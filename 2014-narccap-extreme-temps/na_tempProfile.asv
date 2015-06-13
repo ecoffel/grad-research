@@ -15,10 +15,10 @@ baseTimePeriod = 1981:1998;
 futureTimePeriod = 2051:2069;
 
 baseVar = 'airmin';
-testVar = 'airmin';
+testVar = '';
 
 baseSurfVar = 'tasmin';
-testSurfVar = 'tasmin';
+testSurfVar = '';
 
 baseRegrid = true;
 testRegrid = true;
@@ -286,7 +286,7 @@ result(isnan(result)) = 0;
 
 yAxis = [1000; 850; 500; 300; 200];
 
-plotTitle = ['NARCCAP SW winter mean temperature profile change'];
+plotTitle = ['NARCCAP SW winter mean temperature profile'];
 Xlabel = 'Temperature (degrees C)';
 Ylabel = 'Pressure (hPa)';
 

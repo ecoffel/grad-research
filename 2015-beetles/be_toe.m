@@ -8,14 +8,14 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm'};
-testModels = {'bnu-esm'};
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm'};
+% testModels = {'bnu-esm'};
+baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
 testVar = 'bt';
@@ -31,6 +31,7 @@ annualmean = false;
 exportformat = 'pdf';
 
 blockWater = true;
+biasCorrect = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -58,7 +59,7 @@ end
 
 plotRegion = 'usa';
 
-plotRange = [2020 2060];
+plotRange = [2040 2055];
 plotXUnits = 'Year';
 
 if strcmp(basePeriod, 'past')
@@ -81,7 +82,7 @@ if ~strcmp(testVar, '')
     testDatasetStr = testDataset;
     if strcmp(testDatasetStr, 'cmip5')
         if length(testModels) == 1
-            testDatasetStr = ['cmip5-' modelStr{1}];
+            testDatasetStr = ['cmip5-' baseModels{1}];
         else 
             testDatasetStr = ['cmip5-mm'];
         end
@@ -100,7 +101,7 @@ end
 baseDatasetStr = baseDataset;
 if strcmp(baseDatasetStr, 'cmip5')
     if length(baseModels) == 1
-        baseDatasetStr = ['cmip5-' modelStr{1}]
+        baseDatasetStr = ['cmip5-' baseModels{1}]
     else
         baseDatasetStr = ['cmip5-mm'];
     end
@@ -122,11 +123,15 @@ else
     fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
 
-plotTitle = [testDataset ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
-fileTitle = ['bt-toe-' baseVar '-' fileTimeStr '.' exportformat];
+
 
 baseExt = {};
 futureExt = {};
+percentiles = [];
+
+if biasCorrect
+    load cmip5BiasCorrection_bt;
+end
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -146,9 +151,7 @@ for m = 1:length(baseModels)
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
         
-        if strcmp(testVar, '') & (strcmp(baseVar, 'bt') | strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin'))
-            baseDaily{3} = baseDaily{3}-273.15;
-        end
+        baseDaily{3} = baseDaily{3}-273.15;
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -156,9 +159,31 @@ for m = 1:length(baseModels)
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
         
+        if biasCorrect
+            biasModel = -1;
+            for mn = 1:length(cmip5BiasCorrection_bt)
+                if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
+                    biasModel = mn;
+                    break;
+                end
+            end
+
+            for xlat = 1:size(baseExtTmp{1}{3}, 1)
+                for ylon = 1:size(baseExtTmp{1}{3}, 2)
+                    for p = 10:-1:1
+                        if baseExtTmp{1}{3}(xlat, ylon) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                            baseExtTmp{1}{3}(xlat, ylon) = baseExtTmp{1}{3}(xlat, ylon) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                            break;
+                        end
+                    end
+                end
+            end
+        end
+        
         baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
         clear baseDaily baseExtTmp;
     end
+    
 end
 
 if ~strcmp(testVar, '')
@@ -181,10 +206,33 @@ if ~strcmp(testVar, '')
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             end
 
+            testDaily{3} = testDaily{3}-273.15;
+            
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
                 testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+            end
+            
+            if biasCorrect
+                biasModel = -1;
+                for mn = 1:length(cmip5BiasCorrection_bt)
+                    if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
+                        biasModel = mn;
+                        break;
+                    end
+                end
+                
+                for xlat = 1:size(testDailyExtTmp{1}{3}, 1)
+                    for ylon = 1:size(testDailyExtTmp{1}{3}, 2)
+                        for p = 10:-1:1
+                            if testDailyExtTmp{1}{3}(xlat, ylon) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                                testDailyExtTmp{1}{3}(xlat, ylon) = testDailyExtTmp{1}{3}(xlat, ylon) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                                break;
+                            end
+                        end
+                    end
+                end
             end
 
             futureExt{m} = {futureExt{m}{:}, testDailyExtTmp{:}};
@@ -204,33 +252,58 @@ for m = 1:length(baseExt)
     baseAvg = nanmean(baseAvg, 4);
 end
 
-lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
-for m = 1:length(futureExt)
-    for y = 1:length(futureExt{m})
-        curTest(:,:) = futureExt{m}{y}{3};
-        for xlat = 1:size(curTest, 1)
-            for ylon = 1:size(curTest, 2)
-                if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon) == 0
-                    lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+plotRange = [2020 2055];
+tempCutoff = [-6 -7 -8 -10 -1];
+
+for t = tempCutoff
+    lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
+    for m = 1:length(futureExt)
+        for y = 1:length(futureExt{m})
+            curTest(:,:) = futureExt{m}{y}{3};
+            for xlat = 1:size(curTest, 1)
+                for ylon = 1:size(curTest, 2)
+
+                    if t == -1
+                        if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
+                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                        end
+                    else
+                        if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
+                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                        end
+                    end
                 end
             end
         end
     end
+
+    lastYear = nanmean(lastYear, 3);
+
+    result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
+
+    if t == -1
+        plotTitle = ['Time of emergence (mean TNn)'];
+    else
+        plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+    end
+    
+    cutoffStr = '';
+    if t == -1
+        cutoffStr = 'mean';
+    else
+        cutoffStr = [num2str(t) 'C'];
+    end
+
+    fileTitle = ['bt-toe-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
+
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'blockWater', blockWater);
+
+    plotFromDataFile(saveData);
 end
-
-lastYear = nanmean(lastYear, 3);
-
-result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
-
-plotTitle = ['Time of emergence (mean bark TNn)'];
-
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater);
-
-plotFromDataFile(saveData);
 
