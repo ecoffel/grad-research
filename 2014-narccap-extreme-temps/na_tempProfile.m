@@ -3,25 +3,25 @@ season = 'winter';
 baseTime = 'past';
 testTime = 'future';
 
-baseDataset = 'narccap';
-testDataset = 'narccap';
+baseDataset = 'narr';
+testDataset = 'narr';
 
-% baseModels = {''};
-% testModels = {''};
-baseModels = {'crcm/ccsm', 'crcm/cgcm3', 'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm'};
-testModels = {'crcm/ccsm', 'crcm/cgcm3', 'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm'};
+baseModels = {''};
+testModels = {''};
+%baseModels = {'crcm/ccsm', 'crcm/cgcm3', 'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm'};
+%testModels = {'crcm/ccsm', 'crcm/cgcm3', 'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm'};
 
 baseTimePeriod = 1981:1998;
 futureTimePeriod = 2051:2069;
 
 baseVar = 'airmin';
-testVar = 'airmin';
+testVar = '';
 
 baseSurfVar = 'tasmin';
-testSurfVar = 'tasmin';
+testSurfVar = '';
 
-baseRegrid = true;
-testRegrid = true;
+baseRegrid = false;
+testRegrid = false;
 
 % load 850, 500, 300, 200
 % and load tasmax for the surface
@@ -43,7 +43,7 @@ baseDir = 'e:/data/';
 baseDataDir = [baseDataset '/output'];
 yearStep = 1;
 
-region = 'sw';
+region = 'ne';
 
 if strcmp(region, 'ne')
     latRange = [39 41];
@@ -286,7 +286,7 @@ result(isnan(result)) = 0;
 
 yAxis = [1000; 850; 500; 300; 200];
 
-plotTitle = ['NARCCAP SW winter mean temperature profile change'];
+plotTitle = ['NARR NE winter mean temperature profile'];
 Xlabel = 'Temperature (degrees C)';
 Ylabel = 'Pressure (hPa)';
 
