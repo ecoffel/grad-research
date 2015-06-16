@@ -5,24 +5,23 @@ season = 'all';
 basePeriod = 'past';
 testPeriod = 'future';
 
-baseDataset = 'cmip5';
-testDataset = 'cmip5';
+baseDataset = 'narr';
+testDataset = 'narr';
 
-% baseModels = {''};
-% testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {''};
+testModels = {''};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-
 baseVar = 'bt';
-testVar = 'bt';
+testVar = '';
 
-baseRegrid = true;
-modelRegrid = true;
+baseRegrid = false;
+modelRegrid = false;
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2051:2060;
@@ -110,6 +109,11 @@ if ~strcmp(testVar, '')
         testDataDir = 'ncep-reanalysis/output';
         ensemble = '';
         testRcp = '';
+    elseif strcmp(testDatasetStr, 'narr')
+        testDatasetStr = ['narr'];
+        testDataDir = 'narr/output';
+        ensemble = '';
+        testRcp = '';
     end
     
 end
@@ -128,6 +132,11 @@ if strcmp(baseDatasetStr, 'cmip5')
 elseif strcmp(baseDatasetStr, 'ncep')
     baseDatasetStr = ['ncep'];
     baseDataDir = 'ncep-reanalysis/output';
+    ensemble = '';
+    baseRcp = '';
+elseif strcmp(baseDatasetStr, 'narr')
+    baseDatasetStr = ['narr'];
+    baseDataDir = 'narr/output';
     ensemble = '';
     baseRcp = '';
 end
@@ -245,7 +254,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 annual minimum bt change [2041-2050] - [1985-2004]'];
+plotTitle = ['NARR annual minimum bt [1985-2004]'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

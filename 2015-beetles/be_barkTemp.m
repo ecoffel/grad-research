@@ -284,6 +284,8 @@ while maxTempStartInd <= maxTempEndInd & minTempStartInd <= minTempEndInd
     [latIndexRange, lonIndexRange] = latLonIndexRange({maxTempLat, maxTempLon, monthlyBarkT}, [37 46], [-80 -60]);
     maxTempLat = maxTempLat(latIndexRange, lonIndexRange);
     maxTempLon = maxTempLon(latIndexRange, lonIndexRange);
+    maxTempData = maxTempData(latIndexRange, lonIndexRange, :);
+    minTempData = minTempData(latIndexRange, lonIndexRange, :);
     monthlyBarkT = monthlyBarkT(latIndexRange, lonIndexRange, :);
     
     monthStr = '';
