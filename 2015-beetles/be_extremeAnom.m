@@ -3,12 +3,12 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+testPeriod = 'past';
 
-baseDataset = 'narr';
-testDataset = 'narr';
+baseDataset = 'cmip5';
+testDataset = 'cmip5';
 
-baseModels = {''};
+baseModels = {'bnu-esm'};
 testModels = {''};
 % baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
@@ -20,8 +20,8 @@ testModels = {''};
 baseVar = 'bt';
 testVar = '';
 
-baseRegrid = false;
-modelRegrid = false;
+baseRegrid = true;
+modelRegrid = true;
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2051:2060;
@@ -30,6 +30,7 @@ testPeriodYears = 2051:2060;
 annualmean = false;
 exportformat = 'pdf';
 
+biasCorrect = true;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -92,12 +93,11 @@ elseif strcmp(testPeriod, 'future')
     testRcp = 'rcp85/';
 end
 
+testDatasetStr = testDataset;
 if ~strcmp(testVar, '')
-    testDatasetStr = testDataset;
     if strcmp(testDatasetStr, 'cmip5')
         if length(testModels) == 1
-            modelStr = strsplit(testModels{1}, '/');
-            testDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}];
+            testDatasetStr = ['cmip5-' testModels{1}];
         else 
             testDatasetStr = ['cmip5-mm'];
         end
@@ -121,8 +121,7 @@ end
 baseDatasetStr = baseDataset;
 if strcmp(baseDatasetStr, 'cmip5')
     if length(baseModels) == 1
-        modelStr = strsplit(baseModels{1}, '/');
-        baseDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}]
+        baseDatasetStr = ['cmip5-' baseModels{1}]
     else
         baseDatasetStr = ['cmip5-mm'];
     end
@@ -141,19 +140,30 @@ elseif strcmp(baseDatasetStr, 'narr')
     baseRcp = '';
 end
 
+bcStr = '';
+if biasCorrect
+    bcStr = 'bc-';
+end
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
-    fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [testDatasetStr '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 else
-    fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
 
-plotTitle = [testDataset ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
-fileTitle = ['extremeAnom-' baseVar '-' fileTimeStr '.' exportformat];
+plotTitle = [testDatasetStr ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
+fileTitle = ['extremeAnom-' baseVar '-' bcStr fileTimeStr '.' exportformat];
 
 baseExt = {};
 futureExt = {};
+
+if biasCorrect
+    load cmip5BiasCorrection_bt;
+end
+
+latBounds = [23 60];
+lonBounds = [-135 -55] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -173,8 +183,34 @@ for m = 1:length(baseModels)
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
         
-        if strcmp(testVar, '') & (strcmp(baseVar, 'bt') | strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin'))
-            baseDaily{3} = baseDaily{3}-273.15;
+        baseDaily{3} = baseDaily{3}-273.15;
+        
+        [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
+        baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
+        
+        if biasCorrect
+            biasModel = -1;
+            for mn = 1:length(cmip5BiasCorrection_bt)
+                if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
+                    biasModel = mn;
+                    break;
+                end
+            end
+
+            for xlat = 1:size(baseDaily{3}, 1)
+                for ylon = 1:size(baseDaily{3}, 2)
+                    for month = 1:size(baseDaily{3}, 4)
+                        for day = 1:size(baseDaily{3}, 5)
+                            for p = 1:10
+                                if baseDaily{3}(xlat, ylon, 1, month, day) < cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                                    baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                                    break;
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
         
         if annualmean
@@ -207,7 +243,37 @@ if ~strcmp(testVar, '')
             else
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             end
+            
+            testDaily{3} = testDaily{3}-273.15;
+            
+            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
+            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
 
+            if biasCorrect
+                biasModel = -1;
+                for mn = 1:length(cmip5BiasCorrection_bt)
+                    if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
+                        biasModel = mn;
+                        break;
+                    end
+                end
+                
+                for xlat = 1:size(testDaily{3}, 1)
+                    for ylon = 1:size(testDaily{3}, 2)
+                        for month = 1:size(baseDaily{3}, 4)
+                            for day = 1:size(testDaily{3}, 5)
+                                for p = 1:10
+                                    if testDaily{3}(xlat, ylon, 1, month, day) < cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                                        testDaily{3}(xlat, ylon, 1, month, day) = testDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                                        break;
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
@@ -254,7 +320,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['NARR annual minimum bt [1985-2004]'];
+plotTitle = ['CMIP5 bnu-esm (bias-cor) annual minimum bt [1985-2004]'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

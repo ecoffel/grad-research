@@ -3,35 +3,35 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+testPeriod = 'past';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm'};
-% testModels = {'bnu-esm'};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm'};
+testModels = {''};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
-testVar = 'bt';
+testVar = '';
 
 baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2050;
+testPeriodYears = 2051:2060;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'pdf';
 
-blockWater = true;
 biasCorrect = true;
+blockWater = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -59,8 +59,23 @@ end
 
 plotRegion = 'usa';
 
-plotRange = [2040 2055];
-plotXUnits = 'Year';
+if strcmp(baseVar, 'bt')
+    gridbox = true;
+    if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
+        plotRange = [-5 5];
+    else
+        plotRange = [-20 20];
+    end
+    plotXUnits = 'degrees C';
+elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
+    gridbox = true;
+    if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
+        plotRange = [-10 10];
+    else
+        plotRange = [0 50];
+    end
+    plotXUnits = 'degrees C';
+end
 
 if strcmp(basePeriod, 'past')
     basePeriod = basePeriodYears;
@@ -78,11 +93,11 @@ elseif strcmp(testPeriod, 'future')
     testRcp = 'rcp85/';
 end
 
+testDatasetStr = testDataset;
 if ~strcmp(testVar, '')
-    testDatasetStr = testDataset;
     if strcmp(testDatasetStr, 'cmip5')
         if length(testModels) == 1
-            testDatasetStr = ['cmip5-' baseModels{1}];
+            testDatasetStr = ['cmip5-' testModels{1}];
         else 
             testDatasetStr = ['cmip5-mm'];
         end
@@ -92,6 +107,11 @@ if ~strcmp(testVar, '')
     elseif strcmp(testDatasetStr, 'ncep')
         testDatasetStr = ['ncep'];
         testDataDir = 'ncep-reanalysis/output';
+        ensemble = '';
+        testRcp = '';
+    elseif strcmp(testDatasetStr, 'narr')
+        testDatasetStr = ['narr'];
+        testDataDir = 'narr/output';
         ensemble = '';
         testRcp = '';
     end
@@ -113,6 +133,11 @@ elseif strcmp(baseDatasetStr, 'ncep')
     baseDataDir = 'ncep-reanalysis/output';
     ensemble = '';
     baseRcp = '';
+elseif strcmp(baseDatasetStr, 'narr')
+    baseDatasetStr = ['narr'];
+    baseDataDir = 'narr/output';
+    ensemble = '';
+    baseRcp = '';
 end
 
 bcStr = '';
@@ -122,18 +147,23 @@ end
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
-    fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [testDatasetStr '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 else
-    fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
+
+plotTitle = [testDatasetStr ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
+fileTitle = ['extremeAnom-' baseVar '-' bcStr fileTimeStr '.' exportformat];
 
 baseExt = {};
 futureExt = {};
-percentiles = [];
 
 if biasCorrect
     load cmip5BiasCorrection_bt;
 end
+
+latBounds = [10 60];
+lonBounds = [-150 -60] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -155,6 +185,9 @@ for m = 1:length(baseModels)
         
         baseDaily{3} = baseDaily{3}-273.15;
         
+        [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
+        baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
+        
         if biasCorrect
             biasModel = -1;
             for mn = 1:length(cmip5BiasCorrection_bt)
@@ -165,10 +198,11 @@ for m = 1:length(baseModels)
             end
 
             for xlat = 1:size(baseDaily{3}, 1)
+                ['xlat = ' num2str(xlat)]
                 for ylon = 1:size(baseDaily{3}, 2)
                     for month = 1:size(baseDaily{3}, 4)
                         for day = 1:size(baseDaily{3}, 5)
-                            for p = 10:-1:1
+                            for p = 1:10
                                 if baseDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
                                     baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
                                     break;
@@ -186,12 +220,9 @@ for m = 1:length(baseModels)
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
         
-        
-        
         baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
         clear baseDaily baseExtTmp;
     end
-    
 end
 
 if ~strcmp(testVar, '')
@@ -213,9 +244,12 @@ if ~strcmp(testVar, '')
             else
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             end
-
+            
             testDaily{3} = testDaily{3}-273.15;
             
+            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
+            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
+
             if biasCorrect
                 biasModel = -1;
                 for mn = 1:length(cmip5BiasCorrection_bt)
@@ -254,68 +288,48 @@ if ~strcmp(testVar, '')
 end
 
 ['done loading...']
+modelAvg = [];
 baseAvg = [];
 
 % average over models and years
 for m = 1:length(baseExt)
     for y = 1:length(baseExt{m})
-        baseAvg(:,:,m, y) = baseExt{m}{y}{3};
+        baseAvg(:,:,m,y) = baseExt{m}{y}{3};
     end
-    baseAvg = nanmean(baseAvg, 4);
 end
 
-plotRange = [2020 2055];
-tempCutoff = [-6 -7 -8 -10 -1];
+% construct plotable structures
+baseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, squeeze(nanmean(nanmean(baseAvg, 4), 3))};
 
-for t = tempCutoff
-    lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
+if ~strcmp(testVar, '')
     for m = 1:length(futureExt)
         for y = 1:length(futureExt{m})
-            curTest(:,:) = futureExt{m}{y}{3};
-            for xlat = 1:size(curTest, 1)
-                for ylon = 1:size(curTest, 2)
-
-                    if t == -1
-                        if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
-                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
-                        end
-                    else
-                        if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
-                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
-                        end
-                    end
-                end
-            end
+            modelAvg(:,:,m,y) = futureExt{m}{y}{3};
         end
     end
-
-    lastYear = nanmean(lastYear, 3);
-
-    result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
-
-    if t == -1
-        plotTitle = ['Time of emergence (mean TNn)'];
+    modelAvg = {futureExt{1}{1}{1}, futureExt{1}{1}{2}, nanmean(nanmean(modelAvg, 4), 3)};
+    
+    % regrid the base data if needed
+    if size(baseAvg{3}) ~= size(modelAvg{3})
+        baseExtAvgRegrid = regridGriddata(baseAvg, modelAvg);
     else
-        plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+        baseExtAvgRegrid = baseAvg;
     end
     
-    cutoffStr = '';
-    if t == -1
-        cutoffStr = 'mean';
-    else
-        cutoffStr = [num2str(t) 'C'];
-    end
-
-    fileTitle = ['bt-toe-' baseVar '-' bcStr cutoffStr '-' fileTimeStr '.' exportformat];
-
-    saveData = struct('data', {result}, ...
-                      'plotRegion', plotRegion, ...
-                      'plotRange', plotRange, ...
-                      'plotTitle', plotTitle, ...
-                      'fileTitle', fileTitle, ...
-                      'plotXUnits', plotXUnits, ...
-                      'blockWater', blockWater);
-
-    plotFromDataFile(saveData);
+    result = {modelAvg{1}, modelAvg{2}, modelAvg{3}-baseExtAvgRegrid{3}};
+else
+    result = baseAvg;
 end
+
+plotTitle = ['CMIP5 bnu-esm (bias-cor) annual minimum bt [1985-2004]'];
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', plotRegion, ...
+                  'plotRange', plotRange, ...
+                  'plotTitle', plotTitle, ...
+                  'fileTitle', fileTitle, ...
+                  'plotXUnits', plotXUnits, ...
+                  'blockWater', blockWater);
+
+plotFromDataFile(saveData);
 

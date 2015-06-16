@@ -115,10 +115,6 @@ elseif strcmp(baseDatasetStr, 'ncep')
     baseRcp = '';
 end
 
-bcStr = '';
-if biasCorrect
-    bcStr = 'bc-';
-end
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
@@ -126,6 +122,8 @@ if ~strcmp(testVar, '')
 else
     fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
+
+
 
 baseExt = {};
 futureExt = {};
@@ -164,16 +162,32 @@ for m = 1:length(baseModels)
                 end
             end
 
-            for xlat = 1:size(baseDaily{3}, 1)
-                for ylon = 1:size(baseDaily{3}, 2)
-                    for month = 1:size(baseDaily{3}, 4)
-                        for day = 1:size(baseDaily{3}, 5)
-                            for p = 10:-1:1
-                                if baseDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
-                                    baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
-                                    break;
-                                end
-                            end
+            for xlat = 1:size(baseExtTmp{1}{3}, 1)
+                for ylon = 1:size(baseExtTmp{1}{3}, 2)
+                    if biasCorrect
+            biasModel = -1;
+            for mn = 1:length(cmip5BiasCorrection_bt)
+                if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
+                    biasModel = mn;
+                    break;
+                end
+            end
+
+            for xlat = 1:size(baseExtTmp{1}{3}, 1)
+                for ylon = 1:size(baseExtTmp{1}{3}, 2)
+                    for p = 10:-1:1
+                        if baseExtTmp{1}{3}(xlat, ylon) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                            baseExtTmp{1}{3}(xlat, ylon) = baseExtTmp{1}{3}(xlat, ylon) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                            break;
+                        end
+                    end
+                end
+            end
+        end
+                    for p = 10:-1:1
+                        if baseExtTmp{1}{3}(xlat, ylon) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                            baseExtTmp{1}{3}(xlat, ylon) = baseExtTmp{1}{3}(xlat, ylon) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                            break;
                         end
                     end
                 end
@@ -216,6 +230,12 @@ if ~strcmp(testVar, '')
 
             testDaily{3} = testDaily{3}-273.15;
             
+            if annualmean
+                testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
+            else
+                testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+            end
+            
             if biasCorrect
                 biasModel = -1;
                 for mn = 1:length(cmip5BiasCorrection_bt)
@@ -225,26 +245,16 @@ if ~strcmp(testVar, '')
                     end
                 end
                 
-                for xlat = 1:size(testDaily{3}, 1)
-                    for ylon = 1:size(testDaily{3}, 2)
-                        for month = 1:size(baseDaily{3}, 4)
-                            for day = 1:size(testDaily{3}, 5)
-                                for p = 10:-1:1
-                                    if testDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
-                                        testDaily{3}(xlat, ylon, 1, month, day) = testDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
-                                        break;
-                                    end
-                                end
+                for xlat = 1:size(testDailyExtTmp{1}{3}, 1)
+                    for ylon = 1:size(testDailyExtTmp{1}{3}, 2)
+                        for p = 10:-1:1
+                            if testDailyExtTmp{1}{3}(xlat, ylon) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
+                                testDailyExtTmp{1}{3}(xlat, ylon) = testDailyExtTmp{1}{3}(xlat, ylon) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
+                                break;
                             end
                         end
                     end
                 end
-            end
-            
-            if annualmean
-                testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
-            else
-                testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
             end
 
             futureExt{m} = {futureExt{m}{:}, testDailyExtTmp{:}};
@@ -306,7 +316,7 @@ for t = tempCutoff
         cutoffStr = [num2str(t) 'C'];
     end
 
-    fileTitle = ['bt-toe-' baseVar '-' bcStr cutoffStr '-' fileTimeStr '.' exportformat];
+    fileTitle = ['bt-toe-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...
