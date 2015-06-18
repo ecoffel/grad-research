@@ -1,4 +1,4 @@
-regridVar = 'psl';
+regridVar = 'tasmin';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -18,18 +18,20 @@ models = {'ccsm4', 'cesm1-bgc', ...
 %models = {'cesm1-bgc', 'cmcc-cms'};
 
 ensembles = {'r1i1p1'};
-rcps = {'historical', 'rcp85'};
+rcps = {'rcp45', 'historical', 'rcp85'};
 plevs = {};
+
+latLonBounds = [[20, 60]; [-100 -50]];
       
 for m = 1:length(models)
     for e = 1:length(ensembles)
         for r = 1:length(rcps)
             if length(plevs) > 0
                 for p = 1:length(plevs)
-                    regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVar], regridVar, baseGrid, 'skipexisting', true, 'plev', plevs{p});
+                    regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVar], regridVar, baseGrid, 'skipexisting', true, 'plev', plevs{p}, 'latLonBounds', latLonBounds);
                 end
             else
-                regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVar], regridVar, baseGrid, 'skipexisting', true);
+                regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVar], regridVar, baseGrid, 'skipexisting', true, 'latLonBounds', latLonBounds);
             end
         end
     end

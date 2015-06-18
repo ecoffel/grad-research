@@ -14,6 +14,7 @@ plev = -1;
 yearstart = -1;
 yearend = -1;
 skipExisting = true;
+latLonBounds = [];
 
 for i=1:2:length(varargin)
     key = varargin{i};
@@ -27,6 +28,8 @@ for i=1:2:length(varargin)
             yearend = val;
         case 'skipexisting'
             skipExisting = val;
+        case 'latLonBounds'
+            latLonBounds = val;
     end
 end
 
@@ -63,11 +66,10 @@ for d = 1:length(dirNames)
     for k = 1:length(matFileNames)
         matFileName = matFileNames{k};
 
-        ['regridding ' matFileName '...']
-        
         % check if this file contains the target variable
         matFileNameParts = strsplit(matFileName, '_');
         if length(strfind(matFileNameParts{1}, varName)) == 0
+            ['skipping ' matFileName '...']
             continue
         end
 
@@ -84,9 +86,12 @@ for d = 1:length(dirNames)
         
         if skipExisting
             if exist(newFileName, 'file') == 2
+                ['skipping ' matFileName '...']
                 continue;
             end
         end
+        
+        ['regridding ' matFileName '...']
         
         curFileName = [curDir, '/', matFileName];
         load(curFileName);
@@ -94,6 +99,22 @@ for d = 1:length(dirNames)
         lat = double(eval([matFileNameNoExt, '{1}']));
         lon = double(eval([matFileNameNoExt, '{2}']));        
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
+        
+        if length(latLonBounds) > 0
+            if latLonBounds(2, 1) < 0
+                latLonBounds(2, 1) = latLonBounds(2, 1) + 360;
+                latLonBounds(2, 2) = latLonBounds(2, 2) + 360;
+            end
+            
+            [latIndexM, lonIndexM] = latLonIndexRange({lat, lon, curMonthlyData}, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
+            lat = lat(latIndexM, lonIndexM);
+            lon = lon(latIndexM, lonIndexM);
+            curMonthlyData = curMonthlyData(latIndexM, lonIndexM);
+
+            [latIndexB, lonIndexB] = latLonIndexRange(baseGrid, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
+            baseGrid{1} = baseGrid{1}(latIndexB, lonIndexB);
+            baseGrid{2} = baseGrid{2}(latIndexB, lonIndexB);
+        end
         
         if plev == -1
             

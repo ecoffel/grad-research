@@ -12,7 +12,7 @@ models = {'ccsm4', 'cesm1-bgc', ...
           'mri-cgcm3'};
 
 ensembles = {'r1i1p1'};
-rcps = {'historical', 'rcp85'};
+rcps = {'historical', 'rcp85', 'rcp45'};
       
 for m = 1:length(models)
     for e = 1:length(ensembles)

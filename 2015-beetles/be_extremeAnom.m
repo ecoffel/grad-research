@@ -8,14 +8,14 @@ testPeriod = 'past';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm'};
-testModels = {''};
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm'};
+% testModels = {''};
+baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
 testVar = '';
@@ -57,7 +57,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'usa';
+plotRegion = 'usa-exp';
 
 if strcmp(baseVar, 'bt')
     gridbox = true;
@@ -320,7 +320,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 bnu-esm (bias-cor) annual minimum bt [1985-2004]'];
+plotTitle = ['CMIP5 (bias-cor) annual minimum bt [1985-2004]'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

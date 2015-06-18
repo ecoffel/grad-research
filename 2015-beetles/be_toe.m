@@ -57,7 +57,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'usa';
+plotRegion = 'us-ne';
 
 plotRange = [2040 2055];
 plotXUnits = 'Year';
@@ -135,6 +135,9 @@ if biasCorrect
     load cmip5BiasCorrection_bt;
 end
 
+latBounds = [35 50];
+lonBounds = [-90 -60] + 360;
+
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
         curModel = baseModels{m};
@@ -154,6 +157,9 @@ for m = 1:length(baseModels)
         end
         
         baseDaily{3} = baseDaily{3}-273.15;
+        
+        [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
+        baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
         
         if biasCorrect
             biasModel = -1;
@@ -216,6 +222,9 @@ if ~strcmp(testVar, '')
 
             testDaily{3} = testDaily{3}-273.15;
             
+            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
+            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
+            
             if biasCorrect
                 biasModel = -1;
                 for mn = 1:length(cmip5BiasCorrection_bt)
@@ -227,7 +236,7 @@ if ~strcmp(testVar, '')
                 
                 for xlat = 1:size(testDaily{3}, 1)
                     for ylon = 1:size(testDaily{3}, 2)
-                        for month = 1:size(baseDaily{3}, 4)
+                        for month = 1:size(testDaily{3}, 4)
                             for day = 1:size(testDaily{3}, 5)
                                 for p = 10:-1:1
                                     if testDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
