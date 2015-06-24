@@ -59,7 +59,7 @@ end
 
 plotRegion = 'us-ne';
 
-plotRange = [2040 2055];
+plotRange = [2020 2055];
 plotXUnits = 'Year';
 
 if strcmp(basePeriod, 'past')
@@ -135,8 +135,8 @@ if biasCorrect
     load cmip5BiasCorrection_bt;
 end
 
-latBounds = [35 50];
-lonBounds = [-90 -60] + 360;
+latBounds = [23 50];
+lonBounds = [-130 -50] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')

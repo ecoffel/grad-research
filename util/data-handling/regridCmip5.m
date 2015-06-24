@@ -1,4 +1,4 @@
-regridVar = 'tasmin';
+regridVar = 'tasmax';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -15,6 +15,7 @@ models = {'ccsm4', 'cesm1-bgc', ...
           'cnrm-cm5', 'ipsl-cm5a-mr', ...
           'bnu-esm', 'miroc-esm', ...
           'mri-cgcm3'};
+      
 %models = {'cesm1-bgc', 'cmcc-cms'};
 
 ensembles = {'r1i1p1'};

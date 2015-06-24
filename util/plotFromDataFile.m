@@ -29,9 +29,10 @@ function [fg, cb] = plotFromDataFile(saveData)
     xlabel(cb, saveData.plotXUnits, 'FontSize', 24);
     cbPos = get(cb, 'Position');
     title(saveData.plotTitle, 'FontSize', 24);
+    
     set(gcf, 'Position', get(0,'Screensize'));
-    set(gcf, 'Units', 'normalized');
-    set(gca, 'Units', 'normalized');
+    ti = get(gca,'TightInset');
+    set(gca,'Position', [ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
     
     if statDataExists
         statData = saveData.statData;
@@ -67,8 +68,7 @@ function [fg, cb] = plotFromDataFile(saveData)
         geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
 
-    ti = get(gca,'TightInset');
-    set(gca,'Position',[ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
+    
     eval(['export_fig ' saveData.fileTitle ';']);
     fileNameParts = strsplit(saveData.fileTitle, '.');
     save([fileNameParts{1} '.mat'], 'saveData');
