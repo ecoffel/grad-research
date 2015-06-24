@@ -33,6 +33,7 @@ function [fg, cb] = plotFromDataFile(saveData)
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');
     set(gca,'Position', [ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
+    tightmap;
     
     if statDataExists
         statData = saveData.statData;
