@@ -5,8 +5,8 @@ season = 'all';
 basePeriod = 'past';
 testPeriod = 'past';
 
-baseDataset = 'narr';
-testDataset = 'ncep';
+baseDataset = 'ncep';
+testDataset = 'narr';
 
 baseModels = {''};
 testModels = {''};
@@ -20,17 +20,17 @@ testModels = {''};
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
 
-baseVar = 'tasmin';
-testVar = 'tmin';
+baseVar = 'tmin';
+testVar = 'tasmin';
 
 percentiles = 10:10:100;
 
-baseRegrid = false;
+baseRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-latBounds = [35 50];
-lonBounds = [-100 -62];
+latBounds = [23 50];
+lonBounds = [-128 -63];
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -87,7 +87,7 @@ baseLon = [];
 
 % first load base dataset
 ['loading base dataset: ' baseDataset]
-for y = basePeriodYears(1):yearStep:basePeriodYears(end)
+for y = basePeriod(1):yearStep:basePeriod(end)
     ['year ' num2str(y) '...']
     
     baseDaily = loadDailyData(['e:/data/' baseDataDir '/' baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
@@ -150,7 +150,7 @@ for m = 1:length(testModels)
     testBiasCorrection{m} = {testModels{m}, []};
     
     ['loading ' curModel ' base']
-    for y = basePeriodYears(1):yearStep:basePeriodYears(end)
+    for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
         
         testDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
@@ -159,9 +159,7 @@ for m = 1:length(testModels)
         [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
         testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
     
-        if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2 ~= size(baseLon, 2))
-            testDaily = regridGriddata(testDaily, {baseLat, baseLon, []});
-        end
+        if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(
         
         testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
         testData = {testData{:} testDaily{3}};

@@ -274,7 +274,7 @@ for m = 1:length(baseExt)
 end
 
 plotRange = [2020 2055];
-tempCutoff = [-6 -7 -8 -10 -1];
+tempCutoff = [-6 -7 -8 -10 -1] - 4;
 
 for t = tempCutoff
     lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
