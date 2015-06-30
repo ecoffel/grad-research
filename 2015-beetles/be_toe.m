@@ -8,8 +8,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm'};
-% testModels = {'bnu-esm'};
+% baseModels = {'gfdl-cm3'};
+% testModels = {'gfdl-cm3'};
 baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
@@ -57,7 +57,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'us-ne';
+plotRegion = 'usa';
 
 plotRange = [2020 2055];
 plotXUnits = 'Year';
@@ -135,8 +135,8 @@ if biasCorrect
     load cmip5BiasCorrection_bt;
 end
 
-latBounds = [23 50];
-lonBounds = [-130 -50] + 360;
+latBounds = [35 50];
+lonBounds = [-100 -60] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -274,23 +274,69 @@ for m = 1:length(baseExt)
 end
 
 plotRange = [2020 2055];
-tempCutoff = [-6 -7 -8 -10 -1] - 4;
 
-for t = tempCutoff
+probabilityThreshold = true;
+
+if probabilityThreshold
+    cutoff = [25 50 75 90];
+    tempThreshold = -11;
+    futureWindow = 10;
+else
+    cutoff = [-6 -7 -8 -10 -1] - 4;
+end
+
+for t = cutoff
     lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
-    for m = 1:length(futureExt)
-        for y = 1:length(futureExt{m})
-            curTest(:,:) = futureExt{m}{y}{3};
-            for xlat = 1:size(curTest, 1)
-                for ylon = 1:size(curTest, 2)
+    
+    if probabilityThreshold
+        for m = 1:length(futureExt)
+            for y = 1:length(futureExt{m})-futureWindow
+                
+                % number of times in futureWindow that cold threshold is
+                % surpassed
+                eventCount = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2));
+                
+                for y2 = y:y+futureWindow-1
+                    curTest(:,:) = futureExt{m}{y2}{3};
+                    
+                    for xlat = 1:size(curTest, 1)
+                        for ylon = 1:size(curTest, 2)
 
-                    if t == -1
-                        if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
-                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                            if curTest(xlat, ylon) <= tempThreshold
+                                eventCount(xlat, ylon) = eventCount(xlat, ylon) + 1;
+                            end
+                            
                         end
-                    else
-                        if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
-                            lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                    end
+                end
+                
+                for xlat = 1:size(eventCount, 1)
+                    for ylon = 1:size(eventCount, 2)
+                        if eventCount(xlat, ylon) >= 0.01*t*futureWindow
+                            lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
+                        elseif lastYear(xlat, ylon, m) == 0
+                            lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
+                        end
+                    end
+                end
+                
+            end
+        end
+    else
+        for m = 1:length(futureExt)
+            for y = 1:length(futureExt{m})
+                curTest(:,:) = futureExt{m}{y}{3};
+                for xlat = 1:size(curTest, 1)
+                    for ylon = 1:size(curTest, 2)
+
+                        if t == -1
+                            if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
+                                lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                            end
+                        else
+                            if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
+                                lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                            end
                         end
                     end
                 end
@@ -302,17 +348,18 @@ for t = tempCutoff
 
     result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
 
-    if t == -1
-        plotTitle = ['Time of emergence (mean TNn)'];
-    else
-        plotTitle = ['Time of emergence (' num2str(t) 'C)'];
-    end
-    
     cutoffStr = '';
-    if t == -1
-        cutoffStr = 'mean';
+    if probabilityThreshold
+        cutoffStr = [num2str(t) '-perc'];
+        plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
     else
-        cutoffStr = [num2str(t) 'C'];
+        if t == -1
+            cutoffStr = 'mean';
+            plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+        else
+            cutoffStr = [num2str(t) 'C'];
+            plotTitle = ['Time of emergence (mean TNn)'];
+        end
     end
 
     fileTitle = ['bt-toe-' baseVar '-' bcStr cutoffStr '-' fileTimeStr '.' exportformat];

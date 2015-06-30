@@ -26,6 +26,7 @@ testVar = 'tmin';
 percentiles = 10:10:100;
 
 baseRegrid = false;
+testRegrid = false;
 
 basePeriodYears = 1985:2004;
 
@@ -90,7 +91,12 @@ baseLon = [];
 for y = basePeriodYears(1):yearStep:basePeriodYears(end)
     ['year ' num2str(y) '...']
     
-    baseDaily = loadDailyData(['e:/data/' baseDataDir '/' baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+    
+    if baseRegrid
+        baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+    else
+        baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+    end
     baseDaily{3} = baseDaily{3}-273.15;
     
     [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
@@ -153,17 +159,21 @@ for m = 1:length(testModels)
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
         
-        testDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        if testRegrid
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        else
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        end
         testDaily{3} = testDaily{3}-273.15;
         
         [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
         testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
-    
+        testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
+        
         if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2 ~= size(baseLon, 2))
             testDaily = regridGriddata(testDaily, {baseLat, baseLon, []});
         end
         
-        testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
         testData = {testData{:} testDaily{3}};
         clear baseDaily;
     end
