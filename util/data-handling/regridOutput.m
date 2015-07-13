@@ -15,6 +15,7 @@ yearstart = -1;
 yearend = -1;
 skipExisting = true;
 latLonBounds = [];
+v7 = false;
 
 for i=1:2:length(varargin)
     key = varargin{i};
@@ -30,6 +31,8 @@ for i=1:2:length(varargin)
             skipExisting = val;
         case 'latLonBounds'
             latLonBounds = val;
+        case 'v7'
+            v7 = val;
     end
 end
 
@@ -160,7 +163,11 @@ for d = 1:length(dirNames)
             matFileNameNoExtPlev = [matFileNameNoExt '_' plevStr];
             
             eval([matFileNameNoExtPlev ' = {regridLat, regridLon, regridData};']);
-            save([regridDir, '/', matFileNameNoExtPlev, '.mat'], matFileNameNoExtPlev, '-v7.3');
+            if v7
+                save([regridDir, '/', matFileNameNoExtPlev, '.mat'], matFileNameNoExtPlev, '-v7');
+            else
+                save([regridDir, '/', matFileNameNoExtPlev, '.mat'], matFileNameNoExtPlev, '-v7.3');
+            end
             eval(['clear ' matFileNameNoExt ';']);
             clear curData regridData;
         end
