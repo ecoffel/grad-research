@@ -1,30 +1,15 @@
 
-dataset = {'narr'};
-% dataset = {'crcm/ccsm', 'crcm/cgcm3'};
+dataset = {'crcm/ccsm', 'crcm/cgcm3', 'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm'};
 % dataset = {'crcm/ccsm', 'crcm/cgcm3', 'ecp2/gfdl', ...
 %           'hrm3/gfdl', 'hrm3/hadcm3', 'mm5i/ccsm', ...
 %           'mm5i/hadcm3', 'rcm3/cgcm3', 'rcm3/gfdl', ...
 %           'wrfg/ccsm', 'wrfg/cgcm3'};
 
-% for mrso
-%dataset = {'crcm/ccsm', 'crcm/cgcm3', 'ecp2/gfdl', 'hrm3/gfdl'};
-% dataset = {'crcm/ccsm', 'crcm/cgcm3', 'ecp2/gfdl', ...
-%           'hrm3/gfdl', 'mm5i/ccsm', ...
-%           'mm5i/hadcm3', 'rcm3/cgcm3', ...
-%           'wrfg/ccsm', 'wrfg/cgcm3'};
-
-% for swe
-% dataset = {'crcm/ccsm', 'crcm/cgcm3', 'ecp2/gfdl', ...
-%           'rcm3/cgcm3', 'rcm3/gfdl', ...
-%           'wrfg/ccsm'};
-
-%dataset={'crcm/cgcm3'};
-
 compVar = 'zg500';
 
 summer = false;
 
-testPeriod = 'past';
+testPeriod = 'future';
 
 % whether to find the annual extreme or use a temp percentile
 annualExtreme = true;
@@ -35,12 +20,12 @@ findMax = false;
 tempPercentile = 25;
 
 % whether we're taking the difference of two different time periods
-diff = false;
+diff = true;
 
 blockWater = false;
 
 % whether to subtract the period (base or future) mean to look at anomalies
-anomalies = false;
+anomalies = true;
 
 % the temperature reference area
 region = 'ne';
@@ -99,33 +84,10 @@ elseif strcmp(compVar, 'tasmax') | strcmp(compVar, 'tasmin')
     gridbox = false;
     plotRange = [-20 20];
     plotXUnits = 'degrees C';
-elseif strcmp(compVar, 'mrso')
-    gridbox = true;
-    plotColorMap = ceprecip;
-    if realAnom
-        plotRange = [-200 200];
-        plotXUnits = 'kg / m^2';
-    else
-        plotRange = [-4 4];
-        plotXUnits = 'std. deviations';
-    end
-    
-elseif strcmp(compVar, 'swe')
-    gridbox = true;
-    if diff
-        plotRange = [-0.01 0.01];
-    else
-        plotRange = [0 0.5];
-    end
-    plotXUnits = 'm';
-elseif strcmp(compVar, 'va850') | strcmp(compVar, 'ua850')
+elseif strcmp(compVar, 'psl')
     gridbox = false;
-    plotRange = [-10 10];
-    plotXUnits = 'm/s';
-elseif strcmp(compVar, 'hus')
-    gridbox = false;
-    plotRange = [0 0.005];
-    plotXUnits = 'kg water vapor / kg dry air';
+    plotRange = [1e-6 1e-5];
+    plotXUnits = 'hPa';
 end
 
 if strcmp(region, 'ne')
@@ -646,10 +608,9 @@ if statTest
     end
 end
 
-plotTitle='NARR DJF geopotential height field';
+plotTitle='NARCCAP DJF 500 hPa geopotential height anomaly change';
 
 result = {lat, lon, double(finalOutputCompData)};
-
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

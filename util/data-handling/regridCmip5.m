@@ -22,7 +22,7 @@ ensembles = {'r1i1p1'};
 rcps = {'rcp45', 'historical', 'rcp85'};
 plevs = {};
 
-latLonBounds = [[20, 60]; [50 100]];
+latLonBounds = [[15, 45]; [70 100]];
 v7 = true;
       
 for m = 1:length(models)

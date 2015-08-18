@@ -1,5 +1,5 @@
 
-vars = {'tasmax', 'tasmin', 'mrso', 'zg500', 'swe', 'ua', 'va', 'hus', 'pr', 'ta'};
+vars = {'tasmax', 'tasmin', 'mrso', 'zg500', 'swe', 'ua', 'va', 'hus', 'pr', 'ta', 'psl'};
 
 models = {'narccap/raw/crcm/ccsm', 'narccap/raw/crcm/cgcm3', ...
         'narccap/raw/ecp2/gfdl', 'narccap/raw/hrm3/gfdl', ...

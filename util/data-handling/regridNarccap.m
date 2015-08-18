@@ -12,7 +12,7 @@ models = {'crcm/ccsm', 'crcm/cgcm3', ...
 %           'rcm3/ncep', 'wrfg/ncep'};
       
 %vars = {'tasmax', 'tasmin', 'mrso', 'swe', 'va850', 'ua850', 'hus850'};
-vars = {'ta1000', 'ta850', 'ta500', 'ta300', 'ta200'};
+vars = {'psl'};
 
 baseGridMonthly = loadMonthlyData([baseGridModel '/' baseGridVar '/regrid'], baseGridVar, 'yearStart', 1981, 'yearEnd', 1981);
 baseGrid = {baseGridMonthly{1}{1}{1}, baseGridMonthly{1}{1}{2}, []};

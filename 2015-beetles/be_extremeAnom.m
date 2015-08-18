@@ -3,7 +3,7 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'past';
+testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
@@ -11,26 +11,24 @@ testDataset = 'cmip5';
 % baseModels = {'bnu-esm'};
 % testModels = {''};
 baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'bt';
-testVar = '';
+baseVar = 'tasmin';
+testVar = 'tasmin';
 
 baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2051:2060;
+testPeriodYears = 2030:2040;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'pdf';
 
-biasCorrect = true;
+biasCorrect = false;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -162,8 +160,8 @@ if biasCorrect
     load cmip5BiasCorrection_bt;
 end
 
-latBounds = [23 60];
-lonBounds = [-135 -55] + 360;
+latBounds = [35 50];
+lonBounds = [-100 -60] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -320,7 +318,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 (bias-cor) annual minimum bt [1985-2004]'];
+plotTitle = ['CMIP5 annual minimum temperature change [2030-2040] minus [1985-2004]'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

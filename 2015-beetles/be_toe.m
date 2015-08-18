@@ -278,7 +278,7 @@ plotRange = [2020 2055];
 probabilityThreshold = true;
 
 if probabilityThreshold
-    cutoff = [25 50 75 90];
+    cutoff = [70 80 90 100];
     tempThreshold = -11;
     futureWindow = 10;
 else

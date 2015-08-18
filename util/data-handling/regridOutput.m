@@ -112,7 +112,7 @@ for d = 1:length(dirNames)
             [latIndexM, lonIndexM] = latLonIndexRange({lat, lon, curMonthlyData}, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
             lat = lat(latIndexM, lonIndexM);
             lon = lon(latIndexM, lonIndexM);
-            curMonthlyData = curMonthlyData(latIndexM, lonIndexM);
+            curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :);
 
             [latIndexB, lonIndexB] = latLonIndexRange(baseGrid, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
             baseGrid{1} = baseGrid{1}(latIndexB, lonIndexB);

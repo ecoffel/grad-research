@@ -44,3 +44,6 @@ Temporary Items
 *.pdf
 *.mat
 unpop2012.csv
+*.nc
+tasmax_1993.zip
+*.asv
