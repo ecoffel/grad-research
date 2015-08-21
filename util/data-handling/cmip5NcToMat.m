@@ -8,7 +8,7 @@ ncFileNames = dir([rawNcDir, '/', varName, '_*.nc']);
 ncFileNames = {ncFileNames.name};
 
 fileCount = 0;
-yearStep = 5;
+yearStep = 10;
 
 skipExistingFolders = true;
 skipExistingFiles = false;

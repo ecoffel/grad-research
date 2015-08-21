@@ -22,12 +22,12 @@ baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2060;
+testPeriodYears = 2021:2070;
 
 biasCorrect = true;
 
 region = 'us-ne';
-exposureThreshold = 28;
+exposureThreshold = 30;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -220,7 +220,7 @@ for m = 1:length(baseModels)
             end
         end
         
-        basePopCount(m, y-basePeriod(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5)
+        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5)
         
         clear baseDaily baseExtTmp;
     end
@@ -294,7 +294,7 @@ if ~strcmp(testVar, '')
                 end
             end
 
-            futurePopCount(m, y-testPeriod(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5)
+            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5)
             
             %futureExt{m} = {futureExt{m}{:}, testDailyExtTmp};
             clear testDaily testDailyExtTmp;
@@ -302,6 +302,33 @@ if ~strcmp(testVar, '')
     end
 end
 ['done loading...']
+
+basePopCount = nanmean(basePopCount, 1);
+futurePopCount = nanmean(futurePopCount, 1);
+
+plotTitle = 'Exposure to 30C wet-bulb, US NE';
+fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
+
+saveData = struct('dataX1', basePeriodYears, ...
+                  'dataY1', basePopCount, ...
+                  'dataX2', testPeriodYears, ...
+                  'dataY2', futurePopCount, ...
+                  'Xlabel', 'Year', ...
+                  'Ylabel', 'Number exposed', ...
+                  'plotTitle', plotTitle, ...
+                  'fileTitle', fileTitle);
+
+figure('Color', [1, 1, 1]);
+hold on;
+plot(saveData.dataX1, saveData.dataY1, 'b', 'LineWidth', 2);
+plot(saveData.dataX2, saveData.dataY2, 'r', 'LineWidth', 2);
+title(saveData.plotTitle, 'FontSize', 24);
+xlabel(saveData.Xlabel, 'FontSize', 24);
+ylabel(saveData.Ylabel, 'FontSize', 24); 
+set(gcf, 'Position', get(0,'Screensize'));
+eval(['export_fig ' saveData.fileTitle '.pdf;']);
+save([saveData.fileTitle '.mat'], 'saveData');
+close all;
 
 % plotTitle = 'West Africa';
 % 

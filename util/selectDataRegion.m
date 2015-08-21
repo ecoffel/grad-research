@@ -1,6 +1,6 @@
 
-fileDir = 'E:\data\cmip5\output\hadgem2-es\r1i1p1\rcp85\pr\20551201-20601130';
-outputDir = 'C:\git-ecoffel\nepal-precip\data\hadgem2-es\pr-nepal';
+fileDir = 'E:\data\cmip5\output\mri-cgcm3\r1i1p1\rcp85\tasmax\regrid\20560101-20651231';
+outputDir = 'C:\git-ecoffel\nepal-precip\data\mri-cgcm3\tasmax';
 
 fileNames = dir([fileDir, '\', '*.mat']);
 fileNames = {fileNames.name};
