@@ -5,28 +5,29 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm'};
-testModels = {'bnu-esm'};
+%baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g'};
+%testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g'};
 
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmax';
-testVar = '';
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2079;
+testPeriodYears = 2021:2060;
+
+biasCorrect = true;
 
 region = 'us-ne';
-
-exposureThreshold = 25;
+exposureThreshold = 28;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -57,8 +58,8 @@ else
 end
 
 if strcmp(region, 'us-ne')
-    latRange = [24, 50];
-    lonRange = [235, 294];
+    latRange = [30 55];
+    lonRange = [-100 -62] + 360;
 elseif strcmp(region, 'west-africa')
     latRange = [0, 30];
     lonRange = [340, 40];
@@ -142,6 +143,11 @@ lon = [];
 basePopCount = [];
 futurePopCount = [];
 
+if biasCorrect
+     load(['cmip5BiasCorrection_' baseVar '_neus']);
+     eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_neus;']);
+end
+
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
         curModel = baseModels{m};
@@ -152,7 +158,7 @@ for m = 1:length(baseModels)
     baseExt{m} = {};
     
     ['loading ' curModel ' base']
-    for y = basePeriod(1):yearStep:basePeriod(end)
+    for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
         if baseRegrid
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
@@ -161,10 +167,41 @@ for m = 1:length(baseModels)
         end
         
         [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
+        if strcmp(baseVar, 'tasmax')
+            baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :) - 273.15;
+        else
+            baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
+        end
         
         if length(lat) == 0
             lat = baseDaily{1}(latIndexRange, lonIndexRange);
             lon = baseDaily{2}(latIndexRange, lonIndexRange);
+        end
+        
+        % add bias correction here
+        if biasCorrect
+            biasModel = -1;
+            for mn = 1:length(cmip5BiasCor)
+                if strcmp(cmip5BiasCor{mn}{1}, strrep(curModel, '/', ''))
+                    biasModel = mn;
+                    break;
+                end
+            end
+
+            for xlat = 1:size(baseDaily{3}, 1)
+                for ylon = 1:size(baseDaily{3}, 2)
+                    for month = 1:size(baseDaily{3}, 4)
+                        for day = 1:size(baseDaily{3}, 5)
+                            for p = 10:-1:1
+                                if baseDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCor{biasModel}{2}(xlat, ylon, p)
+                                    baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                    break;
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
         
         if annualmean
@@ -172,10 +209,7 @@ for m = 1:length(baseModels)
         else
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
-        
-        baseExtTmp = baseExtTmp{1}{3}(latIndexRange,lonIndexRange,:)-273.15;
-        
-        % add bias correction here
+        baseExtTmp = baseExtTmp{1}{3};
         
         selGrid = zeros(size(lat));
         for xlat = 1:size(baseExtTmp, 1)
@@ -186,9 +220,8 @@ for m = 1:length(baseModels)
             end
         end
         
-        basePopCount(end+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5);
+        basePopCount(m, y-basePeriod(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5)
         
-        %baseExt{m} = {baseExt{m}{:} baseExtTmp};
         clear baseDaily baseExtTmp;
     end
 end
@@ -204,7 +237,7 @@ if ~strcmp(testVar, '')
         futureExt{m} = {};
 
         ['loading ' curModel ' future']
-        for y = testPeriod(1):yearStep:testPeriod(end)
+        for y = testPeriodYears(1):yearStep:testPeriodYears(end)
             ['year ' num2str(y) '...']
             % load daily data
             if modelRegrid
@@ -214,61 +247,99 @@ if ~strcmp(testVar, '')
             end
             
             [latIndexRange, lonIndexRange] = latLonIndexRange(testDaily, latRange, lonRange);
-
+            if strcmp(testVar, 'tasmax')
+                testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :) - 273.15;
+            else
+                testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);
+            end
+            
+            if biasCorrect
+                biasModel = -1;
+                for mn = 1:length(cmip5BiasCor)
+                    if strcmp(cmip5BiasCor{mn}{1}, strrep(curModel, '/', ''))
+                        biasModel = mn;
+                        break;
+                    end
+                end
+                
+                for xlat = 1:size(testDaily{3}, 1)
+                    for ylon = 1:size(testDaily{3}, 2)
+                        for month = 1:size(testDaily{3}, 4)
+                            for day = 1:size(testDaily{3}, 5)
+                                for p = 10:-1:1
+                                    if testDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCor{biasModel}{2}(xlat, ylon, p)
+                                        testDaily{3}(xlat, ylon, 1, month, day) = testDaily{3}(xlat, ylon, 1, month, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                        break;
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
                 testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
             end
+            testDailyExtTmp = testDailyExtTmp{1}{3};
             
-            testDailyExtTmp = testDailyExtTmp{1}{3}(latIndexRange,lonIndexRange,:)-273.15;
+            selGrid = zeros(size(lat));
+            for xlat = 1:size(testDailyExtTmp,  1)
+                for ylon = 1:size(testDailyExtTmp, 2)
+                    if testDailyExtTmp(xlat, ylon) >= exposureThreshold
+                        selGrid(xlat, ylon) = 1;
+                    end
+                end
+            end
 
-            futureExt{m} = {futureExt{m}{:}, testDailyExtTmp};
+            futurePopCount(m, y-testPeriod(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5)
+            
+            %futureExt{m} = {futureExt{m}{:}, testDailyExtTmp};
             clear testDaily testDailyExtTmp;
         end
     end
 end
 ['done loading...']
 
-
-
-plotTitle = 'West Africa';
-
-tempXRange = 2030:10:2070;
-popXRange = 2010:10:2090;
-
-Ylabel1 = 'Temperature (degrees C per decade)';
-Ylabel2 = 'Population (million per decade)';
-
-saveData = struct('dataX1', tempXRange, ...
-                  'dataY1', futureDecRateChg, ...
-                  'dataX2', popXRange, ...
-                  'dataY2', decadalPopChg, ...
-                  'Xlabel', 'Year', ...
-                  'Ylabel1', Ylabel1, ...
-                  'Ylabel2', Ylabel2, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle);
-
-figure('Color', [1 1 1]);
-hold on;
-title(plotTitle, 'FontSize', 24);
-[hAx, hLine1, hLine2] = plotyy(tempXRange, futureDecRateChg, popXRange, decadalPopChg);
-
-set(hLine1, 'Color', 'k', 'LineWidth', 2);
-set(hLine2, 'Color', 'b', 'LineWidth', 2);
-
-set(hAx, 'FontSize', 20); 
-set(hAx(1), 'YColor', 'k');
-set(hAx(2), 'YColor', 'b');
-
-xlabel('Year', 'FontSize', 24);
-ylabel(hAx(1), Ylabel1)     % left y-axis
-ylabel(hAx(2), Ylabel2)        % right y-axis
-
-set(gcf, 'Position', get(0,'Screensize'));
-eval(['export_fig ' saveData.fileTitle ';']);
-fileNameParts = strsplit(saveData.fileTitle, '.');
-save([fileNameParts{1} '.mat'], 'saveData');
-close all;
-
+% plotTitle = 'West Africa';
+% 
+% tempXRange = 2030:10:2070;
+% popXRange = 2010:10:2090;
+% 
+% Ylabel1 = 'Temperature (degrees C per decade)';
+% Ylabel2 = 'Population (million per decade)';
+% 
+% saveData = struct('dataX1', tempXRange, ...
+%                   'dataY1', futureDecRateChg, ...
+%                   'dataX2', popXRange, ...
+%                   'dataY2', decadalPopChg, ...
+%                   'Xlabel', 'Year', ...
+%                   'Ylabel1', Ylabel1, ...
+%                   'Ylabel2', Ylabel2, ...
+%                   'plotTitle', plotTitle, ...
+%                   'fileTitle', fileTitle);
+% 
+% figure('Color', [1 1 1]);
+% hold on;
+% title(plotTitle, 'FontSize', 24);
+% [hAx, hLine1, hLine2] = plotyy(tempXRange, futureDecRateChg, popXRange, decadalPopChg);
+% 
+% set(hLine1, 'Color', 'k', 'LineWidth', 2);
+% set(hLine2, 'Color', 'b', 'LineWidth', 2);
+% 
+% set(hAx, 'FontSize', 20); 
+% set(hAx(1), 'YColor', 'k');
+% set(hAx(2), 'YColor', 'b');
+% 
+% xlabel('Year', 'FontSize', 24);
+% ylabel(hAx(1), Ylabel1)     % left y-axis
+% ylabel(hAx(2), Ylabel2)        % right y-axis
+% 
+% set(gcf, 'Position', get(0,'Screensize'));
+% eval(['export_fig ' saveData.fileTitle ';']);
+% fileNameParts = strsplit(saveData.fileTitle, '.');
+% save([fileNameParts{1} '.mat'], 'saveData');
+% close all;
+% 

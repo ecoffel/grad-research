@@ -1,18 +1,18 @@
 
-fileDir = 'E:\data\cmip5\output\gfdl-cm3\r1i1p1\rcp85\rh\regrid\2006101-21001231';
-outputDir = 'C:\git-ecoffel\climate-som\data\gfdl-cm3\rh-usne';
+fileDir = 'E:\data\cmip5\output\hadgem2-es\r1i1p1\rcp85\pr\20551201-20601130';
+outputDir = 'C:\git-ecoffel\nepal-precip\data\hadgem2-es\pr-nepal';
 
 fileNames = dir([fileDir, '\', '*.mat']);
 fileNames = {fileNames.name};
 
-usEast = true;
+usEast = false;
 
 if usEast
     latBounds = [30 50];
     lonBounds = [260 300];
 else
-    latBounds = [20 50];
-    lonBounds = [60 100];
+    latBounds = [15 45];
+    lonBounds = [70 100];
 end
 
 for i = 1:length(fileNames)
