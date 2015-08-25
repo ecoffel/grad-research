@@ -1,4 +1,4 @@
-regridVar = 'pr';
+regridVar = 'vas';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -22,7 +22,7 @@ ensembles = {'r1i1p1'};
 rcps = {'rcp45', 'historical', 'rcp85'};
 plevs = {};
 
-latLonBounds = [[15, 45]; [70 100]];
+latLonBounds = [[25, 60]; [0 359]];
 v7 = true;
       
 for m = 1:length(models)

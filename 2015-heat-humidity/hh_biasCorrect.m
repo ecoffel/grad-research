@@ -20,8 +20,21 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-latBounds = [30 55];
-lonBounds = [-100 -62] + 360;
+region = 'china';
+
+if strcmp(region, 'us-ne')
+    latBounds = [30 55];
+    lonBounds = [-100 -62] + 360;
+elseif strcmp(region, 'west-africa')
+    latBounds = [0, 30];
+    lonBounds = [340, 40];
+elseif strcmp(region, 'china')
+    latBounds = [20, 55];
+    lonBounds = [75, 135];
+elseif strcmp(region, 'world')
+    latBounds = [-90, 90];
+    lonBounds = [0, 360];
+end
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -199,10 +212,11 @@ for m = 1:length(testModels)
     clear testDist testData;
 end
 
-fileStr = 'cmip5BiasCorrection_wb_neus_tmp';
+fileStr = ['cmip5BiasCorrection_' baseVar '_' region '_tmp'];
+varName = ['cmip5BiasCorrection_' baseVar '_' region];
 
-eval([fileStr ' =  testBiasCorrection;']);
-save([fileStr '.mat'], fileStr);
+eval([varName ' =  testBiasCorrection;']);
+save([fileStr '.mat'], varName);
 
 
 

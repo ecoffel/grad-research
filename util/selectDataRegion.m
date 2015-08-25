@@ -1,18 +1,21 @@
 
-fileDir = 'E:\data\cmip5\output\mri-cgcm3\r1i1p1\rcp85\tasmax\regrid\20560101-20651231';
-outputDir = 'C:\git-ecoffel\nepal-precip\data\mri-cgcm3\tasmax';
+fileDir = 'E:\data\cmip5\output\gfdl-esm2m\r1i1p1\rcp85\vas\regrid\20560101-20601231';
+outputDir = 'C:\git-ecoffel\wbgt-analysis\data\gfdl-esm2m\vas';
 
 fileNames = dir([fileDir, '\', '*.mat']);
 fileNames = {fileNames.name};
 
-usEast = false;
+region = 'nh';
 
-if usEast
+if strcmp(region, 'usne')
     latBounds = [30 50];
     lonBounds = [260 300];
-else
+elseif strcmp(region, 'nepal')
     latBounds = [15 45];
     lonBounds = [70 100];
+elseif strcmp(region, 'nh')
+    latBounds = [25 60];
+    lonBounds = [0 359];
 end
 
 for i = 1:length(fileNames)
@@ -33,5 +36,6 @@ for i = 1:length(fileNames)
     clear data;
     eval(['clear ' fNameParts{1} ';']);
 end
+
     
     

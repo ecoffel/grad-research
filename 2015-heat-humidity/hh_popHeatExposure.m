@@ -26,7 +26,7 @@ testPeriodYears = 2021:2070;
 
 biasCorrect = true;
 
-region = 'us-ne';
+region = 'china';
 exposureThreshold = 30;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -63,7 +63,7 @@ if strcmp(region, 'us-ne')
 elseif strcmp(region, 'west-africa')
     latRange = [0, 30];
     lonRange = [340, 40];
-elseif strcmp(region, 'east-china')
+elseif strcmp(region, 'china')
     latRange = [20, 55];
     lonRange = [75, 135];
 elseif strcmp(region, 'world')
@@ -144,8 +144,8 @@ basePopCount = [];
 futurePopCount = [];
 
 if biasCorrect
-     load(['cmip5BiasCorrection_' baseVar '_neus']);
-     eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_neus;']);
+     load(['cmip5BiasCorrection_' baseVar '_' region '.mat']);
+     eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_' region ';']);
 end
 
 for m = 1:length(baseModels)
@@ -306,7 +306,7 @@ end
 basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
 
-plotTitle = 'Exposure to 30C wet-bulb, US NE';
+plotTitle = 'Exposure to 30C WB, China';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...

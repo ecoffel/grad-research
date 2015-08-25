@@ -1,4 +1,4 @@
-vars = {'tasmax', 'tasmin', 'ta', 'huss', 'psl', 'rhs', 'pr'};
+vars = {'tasmax', 'tasmin', 'ta', 'huss', 'psl', 'rhs', 'pr', 'uas', 'vas'};
 
 modelBaseDir = 'cmip5/raw';
 models = {'ccsm4', 'cesm1-bgc', ...
