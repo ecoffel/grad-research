@@ -1,6 +1,6 @@
 
-fileDir = 'E:\data\cmip5\output\gfdl-esm2m\r1i1p1\rcp85\vas\regrid\20560101-20601231';
-outputDir = 'C:\git-ecoffel\wbgt-analysis\data\gfdl-esm2m\vas';
+fileDir = 'E:\data\cmip5\output\gfdl-esm2m\r1i1p1\rcp85\rh\regrid\2006101-20801231';
+outputDir = 'C:\git-ecoffel\wbgt-analysis\data\gfdl-esm2m\rh';
 
 fileNames = dir([fileDir, '\', '*.mat']);
 fileNames = {fileNames.name};

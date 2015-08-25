@@ -1,6 +1,6 @@
 % counts the population within a given region and under certain gridboxes
 
-function [popCount] = countPop(selectionGrid, region, popYears, sspNum)
+function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridded)
 
     popCount = [];
 
@@ -43,7 +43,12 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum)
     
     for y = 1:length(popYears)
 
-        load(['C:\git-ecoffel\grad-research\ssp\ssp5\output\ssp5\ssp5_' num2str(popYears(y)) '.mat']);
+        if regridded
+            load(['C:\git-ecoffel\grad-research\ssp\ssp5\output\ssp5\regrid\ssp5_' num2str(popYears(y)) '.mat']);
+        else
+            load(['C:\git-ecoffel\grad-research\ssp\ssp5\output\ssp5\ssp5_' num2str(popYears(y)) '.mat']);
+        end
+        
         eval(['ssp = ssp' num2str(sspNum) '_' num2str(popYears(y)) ';']);
         eval(['clear ssp' num2str(sspNum) '_' num2str(popYears(y)) ';']);
 

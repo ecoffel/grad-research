@@ -5,8 +5,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-%baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g'};
-%testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g'};
+% baseModels = {'bnu-esm'};
+% testModels = {'bnu-esm'};
 
 baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
@@ -26,8 +26,10 @@ testPeriodYears = 2021:2070;
 
 biasCorrect = true;
 
+popRegrid = true;
+
 region = 'china';
-exposureThreshold = 30;
+exposureThreshold = 31;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -220,7 +222,7 @@ for m = 1:length(baseModels)
             end
         end
         
-        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5)
+        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid)
         
         clear baseDaily baseExtTmp;
     end
@@ -294,7 +296,7 @@ if ~strcmp(testVar, '')
                 end
             end
 
-            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5)
+            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5, popRegrid)
             
             %futureExt{m} = {futureExt{m}{:}, testDailyExtTmp};
             clear testDaily testDailyExtTmp;
@@ -329,44 +331,3 @@ set(gcf, 'Position', get(0,'Screensize'));
 eval(['export_fig ' saveData.fileTitle '.pdf;']);
 save([saveData.fileTitle '.mat'], 'saveData');
 close all;
-
-% plotTitle = 'West Africa';
-% 
-% tempXRange = 2030:10:2070;
-% popXRange = 2010:10:2090;
-% 
-% Ylabel1 = 'Temperature (degrees C per decade)';
-% Ylabel2 = 'Population (million per decade)';
-% 
-% saveData = struct('dataX1', tempXRange, ...
-%                   'dataY1', futureDecRateChg, ...
-%                   'dataX2', popXRange, ...
-%                   'dataY2', decadalPopChg, ...
-%                   'Xlabel', 'Year', ...
-%                   'Ylabel1', Ylabel1, ...
-%                   'Ylabel2', Ylabel2, ...
-%                   'plotTitle', plotTitle, ...
-%                   'fileTitle', fileTitle);
-% 
-% figure('Color', [1 1 1]);
-% hold on;
-% title(plotTitle, 'FontSize', 24);
-% [hAx, hLine1, hLine2] = plotyy(tempXRange, futureDecRateChg, popXRange, decadalPopChg);
-% 
-% set(hLine1, 'Color', 'k', 'LineWidth', 2);
-% set(hLine2, 'Color', 'b', 'LineWidth', 2);
-% 
-% set(hAx, 'FontSize', 20); 
-% set(hAx(1), 'YColor', 'k');
-% set(hAx(2), 'YColor', 'b');
-% 
-% xlabel('Year', 'FontSize', 24);
-% ylabel(hAx(1), Ylabel1)     % left y-axis
-% ylabel(hAx(2), Ylabel2)        % right y-axis
-% 
-% set(gcf, 'Position', get(0,'Screensize'));
-% eval(['export_fig ' saveData.fileTitle ';']);
-% fileNameParts = strsplit(saveData.fileTitle, '.');
-% save([fileNameParts{1} '.mat'], 'saveData');
-% close all;
-% 
