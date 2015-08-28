@@ -54,8 +54,12 @@ if ~obs
     if length(dirNames) == 0
         dirNames(1) = '';
     end
-
+    
     for d = 1:length(dirNames)
+        if length(find(isstrprop(dirNames{d}, 'digit'))) == 0
+            continue;
+        end
+        
         curDir = [dataDir '/' dirNames{d}];
         matFileNames = dir([curDir, '/*.mat']);
         matFileNames = {matFileNames.name};

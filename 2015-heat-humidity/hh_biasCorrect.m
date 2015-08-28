@@ -20,9 +20,9 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-region = 'china';
+region = 'usne';
 
-if strcmp(region, 'us-ne')
+if strcmp(region, 'usne')
     latBounds = [30 55];
     lonBounds = [-100 -62] + 360;
 elseif strcmp(region, 'west-africa')

@@ -28,8 +28,8 @@ biasCorrect = true;
 
 popRegrid = true;
 
-region = 'china';
-exposureThreshold = 31;
+region = 'usne';
+exposureThreshold = 22;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -59,7 +59,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-if strcmp(region, 'us-ne')
+if strcmp(region, 'usne')
     latRange = [30 55];
     lonRange = [-100 -62] + 360;
 elseif strcmp(region, 'west-africa')
@@ -163,7 +163,7 @@ for m = 1:length(baseModels)
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
         if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         else
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
@@ -178,32 +178,6 @@ for m = 1:length(baseModels)
         if length(lat) == 0
             lat = baseDaily{1}(latIndexRange, lonIndexRange);
             lon = baseDaily{2}(latIndexRange, lonIndexRange);
-        end
-        
-        % add bias correction here
-        if biasCorrect
-            biasModel = -1;
-            for mn = 1:length(cmip5BiasCor)
-                if strcmp(cmip5BiasCor{mn}{1}, strrep(curModel, '/', ''))
-                    biasModel = mn;
-                    break;
-                end
-            end
-
-            for xlat = 1:size(baseDaily{3}, 1)
-                for ylon = 1:size(baseDaily{3}, 2)
-                    for month = 1:size(baseDaily{3}, 4)
-                        for day = 1:size(baseDaily{3}, 5)
-                            for p = 10:-1:1
-                                if baseDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCor{biasModel}{2}(xlat, ylon, p)
-                                    baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
-                                    break;
-                                end
-                            end
-                        end
-                    end
-                end
-            end
         end
         
         if annualmean
@@ -242,42 +216,13 @@ if ~strcmp(testVar, '')
         for y = testPeriodYears(1):yearStep:testPeriodYears(end)
             ['year ' num2str(y) '...']
             % load daily data
-            if modelRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            end
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             
             [latIndexRange, lonIndexRange] = latLonIndexRange(testDaily, latRange, lonRange);
             if strcmp(testVar, 'tasmax')
                 testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :) - 273.15;
             else
                 testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);
-            end
-            
-            if biasCorrect
-                biasModel = -1;
-                for mn = 1:length(cmip5BiasCor)
-                    if strcmp(cmip5BiasCor{mn}{1}, strrep(curModel, '/', ''))
-                        biasModel = mn;
-                        break;
-                    end
-                end
-                
-                for xlat = 1:size(testDaily{3}, 1)
-                    for ylon = 1:size(testDaily{3}, 2)
-                        for month = 1:size(testDaily{3}, 4)
-                            for day = 1:size(testDaily{3}, 5)
-                                for p = 10:-1:1
-                                    if testDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCor{biasModel}{2}(xlat, ylon, p)
-                                        testDaily{3}(xlat, ylon, 1, month, day) = testDaily{3}(xlat, ylon, 1, month, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
-                                        break;
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
             end
             
             if annualmean
@@ -308,7 +253,7 @@ end
 basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
 
-plotTitle = 'Exposure to 30C WB, China';
+plotTitle = 'Exposure to 31C wet-bulb, NE US';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...
