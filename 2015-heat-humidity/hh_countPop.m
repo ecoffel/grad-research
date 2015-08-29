@@ -19,7 +19,7 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
             %['processing ' curState.Name]
             if length(find(ismember(states, curState.Name))) > 0    
                 latBounds = curState.Lat;
-                lonBounds = curState.Lon;
+                lonBounds = curState.Lon + 360;
                 bbList{end+1} = [latBounds; lonBounds];
             end
         end
@@ -28,7 +28,7 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
         
         curCountry = [];
         for c = 1:length(countries)
-            curCountry = countries(c);
+            curCountry = countries(c);  
             if strcmp(curCountry.NAME, 'China')
                 latBounds = curCountry.Lat;
                 lonBounds = curCountry.Lon;
@@ -75,13 +75,13 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
                 minLon = selectionLon(i, j);
                 maxLon = minLon + 2;
 
-                if minLon > 180
-                    minLon = minLon-360;
-                end
-                if maxLon > 180
-                    maxLon = maxLon-360;
-                end
-
+%                 if minLon < 0
+%                     minLon = minLon + 360;
+%                 end
+%                 if maxLon < 0
+%                     maxLon = maxLon + 360;
+%                 end
+                    
                 xlativ = find(squeeze(sspLat(:,1)) >= minLat & squeeze(sspLat(:,1)) <= maxLat);
                 yloniv = find(squeeze(sspLon(1,:)) >= minLon & squeeze(sspLon(1,:)) <= maxLon);
 

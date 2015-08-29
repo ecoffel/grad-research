@@ -29,7 +29,7 @@ biasCorrect = true;
 popRegrid = true;
 
 region = 'usne';
-exposureThreshold = 22;
+exposureThreshold = 30;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -144,6 +144,7 @@ lon = [];
 
 basePopCount = [];
 futurePopCount = [];
+constPopCount = [];
 
 if biasCorrect
      load(['cmip5BiasCorrection_' baseVar '_' region '.mat']);
@@ -242,8 +243,8 @@ if ~strcmp(testVar, '')
             end
 
             futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5, popRegrid)
+            constPopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid);
             
-            %futureExt{m} = {futureExt{m}{:}, testDailyExtTmp};
             clear testDaily testDailyExtTmp;
         end
     end
@@ -252,14 +253,16 @@ end
 
 basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
+constPopCount = nanmean(constPopCount, 1);
 
-plotTitle = 'Exposure to 31C wet-bulb, NE US';
+plotTitle = 'Exposure to 30C wet-bulb, US NE';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...
                   'dataY1', basePopCount, ...
                   'dataX2', testPeriodYears, ...
                   'dataY2', futurePopCount, ...
+                  'dataY3', constPopCount, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...
@@ -269,9 +272,12 @@ figure('Color', [1, 1, 1]);
 hold on;
 plot(saveData.dataX1, saveData.dataY1, 'b', 'LineWidth', 2);
 plot(saveData.dataX2, saveData.dataY2, 'r', 'LineWidth', 2);
+plot(saveData.dataX2, saveData.dataY3, '--r', 'LineWidth', 2);
 title(saveData.plotTitle, 'FontSize', 24);
 xlabel(saveData.Xlabel, 'FontSize', 24);
-ylabel(saveData.Ylabel, 'FontSize', 24); 
+ylabel(saveData.Ylabel, 'FontSize', 24);
+l = legend('Past', 'Future', 'Constant population');
+set(l, 'FontSize', 24, 'Location', 'best');
 set(gcf, 'Position', get(0,'Screensize'));
 eval(['export_fig ' saveData.fileTitle '.pdf;']);
 save([saveData.fileTitle '.mat'], 'saveData');
