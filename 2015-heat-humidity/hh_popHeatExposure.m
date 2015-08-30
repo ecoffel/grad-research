@@ -15,8 +15,8 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'tasmax';
+testVar = 'tasmax';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -28,8 +28,8 @@ biasCorrect = true;
 
 popRegrid = true;
 
-region = 'usne';
-exposureThreshold = 30;
+region = 'west_africa';
+exposureThreshold = 50;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -62,7 +62,7 @@ end
 if strcmp(region, 'usne')
     latRange = [30 55];
     lonRange = [-100 -62] + 360;
-elseif strcmp(region, 'west-africa')
+elseif strcmp(region, 'west_africa')
     latRange = [0, 30];
     lonRange = [340, 40];
 elseif strcmp(region, 'china')
@@ -255,7 +255,7 @@ basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
 constPopCount = nanmean(constPopCount, 1);
 
-plotTitle = 'Exposure to 30C wet-bulb, US NE';
+plotTitle = 'Exposure to 50C temperature, West Africa';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...

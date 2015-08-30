@@ -201,6 +201,7 @@ for m = 1:length(testModels)
                     curMean = nanmean(testDist{xlat}{ylon}(testDist{xlat}{ylon}(:) < cutoffs(pIndex) & testDist{xlat}{ylon}(:) > cutoffs(pIndex-1)));
                 end
                 testBiasCorrection{m}{2}(xlat, ylon, pIndex) = curMean - baseMeans(xlat, ylon, pIndex);
+                testBiasCorrection{m}{3}(xlat, ylon, pIndex) = cutoffs(pIndex);
                 pIndex = pIndex+1;
             end
         end

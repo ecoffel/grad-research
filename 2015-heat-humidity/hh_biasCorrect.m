@@ -1,3 +1,6 @@
+% calculate base cutoffs and store them in the final output file so that
+% they can be applied to the base data for bias correction
+
 season = 'all';
 basePeriod = 'past';
 testPeriod = 'past';
@@ -10,8 +13,8 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
@@ -20,12 +23,15 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-region = 'usne';
+futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
+                 2050:2060; 2060:2070; 2070:2080];
+
+region = 'west_africa';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
     lonBounds = [-100 -62] + 360;
-elseif strcmp(region, 'west-africa')
+elseif strcmp(region, 'west_africa')
     latBounds = [0, 30];
     lonBounds = [340, 40];
 elseif strcmp(region, 'china')
@@ -119,6 +125,7 @@ end
 
 baseDist = {};
 baseMeans = [];
+baseCutoffs = [];
 
 for xlat = 1:size(baseData{1}, 1)
     if size(baseDist, 1) < xlat
@@ -205,6 +212,7 @@ for m = 1:length(testModels)
                     curMean = nanmean(testDist{xlat}{ylon}(testDist{xlat}{ylon}(:) < cutoffs(pIndex) & testDist{xlat}{ylon}(:) > cutoffs(pIndex-1)));
                 end
                 testBiasCorrection{m}{2}(xlat, ylon, pIndex) = baseMeans(xlat, ylon, pIndex) - curMean;
+                testBiasCorrection{m}{3}(xlat, ylon, pIndex) = cutoffs(pIndex);
                 pIndex = pIndex+1;
             end
         end
@@ -212,8 +220,8 @@ for m = 1:length(testModels)
     clear testDist testData;
 end
 
-fileStr = ['cmip5BiasCorrection_' baseVar '_' region '_tmp'];
-varName = ['cmip5BiasCorrection_' baseVar '_' region];
+fileStr = ['cmip5BiasCorrection_' testVar '_' region '_tmp'];
+varName = ['cmip5BiasCorrection_' testVar '_' region];
 
 eval([varName ' =  testBiasCorrection;']);
 save([fileStr '.mat'], varName);

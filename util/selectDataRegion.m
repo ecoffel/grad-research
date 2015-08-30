@@ -1,5 +1,5 @@
 
-function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, model, region, biasCorrect, v7)
+function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, model, region, biasCorrect, v7, skipExisting)
     %fileDir = ['E:\data\ncep-reanalysis\output\tmax\' num2str(y)];
     %outputDir = 'C:\git-ecoffel\climate-som\data\ncep\tmax';
 
@@ -18,7 +18,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
     elseif strcmp(region, 'china')
         latBounds = [20, 55];
         lonBounds = [75, 135];  
-    elseif strcmp(region, 'west-africa')
+    elseif strcmp(region, 'west_africa')
         latBounds = [0, 30];
         lonBounds = [340, 40];
     end
@@ -41,6 +41,11 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
             continue;
         end
         
+        if exist([outputDir '\' fname], 'file') && skipExisting
+            ['skipping ' outputDir '\' fname]
+            continue;
+        end
+        
         if biasCorrect
             
             load(['cmip5BiasCorrection_' variable '_' region '.mat']);
@@ -53,14 +58,28 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
                     break;
                 end
             end
+            
+            isBaseYear = false;
+            if ismember(fNameYear, baseYears)
+                isBaseYear = true;
+            end
 
             for xlat = 1:size(data{3}, 1)
                 for ylon = 1:size(data{3}, 2)
                     for day = 1:size(data{3}, 3)
                         for p = 10:-1:1
-                            if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{2}(xlat, ylon, p)
-                                data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
-                                break;
+                            if isBaseYear
+                                % test against base cutoffs
+                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{3}(xlat, ylon, p)
+                                    data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                    break;
+                                end
+                            else
+                                % test against future cutoffs
+                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{4}(xlat, ylon, p)
+                                    data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                    break;
+                                end
                             end
                         end
                     end

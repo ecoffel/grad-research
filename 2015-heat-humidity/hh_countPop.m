@@ -35,6 +35,23 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
                 bbList{end+1} = [latBounds; lonBounds];
             end
         end
+    elseif strcmp(region, 'west_africa')
+        countries = shaperead('countries', 'UseGeoCoords', true);
+        regionCountries = {'Benin', 'Burkina Faso', 'Cape Verde', 'Gambia', ...
+                            'Ghana', 'Guinea', 'Guinea-Bissau', 'Cote d''Ivoire', ...
+                            'Liberia', 'Mali', 'Niger', 'Nigeria', 'Senegal', ...
+                            'Sierra Leone'};
+        
+        
+        curCountry = [];
+        for c = 1:length(countries)
+            curCountry = countries(c);  
+            if length(find(ismember(regionCountries, curCountry.NAME)))
+                latBounds = curCountry.Lat;
+                lonBounds = curCountry.Lon;
+                bbList{end+1} = [latBounds; lonBounds];
+            end
+        end
     end
     
     selectionLat = selectionGrid{1};

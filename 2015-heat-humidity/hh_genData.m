@@ -2,14 +2,17 @@ models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-regions = {'china'};
+regions = {'west_africa'};
 rcps = {'historical', 'rcp85'};
-var = 'hi';
+var = 'tasmax';
 
 baseYears = 1980:2005;
 futureYears = 2020:2070;
 
 regridded = true;
+skipExisting = true;
+biasCorrect = true;
+v7 = false;
 
 for m = 1:length(models)
     for r = 1:length(regions)
@@ -36,7 +39,7 @@ for m = 1:length(models)
                 end
                 
                 ['processing ' models{m} '/' regions{r} '/' rcps{rcp} '...']
-                selectDataRegion(curDir, newDir, baseYears, futureYears, var, models{m}, regions{r}, true, false);
+                selectDataRegion(curDir, newDir, baseYears, futureYears, var, models{m}, regions{r}, biasCorrect, v7, skipExisting);
                 
             end
         end
