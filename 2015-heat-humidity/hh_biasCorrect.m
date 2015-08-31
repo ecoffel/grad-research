@@ -26,7 +26,7 @@ basePeriodYears = 1985:2004;
 futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
                  2050:2060; 2060:2070; 2070:2080];
 
-region = 'west_africa';
+region = 'usne';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -81,6 +81,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
+    futureRcp = 'rcp85/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';
@@ -107,7 +108,10 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
     else
         baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
     end
-    baseDaily{3} = baseDaily{3}-273.15;
+    
+    if strcmp(baseVar, 'tasmax') || strcmp(baseVar, 'tasmin') || strcmp(baseVar, 'tmin') || strcmp(baseVar, 'tmin')
+        baseDaily{3} = baseDaily{3}-273.15;
+    end
     
     [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
     baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
@@ -137,6 +141,7 @@ for xlat = 1:size(baseData{1}, 1)
         for n = 1:length(baseData)
             baseDist{xlat}{ylon} = [baseDist{xlat}{ylon}(:); squeeze(baseData{n}(xlat, ylon, :))];
         end
+        
         pIndex = 1;
         cutoffs = [];
         for p = percentiles
@@ -175,7 +180,10 @@ for m = 1:length(testModels)
         else
             testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
-        testDaily{3} = testDaily{3}-273.15;
+        
+        if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+            testDaily{3} = testDaily{3}-273.15;
+        end
         
         [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
         testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
@@ -186,7 +194,64 @@ for m = 1:length(testModels)
         end
         
         testData = {testData{:} testDaily{3}};
-        clear baseDaily;
+        clear testDaily;
+    end
+    
+    ['loading future decades...']
+    decadeCutoffs = {};
+    for decade = 1:size(futureDecades, 1)
+        decadeCutoffs{decade} = [];
+        curDecadeData = {};
+        for y = 1:size(futureDecades, 2)
+            ['year ' num2str(futureDecades(decade, y)) '...']
+        
+            if testRegrid
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid'], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+            else
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+            end
+            
+            if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+                testDaily{3} = testDaily{3}-273.15;
+            end
+
+            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
+            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
+            testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
+
+            if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2) ~= size(baseLon, 2)
+                testDaily = regridGriddata(testDaily, {baseLat, baseLon, []});
+            end
+            
+            for xlat = 1:size(testDaily{3}, 1)
+                if y == 1
+                    curDecadeData{xlat} = {};
+                end
+                
+                for ylon = 1:size(testDaily{3}, 2)
+                    if y == 1
+                        curDecadeData{xlat}{ylon} = [];
+                    end
+                    
+                    curDecadeData{xlat}{ylon} = [curDecadeData{xlat}{ylon}(:); squeeze(testDaily{3}(xlat, ylon, :))];
+                end
+            end
+            
+            clear testDaily;
+        end
+        
+        % assemble cutoffs for current decade
+        for xlat = 1:length(curDecadeData)
+            for ylon = 1:length(curDecadeData{xlat})
+                pIndex = 1;
+                for p = percentiles
+                    decadeCutoffs{decade}(xlat, ylon, pIndex) = prctile(curDecadeData{xlat}{ylon}, p);
+                    pIndex = pIndex + 1;
+                end
+            end
+        end
+        
+        clear curDecadeData;
     end
     
     testDist = {};
@@ -216,6 +281,11 @@ for m = 1:length(testModels)
                 pIndex = pIndex+1;
             end
         end
+    end
+    
+    % add cutoffs for each decade to mat structure
+    for decade = 1:size(futureDecades, 1)
+        testBiasCorrection{m}{3+decade} = {futureDecades(decade, 1), decadeCutoffs{decade}};
     end
     clear testDist testData;
 end
