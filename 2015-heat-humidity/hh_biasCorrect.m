@@ -13,8 +13,8 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'tmax';
-testVar = 'tasmax';
+baseVar = 'wb';
+testVar = 'wb';
 
 percentiles = 10:10:100;
 
@@ -26,7 +26,7 @@ basePeriodYears = 1985:2004;
 futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
                  2050:2060; 2060:2070; 2070:2080];
 
-region = 'usne';
+region = 'world';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -98,6 +98,8 @@ baseData = {};
 baseLat = [];
 baseLon = [];
 
+load('waterGrid');
+
 % first load base dataset
 ['loading base dataset: ' baseDataset]
 for y = basePeriodYears(1):yearStep:basePeriodYears(end)
@@ -109,7 +111,7 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
     end
     
-    if strcmp(baseVar, 'tasmax') || strcmp(baseVar, 'tasmin') || strcmp(baseVar, 'tmin') || strcmp(baseVar, 'tmin')
+    if strcmp(baseVar, 'tasmax') || strcmp(baseVar, 'tasmin') || strcmp(baseVar, 'tmax') || strcmp(baseVar, 'tmin')
         baseDaily{3} = baseDaily{3}-273.15;
     end
     
@@ -122,7 +124,7 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
     end
     
     baseDaily{3} = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
-
+    
     baseData = {baseData{:} baseDaily{3}};
     clear baseDaily;
 end
@@ -138,6 +140,11 @@ for xlat = 1:size(baseData{1}, 1)
     
     for ylon = 1:size(baseData{1}, 2)
         baseDist{xlat}{ylon} = [];
+        
+        if waterGrid(xlat, ylon)
+            continue;
+        end
+        
         for n = 1:length(baseData)
             baseDist{xlat}{ylon} = [baseDist{xlat}{ylon}(:); squeeze(baseData{n}(xlat, ylon, :))];
         end
@@ -160,7 +167,7 @@ end
 clear baseDist baseData;
 
 testBiasCorrection = {};
-    
+
 for m = 1:length(testModels)
     if strcmp(testModels{m}, '')
         curModel = testModels{m};
@@ -244,6 +251,11 @@ for m = 1:length(testModels)
         for xlat = 1:length(curDecadeData)
             for ylon = 1:length(curDecadeData{xlat})
                 pIndex = 1;
+                
+                if waterGrid(xlat, ylon)
+                    continue;
+                end
+                
                 for p = percentiles
                     decadeCutoffs{decade}(xlat, ylon, pIndex) = prctile(curDecadeData{xlat}{ylon}, p);
                     pIndex = pIndex + 1;
@@ -255,7 +267,8 @@ for m = 1:length(testModels)
     end
     
     testDist = {};
-
+    testBiasCorrection{m}{3} = {basePeriodYears(1), []}
+    
     for xlat = 1:size(testData{1}, 1)
         if size(testDist, 1) < xlat
             testDist{xlat} = {};
@@ -263,11 +276,17 @@ for m = 1:length(testModels)
 
         for ylon = 1:size(testData{1}, 2)
             testDist{xlat}{ylon} = [];
+            
+            if waterGrid(xlat, ylon)
+                continue;
+            end
+            
             for n = 1:length(testData)
                 testDist{xlat}{ylon} = [testDist{xlat}{ylon}(:); squeeze(testData{n}(xlat, ylon, :))];
             end
             pIndex = 1;
             cutoffs = [];
+            
             for p = percentiles
                 % store cuttoffs so we take mean between each percentile
                 cutoffs(pIndex) = prctile(testDist{xlat}{ylon}, p);
@@ -277,7 +296,7 @@ for m = 1:length(testModels)
                     curMean = nanmean(testDist{xlat}{ylon}(testDist{xlat}{ylon}(:) < cutoffs(pIndex) & testDist{xlat}{ylon}(:) > cutoffs(pIndex-1)));
                 end
                 testBiasCorrection{m}{2}(xlat, ylon, pIndex) = baseMeans(xlat, ylon, pIndex) - curMean;
-                testBiasCorrection{m}{3}(xlat, ylon, pIndex) = cutoffs(pIndex);
+                testBiasCorrection{m}{3}{2}(xlat, ylon, pIndex) = cutoffs(pIndex);
                 pIndex = pIndex+1;
             end
         end

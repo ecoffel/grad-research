@@ -2,9 +2,9 @@ models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-regions = {'west_africa'};
+regions = {'china'};
 rcps = {'historical', 'rcp85'};
-var = 'tasmax';
+var = 'hi';
 
 baseYears = 1980:2005;
 futureYears = 2020:2070;
@@ -34,7 +34,7 @@ for m = 1:length(models)
                 end
 
                 newDir = [baseDir '/' regions{r} '/' dirNames{d}];
-                if ~isdir(newDir)
+                if ~isdir(newDir) && length(find(isstrprop(dirNames{d},'digit'))) > 0
                     mkdir(newDir);
                 end
                 

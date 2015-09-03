@@ -5,6 +5,8 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
 
     fileNames = dir([fileDir, '\', '*.mat']);
     fileNames = {fileNames.name};
+    
+    futureDecades = 2020:10:2080;
 
     if strcmp(region, 'usne')
         latBounds = [30 55];
@@ -34,6 +36,10 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
         data{1} = data{1}(latIndexRange, lonIndexRange);
         data{2} = data{2}(latIndexRange, lonIndexRange);
         data{3} = data{3}(latIndexRange, lonIndexRange, :);
+        
+        if strcmp(variable, 'tasmax') || strcmp(variable, 'tasmin')
+            data{3} = data{3} - 273.15;
+        end
 
         fNameYear = strsplit(fNameParts{1}, '_');
         fNameYear = str2num(fNameYear{2});
@@ -64,19 +70,21 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
                 isBaseYear = true;
             end
 
+            closestDecade = 3 + find(futureDecades == roundn(fNameYear, 1));
+            
             for xlat = 1:size(data{3}, 1)
                 for ylon = 1:size(data{3}, 2)
                     for day = 1:size(data{3}, 3)
                         for p = 10:-1:1
                             if isBaseYear
                                 % test against base cutoffs
-                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{3}(xlat, ylon, p)
+                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{3}{2}(xlat, ylon, p)
                                     data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
                                     break;
                                 end
                             else
                                 % test against future cutoffs
-                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{4}(xlat, ylon, p)
+                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{closestDecade}{2}(xlat, ylon, p)
                                     data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
                                     break;
                                 end

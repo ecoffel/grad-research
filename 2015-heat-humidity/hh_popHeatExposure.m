@@ -5,18 +5,18 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm'};
-% testModels = {'bnu-esm'};
+baseModels = {'bnu-esm'};
+testModels = {'bnu-esm'};
 
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmax';
-testVar = 'tasmax';
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -28,8 +28,8 @@ biasCorrect = true;
 
 popRegrid = true;
 
-region = 'west_africa';
-exposureThreshold = 50;
+region = 'china';
+exposureThreshold = 31;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -170,11 +170,7 @@ for m = 1:length(baseModels)
         end
         
         [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
-        if strcmp(baseVar, 'tasmax')
-            baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :) - 273.15;
-        else
-            baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
-        end
+        baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
         
         if length(lat) == 0
             lat = baseDaily{1}(latIndexRange, lonIndexRange);
@@ -220,11 +216,7 @@ if ~strcmp(testVar, '')
             testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             
             [latIndexRange, lonIndexRange] = latLonIndexRange(testDaily, latRange, lonRange);
-            if strcmp(testVar, 'tasmax')
-                testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :) - 273.15;
-            else
-                testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);
-            end
+            testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);
             
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -255,7 +247,14 @@ basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
 constPopCount = nanmean(constPopCount, 1);
 
-plotTitle = 'Exposure to 50C temperature, West Africa';
+% calc decadal means
+futureDecX = (testPeriodYears(1)-1)+5:10:(testPeriodYears(end)-1)+5;
+futureDecY = [];
+for d = 1:length(futureDecX)
+    futureDecY(d) = nanmean(futurePopCount((d-1)*10+1 : d*10));
+end
+
+plotTitle = 'Exposure to 31C wet bulb, China';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...
@@ -263,21 +262,34 @@ saveData = struct('dataX1', basePeriodYears, ...
                   'dataX2', testPeriodYears, ...
                   'dataY2', futurePopCount, ...
                   'dataY3', constPopCount, ...
+                  'futureDecX', futureDecX, ...
+                  'futureDecY', futureDecY, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...
                   'fileTitle', fileTitle);
 
-figure('Color', [1, 1, 1]);
-hold on;
-plot(saveData.dataX1, saveData.dataY1, 'b', 'LineWidth', 2);
-plot(saveData.dataX2, saveData.dataY2, 'r', 'LineWidth', 2);
-plot(saveData.dataX2, saveData.dataY3, '--r', 'LineWidth', 2);
-title(saveData.plotTitle, 'FontSize', 24);
-xlabel(saveData.Xlabel, 'FontSize', 24);
-ylabel(saveData.Ylabel, 'FontSize', 24);
-l = legend('Past', 'Future', 'Constant population');
-set(l, 'FontSize', 24, 'Location', 'best');
+barChart = true;
+              
+if barChart
+    figure('Color', [1, 1, 1]);
+    hold on;
+    bar(futureDecX, futureDecY, 1.0, 'r');
+    
+    
+else
+    figure('Color', [1, 1, 1]);
+    hold on;
+    plot(saveData.dataX1, saveData.dataY1, 'b', 'LineWidth', 2);
+    plot(saveData.dataX2, saveData.dataY2, 'r', 'LineWidth', 2);
+    plot(saveData.dataX2, saveData.dataY3, '--r', 'LineWidth', 2);
+    title(saveData.plotTitle, 'FontSize', 24);
+    xlabel(saveData.Xlabel, 'FontSize', 24);
+    ylabel(saveData.Ylabel, 'FontSize', 24);
+    l = legend('Past', 'Future', 'Constant population');
+    set(l, 'FontSize', 24, 'Location', 'best');
+end
+
 set(gcf, 'Position', get(0,'Screensize'));
 eval(['export_fig ' saveData.fileTitle '.pdf;']);
 save([saveData.fileTitle '.mat'], 'saveData');

@@ -2,7 +2,7 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'past';
+basePeriod = 'future';
 testPeriod = 'past';
 
 baseDataset = 'cmip5';
@@ -17,13 +17,14 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmax';
+baseVar = 'wb';
 testVar = '';
 
 baseRegrid = true;
 modelRegrid = true;
 
-basePeriodYears = 1985:2004;
+basePeriodYears = 2060:2070;
+%basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2069;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -291,7 +292,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['Temperature'];
+plotTitle = ['WB'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

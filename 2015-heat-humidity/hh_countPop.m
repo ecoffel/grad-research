@@ -6,20 +6,32 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
 
     bbList = {};
     if strcmp(region, 'usne')
-        states = {'Massachusettes', 'Connecticut', 'New Jersey', ...
-                 'Pennsylvania', 'Maryland', 'Delaware', 'Vermont', ...
-                 'New Hampshire', 'New York', 'District of Columbia', ...
-                 'Virginia'};
+%         states = {'Massachusettes', 'Connecticut', 'New Jersey', ...
+%                  'Pennsylvania', 'Maryland', 'Delaware', 'Vermont', ...
+%                  'New Hampshire', 'New York', 'District of Columbia', ...
+%                  'Virginia'};
+%         
+%         stateShape = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
+%                                {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
+%         curState = [];
+%         for s = 1:length(stateShape)
+%             curState = stateShape(s);
+%             %['processing ' curState.Name]
+%             if length(find(ismember(states, curState.Name))) > 0    
+%                 latBounds = curState.Lat;
+%                 lonBounds = curState.Lon + 360;
+%                 bbList{end+1} = [latBounds; lonBounds];
+%             end
+%         end
+
+        countries = shaperead('countries', 'UseGeoCoords', true);
         
-        stateShape = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
-                               {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
-        curState = [];
-        for s = 1:length(stateShape)
-            curState = stateShape(s);
-            %['processing ' curState.Name]
-            if length(find(ismember(states, curState.Name))) > 0    
-                latBounds = curState.Lat;
-                lonBounds = curState.Lon + 360;
+        curCountry = [];
+        for c = 1:length(countries)
+            curCountry = countries(c);  
+            if strcmp(curCountry.NAME, 'United States')
+                latBounds = curCountry.Lat;
+                lonBounds = curCountry.Lon + 360;
                 bbList{end+1} = [latBounds; lonBounds];
             end
         end
@@ -91,14 +103,7 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
 
                 minLon = selectionLon(i, j);
                 maxLon = minLon + 2;
-
-%                 if minLon < 0
-%                     minLon = minLon + 360;
-%                 end
-%                 if maxLon < 0
-%                     maxLon = maxLon + 360;
-%                 end
-                    
+    
                 xlativ = find(squeeze(sspLat(:,1)) >= minLat & squeeze(sspLat(:,1)) <= maxLat);
                 yloniv = find(squeeze(sspLon(1,:)) >= minLon & squeeze(sspLon(1,:)) <= maxLon);
 
