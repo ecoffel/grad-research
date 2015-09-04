@@ -5,15 +5,15 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm'};
-testModels = {'bnu-esm'};
+%baseModels = {'bnu-esm'};
+%testModels = {'bnu-esm'};
 
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'wb';
 testVar = 'wb';
@@ -29,7 +29,7 @@ biasCorrect = true;
 popRegrid = true;
 
 region = 'china';
-exposureThreshold = 31;
+exposureThreshold = 32;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -145,11 +145,14 @@ lon = [];
 basePopCount = [];
 futurePopCount = [];
 constPopCount = [];
+constClimateCount = [];
 
 if biasCorrect
      load(['cmip5BiasCorrection_' baseVar '_' region '.mat']);
      eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_' region ';']);
 end
+
+meanBaseSelGrid = [];
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -193,11 +196,15 @@ for m = 1:length(baseModels)
             end
         end
         
+        meanBaseSelGrid(:, :, m, y-basePeriodYears(1)+1) = selGrid;
+        
         basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid)
         
         clear baseDaily baseExtTmp;
     end
 end
+
+meanBaseSelGrid = nanmean(nanmean(meanBaseSelGrid, 4), 3);
 
 if ~strcmp(testVar, '')
     for m = 1:length(testModels)
@@ -236,6 +243,7 @@ if ~strcmp(testVar, '')
 
             futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5, popRegrid)
             constPopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid);
+            constClimateCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [roundn(y, 1)], 5, popRegrid);
             
             clear testDaily testDailyExtTmp;
         end
@@ -246,15 +254,23 @@ end
 basePopCount = nanmean(basePopCount, 1);
 futurePopCount = nanmean(futurePopCount, 1);
 constPopCount = nanmean(constPopCount, 1);
+constClimateCount = nanmean(constClimateCount, 1);
+
+% exposure rise due to climate alone
+climatePopEffect = futurePopCount - constPopCount;
+% exposure rise due to pop change alone
+popPopEffect = constClimateCount;
+% exposure rise due to climate & pop
+interactionEffect = futurePopCount - climatePopEffect - popPopEffect;
 
 % calc decadal means
 futureDecX = (testPeriodYears(1)-1)+5:10:(testPeriodYears(end)-1)+5;
 futureDecY = [];
 for d = 1:length(futureDecX)
-    futureDecY(d) = nanmean(futurePopCount((d-1)*10+1 : d*10));
+    futureDecY(d,:) = [nanmean(popPopEffect((d-1)*10+1 : d*10)), nanmean(climatePopEffect((d-1)*10+1 : d*10)), nanmean(interactionEffect((d-1)*10+1 : d*10))];
 end
 
-plotTitle = 'Exposure to 31C wet bulb, China';
+plotTitle = 'Exposure to 32C wet bulb, China';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('dataX1', basePeriodYears, ...
@@ -274,8 +290,20 @@ barChart = true;
 if barChart
     figure('Color', [1, 1, 1]);
     hold on;
-    bar(futureDecX, futureDecY, 1.0, 'r');
+    B = bar(futureDecX, futureDecY, 1.0, 'stacked');
+
+    set(B(1), 'FaceColor', 'g');
+    set(B(2), 'FaceColor', 'r');
+    set(B(3), 'FaceColor', 'b');
     
+    title(saveData.plotTitle, 'FontSize', 24);
+    xlabel(saveData.Xlabel, 'FontSize', 24);
+    ylabel(saveData.Ylabel, 'FontSize', 24);
+    set(gca, 'FontSize', 24);
+    set(gcf, 'Position', get(0,'Screensize'));
+    
+    l = legend(B, 'population effect', 'climate effect', 'interaction effect');
+    set(l, 'FontSize', 24, 'Location', 'best');
     
 else
     figure('Color', [1, 1, 1]);
@@ -286,11 +314,11 @@ else
     title(saveData.plotTitle, 'FontSize', 24);
     xlabel(saveData.Xlabel, 'FontSize', 24);
     ylabel(saveData.Ylabel, 'FontSize', 24);
+    set(gcf, 'Position', get(0,'Screensize'));
     l = legend('Past', 'Future', 'Constant population');
     set(l, 'FontSize', 24, 'Location', 'best');
 end
 
-set(gcf, 'Position', get(0,'Screensize'));
 eval(['export_fig ' saveData.fileTitle '.pdf;']);
 save([saveData.fileTitle '.mat'], 'saveData');
 close all;
