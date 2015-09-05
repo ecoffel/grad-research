@@ -9,4 +9,6 @@ addpath('C:\git-ecoffel\grad-research\2015-heat-humidity');
 addpath('C:\git-ecoffel\grad-research\econ-extremes');
 userpath('C:\git-ecoffel\grad-research');
 
+plotlysetup('ecoffel', 'zo5qjdmelk')
+
 dbstop if error;

@@ -20,9 +20,6 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
 baseVar = 'wb';
 testVar = '';
 
-baseRegrid = true;
-modelRegrid = true;
-
 basePeriodYears = 2060:2070;
 %basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2069;
@@ -31,6 +28,7 @@ testPeriodYears = 2050:2069;
 annualmean = false;
 exportformat = 'pdf';
 
+biasCorrect = true;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -205,11 +203,7 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        else
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        end
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if strcmp(testVar, '') & (strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin'))
             baseDaily{3} = baseDaily{3}-273.15;
@@ -240,11 +234,7 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            if modelRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            end
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -292,7 +282,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['WB'];
+plotTitle = ['WB Annual Max'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

@@ -26,7 +26,7 @@ basePeriodYears = 1985:2004;
 futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
                  2050:2060; 2060:2070; 2070:2080];
 
-region = 'world';
+region = 'india';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -40,6 +40,9 @@ elseif strcmp(region, 'china')
 elseif strcmp(region, 'world')
     latBounds = [-90, 90];
     lonBounds = [0, 360];
+elseif strcmp(region, 'india')
+    latBounds = [8, 34];
+    lonBounds = [67, 90];
 end
 
 baseDir = 'e:/data/';

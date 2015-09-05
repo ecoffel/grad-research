@@ -93,7 +93,7 @@ elseif strcmp(region, 'us-ne')
     axesm('mercator','MapLatLimit',[35 50],'MapLonLimit',[-100 -60]);
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'middle')
-    axesm('mercator','MapLatLimit',[-50 50],'MapLonLimit',[0 359]);
+    axesm('mercator','MapLatLimit',[-40 40],'MapLonLimit',[0 359]);
     framem off; gridm off; mlabel off; plabel off;
 else
     worldmap(region);

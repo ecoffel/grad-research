@@ -24,8 +24,11 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
         latBounds = [0, 30];
         lonBounds = [340, 40];
     elseif strcmp(region, 'world')
-        latBounds = [-90, 00];
+        latBounds = [-90, 90];
         lonBounds = [0 360];
+    elseif strcmp(region, 'india')
+        latBounds = [8, 34];
+        lonBounds = [67, 90];
     end
 
     load('waterGrid.mat');

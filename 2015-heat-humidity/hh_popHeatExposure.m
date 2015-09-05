@@ -29,7 +29,7 @@ biasCorrect = true;
 popRegrid = true;
 
 region = 'china';
-exposureThreshold = 32;
+exposureThreshold = 30;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -71,6 +71,9 @@ elseif strcmp(region, 'china')
 elseif strcmp(region, 'world')
     latRange = [-90, 90];
     lonRange = [0, 360];
+elseif strcmp(region, 'india')
+    latBounds = [8, 34];
+    lonBounds = [67, 90];
 end
 
 if strcmp(basePeriod, 'past')
@@ -257,7 +260,7 @@ constPopCount = nanmean(constPopCount, 1);
 constClimateCount = nanmean(constClimateCount, 1);
 
 % exposure rise due to climate alone
-climatePopEffect = futurePopCount - constPopCount;
+climatePopEffect = constPopCount;
 % exposure rise due to pop change alone
 popPopEffect = constClimateCount;
 % exposure rise due to climate & pop
@@ -267,18 +270,16 @@ interactionEffect = futurePopCount - climatePopEffect - popPopEffect;
 futureDecX = (testPeriodYears(1)-1)+5:10:(testPeriodYears(end)-1)+5;
 futureDecY = [];
 for d = 1:length(futureDecX)
-    futureDecY(d,:) = [nanmean(popPopEffect((d-1)*10+1 : d*10)), nanmean(climatePopEffect((d-1)*10+1 : d*10)), nanmean(interactionEffect((d-1)*10+1 : d*10))];
+    popE = nanmean(popPopEffect((d-1)*10+1 : d*10));
+    climE = nanmean(climatePopEffect((d-1)*10+1 : d*10));
+    intE = nanmean(interactionEffect((d-1)*10+1 : d*10));
+    futureDecY(d,:) = [popE, climE, intE, popE+climE+intE];
 end
 
-plotTitle = 'Exposure to 32C wet bulb, China';
+plotTitle = 'Exposure to 30C wet bulb, China';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
-saveData = struct('dataX1', basePeriodYears, ...
-                  'dataY1', basePopCount, ...
-                  'dataX2', testPeriodYears, ...
-                  'dataY2', futurePopCount, ...
-                  'dataY3', constPopCount, ...
-                  'futureDecX', futureDecX, ...
+saveData = struct('futureDecX', futureDecX, ...
                   'futureDecY', futureDecY, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
@@ -290,11 +291,13 @@ barChart = true;
 if barChart
     figure('Color', [1, 1, 1]);
     hold on;
-    B = bar(futureDecX, futureDecY, 1.0, 'stacked');
+    
+    B = bar(saveData.futureDecX, saveData.futureDecY, 1.0, 'grouped');
 
-    set(B(1), 'FaceColor', 'g');
-    set(B(2), 'FaceColor', 'r');
-    set(B(3), 'FaceColor', 'b');
+    set(B(1), 'FaceColor', [181,82,124] ./ 255.0);
+    set(B(2), 'FaceColor', [107,169,61] ./ 255.0);
+    set(B(3), 'FaceColor', [104,126,171] ./ 255.0);
+    set(B(3), 'FaceColor', [170,126,51] ./ 255.0);
     
     title(saveData.plotTitle, 'FontSize', 24);
     xlabel(saveData.Xlabel, 'FontSize', 24);
@@ -302,7 +305,7 @@ if barChart
     set(gca, 'FontSize', 24);
     set(gcf, 'Position', get(0,'Screensize'));
     
-    l = legend(B, 'population effect', 'climate effect', 'interaction effect');
+    l = legend(B, 'population effect', 'climate effect', 'interaction effect', 'total change');
     set(l, 'FontSize', 24, 'Location', 'best');
     
 else
@@ -321,4 +324,4 @@ end
 
 eval(['export_fig ' saveData.fileTitle '.pdf;']);
 save([saveData.fileTitle '.mat'], 'saveData');
-close all;
+%close all;
