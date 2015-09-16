@@ -28,8 +28,8 @@ biasCorrect = true;
 
 popRegrid = true;
 
-region = 'china';
-exposureThreshold = 30;
+region = 'world';
+exposureThreshold = 33;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -72,8 +72,8 @@ elseif strcmp(region, 'world')
     latRange = [-90, 90];
     lonRange = [0, 360];
 elseif strcmp(region, 'india')
-    latBounds = [8, 34];
-    lonBounds = [67, 90];
+    latRange = [8, 34];
+    lonRange = [67, 90];
 end
 
 if strcmp(basePeriod, 'past')
@@ -276,7 +276,7 @@ for d = 1:length(futureDecX)
     futureDecY(d,:) = [popE, climE, intE, popE+climE+intE];
 end
 
-plotTitle = 'Exposure to 30C wet bulb, China';
+plotTitle = 'Exposure to 33C wet bulb, global';
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...

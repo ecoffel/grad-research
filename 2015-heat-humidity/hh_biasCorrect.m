@@ -145,6 +145,7 @@ for xlat = 1:size(baseData{1}, 1)
         baseDist{xlat}{ylon} = [];
         
         if waterGrid(xlat, ylon)
+            baseMeans(xlat, ylon) = 0;
             continue;
         end
         
@@ -256,6 +257,7 @@ for m = 1:length(testModels)
                 pIndex = 1;
                 
                 if waterGrid(xlat, ylon)
+                    decadeCutoffs{decade}(xlat, ylon, pIndex) = 0;
                     continue;
                 end
                 
@@ -281,6 +283,8 @@ for m = 1:length(testModels)
             testDist{xlat}{ylon} = [];
             
             if waterGrid(xlat, ylon)
+                testBiasCorrection{m}{2}(xlat, ylon, pIndex) = 0;
+                testBiasCorrection{m}{3}{2}(xlat, ylon, pIndex) = 0;
                 continue;
             end
             

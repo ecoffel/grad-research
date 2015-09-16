@@ -8,11 +8,6 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-%baseModels = {''};
-
-% baseModels = {'canesm2'};
-% testModels = {'canesm2'};
-
 baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
@@ -20,18 +15,8 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-% models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'ipsl-cm5a-mr', ...
-%           'mri-cgcm3', 'noresm1-m'};
-       
-% models = {'bnu-esm', 'canesm2', 'ccsm4', 'cesm1-bgc', ...
-%           'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', ...
-%           'ipsl-cm5a-mr', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', ...
-%           'noresm1-m'};
-
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'tasmax';
+testVar = 'tasmax';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -176,15 +161,8 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        else
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        end
         
-        if strcmp(testVar, '') & (strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin'))
-            baseDaily{3} = baseDaily{3}-273.15;
-        end
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -221,11 +199,7 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            if modelRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            end
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             
             if length(testExceedences) == 0
                 testExceedences = zeros(size(testDaily{3}, 1), size(testDaily{3}, 2), length(testModels), length(testPeriod));
@@ -257,7 +231,7 @@ testExceedences = nanmean(nanmean(testExceedences, 4), 3);
 result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, testExceedences};
 
 fileTitle = ['recurrance-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
-plotTitle = ['Heat index'];
+plotTitle = ['Temperature recurrence'];
 
 
 saveData = struct('data', {result}, ...

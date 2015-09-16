@@ -2,17 +2,17 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'future';
+basePeriod = 'past';
 testPeriod = 'past';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {''};
+baseModels = {'gfdl-cm3'};
 % testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
@@ -20,15 +20,15 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
 baseVar = 'wb';
 testVar = '';
 
-basePeriodYears = 2060:2070;
-%basePeriodYears = 1985:2004;
+%basePeriodYears = 2060:2070;
+basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2069;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
+annualmean = true;
 exportformat = 'pdf';
 
-biasCorrect = true;
+biasCorrect = false;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -141,18 +141,17 @@ if ~strcmp(testVar, '')
     testDatasetStr = testDataset;
     if strcmp(testDatasetStr, 'cmip5')
         if length(testModels) == 1
-            modelStr = strsplit(testModels{1}, '/');
-            testDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}];
+            testDatasetStr = ['cmip5-' testModels{1}];
         else 
             testDatasetStr = ['cmip5-mm'];
         end
         
         testDataDir = 'cmip5/output';
-        ensemble = 'r1i1p1/';
+        testEnsemble = 'r1i1p1/';
     elseif strcmp(testDatasetStr, 'ncep')
         testDatasetStr = ['ncep'];
         testDataDir = 'ncep-reanalysis/output';
-        ensemble = '';
+        testEnsemble = '';
         testRcp = '';
     end
     
@@ -161,18 +160,17 @@ end
 baseDatasetStr = baseDataset;
 if strcmp(baseDatasetStr, 'cmip5')
     if length(baseModels) == 1
-        modelStr = strsplit(baseModels{1}, '/');
-        baseDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}]
+        baseDatasetStr = ['cmip5-' baseModels{1}]
     else
         baseDatasetStr = ['cmip5-mm'];
     end
     
     baseDataDir = 'cmip5/output';
-    ensemble = 'r1i1p1/';
+    baseEnsemble = 'r1i1p1/';
 elseif strcmp(baseDatasetStr, 'ncep')
     baseDatasetStr = ['ncep'];
     baseDataDir = 'ncep-reanalysis/output';
-    ensemble = '';
+    baseEnsemble = '';
     baseRcp = '';
 end
 
@@ -203,9 +201,10 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        
-        if strcmp(testVar, '') & (strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin'))
+        if strcmp(baseDataset, 'cmip5')
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        elseif strcmp(baseDataset, 'ncep')
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             baseDaily{3} = baseDaily{3}-273.15;
         end
         
@@ -234,7 +233,12 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            if biasCorrect
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            else
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                testDaily{3} = testDaily{3}-273.15;
+            end
 
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -282,7 +286,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['WB Annual Max'];
+plotTitle = ['CMIP5 wet bulb mean'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

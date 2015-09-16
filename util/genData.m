@@ -1,4 +1,4 @@
-vars = {'wb'};
+vars = {'tasmin'};
 
 for v = 1:length(vars)
     var = vars{v};
@@ -6,11 +6,11 @@ for v = 1:length(vars)
               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
               'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-    regions = {'india'};
+    regions = {'usne'};
     rcps = {'historical', 'rcp85'};
 
     baseYears = 1980:2005;
-    futureYears = 2020:2070;
+    futureYears = 2020:2060;
 
     regridded = true;
     skipExisting = true;

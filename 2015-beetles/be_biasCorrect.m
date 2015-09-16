@@ -1,37 +1,50 @@
-% computes the difference in the yearly mean of maximum summertime
-% temperatures between NARCCAP models and NARR reanalysis.
+% calculate base cutoffs and store them in the final output file so that
+% they can be applied to the base data for bias correction
 
 season = 'all';
 basePeriod = 'past';
 testPeriod = 'past';
 
-baseDataset = 'narr';
-testDataset = 'ncep';
+baseDataset = 'ncep';
+testDataset = 'cmip5';
 
 baseModels = {''};
-testModels = {''};
-% baseModels = {'ccsm4', 'cesm1-bgc', ...
-%           'gfdl-cm3', 'mpi-esm-mr', ...
-%           'gfdl-esm2m', 'gfdl-esm2g', ...
-%           'canesm2', 'noresm1-m', ...
-%           'hadgem2-es', 'cesm1-cam5', ...
-%           'cmcc-cm', 'cmcc-cms', ...    
-%           'cnrm-cm5', 'ipsl-cm5a-mr', ...
-%           'bnu-esm', 'miroc-esm', ...
-%           'mri-cgcm3'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+%testModels = {'hadgem2-es'};
 
-baseVar = 'tasmin';
-testVar = 'tmin';
+baseVar = 'tmin';
+testVar = 'tasmin';
 
 percentiles = 10:10:100;
 
-baseRegrid = false;
-testRegrid = false;
+baseRegrid = true;
+testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-latBounds = [35 50];
-lonBounds = [-100 -62];
+futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
+                 2050:2060];
+
+region = 'usne';
+
+if strcmp(region, 'usne')
+    latBounds = [30 55];
+    lonBounds = [-100 -62] + 360;
+elseif strcmp(region, 'west_africa')
+    latBounds = [0, 30];
+    lonBounds = [340, 40];
+elseif strcmp(region, 'china')
+    latBounds = [20, 55];
+    lonBounds = [75, 135];
+elseif strcmp(region, 'world')
+    latBounds = [-90, 90];
+    lonBounds = [0, 360];
+elseif strcmp(region, 'india')
+    latBounds = [8, 34];
+    lonBounds = [67, 90];
+end
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -47,6 +60,7 @@ if strcmp(baseDataset, 'cmip5')
     
     baseDataDir = 'cmip5/output';
     baseEnsemble = 'r1i1p1/';
+    baseRcp = '';
 elseif strcmp(baseDataset, 'ncep')
     baseDatasetStr = ['ncep'];
     baseDataDir = 'ncep-reanalysis/output';
@@ -70,6 +84,8 @@ if strcmp(testDataset, 'cmip5')
     
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
+    testRcp = 'historical/';
+    futureRcp = 'rcp85/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';
@@ -86,18 +102,22 @@ baseData = {};
 baseLat = [];
 baseLon = [];
 
+load('waterGrid');
+
 % first load base dataset
 ['loading base dataset: ' baseDataset]
 for y = basePeriodYears(1):yearStep:basePeriodYears(end)
     ['year ' num2str(y) '...']
-    
-    
+        
     if baseRegrid
         baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
     else
         baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
     end
-    baseDaily{3} = baseDaily{3}-273.15;
+    
+    if strcmp(baseVar, 'tasmax') || strcmp(baseVar, 'tasmin') || strcmp(baseVar, 'tmax') || strcmp(baseVar, 'tmin')
+        baseDaily{3} = baseDaily{3}-273.15;
+    end
     
     [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
     baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
@@ -108,13 +128,14 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
     end
     
     baseDaily{3} = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
-
+    
     baseData = {baseData{:} baseDaily{3}};
     clear baseDaily;
 end
 
 baseDist = {};
 baseMeans = [];
+baseCutoffs = [];
 
 for xlat = 1:size(baseData{1}, 1)
     if size(baseDist, 1) < xlat
@@ -123,9 +144,16 @@ for xlat = 1:size(baseData{1}, 1)
     
     for ylon = 1:size(baseData{1}, 2)
         baseDist{xlat}{ylon} = [];
+        
+        if waterGrid(xlat, ylon)
+            baseMeans(xlat, ylon) = 0;
+            continue;
+        end
+        
         for n = 1:length(baseData)
             baseDist{xlat}{ylon} = [baseDist{xlat}{ylon}(:); squeeze(baseData{n}(xlat, ylon, :))];
         end
+        
         pIndex = 1;
         cutoffs = [];
         for p = percentiles
@@ -144,7 +172,7 @@ end
 clear baseDist baseData;
 
 testBiasCorrection = {};
-    
+
 for m = 1:length(testModels)
     if strcmp(testModels{m}, '')
         curModel = testModels{m};
@@ -164,22 +192,89 @@ for m = 1:length(testModels)
         else
             testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
-        testDaily{3} = testDaily{3}-273.15;
+        
+        if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+            testDaily{3} = testDaily{3}-273.15;
+        end
         
         [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
         testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
         testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
         
-        if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2 ~= size(baseLon, 2))
+        if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2) ~= size(baseLon, 2)
             testDaily = regridGriddata(testDaily, {baseLat, baseLon, []});
         end
         
         testData = {testData{:} testDaily{3}};
-        clear baseDaily;
+        clear testDaily;
+    end
+    
+    ['loading future decades...']
+    decadeCutoffs = {};
+    for decade = 1:size(futureDecades, 1)
+        decadeCutoffs{decade} = [];
+        curDecadeData = {};
+        for y = 1:size(futureDecades, 2)
+            ['year ' num2str(futureDecades(decade, y)) '...']
+        
+            if testRegrid
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid'], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+            else
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+            end
+            
+            if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+                testDaily{3} = testDaily{3}-273.15;
+            end
+
+            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
+            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
+            testDaily{3} = reshape(testDaily{3}, [size(testDaily{3}, 1), size(testDaily{3}, 2), size(testDaily{3}, 3)*size(testDaily{3}, 4)*size(testDaily{3}, 5)]);
+
+            if size(testDaily{3}, 1) ~= size(baseLat, 1) | size(testDaily{3}, 2) ~= size(baseLon, 2)
+                testDaily = regridGriddata(testDaily, {baseLat, baseLon, []});
+            end
+            
+            for xlat = 1:size(testDaily{3}, 1)
+                if y == 1
+                    curDecadeData{xlat} = {};
+                end
+                
+                for ylon = 1:size(testDaily{3}, 2)
+                    if y == 1
+                        curDecadeData{xlat}{ylon} = [];
+                    end
+                    
+                    curDecadeData{xlat}{ylon} = [curDecadeData{xlat}{ylon}(:); squeeze(testDaily{3}(xlat, ylon, :))];
+                end
+            end
+            
+            clear testDaily;
+        end
+        
+        % assemble cutoffs for current decade
+        for xlat = 1:length(curDecadeData)
+            for ylon = 1:length(curDecadeData{xlat})
+                pIndex = 1;
+                
+                if waterGrid(xlat, ylon)
+                    decadeCutoffs{decade}(xlat, ylon, pIndex) = 0;
+                    continue;
+                end
+                
+                for p = percentiles
+                    decadeCutoffs{decade}(xlat, ylon, pIndex) = prctile(curDecadeData{xlat}{ylon}, p);
+                    pIndex = pIndex + 1;
+                end
+            end
+        end
+        
+        clear curDecadeData;
     end
     
     testDist = {};
-
+    testBiasCorrection{m}{3} = {basePeriodYears(1), []}
+    
     for xlat = 1:size(testData{1}, 1)
         if size(testDist, 1) < xlat
             testDist{xlat} = {};
@@ -187,11 +282,19 @@ for m = 1:length(testModels)
 
         for ylon = 1:size(testData{1}, 2)
             testDist{xlat}{ylon} = [];
+            
+            if waterGrid(xlat, ylon)
+                testBiasCorrection{m}{2}(xlat, ylon, pIndex) = 0;
+                testBiasCorrection{m}{3}{2}(xlat, ylon, pIndex) = 0;
+                continue;
+            end
+            
             for n = 1:length(testData)
                 testDist{xlat}{ylon} = [testDist{xlat}{ylon}(:); squeeze(testData{n}(xlat, ylon, :))];
             end
             pIndex = 1;
             cutoffs = [];
+            
             for p = percentiles
                 % store cuttoffs so we take mean between each percentile
                 cutoffs(pIndex) = prctile(testDist{xlat}{ylon}, p);
@@ -200,16 +303,22 @@ for m = 1:length(testModels)
                 else
                     curMean = nanmean(testDist{xlat}{ylon}(testDist{xlat}{ylon}(:) < cutoffs(pIndex) & testDist{xlat}{ylon}(:) > cutoffs(pIndex-1)));
                 end
-                testBiasCorrection{m}{2}(xlat, ylon, pIndex) = curMean - baseMeans(xlat, ylon, pIndex);
-                testBiasCorrection{m}{3}(xlat, ylon, pIndex) = cutoffs(pIndex);
+                testBiasCorrection{m}{2}(xlat, ylon, pIndex) = baseMeans(xlat, ylon, pIndex) - curMean;
+                testBiasCorrection{m}{3}{2}(xlat, ylon, pIndex) = cutoffs(pIndex);
                 pIndex = pIndex+1;
             end
         end
     end
+    
+    % add cutoffs for each decade to mat structure
+    for decade = 1:size(futureDecades, 1)
+        testBiasCorrection{m}{3+decade} = {futureDecades(decade, 1), decadeCutoffs{decade}};
+    end
     clear testDist testData;
 end
 
-save testBiasCorrection;
+fileStr = ['cmip5BiasCorrection_' testVar '_' region '_tmp'];
+varName = ['cmip5BiasCorrection_' testVar '_' region];
 
-
-
+eval([varName ' =  testBiasCorrection;']);
+save([fileStr '.mat'], varName);

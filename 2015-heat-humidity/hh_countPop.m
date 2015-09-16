@@ -5,25 +5,10 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
     popCount = [];
 
     bbList = {};
+    
+    load waterGrid;
+    
     if strcmp(region, 'usne')
-%         states = {'Massachusettes', 'Connecticut', 'New Jersey', ...
-%                  'Pennsylvania', 'Maryland', 'Delaware', 'Vermont', ...
-%                  'New Hampshire', 'New York', 'District of Columbia', ...
-%                  'Virginia'};
-%         
-%         stateShape = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
-%                                {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
-%         curState = [];
-%         for s = 1:length(stateShape)
-%             curState = stateShape(s);
-%             %['processing ' curState.Name]
-%             if length(find(ismember(states, curState.Name))) > 0    
-%                 latBounds = curState.Lat;
-%                 lonBounds = curState.Lon + 360;
-%                 bbList{end+1} = [latBounds; lonBounds];
-%             end
-%         end
-
         countries = shaperead('countries', 'UseGeoCoords', true);
         
         curCountry = [];
@@ -47,6 +32,18 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
                 bbList{end+1} = [latBounds; lonBounds];
             end
         end
+    elseif strcmp(region, 'india')
+        countries = shaperead('countries', 'UseGeoCoords', true);
+        
+        curCountry = [];
+        for c = 1:length(countries)
+            curCountry = countries(c);  
+            if strcmp(curCountry.NAME, 'India')
+                latBounds = curCountry.Lat;
+                lonBounds = curCountry.Lon;
+                bbList{end+1} = [latBounds; lonBounds];
+            end
+        end
     elseif strcmp(region, 'west_africa')
         countries = shaperead('countries', 'UseGeoCoords', true);
         regionCountries = {'Benin', 'Burkina Faso', 'Cape Verde', 'Gambia', ...
@@ -64,6 +61,8 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
                 bbList{end+1} = [latBounds; lonBounds];
             end
         end
+    elseif strcmp(region, 'world')
+        bbList{end+1} = [[-90 90 90 -90]; [0 0 360 360]];
     end
     
     selectionLat = selectionGrid{1};
@@ -109,8 +108,11 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
 
                 for xlat = 1:length(xlativ)
                     for ylon = 1:length(yloniv)
+                        if waterGrid(xlativ(xlat), yloniv(ylon))
+                            continue;
+                        end
                         if inpolygon(sspLat(xlativ(xlat), yloniv(ylon)), sspLon(xlativ(xlat), yloniv(ylon)), latBounds, lonBounds)
-                            popCount(end) = popCount(end) + sspData(xlativ(xlat), yloniv(ylon));
+                            popCount(end) = popCount(end) + selectionGrid{3}(i, j)*sspData(xlativ(xlat), yloniv(ylon));
                         end
                     end
                 end

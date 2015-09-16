@@ -10,7 +10,7 @@ chinaLon = [100 100 135 135];
 wAfLat = [0 30 30 0];
 wAfLon = [340 340 40 40];
 
-indiaLat = [8 34 34 8];
+indiaLat = [8 38 38 8];
 indiaLon = [67 67 90 90];
 
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);

@@ -1,6 +1,6 @@
 % needs to handle plev
 baseGridModel = 'e:/data/ncep-reanalysis/output';
-regridVar = 'tmin';
+regridVar = 'bt';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
