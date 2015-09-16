@@ -10,7 +10,9 @@ for v = 1:length(vars)
     rcps = {'historical', 'rcp85'};
 
     baseYears = 1980:2005;
-    futureYears = 2020:2060;
+    futureYears = 2020:2050;    
+    futureDecades = 2020:10:2050;
+
 
     regridded = true;
     skipExisting = true;
@@ -42,7 +44,7 @@ for v = 1:length(vars)
                     end
 
                     ['processing ' models{m} '/' regions{r} '/' rcps{rcp} '...']
-                    selectDataRegion(curDir, newDir, baseYears, futureYears, var, models{m}, regions{r}, biasCorrect, v7, skipExisting);
+                    selectDataRegion(curDir, newDir, baseYears, futureYears, futureDecades, var, models{m}, regions{r}, biasCorrect, v7, skipExisting);
 
                 end
             end

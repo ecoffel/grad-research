@@ -1,13 +1,11 @@
 
-function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, model, region, biasCorrect, v7, skipExisting)
+function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDecades, variable, model, region, biasCorrect, v7, skipExisting)
     %fileDir = ['E:\data\ncep-reanalysis\output\tmax\' num2str(y)];
     %outputDir = 'C:\git-ecoffel\climate-som\data\ncep\tmax';
 
     fileNames = dir([fileDir, '\', '*.mat']);
     fileNames = {fileNames.name};
     
-    futureDecades = 2020:10:2080;
-
     if strcmp(region, 'usne')
         latBounds = [30 55];
         lonBounds = [-100 -62] + 360;
@@ -82,7 +80,11 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, variable, 
                 isBaseYear = true;
             end
 
-            closestDecade = 3 + find(futureDecades == roundn(fNameYear, 1));
+            roundedYear = roundn(fNameYear, 1);
+            closestDecade = 3 + find(futureDecades == roundedYear);
+            if roundedYear >= futureDecades(end)
+                closestDecade = closestDecade - 1;
+            end
             
             for xlat = 1:size(data{3}, 1)
                 for ylon = 1:size(data{3}, 2)
