@@ -1,10 +1,11 @@
-vars = {'tasmin'};
+vars = {'tasmax'};
 
 for v = 1:length(vars)
     var = vars{v};
-    models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-              'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+    models = {'cmcc-cm', 'cmcc-cms'};
+%     models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%               'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
     regions = {'usne'};
     rcps = {'historical', 'rcp85'};
@@ -12,7 +13,6 @@ for v = 1:length(vars)
     baseYears = 1980:2005;
     futureYears = 2020:2050;    
     futureDecades = 2020:10:2050;
-
 
     regridded = true;
     skipExisting = true;

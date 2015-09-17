@@ -212,7 +212,7 @@ function barkTemp(dataDir, isRegridded, region)
 
         maxTempStartMonth = str2num(maxTempFileSubParts{3});
         minTempStartMonth = str2num(minTempFileSubParts{3});
-
+        
         if maxTempStartYear ~= minTempStartYear
             ['years do not match']
             return;
@@ -225,6 +225,22 @@ function barkTemp(dataDir, isRegridded, region)
             return;
         else
             curMonth = maxTempStartMonth;
+        end
+        
+        monthStr = '';
+        if curMonth < 10
+            monthStr = ['0', num2str(curMonth)];
+        else
+            monthStr = num2str(curMonth);
+        end
+
+        fileName = ['bt_', num2str(curYear), '_' monthStr, '_01'];
+
+        if exist([btCurDir '/' fileName '.mat'], 'file')
+            ['skipping ' btCurDir '/' fileName '.mat']
+            maxTempStartInd = maxTempStartInd + 1;
+            minTempStartInd = minTempStartInd + 1;
+            continue;
         end
 
         maxTempCurFileName = [maxTempMatDirNames{maxTempStartInd}, '/', maxTempMatFileName];
@@ -259,9 +275,9 @@ function barkTemp(dataDir, isRegridded, region)
 
         if size(maxTempData, 3) ~= size(minTempData, 3)
             ['time dimensions do not match, skipping' maxTempCurFileName]
-            maxTempStartInd = maxTempStartInd + 1;
-            minTempStartInd = minTempStartInd + 1;
-            continue;
+            %maxTempStartInd = maxTempStartInd + 1;
+            %minTempStartInd = minTempStartInd + 1;
+            %continue;
         end
 
         monthlyBarkT = [];
@@ -310,18 +326,7 @@ function barkTemp(dataDir, isRegridded, region)
             end
         end
 
-        monthStr = '';
-        if curMonth < 10
-            monthStr = ['0', num2str(curMonth)];
-        else
-            monthStr = num2str(curMonth);
-        end
-
-        fileName = ['bt_', num2str(curYear), '_' monthStr, '_01'];
-
-        if exist([btCurDir '/' fileName '.mat'], 'file')
-            %continue;
-        end
+        
 
         ['processing ' btCurDir '/' fileName]
         eval([fileName ' = {maxTempLat, maxTempLon, monthlyBarkT};']);

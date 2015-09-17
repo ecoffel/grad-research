@@ -3,18 +3,21 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'past';
+testPeriod = 'future';
 
 baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'cmcc-cm', 'cmcc-cms'};
+% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'wb';
-testVar = 'wb';
+addToBC = true;
+
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
@@ -23,10 +26,9 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-futureDecades = [2020:2030; 2030:2040; 2040:2050; ...
-                 2050:2060; 2060:2070; 2070:2080];
+futureDecades = [2020:2030; 2030:2040; 2040:2050];
 
-region = 'india';
+region = 'usne';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -319,8 +321,17 @@ end
 fileStr = ['cmip5BiasCorrection_' testVar '_' region '_tmp'];
 varName = ['cmip5BiasCorrection_' testVar '_' region];
 
-eval([varName ' =  testBiasCorrection;']);
-save([fileStr '.mat'], varName);
-
+if addToBC
+    load([varName '.mat']);
+    eval(['bc = ' varName ';']);
+    for i = 1:length(testBiasCorrection)
+        bc{end+1} = testBiasCorrection{i};
+    end
+    eval([varName ' =  bc;']);
+    save([fileStr '.mat'], varName);
+else
+    eval([varName ' =  testBiasCorrection;']);
+    save([fileStr '.mat'], varName);
+end
 
 

@@ -10,15 +10,15 @@ testDataset = 'cmip5';
 
 % baseModels = {'gfdl-cm3'};
 % testModels = {'gfdl-cm3'};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
 testVar = 'bt';
+
+region = 'usne';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -31,7 +31,6 @@ annualmean = false;
 exportformat = 'pdf';
 
 blockWater = true;
-biasCorrect = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -57,7 +56,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'usa';
+plotRegion = 'usne';
 
 plotRange = [2020 2055];
 plotXUnits = 'Year';
@@ -115,11 +114,6 @@ elseif strcmp(baseDatasetStr, 'ncep')
     baseRcp = '';
 end
 
-bcStr = '';
-if biasCorrect
-    bcStr = 'bc-';
-end
-
 fileTimeStr = '';
 if ~strcmp(testVar, '')
     fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
@@ -130,13 +124,6 @@ end
 baseExt = {};
 futureExt = {};
 percentiles = [];
-
-if biasCorrect
-    load cmip5BiasCorrection_bt;
-end
-
-latBounds = [35 50];
-lonBounds = [-100 -60] + 360;
 
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
@@ -150,49 +137,14 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        else
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        end
-        
-        baseDaily{3} = baseDaily{3}-273.15;
-        
-        [latIndex, lonIndex] = latLonIndexRange(baseDaily, latBounds, lonBounds);
-        baseDaily = {baseDaily{1}(latIndex, lonIndex), baseDaily{2}(latIndex, lonIndex), baseDaily{3}(latIndex, lonIndex, :, :, :)};
-        
-        if biasCorrect
-            biasModel = -1;
-            for mn = 1:length(cmip5BiasCorrection_bt)
-                if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
-                    biasModel = mn;
-                    break;
-                end
-            end
 
-            for xlat = 1:size(baseDaily{3}, 1)
-                for ylon = 1:size(baseDaily{3}, 2)
-                    for month = 1:size(baseDaily{3}, 4)
-                        for day = 1:size(baseDaily{3}, 5)
-                            for p = 10:-1:1
-                                if baseDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
-                                    baseDaily{3}(xlat, ylon, 1, month, day) = baseDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
-                                    break;
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
         else
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
-        
-        
         
         baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
         clear baseDaily baseExtTmp;
@@ -214,42 +166,9 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            if modelRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            end
 
-            testDaily{3} = testDaily{3}-273.15;
-            
-            [latIndex, lonIndex] = latLonIndexRange(testDaily, latBounds, lonBounds);
-            testDaily = {testDaily{1}(latIndex, lonIndex), testDaily{2}(latIndex, lonIndex), testDaily{3}(latIndex, lonIndex, :, :, :)};
-            
-            if biasCorrect
-                biasModel = -1;
-                for mn = 1:length(cmip5BiasCorrection_bt)
-                    if strcmp(cmip5BiasCorrection_bt{mn}{1}, strrep(curModel, '/', ''))
-                        biasModel = mn;
-                        break;
-                    end
-                end
-                
-                for xlat = 1:size(testDaily{3}, 1)
-                    for ylon = 1:size(testDaily{3}, 2)
-                        for month = 1:size(testDaily{3}, 4)
-                            for day = 1:size(testDaily{3}, 5)
-                                for p = 10:-1:1
-                                    if testDaily{3}(xlat, ylon, 1, month, day) > cmip5BiasCorrection_bt{biasModel}{3}(xlat, ylon, p)
-                                        testDaily{3}(xlat, ylon, 1, month, day) = testDaily{3}(xlat, ylon, 1, month, day) - cmip5BiasCorrection_bt{biasModel}{2}(xlat, ylon, p);
-                                        break;
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
@@ -273,13 +192,15 @@ for m = 1:length(baseExt)
     baseAvg = nanmean(baseAvg, 4);
 end
 
-plotRange = [2020 2055];
+plotRange = [2020 2045];
 
-probabilityThreshold = false;
+probabilityThreshold = true;
 
+tempThreshold = -11;       % bark temp
+%tempThreshold = -16;        % air temp
+    
 if probabilityThreshold
     cutoff = [70 80 90 100];
-    tempThreshold = -11;
     futureWindow = 10;
 else
     cutoff = [-6 -7 -8 -10 -1] - 4;
@@ -350,7 +271,7 @@ for t = cutoff
 
     cutoffStr = '';
     if probabilityThreshold
-        cutoffStr = [num2str(t) '-perc'];
+        cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
         plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
     else
         if t == -1
@@ -362,7 +283,7 @@ for t = cutoff
         end
     end
 
-    fileTitle = ['bt-toe-' baseVar '-' bcStr cutoffStr '-' fileTimeStr '.' exportformat];
+    fileTitle = ['bt-toe-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...
