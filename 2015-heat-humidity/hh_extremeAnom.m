@@ -8,11 +8,11 @@ testPeriod = 'past';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'gfdl-cm3'};
+%baseModels = {'gfdl-cm3'};
 % testModels = {''};
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
@@ -55,7 +55,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'world';
+plotRegion = 'usne';
 
 if strcmp(baseVar, 'zg500')
     gridbox = false;
@@ -286,7 +286,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 wet bulb mean'];
+plotTitle = ['CMIP5 wet bulb annual mean'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

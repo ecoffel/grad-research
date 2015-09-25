@@ -56,12 +56,12 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'usa-exp';
+plotRegion = 'usne';
 
 if strcmp(baseVar, 'bt')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [-5 5];
+        plotRange = [0 5];
     else
         plotRange = [-20 20];
     end
@@ -69,7 +69,7 @@ if strcmp(baseVar, 'bt')
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [-10 10];
+        plotRange = [0 5];
     else
         plotRange = [0 50];
     end
@@ -239,7 +239,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 annual minimum temperature change [2030-2040] minus [1985-2004]'];
+plotTitle = ['Change in annual minimum bark temperature'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...
