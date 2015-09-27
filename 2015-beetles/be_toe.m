@@ -8,8 +8,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'gfdl-cm3'};
-% testModels = {'gfdl-cm3'};
+% baseModels = {'bnu-esm', 'gfdl-cm3'};
+% testModels = {'bnu-esm', 'gfdl-cm3'};
 baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
@@ -265,6 +265,23 @@ for t = cutoff
         end
     end
 
+    agreement = [];
+    agreementThresh = length(testModels)/2.0;
+    % find number of models that agree on the decade
+    for xlat = 1:size(lastYear, 1)
+        for ylon = 1:size(lastYear, 2)
+            curToe = roundn(squeeze(lastYear(xlat, ylon, :)), 1);
+            curMode = mode(curToe);
+            n = length(find(curToe == curMode));
+            if n >= agreementThresh
+                agreement(xlat, ylon) = 1;
+            else
+                agreement(xlat, ylon) = 0;
+            end
+        end
+    end
+    
+    
     lastYear = nanmean(lastYear, 3);
 
     result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
@@ -291,7 +308,9 @@ for t = cutoff
                       'plotTitle', plotTitle, ...
                       'fileTitle', fileTitle, ...
                       'plotXUnits', plotXUnits, ...
-                      'blockWater', blockWater);
+                      'blockWater', blockWater, ...
+                      'statData', agreement, ...
+                      'stippleInterval', 0.5);
 
     plotFromDataFile(saveData);
 end

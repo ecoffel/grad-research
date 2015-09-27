@@ -9,12 +9,12 @@ baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-testModels = {'cmcc-cm', 'cmcc-cms'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'cmcc-cm', 'cmcc-cms'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-addToBC = true;
+addToBC = false;
 
 baseVar = 'tmax';
 testVar = 'tasmax';
@@ -26,9 +26,9 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-futureDecades = [2020:2030; 2030:2040; 2040:2050];
+futureDecades = [2020:2030; 2030:2040; 2040:2050; 2050:2060; 2060:2070];
 
-region = 'usne';
+region = 'nepal';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -45,6 +45,9 @@ elseif strcmp(region, 'world')
 elseif strcmp(region, 'india')
     latBounds = [8, 34];
     lonBounds = [67, 90];
+elseif strcmp(region, 'nepal')
+    latBounds = [10, 35];
+    lonBounds = [75, 100];
 end
 
 baseDir = 'e:/data/';

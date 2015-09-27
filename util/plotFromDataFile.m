@@ -37,14 +37,24 @@ function [fg, cb] = plotFromDataFile(saveData)
     
     if statDataExists
         statData = saveData.statData;
-        for xlat = 1:2:size(statData, 1)
-            for ylon = 1:2:size(statData, 2)
+        
+        for xlat = 1:size(statData, 1)-1
+            for ylon = 1:size(statData, 2)-1
                 if statData(xlat, ylon)
+                    startingLat = saveData.data{1}(xlat, ylon);
+                    endingLat = saveData.data{1}(xlat+1, ylon);
 
-                    plotm(saveData.data{1}(xlat, ylon), saveData.data{2}(xlat, ylon), 'Marker', 'o',...
-                                                                    'MarkerEdgeColor', 'k',...
-                                                                    'MarkerFaceColor', 'k',...
-                                                                    'MarkerSize', 1)
+                    startingLon = saveData.data{2}(xlat, ylon);
+                    endingLon = saveData.data{2}(xlat, ylon+1);
+                    
+                    for j = linspace(startingLat, endingLat, abs(endingLat-startingLat)/saveData.stippleInterval)
+                        for k = linspace(startingLon, endingLon, abs(endingLon-startingLon)/saveData.stippleInterval)
+                            plotm(j, k, 'Marker', 'o',...
+                                        'MarkerEdgeColor', 'k',...
+                                        'MarkerFaceColor', 'k',...
+                                        'MarkerSize', 1)
+                        end
+                    end
                 end
             end
         end
