@@ -10,6 +10,14 @@ pinurigi = shaperead('2015-beetles/data/pinurigi/pinurigi.shp', 'UseGeoCoords', 
 states = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
              {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
          
+canadaShp = shaperead('2015-beetles/data/canada/Canada.shp', 'UseGeoCoords', true);
+f = fieldnames(canadaShp);
+v = struct2cell(canadaShp);
+f{strmatch('NAME',f,'exact')} = 'Name';
+canadaShp = cell2struct(v,f);
+clear f v;
+
+statesAndCanada = {canadaShp, states};
          
 fg = figure;
 hold on;
@@ -61,6 +69,11 @@ poly2040Lat = [30 poly2040Lat 30 30];
 pitchArea = 0;
 redArea = 0;
 jackArea = 0;
+
+pitchStateArea = {};
+redStateArea = {};
+jackStateArea = {};
+
 for i = 1:length(pinurigi)
     curLat = pinurigi(i).Lat;
     curLon = pinurigi(i).Lon;
@@ -73,8 +86,31 @@ for i = 1:length(pinurigi)
         for k = 1:length(curArea)
             pitchArea = pitchArea + curArea(k);
         end
+        
+        for d = 1:length(statesAndCanada)
+            for s = 1:length(statesAndCanada{d})
+                state = statesAndCanada{d}(s);
+                [stateintx, stateinty] = polybool('intersection', intx, inty, state.Lon, state.Lat);
+                if length(stateintx) > 0
+                    stateArea = areaint(stateintx, stateinty);
+                    curStateArea = 0;
+                    for k = 1:length(stateArea)
+                        curStateArea = curStateArea + stateArea(k);
+                    end
+
+                    stateInd = find(cellfun(@(S) strcmp(state.Name, S{1}), pitchStateArea));
+
+                    if length(stateInd) == 0
+                        pitchStateArea{end+1} = {state.Name, curStateArea*earthSA};
+                    else
+                        pitchStateArea{stateInd}{2} = pitchStateArea{stateInd}{2} + curStateArea*earthSA;
+                    end
+                end
+            end
+        end
     end
 end
+
 for i = 1:length(pinubank)
     curLat = pinubank(i).Lat;
     curLon = pinubank(i).Lon;
@@ -87,8 +123,31 @@ for i = 1:length(pinubank)
         for k = 1:length(curArea)
             jackArea = jackArea + curArea(k);
         end
+        
+        for d = 1:length(statesAndCanada)
+            for s = 1:length(statesAndCanada{d})
+                state = statesAndCanada{d}(s);
+                [stateintx, stateinty] = polybool('intersection', intx, inty, state.Lon, state.Lat);
+                if length(stateintx) > 0
+                    stateArea = areaint(stateintx, stateinty);
+                    curStateArea = 0;
+                    for k = 1:length(stateArea)
+                        curStateArea = curStateArea + stateArea(k);
+                    end
+
+                    stateInd = find(cellfun(@(S) strcmp(state.Name, S{1}), jackStateArea));
+
+                    if length(stateInd) == 0
+                        jackStateArea{end+1} = {state.Name, curStateArea*earthSA};
+                    else
+                        jackStateArea{stateInd}{2} = jackStateArea{stateInd}{2} + curStateArea*earthSA;
+                    end
+                end
+            end
+        end
     end
 end
+
 for i = 1:length(pinuresi)
     curLat = pinuresi(i).Lat;
     curLon = pinuresi(i).Lon;
@@ -100,6 +159,28 @@ for i = 1:length(pinuresi)
         curArea = areaint(intx, inty);
         for k = 1:length(curArea)
             redArea = redArea + curArea(k);
+        end
+        
+        for d = 1:length(statesAndCanada)
+            for s = 1:length(statesAndCanada{d})
+                state = statesAndCanada{d}(s);
+                [stateintx, stateinty] = polybool('intersection', intx, inty, state.Lon, state.Lat);
+                if length(stateintx) > 0
+                    stateArea = areaint(stateintx, stateinty);
+                    curStateArea = 0;
+                    for k = 1:length(stateArea)
+                        curStateArea = curStateArea + stateArea(k);
+                    end
+
+                    stateInd = find(cellfun(@(S) strcmp(state.Name, S{1}), redStateArea));
+
+                    if length(stateInd) == 0
+                        redStateArea{end+1} = {state.Name, curStateArea*earthSA};
+                    else
+                        redStateArea{stateInd}{2} = redStateArea{stateInd}{2} + curStateArea*earthSA;
+                    end
+                end
+            end
         end
     end
 end
