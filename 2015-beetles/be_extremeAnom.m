@@ -3,15 +3,15 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+testPeriod = 'past';
 
-baseDataset = 'cmip5';
+baseDataset = 'ncep';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm'};
+baseModels = {''};
 % testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
@@ -24,7 +24,8 @@ modelRegrid = true;
 region = 'usne';
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2040:2050;
+testPeriodYears = 1985:2004;
+%testPeriodYears = 2040:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -102,16 +103,16 @@ if ~strcmp(testVar, '')
         end
         
         testDataDir = 'cmip5/output';
-        ensemble = 'r1i1p1/';
+        testEnsemble = 'r1i1p1/';
     elseif strcmp(testDatasetStr, 'ncep')
         testDatasetStr = ['ncep'];
         testDataDir = 'ncep-reanalysis/output';
-        ensemble = '';
+        testEnsemble = '';
         testRcp = '';
     elseif strcmp(testDatasetStr, 'narr')
         testDatasetStr = ['narr'];
         testDataDir = 'narr/output';
-        ensemble = '';
+        testEnsemble = '';
         testRcp = '';
     end
     
@@ -126,16 +127,16 @@ if strcmp(baseDatasetStr, 'cmip5')
     end
     
     baseDataDir = 'cmip5/output';
-    ensemble = 'r1i1p1/';
+    baseEnsemble = 'r1i1p1/';
 elseif strcmp(baseDatasetStr, 'ncep')
     baseDatasetStr = ['ncep'];
     baseDataDir = 'ncep-reanalysis/output';
-    ensemble = '';
+    baseEnsemble = '';
     baseRcp = '';
 elseif strcmp(baseDatasetStr, 'narr')
     baseDatasetStr = ['narr'];
     baseDataDir = 'narr/output';
-    ensemble = '';
+    baseEnsemble = '';
     baseRcp = '';
 end
 
@@ -164,7 +165,7 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -191,7 +192,7 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -234,12 +235,14 @@ if ~strcmp(testVar, '')
         baseExtAvgRegrid = baseAvg;
     end
     
-    result = {modelAvg{1}, modelAvg{2}, modelAvg{3}-baseExtAvgRegrid{3}};
+    xdim = 1:min(size(modelAvg{3}, 1), size(baseExtAvgRegrid{3}, 1));
+    ydim = 1:min(size(modelAvg{3}, 2), size(baseExtAvgRegrid{3}, 2));
+    result = {modelAvg{1}, modelAvg{2}, modelAvg{3}(xdim, ydim)-baseExtAvgRegrid{3}(xdim, ydim)};
 else
     result = baseAvg;
 end
 
-plotTitle = ['Change in annual minimum bark temperature'];
+plotTitle = ['CMIP5 Annual minimum bark temperature bias'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

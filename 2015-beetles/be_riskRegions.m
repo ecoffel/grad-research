@@ -1,5 +1,7 @@
 targetYear = 2050;
 fourColor = false;
+earthSA = 510.1e6;      % km^2
+
 
 pinubank = shaperead('2015-beetles/data/pinubank/pinubank.shp', 'UseGeoCoords', true);
 pinuresi = shaperead('2015-beetles/data/pinuresi/pinuresi.shp', 'UseGeoCoords', true);
@@ -30,6 +32,15 @@ if ~fourColor
     [C, h] = contourm(X, Y, Z, 2020:5:2050, 'LineWidth', 2, 'LineColor', 'black');
     labels = clabelm(C, h);
     set(labels, 'FontSize', 22);
+    
+    contours = {};
+    cnt = 1;
+    while cnt < size(C, 2)
+        key = C(1, cnt);
+        num = C(2, cnt);
+        contours{end+1} = {key, C(:, cnt+1 : cnt + num)};
+        cnt = cnt + num + 1;
+    end
 else
     selGrid = zeros(size(Z));
     for xlat = 1:size(Z, 1)
@@ -39,9 +50,66 @@ else
             end
         end
     end
-    
-    
 end
+
+poly2040Lon = contours{end}{2}(1, :);
+poly2040Lon = [poly2040Lon(1) poly2040Lon poly2040Lon(end) poly2040Lon(1)];
+poly2040Lat = contours{end}{2}(2, :);
+poly2040Lat = [30 poly2040Lat 30 30];
+
+% area calculation
+pitchArea = 0;
+redArea = 0;
+jackArea = 0;
+for i = 1:length(pinurigi)
+    curLat = pinurigi(i).Lat;
+    curLon = pinurigi(i).Lon;
+    
+    [poly2040Lon, poly2040Lat] = poly2cw(poly2040Lon, poly2040Lat);
+    [intx, inty] = polybool('intersection', curLon, curLat, poly2040Lon, poly2040Lat);
+    
+    if length(intx) > 0
+        curArea = areaint(intx, inty);
+        for k = 1:length(curArea)
+            pitchArea = pitchArea + curArea(k);
+        end
+    end
+end
+for i = 1:length(pinubank)
+    curLat = pinubank(i).Lat;
+    curLon = pinubank(i).Lon;
+    
+    [poly2040Lon, poly2040Lat] = poly2cw(poly2040Lon, poly2040Lat);
+    [intx, inty] = polybool('intersection', curLon, curLat, poly2040Lon, poly2040Lat);
+    
+    if length(intx) > 0
+        curArea = areaint(intx, inty);
+        for k = 1:length(curArea)
+            jackArea = jackArea + curArea(k);
+        end
+    end
+end
+for i = 1:length(pinuresi)
+    curLat = pinuresi(i).Lat;
+    curLon = pinuresi(i).Lon;
+    
+    [poly2040Lon, poly2040Lat] = poly2cw(poly2040Lon, poly2040Lat);
+    [intx, inty] = polybool('intersection', curLon, curLat, poly2040Lon, poly2040Lat);
+    
+    if length(intx) > 0
+        curArea = areaint(intx, inty);
+        for k = 1:length(curArea)
+            redArea = redArea + curArea(k);
+        end
+    end
+end
+
+pitchArea = pitchArea * earthSA;
+jackArea = jackArea * earthSA;
+redArea = redArea * earthSA;
+['destroyed jack pine: ' num2str(jackArea) ' km^2']
+['destroyed red pine: ' num2str(redArea) ' km^2']
+['destroyed pitch pine: ' num2str(pitchArea) ' km^2']
 
 title('Forest Types', 'FontSize', 24);
 %set(gcf, 'Position', get(0,'Screensize'));

@@ -3,8 +3,8 @@ function barkTemp(dataDir, isRegridded, region)
     K = [.221 .175 .156 .141 .077];
     timeStep = 1;
 
-    maxTempVar = 'tasmax';
-    minTempVar = 'tasmin';
+    maxTempVar = 'tmax';
+    minTempVar = 'tmin';
 
     regridStr = '';
     if isRegridded
