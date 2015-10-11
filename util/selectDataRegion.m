@@ -47,7 +47,9 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         data{2} = data{2}(latIndexRange, lonIndexRange);
         data{3} = data{3}(latIndexRange, lonIndexRange, :);
         
-        if strcmp(variable, 'tasmax') || strcmp(variable, 'tasmin')
+        dataOld = data{3};
+        
+        if strcmp(variable, 'tasmax') || strcmp(variable, 'tasmin') || strcmp(variable, 'tmax') || strcmp(variable, 'tmin')
             data{3} = data{3} - 273.15;
         end
         
@@ -95,15 +97,29 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
                         for p = 10:-1:1
                             if isBaseYear
                                 % test against base cutoffs
-                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{3}{2}(xlat, ylon, p)
+                                if p == 1
+                                    % if we have reached p = 1, then cell
+                                    % is either between p = 1 and 2 or < p
+                                    % = 1, both of which result in applying
+                                    % p = 1 correction
                                     data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
                                     break;
+                                else
+                                    if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{3}{2}(xlat, ylon, p)
+                                        data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                        break;
+                                    end
                                 end
                             else
                                 % test against future cutoffs
-                                if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{closestDecade}{2}(xlat, ylon, p)
+                                if p == 1
                                     data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
                                     break;
+                                else
+                                    if data{3}(xlat, ylon, day) > cmip5BiasCor{biasModel}{closestDecade}{2}(xlat, ylon, p)
+                                        data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
+                                        break;
+                                    end
                                 end
                             end
                         end
@@ -112,6 +128,10 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
             end
         end
 
+        if ~exist(outputDir)
+            mkdir(outputDir);
+        end
+        
         eval([fNameParts{1} ' = data;']);
         if v7
             save([outputDir '\' fname], fNameParts{1}, '-v7');

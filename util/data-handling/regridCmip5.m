@@ -1,4 +1,4 @@
-regridVar = 'tasmin';
+regridVar = 'pr';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -16,13 +16,14 @@ modelBaseDir = 'cmip5/output';
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
       
-models = {'hadgem2-es'};
+models = {'hadgem2-es', 'mpi-esm-mr', 'ipsl-cm5a-mr', 'noresm1-m'};
 
 ensembles = {'r1i1p1'};
-rcps = {'rcp45', 'historical', 'rcp85'};
+rcps = {'historical', 'rcp85'};
 plevs = {};
 
-latLonBounds = [[-90, 90]; [0 359]];
+% nepal
+latLonBounds = [[15 45]; [70 100]];
 v7 = false;
       
 for m = 1:length(models)

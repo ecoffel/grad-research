@@ -9,7 +9,7 @@ baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-% testModels = {''};
+%testModels = {'gfdl-cm3'};
 % baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
@@ -28,13 +28,23 @@ testPeriodYears = 1985:2004;
 %testPeriodYears = 2040:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
+annualmean = true;
 exportformat = 'pdf';
 
 blockWater = true;
+baseBiasCorrect = false;
+testBiasCorrect = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
+
+baseBcStr = '';
+
+if ~testBiasCorrect
+    testBcStr = '-nbc';
+else
+    testBcStr = '-bc';
+end
 
 if strcmp(season, 'summer')
     findMax = false;
@@ -142,12 +152,11 @@ end
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
-    fileTimeStr = [testDatasetStr '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [testDatasetStr testBcStr '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 else
     fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
 
-plotTitle = [testDatasetStr ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
 fileTitle = ['extremeAnom-' baseVar '-' fileTimeStr '.' exportformat];
 
 baseExt = {};
@@ -165,7 +174,11 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        
+        if strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
+            baseDaily{3} = baseDaily{3} - 273.15;
+        end
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -192,8 +205,12 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
+            if strcmp(testVar, 'tmax') | strcmp(testVar, 'tmin')
+                testDaily{3} = testDaily{3} - 273.15;
+            end
+        
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
@@ -242,7 +259,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 Annual minimum bark temperature bias'];
+plotTitle = ['CMIP5 mean daily minimum bark temperature bias (corrected)'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

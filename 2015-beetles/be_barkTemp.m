@@ -1,21 +1,28 @@
-function barkTemp(dataDir, isRegridded, region)
+function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
     K = [.221 .175 .156 .141 .077];
     timeStep = 1;
 
-    maxTempVar = 'tmax';
-    minTempVar = 'tmin';
+    maxTempVar = 'tasmax';
+    minTempVar = 'tasmin';
 
     regridStr = '';
     if isRegridded
         regridStr = 'regrid/';
     end
-
-    maxTempDirNames = dir([dataDir '/' maxTempVar '/' regridStr '/' region]);
+    
+    bcStr = '';
+    if biasCorrected
+        bcStr = '-bc';
+    else
+        bcStr = '-nbc';
+    end
+       
+    maxTempDirNames = dir([dataDir '/' maxTempVar '/' regridStr '/' region bcStr]);
     maxTempDirIndices = [maxTempDirNames(:).isdir];
     maxTempDirNames = {maxTempDirNames(maxTempDirIndices).name}';
 
-    minTempDirNames = dir([dataDir '/' minTempVar '/' regridStr '/' region]);
+    minTempDirNames = dir([dataDir '/' minTempVar '/' regridStr '/' region bcStr]);
     minTempDirIndices = [minTempDirNames(:).isdir];
     minTempDirNames = {minTempDirNames(minTempDirIndices).name}';
 
@@ -183,7 +190,7 @@ function barkTemp(dataDir, isRegridded, region)
         minTempEndMonth = str2num(minTempFileSubParts{3});
     end
 
-    folDataTarget = [dataDir '/bt/' regridStr region '/' num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
+    folDataTarget = [dataDir '/bt/' regridStr region bcStr '/' num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
@@ -253,11 +260,19 @@ function barkTemp(dataDir, isRegridded, region)
         eval(['maxTempLon = ' maxTempMatFileNameNoExt '{2};']);
         eval(['maxTempData = ' maxTempMatFileNameNoExt '{3};']);
         eval(['clear ' maxTempMatFileNameNoExt ';']);
-
+        
         eval(['minTempLat = ' minTempMatFileNameNoExt '{1};']);
         eval(['minTempLon = ' minTempMatFileNameNoExt '{2};']);
         eval(['minTempData = ' minTempMatFileNameNoExt '{3};']);
         eval(['clear ' minTempMatFileNameNoExt ';']);
+
+        if maxTempData(1,1,1) > 150
+            maxTempData = maxTempData - 273.15;
+        end
+
+        if minTempData(1,1,1) > 150
+            minTempData = minTempData - 273.15;
+        end
 
         if size(maxTempData,1) ~= size(minTempData,1)
             ['lat dimensions do not match, skipping ' maxTempCurFileName]
@@ -325,8 +340,6 @@ function barkTemp(dataDir, isRegridded, region)
                 end
             end
         end
-
-        
 
         ['processing ' btCurDir '/' fileName]
         eval([fileName ' = {maxTempLat, maxTempLon, monthlyBarkT};']);

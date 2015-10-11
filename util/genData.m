@@ -1,11 +1,10 @@
-vars = {'tasmax'};
+vars = {'tasmin', 'tasmax'};
 
 for v = 1:length(vars)
     var = vars{v};
-    models = {'cmcc-cm', 'cmcc-cms'};
-%     models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%               'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+%    models = {'gfdl-cm3'};
+    models = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
+              'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
 
     regions = {'usne'};
     rcps = {'historical', 'rcp85'};
@@ -16,9 +15,16 @@ for v = 1:length(vars)
 
     regridded = true;
     skipExisting = true;
-    biasCorrect = true;
+    biasCorrect = false;
     v7 = false;
 
+    bcStr = '';
+    if biasCorrect
+        bcStr = 'bc';
+    else
+        bcStr = 'nbc';
+    end
+    
     for m = 1:length(models)
         for r = 1:length(regions)
             for rcp = 1:length(rcps)
@@ -34,16 +40,16 @@ for v = 1:length(vars)
                 for d = 1:length(dirNames)
                     curDir = [baseDir '/' dirNames{d}];
 
-                    if strcmp(dirNames{d}, '.') || strcmp(dirNames{d}, '..') || ismember(dirNames{d}, regions)
+                    if strcmp(dirNames{d}, '.') || strcmp(dirNames{d}, '..') || ismember(dirNames{d}, [regions '-' bcStr])
                         continue;
                     end
 
-                    newDir = [baseDir '/' regions{r} '/' dirNames{d}];
+                    newDir = [baseDir '/' regions{r} '-' bcStr '/' dirNames{d}];
                     if ~isdir(newDir) && length(find(isstrprop(dirNames{d},'digit'))) > 0
                         mkdir(newDir);
                     end
 
-                    ['processing ' models{m} '/' regions{r} '/' rcps{rcp} '...']
+                    ['processing ' models{m} '/' regions{r} '-' bcStr '/' rcps{rcp} '...']
                     selectDataRegion(curDir, newDir, baseYears, futureYears, futureDecades, var, models{m}, regions{r}, biasCorrect, v7, skipExisting);
 
                 end

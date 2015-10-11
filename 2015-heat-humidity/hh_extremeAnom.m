@@ -5,20 +5,20 @@ season = 'all';
 basePeriod = 'past';
 testPeriod = 'past';
 
-baseDataset = 'cmip5';
+baseDataset = 'ncep';
 testDataset = 'cmip5';
 
-%baseModels = {'gfdl-cm3'};
+baseModels = {''};
 % testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
-testVar = '';
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 %basePeriodYears = 2060:2070;
 basePeriodYears = 1985:2004;
@@ -28,7 +28,7 @@ testPeriodYears = 2050:2069;
 annualmean = true;
 exportformat = 'pdf';
 
-biasCorrect = false;
+biasCorrect = true;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -55,7 +55,7 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'usne';
+plotRegion = 'world';
 
 if strcmp(baseVar, 'zg500')
     gridbox = false;
@@ -102,7 +102,7 @@ elseif strcmp(baseVar, 'wb')
         plotRange = [25 35];
     end
     plotXUnits = 'degrees C';
-elseif strcmp(baseVar, 'rh')
+elseif strcmp(baseVar, 'rh') || strcmp(baseVar, 'rhum')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [-5 5];
@@ -202,14 +202,29 @@ for m = 1:length(baseModels)
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
         if strcmp(baseDataset, 'cmip5')
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         elseif strcmp(baseDataset, 'ncep')
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            baseDaily{3} = baseDaily{3}-273.15;
+            
+            if strcmp(baseVar, 'tmax')
+                baseDaily{3} = baseDaily{3}-273.15;
+            end
+            
+            if length(size(baseDaily{3}) == 4)
+                baseDaily{3} = squeeze(baseDaily{3}(:,:,1,:));
+            end
         end
         
+        baseExtTmp = {};
+        
         if annualmean
-            baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
+            if length(size(baseDaily{3})) == 3
+                baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(baseDaily{3}(:,:,:), 3)}};
+            elseif length(size(baseDaily{3})) == 5
+                baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
+            else
+                ['baseDaily dimensions unexpected']
+            end
         else
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
@@ -286,7 +301,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 wet bulb annual mean'];
+plotTitle = ['CMIP5 mean daily maximum temperature bias (corrected)'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

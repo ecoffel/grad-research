@@ -1,8 +1,8 @@
 function relHumidity(dataDir, isRegridded)
 
-tempVar = 'tasmax';
-hussVar = 'huss';
-pslVar = 'psl';
+tempVar = 'tmax';
+hussVar = 'shum';
+pslVar = 'mslp';
 
 regridStr = '';
 if isRegridded
