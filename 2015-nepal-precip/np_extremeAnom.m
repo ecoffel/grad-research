@@ -2,22 +2,22 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'future';
+basePeriod = 'past';
 testPeriod = 'past';
 
-baseDataset = 'cmip5';
+baseDataset = 'ncep';
 testDataset = 'cmip5';
 
-%baseModels = {''};
+baseModels = {''};
 % testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
+baseVar = 'prate';
 testVar = '';
 
 %basePeriodYears = 2060:2070;
@@ -25,10 +25,10 @@ basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2069;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
+annualmean = true;
 exportformat = 'pdf';
 
-biasCorrect = true;
+biasCorrect = false;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -55,47 +55,16 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'world';
+plotRegion = 'nepal';
 
 if strcmp(baseVar, 'zg500')
-    gridbox = false;
     plotRange = [-150 150];
-    plotXUnits = 'm';
-elseif strcmp(baseVar, 'mrso')
-    gridbox = true;
-    if strcmp(dataset, 'narr')
-        plotRange = [-200 200];
-        plotXUnits = 'kg / m^2';
-    else
-        plotRange = [-200 200];
-        plotXUnits = 'kg / m^2';
-    end
-elseif strcmp(baseVar, 'swe')
-    gridbox = true;
-    if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [-0.01 0.01];
-    else
-        plotRange = [-0.02 0.02];
-    end
     plotXUnits = 'm';
 elseif strcmp(baseVar, 'va850') | strcmp(baseVar, 'ua850')
     gridbox = false;
     plotRange = [-10 10];
     plotXUnits = 'm/s';
-elseif strcmp(baseVar, 'huss')
-    gridbox = true;
-    plotRange = [-0.003 0.003];
-    plotXUnits = 'kg water vapor / kg air';
-elseif strcmp(baseVar, 'hi')
-    gridbox = true;
-    if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [-10 10];
-    else
-        plotRange = [26 60];
-    end
-    plotXUnits = 'degrees C';
 elseif strcmp(baseVar, 'wb')
-    gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [-10 10];
     else
@@ -103,7 +72,6 @@ elseif strcmp(baseVar, 'wb')
     end
     plotXUnits = 'degrees C';
 elseif strcmp(baseVar, 'rh') || strcmp(baseVar, 'rhum')
-    gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [-5 5];
     else
@@ -111,15 +79,20 @@ elseif strcmp(baseVar, 'rh') || strcmp(baseVar, 'rhum')
     end
     plotXUnits = 'percent';
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
-    gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [-10 10];
     else
         plotRange = [0 50];
     end
     plotXUnits = 'degrees C';
+elseif strcmp(baseVar, 'pr') | strcmp(baseVar, 'prate')
+    if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
+        plotRange = [-10 10];
+    else
+        plotRange = [0 10];
+    end
+    plotXUnits = 'mm/day';
 end
-
 
 if strcmp(basePeriod, 'past')
     basePeriod = basePeriodYears;
@@ -203,16 +176,10 @@ for m = 1:length(baseModels)
         ['year ' num2str(y) '...']
         if strcmp(baseDataset, 'cmip5')
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily{3} = baseDaily{3} * 86400;
         elseif strcmp(baseDataset, 'ncep')
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            
-            if strcmp(baseVar, 'tmax')
-                baseDaily{3} = baseDaily{3}-273.15;
-            end
-            
-            if length(size(baseDaily{3}) == 4)
-                baseDaily{3} = squeeze(baseDaily{3}(:,:,1,:));
-            end
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily{3} = baseDaily{3} * 86400;
         end
         
         baseExtTmp = {};
@@ -248,13 +215,9 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            if biasCorrect
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-                testDaily{3} = testDaily{3}-273.15;
-            end
-
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily{3} = testDaily{3} * 86400;
+            
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
             else
@@ -301,7 +264,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 projected annual maxiimum wet bulb'];
+plotTitle = ['NCEP mean annual precip'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

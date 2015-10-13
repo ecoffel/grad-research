@@ -95,6 +95,9 @@ elseif strcmp(region, 'usne')
 elseif strcmp(region, 'middle')
     axesm('mercator','MapLatLimit',[-40 40],'MapLonLimit',[0 359]);
     framem off; gridm off; mlabel off; plabel off;
+elseif strcmp(region, 'nepal')
+    axesm('mercator','MapLatLimit',[15 40],'MapLonLimit',[70 100]);
+    framem off; gridm off; mlabel off; plabel off;
 else
     worldmap(region);
     data{1}(:, end+1) = data{1}(:, end) + (data{1}(:, end)-data{1}(:, end-1));

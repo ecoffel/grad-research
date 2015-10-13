@@ -16,7 +16,7 @@ modelBaseDir = 'cmip5/output';
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
       
-models = {'hadgem2-es', 'mpi-esm-mr', 'ipsl-cm5a-mr', 'noresm1-m'};
+models = {'gfdl-esm2m', 'cmcc-cm'};
 
 ensembles = {'r1i1p1'};
 rcps = {'historical', 'rcp85'};

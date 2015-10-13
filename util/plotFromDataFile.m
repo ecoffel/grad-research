@@ -22,7 +22,13 @@ function [fg, cb] = plotFromDataFile(saveData)
         vectorData = [];
     end
     
-    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData);
+    if isfield(saveData, 'plotCountries')
+        plotCountries = true;
+    else
+        plotCountries = false;
+    end
+    
+    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries);
     
     set(gca, 'Color', 'none');
     set(gca, 'FontSize', 24);
@@ -78,6 +84,8 @@ function [fg, cb] = plotFromDataFile(saveData)
         load coast;
         geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
+    
+    
 
     
     eval(['export_fig ' saveData.fileTitle ';']);
