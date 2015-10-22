@@ -66,7 +66,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         
         if biasCorrect
             
-            load(['cmip5BiasCorrection_' variable '_' region '.mat']);
+            load(['bias-correction/cmip5BiasCorrection_' variable '_' region '.mat']);
             eval(['cmip5BiasCor = cmip5BiasCorrection_' variable '_' region ';']);
             
             biasModel = -1;

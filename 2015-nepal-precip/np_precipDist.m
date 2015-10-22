@@ -8,10 +8,10 @@ testPeriod = 'past';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {''};
-baseModels = {'cmcc-cm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+% baseModels = {''};
+baseModels = {'ccsm4', 'cmcc-cm', 'cmcc-cms', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
               'hadgem2-es', 'mpi-esm-mr', 'noresm1-m'};
-testModels = {'cmcc-cm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+testModels = {'ccsm4', 'cmcc-cm', 'cmcc-cms', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
               'hadgem2-es', 'mpi-esm-mr', 'noresm1-m'};
       
 baseVar = 'pr';
@@ -222,7 +222,7 @@ baseSeasonal = nanmean(baseSeasonal, 5);
 
 for s = 1:length(seasons)
     plotTitle = ['CMIP5 ' seasons{s} ' precip dist'];
-    fileTitle = ['precipDist-' baseVar '-' seasons{s} '-' fileTimeStr '.' exportformat];
+    fileTitle = ['precipDist-' baseDataset '-' baseVar '-' seasons{s} '-' fileTimeStr '.' exportformat];
     
     baseSeasonalLinear = reshape(baseSeasonal(:,:,:,s), [size(baseSeasonal(:,:,:,s), 1)*size(baseSeasonal(:,:,:,s), 2)*size(baseSeasonal(:,:,:,s), 3), 1]);
     
@@ -242,7 +242,9 @@ for s = 1:length(seasons)
     set(gca, 'FontSize', 24);
     xlabel('mm/day');
     ylabel('occurences');
-    
+    set(gcf, 'Position', get(0,'Screensize'));
+    tightfig;
+    eval(['export_fig ' fileTitle ';']);
     
 %     result = {baseLat, baseLon, baseSeasonal(:,:,s)};
 %     saveData = struct('data', {result}, ...

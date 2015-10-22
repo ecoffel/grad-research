@@ -24,12 +24,13 @@ baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2050;
+testPeriodYears = 2006:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'pdf';
 
+biasCorrect = true;
 blockWater = true;
 
 baseDir = 'e:/data/';
@@ -58,7 +59,7 @@ end
 
 plotRegion = 'usne';
 
-plotRange = [2020 2055];
+plotRange = [2005 2040];
 plotXUnits = 'Year';
 
 if strcmp(basePeriod, 'past')
@@ -125,6 +126,13 @@ baseExt = {};
 futureExt = {};
 percentiles = [];
 
+bcStr = '';
+if biasCorrect
+    bcStr = '-bc';
+else
+    bcStr = '-nbc';
+end
+
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
         curModel = baseModels{m};
@@ -138,7 +146,7 @@ for m = 1:length(baseModels)
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
 
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -167,7 +175,7 @@ if ~strcmp(testVar, '')
             ['year ' num2str(y) '...']
             % load daily data
 
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if annualmean
                 testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
@@ -196,11 +204,11 @@ plotRange = [2020 2045];
 
 probabilityThreshold = true;
 
-tempThreshold = -11;       % bark temp
+tempThreshold = -11;         % bark temp
 %tempThreshold = -16;        % air temp
     
 if probabilityThreshold
-    cutoff = [70 80 90 100];
+    cutoff = [90];
     futureWindow = 10;
 else
     cutoff = [-6 -7 -8 -10 -1] - 4;
@@ -266,7 +274,7 @@ for t = cutoff
     end
 
     agreement = [];
-    agreementThresh = length(testModels)/2.0;
+    agreementThresh = length(testModels) * 0.50;
     % find number of models that agree on the decade
     for xlat = 1:size(lastYear, 1)
         for ylon = 1:size(lastYear, 2)
@@ -281,38 +289,73 @@ for t = cutoff
         end
     end
     
+    multiModelMean = false;
     
-    lastYear = nanmean(lastYear, 3);
+    if multiModelMean
+        lastYear = nanmean(lastYear, 3);
+        result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
 
-    result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
-
-    cutoffStr = '';
-    if probabilityThreshold
-        cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
-        plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
-    else
-        if t == -1
-            cutoffStr = 'mean';
-            plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+        cutoffStr = '';
+        if probabilityThreshold
+            cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
+            plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
         else
-            cutoffStr = [num2str(t) 'C'];
-            plotTitle = ['Time of emergence (mean TNn)'];
+            if t == -1
+                cutoffStr = 'mean';
+                plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+            else
+                cutoffStr = [num2str(t) 'C'];
+                plotTitle = ['Time of emergence (mean TNn)'];
+            end
+        end
+
+        fileTitle = ['bt-toe' bcStr '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
+
+        saveData = struct('data', {result}, ...
+                          'plotRegion', plotRegion, ...
+                          'plotRange', plotRange, ...
+                          'plotTitle', plotTitle, ...
+                          'fileTitle', fileTitle, ...
+                          'plotXUnits', plotXUnits, ...
+                          'blockWater', blockWater, ...
+                          'statData', agreement, ...
+                          'stippleInterval', 0.5, ...
+                          'colormap', 'autumn');
+
+        plotFromDataFile(saveData);
+    else
+        for modelnum = 1:size(lastYear,3)
+            result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear(:,:,modelnum)};
+
+            cutoffStr = '';
+            if probabilityThreshold
+                cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
+                plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C) model = ' baseModels{modelnum}];
+            else
+                if t == -1
+                    cutoffStr = 'mean';
+                    plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+                else
+                    cutoffStr = [num2str(t) 'C'];
+                    plotTitle = ['Time of emergence (mean TNn)'];
+                end
+            end
+
+            fileTitle = ['bt-toe' bcStr '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
+
+            saveData = struct('data', {result}, ...
+                              'plotRegion', plotRegion, ...
+                              'plotRange', plotRange, ...
+                              'plotTitle', plotTitle, ...
+                              'fileTitle', fileTitle, ...
+                              'plotXUnits', plotXUnits, ...
+                              'blockWater', blockWater, ...
+                              'statData', agreement, ...
+                              'stippleInterval', 0.5, ...
+                              'colormap', 'autumn');
+
+            plotFromDataFile(saveData);
         end
     end
-
-    fileTitle = ['bt-toe-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
-
-    saveData = struct('data', {result}, ...
-                      'plotRegion', plotRegion, ...
-                      'plotRange', plotRange, ...
-                      'plotTitle', plotTitle, ...
-                      'fileTitle', fileTitle, ...
-                      'plotXUnits', plotXUnits, ...
-                      'blockWater', blockWater, ...
-                      'statData', agreement, ...
-                      'stippleInterval', 0.5, ...
-                      'colorMap', 'autumn');
-
-    plotFromDataFile(saveData);
 end
 

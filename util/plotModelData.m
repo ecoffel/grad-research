@@ -90,7 +90,7 @@ elseif strcmp(region, 'north-america')
     axesm('mercator','MapLatLimit',[20 75],'MapLonLimit',[-160 -35]);
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'usne')
-    axesm('mercator','MapLatLimit',[35 50],'MapLonLimit',[-100 -60]);
+    axesm('mercator','MapLatLimit',[36 50],'MapLonLimit',[-90 -60]);
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'middle')
     axesm('mercator','MapLatLimit',[-40 40],'MapLonLimit',[0 359]);

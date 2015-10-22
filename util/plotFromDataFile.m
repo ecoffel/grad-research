@@ -11,7 +11,7 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     
     if isfield(saveData, 'colormap')
-        colorMap = saveData.colorMap;
+        colorMap = saveData.colormap;
     else
         colorMap = [];
     end
@@ -84,9 +84,6 @@ function [fg, cb] = plotFromDataFile(saveData)
         load coast;
         geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
-    
-    
-
     
     eval(['export_fig ' saveData.fileTitle ';']);
     fileNameParts = strsplit(saveData.fileTitle, '.');

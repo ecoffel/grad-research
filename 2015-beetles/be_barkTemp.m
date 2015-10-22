@@ -47,7 +47,7 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
             continue;
         end
 
-        maxTempCurDir = [dataDir '/' maxTempVar '/' regridStr region '/' maxTempDirNames{d}];
+        maxTempCurDir = [dataDir '/' maxTempVar '/' regridStr region bcStr '/' maxTempDirNames{d}];
 
         if ~isdir(maxTempCurDir)
             continue;
@@ -66,7 +66,7 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
             continue;
         end
 
-        minTempCurDir = [dataDir  '/' minTempVar '/' regridStr region '/' minTempDirNames{d}];
+        minTempCurDir = [dataDir  '/' minTempVar '/' regridStr region bcStr '/' minTempDirNames{d}];
 
         if ~isdir(minTempCurDir)
             continue;

@@ -10,7 +10,7 @@ testDataset = 'cmip5';
 
 baseModels = {''};
 % testModels = {'cmcc-cm', 'cmcc-cms'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
@@ -26,9 +26,9 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-futureDecades = [2020:2030; 2030:2040; 2040:2050; 2050:2060; 2060:2070];
+futureDecades = {2006:2010, 2010:2020, 2020:2030, 2030:2040, 2040:2050, 2050:2060};
 
-region = 'nepal';
+region = 'usne';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -215,16 +215,16 @@ for m = 1:length(testModels)
     
     ['loading future decades...']
     decadeCutoffs = {};
-    for decade = 1:size(futureDecades, 1)
+    for decade = 1:length(futureDecades)
         decadeCutoffs{decade} = [];
         curDecadeData = {};
-        for y = 1:size(futureDecades, 2)
-            ['year ' num2str(futureDecades(decade, y)) '...']
+        for y = 1:length(futureDecades{decade})
+            ['year ' num2str(futureDecades{decade}(y)) '...']
         
             if testRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid'], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid'], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
             else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades(decade, y), 'yearEnd', (futureDecades(decade, y)+yearStep)-1);
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
             end
             
             if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
@@ -315,8 +315,8 @@ for m = 1:length(testModels)
     end
     
     % add cutoffs for each decade to mat structure
-    for decade = 1:size(futureDecades, 1)
-        testBiasCorrection{m}{3+decade} = {futureDecades(decade, 1), decadeCutoffs{decade}};
+    for decade = 1:length(futureDecades)
+        testBiasCorrection{m}{3+decade} = {futureDecades{decade}(1), decadeCutoffs{decade}};
     end
     clear testDist testData;
 end

@@ -6,20 +6,20 @@ basePeriod = 'past';
 testPeriod = 'past';
 
 baseDataset = 'ncep';
-testDataset = 'cmip5';
+testDataset = 'narr';
 
 baseModels = {''};
-%testModels = {'gfdl-cm3'};
+testModels = {''};
 % baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'bt';
-testVar = 'bt';
+baseVar = 'tmin';
+testVar = 'tasmin';
 
-baseRegrid = true;
-modelRegrid = true;
+baseRegrid = false;
+modelRegrid = false;
 
 region = 'usne';
 
@@ -33,7 +33,7 @@ exportformat = 'pdf';
 
 blockWater = true;
 baseBiasCorrect = false;
-testBiasCorrect = true;
+testBiasCorrect = false;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -259,7 +259,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 mean daily minimum bark temperature bias (corrected)'];
+plotTitle = ['NARR - NCEP mean daily minimum temperature bias'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

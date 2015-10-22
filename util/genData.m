@@ -2,20 +2,21 @@ vars = {'tasmin', 'tasmax'};
 
 for v = 1:length(vars)
     var = vars{v};
-%    models = {'gfdl-cm3'};
-    models = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
-              'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
+%     models = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
+%               'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
 
+    models = {'hadgem2-es'};
+    
     regions = {'usne'};
     rcps = {'historical', 'rcp85'};
 
     baseYears = 1980:2005;
-    futureYears = 2020:2050;    
-    futureDecades = 2020:10:2050;
+    futureYears = 2006:2060;    
+    futureDecades = [2006, 2010, 2020, 2030, 2040, 2050, 2060];
 
     regridded = true;
     skipExisting = true;
-    biasCorrect = false;
+    biasCorrect = true;
     v7 = false;
 
     bcStr = '';
