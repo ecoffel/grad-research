@@ -32,14 +32,16 @@ b = geoshow(pinuresi, 'DisplayType', 'polygon', 'FaceColor', [204/255.0, 235/255
 c = geoshow(pinurigi, 'DisplayType', 'polygon', 'FaceColor', [251/255.0, 180/255.0, 174/255.0]);
 geoshow(states, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none', 'LineWidth', 1);
 
-load('bt-toe-bc-bt-90-perc--11-cmip5-all-ext-2006-2050-cmip5-1985-2004');
+load('bt-toe-bc-221-bt-90-perc--11-cmip5-all-ext-2006-2050-cmip5-1985-2004');
 X=saveData.data{1};
 Y=saveData.data{2};
 Z=saveData.data{3};
 
+set(gcf, 'Position', get(0,'Screensize'));
+
 if ~fourColor    
     [C, h] = contourm(X, Y, Z, 2015:5:2050, 'LineWidth', 2, 'LineColor', 'black');
-    labels = clabelm(C, h);
+    labels = clabelm(C, h, 'manual');
     set(labels, 'FontSize', 22);
     
     contours = {};
@@ -196,7 +198,6 @@ if computeAreas
 end
 
 title('Forest Types', 'FontSize', 24);
-%set(gcf, 'Position', get(0,'Screensize'));
 l = legend([a b c], 'Jack Pine', 'Red Pine', 'Pitch Pine');
 set(l, 'FontSize', 24, 'Location', 'south');
 

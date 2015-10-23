@@ -126,7 +126,7 @@ baseExt = {};
 futureExt = {};
 percentiles = [];
 
-kStr = '-221';
+kStr = '-077';
 bcStr = '';
 if biasCorrect
     bcStr = ['-bc' kStr];
