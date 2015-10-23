@@ -1,6 +1,7 @@
 function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
-    K = [.221 .175 .156 .141 .077];
+    K = 0.077;
+    %K = [.221 .175 .156 .141 .077];
     timeStep = 1;
 
     maxTempVar = 'tasmax';
@@ -17,6 +18,8 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
     else
         bcStr = '-nbc';
     end
+    
+    kStr = '-077';
        
     maxTempDirNames = dir([dataDir '/' maxTempVar '/' regridStr '/' region bcStr]);
     maxTempDirIndices = [maxTempDirNames(:).isdir];
@@ -190,7 +193,7 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
         minTempEndMonth = str2num(minTempFileSubParts{3});
     end
 
-    folDataTarget = [dataDir '/bt/' regridStr region bcStr '/' num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
+    folDataTarget = [dataDir '/bt/' regridStr region bcStr kStr '/' num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else

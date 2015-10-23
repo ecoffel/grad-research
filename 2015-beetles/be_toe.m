@@ -126,9 +126,10 @@ baseExt = {};
 futureExt = {};
 percentiles = [];
 
+kStr = '-221';
 bcStr = '';
 if biasCorrect
-    bcStr = '-bc';
+    bcStr = ['-bc' kStr];
 else
     bcStr = '-nbc';
 end
@@ -200,7 +201,7 @@ for m = 1:length(baseExt)
     baseAvg = nanmean(baseAvg, 4);
 end
 
-plotRange = [2020 2045];
+plotRange = [2005 2040];
 
 probabilityThreshold = true;
 
