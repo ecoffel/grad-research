@@ -208,6 +208,7 @@ for m = 1:length(baseModels)
 end
 
 meanBaseSelGrid = nanmean(nanmean(meanBaseSelGrid, 4), 3);
+futureSelGrid = zeros(size(lat, 1), size(lat, 2), length(testPeriodYears), length(baseModels));
 
 if ~strcmp(testVar, '')
     for m = 1:length(testModels)
@@ -240,6 +241,7 @@ if ~strcmp(testVar, '')
                 for ylon = 1:size(testDailyExtTmp, 2)
                     if testDailyExtTmp(xlat, ylon) >= exposureThreshold
                         selGrid(xlat, ylon) = 1;
+                        futureSelGrid(xlat, ylon, y-testPeriodYears(1)+1, m) = 1;
                     end
                 end
             end
