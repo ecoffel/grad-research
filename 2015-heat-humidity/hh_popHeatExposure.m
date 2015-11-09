@@ -5,8 +5,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-%baseModels = {'bnu-esm'};
-%testModels = {'bnu-esm'};
+% baseModels = {'bnu-esm', 'canesm2'};
+% testModels = {'bnu-esm', 'canesm2'};
 
 baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
@@ -29,7 +29,7 @@ biasCorrect = true;
 popRegrid = true;
 
 region = 'world';
-exposureThreshold = 33;
+exposureThreshold = 32;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -151,7 +151,7 @@ constPopCount = [];
 constClimateCount = [];
 
 if biasCorrect
-     load(['cmip5BiasCorrection_' baseVar '_' region '.mat']);
+     load(['bias-correction/cmip5BiasCorrection_' baseVar '_' region '.mat']);
      eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_' region ';']);
 end
 
@@ -254,10 +254,11 @@ if ~strcmp(testVar, '')
 end
 ['done loading...']
 
-basePopCount = nanmean(basePopCount, 1);
-futurePopCount = nanmean(futurePopCount, 1);
-constPopCount = nanmean(constPopCount, 1);
-constClimateCount = nanmean(constClimateCount, 1);
+% average over models
+mmBasePopCount = nanmean(basePopCount, 1);
+mmFuturePopCount = nanmean(futurePopCount, 1);
+mmConstPopCount = nanmean(constPopCount, 1);
+mmConstClimateCount = nanmean(constClimateCount, 1);
 
 % exposure rise due to climate alone
 climatePopEffect = constPopCount;
@@ -266,21 +267,60 @@ popPopEffect = constClimateCount;
 % exposure rise due to climate & pop
 interactionEffect = futurePopCount - climatePopEffect - popPopEffect;
 
+% calculate uncertainties
+climEstd = squeeze(nanstd(climatePopEffect, 1));
+popEstd = squeeze(nanstd(popPopEffect, 1));
+intEstd = squeeze(nanstd(interactionEffect, 1));
+futPopStd = squeeze(nanstd(futurePopCount, 1));
+
+mmClimatePopEffect = nanmean(climatePopEffect, 1);
+mmPopPopEffect = nanmean(popPopEffect, 1);
+mmInteractionEffect = nanmean(interactionEffect, 1);
+
 % calc decadal means
 futureDecX = (testPeriodYears(1)-1)+5:10:(testPeriodYears(end)-1)+5;
+mmFutureDecY = [];
+mmFutureDecYerr = [];
+
 futureDecY = [];
+futureDecYerr = [];
+
 for d = 1:length(futureDecX)
-    popE = nanmean(popPopEffect((d-1)*10+1 : d*10));
-    climE = nanmean(climatePopEffect((d-1)*10+1 : d*10));
-    intE = nanmean(interactionEffect((d-1)*10+1 : d*10));
-    futureDecY(d,:) = [popE, climE, intE, popE+climE+intE];
+    mmPopE = nanmean(mmPopPopEffect((d-1)*10+1 : d*10));
+    mmPopEerr = nanmean(popEstd((d-1)*10+1 : d*10));
+    
+    mmClimE = nanmean(mmClimatePopEffect((d-1)*10+1 : d*10));
+    mmClimEerr = nanmean(climEstd((d-1)*10+1 : d*10));
+    
+    mmIntE = nanmean(mmInteractionEffect((d-1)*10+1 : d*10));
+    mmIntEerr = nanmean(intEstd((d-1)*10+1 : d*10));
+    
+    mmFutEerr = nanmean(futPopStd((d-1)*10+1 : d*10));
+    
+    mmFutureDecY(d,:) = [mmPopE, mmClimE, mmIntE, mmPopE+mmClimE+mmIntE];
+    mmFutureDecYerr(d,:) = [mmPopEerr, mmClimEerr, mmIntEerr, mmFutEerr];
+    
+    popE = squeeze(nanmean(popPopEffect(:, (d-1)*10+1 : d*10), 2));
+    climE = squeeze(nanmean(climatePopEffect(:, (d-1)*10+1 : d*10), 2));
+    intE = squeeze(nanmean(interactionEffect(:, (d-1)*10+1 : d*10), 2));
+    
+    futureDecY(d, 1, :) = popE;
+    futureDecY(d, 2, :) = climE;
+    futureDecY(d, 3, :) = intE;
+    futureDecY(d, 4, :) = popE+climE+intE;
+    
+    futureDecYerr(d, 1) = nanstd(popE);
+    futureDecYerr(d, 2) = nanstd(climE);
+    futureDecYerr(d, 3) = nanstd(intE);
+    futureDecYerr(d, 4) = nanstd(popE+climE+intE);
 end
 
-plotTitle = 'Exposure to 33C wet bulb, global';
+plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...
-                  'futureDecY', futureDecY, ...
+                  'futureDecY', mmFutureDecY, ...
+                  'futureDecYerr', mmFutureDecYerr, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...
@@ -289,11 +329,53 @@ saveData = struct('futureDecX', futureDecX, ...
 barChart = true;
               
 if barChart
+
+    trace1 = struct('x', { saveData.futureDecX }, ...
+                  'y', saveData.futureDecYerr(:,1), ...
+                  'name', 'Population effect', ...
+                  'error_y', struct(...
+                    'type', 'data', ...
+                    'array', saveData.futureDecY(:,1), ...
+                    'visible', true), ...
+                  'type', 'bar');
+              
+	trace2 = struct('x', { saveData.futureDecX }, ...
+                  'y', saveData.futureDecYerr(:,2), ...
+                  'name', 'Climate effect', ...
+                  'error_y', struct(...
+                    'type', 'data', ...
+                    'array', saveData.futureDecY(:,2), ...
+                    'visible', true), ...
+                  'type', 'bar');
+    trace3 = struct('x', { saveData.futureDecX }, ...
+                  'y', saveData.futureDecYerr(:,3), ...
+                  'name', 'Interaction effect', ...
+                  'error_y', struct(...
+                    'type', 'data', ...
+                    'array', saveData.futureDecY(:,3), ...
+                    'visible', true), ...
+                  'type', 'bar');
+              
+	trace4 = struct('x', { saveData.futureDecX }, ...
+                  'y', saveData.futureDecYerr(:,4), ...
+                  'name', 'Total', ...
+                  'error_y', struct(...
+                    'type', 'data', ...
+                    'array', saveData.futureDecY(:,4), ...
+                    'visible', true), ...
+                  'type', 'bar');
+              
+    plotlyData = {trace1, trace2, trace3, trace4};
+    plotlyLayout = struct('barmode', 'group');
+    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', 'error-bar-bar', 'fileopt', 'overwrite'));
+    
     figure('Color', [1, 1, 1]);
     hold on;
-    
-    B = bar(saveData.futureDecX, saveData.futureDecY, 1.0, 'grouped');
 
+    B = barwitherr([saveData.futureDecYerr(:,1), saveData.futureDecYerr(:,2), saveData.futureDecYerr(:,3), saveData.futureDecYerr(:,4)], ...
+                   saveData.futureDecX, ...
+                   [saveData.futureDecY(:,1), saveData.futureDecY(:,2), saveData.futureDecY(:,3), saveData.futureDecY(:,4)]);
+    
     set(B(1), 'FaceColor', [181,82,124] ./ 255.0);
     set(B(2), 'FaceColor', [107,169,61] ./ 255.0);
     set(B(3), 'FaceColor', [104,126,171] ./ 255.0);
