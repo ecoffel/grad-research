@@ -8,17 +8,19 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm', 'gfdl-cm3'};
-% testModels = {'bnu-esm', 'gfdl-cm3'};
-baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'csiro-mk3-6-0'};
+testModels = {'csiro-mk3-6-0'};
+% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
 testVar = 'bt';
 
 region = 'usne';
+
+ensembles = 1:10;
 
 baseRegrid = true;
 modelRegrid = true;
@@ -115,223 +117,201 @@ elseif strcmp(baseDatasetStr, 'ncep')
     baseRcp = '';
 end
 
-fileTimeStr = '';
-if ~strcmp(testVar, '')
-    fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
-else
-    fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
-end
-
-baseExt = {};
-futureExt = {};
-percentiles = [];
-
-kStr = '-077';
-bcStr = '';
-if biasCorrect
-    bcStr = ['-bc' kStr];
-else
-    bcStr = '-nbc';
-end
-
-for m = 1:length(baseModels)
-    if strcmp(baseModels{m}, '')
-        curModel = baseModels{m};
+for e = ensembles
+    ensemble = ['r' num2str(e) 'i1p1/'];
+    
+    fileTimeStr = '';
+    if ~strcmp(testVar, '')
+        fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
     else
-        curModel = [baseModels{m} '/'];
+        fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
     end
 
-    baseExt{m} = {};
-    
-    ['loading ' curModel ' base']
-    for y = basePeriod(1):yearStep:basePeriod(end)
-        ['year ' num2str(y) '...']
+    baseExt = {};
+    futureExt = {};
+    percentiles = [];
 
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        
-        if annualmean
-            baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
-        else
-            baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
-        end
-        
-        baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
-        clear baseDaily baseExtTmp;
+    kStr = '-077';
+    bcStr = '';
+    if biasCorrect
+        bcStr = ['-bc' kStr];
+    else
+        bcStr = '-nbc';
     end
     
-end
-
-if ~strcmp(testVar, '')
-    for m = 1:length(testModels)
-        if strcmp(testModels{m}, '')
-            curModel = testModels{m};
+    for m = 1:length(baseModels)
+        if strcmp(baseModels{m}, '')
+            curModel = baseModels{m};
         else
-            curModel = [testModels{m} '/'];
+            curModel = [baseModels{m} '/'];
         end
-        
-        futureExt{m} = {};
 
-        ['loading ' curModel ' future']
-        for y = testPeriod(1):yearStep:testPeriod(end)
+        baseExt{m} = {};
+
+        ['loading ' curModel ' base']
+        for y = basePeriod(1):yearStep:basePeriod(end)
             ['year ' num2str(y) '...']
-            % load daily data
 
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if annualmean
-                testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
+                baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
             else
-                testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+                baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
             end
 
-            futureExt{m} = {futureExt{m}{:}, testDailyExtTmp{:}};
-            clear testDaily testDailyExtTmp;
+            baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
+            clear baseDaily baseExtTmp;
+        end
+
+    end
+
+    if ~strcmp(testVar, '')
+        for m = 1:length(testModels)
+            if strcmp(testModels{m}, '')
+                curModel = testModels{m};
+            else
+                curModel = [testModels{m} '/'];
+            end
+
+            futureExt{m} = {};
+
+            ['loading ' curModel ' future']
+            for y = testPeriod(1):yearStep:testPeriod(end)
+                ['year ' num2str(y) '...']
+                % load daily data
+
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region bcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+
+                if annualmean
+                    testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
+                else
+                    testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+                end
+
+                futureExt{m} = {futureExt{m}{:}, testDailyExtTmp{:}};
+                clear testDaily testDailyExtTmp;
+            end
         end
     end
-end
 
-['done loading...']
-baseAvg = [];
+    ['done loading...']
+    baseAvg = [];
 
-% average over models and years
-for m = 1:length(baseExt)
-    for y = 1:length(baseExt{m})
-        baseAvg(:,:,m, y) = baseExt{m}{y}{3};
+    % average over models and years
+    for m = 1:length(baseExt)
+        for y = 1:length(baseExt{m})
+            baseAvg(:,:,m, y) = baseExt{m}{y}{3};
+        end
+        baseAvg = nanmean(baseAvg, 4);
     end
-    baseAvg = nanmean(baseAvg, 4);
-end
 
-plotRange = [2005 2040];
+    plotRange = [2005 2040];
 
-probabilityThreshold = true;
+    probabilityThreshold = true;
 
-tempThreshold = -11;         % bark temp
-%tempThreshold = -16;        % air temp
-    
-if probabilityThreshold
-    cutoff = [90];
-    futureWindow = 10;
-else
-    cutoff = [-6 -7 -8 -10 -1] - 4;
-end
+    tempThreshold = -11;         % bark temp
+    %tempThreshold = -16;        % air temp
 
-for t = cutoff
-    lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
-    
     if probabilityThreshold
-        for m = 1:length(futureExt)
-            for y = 1:length(futureExt{m})-futureWindow
-                
-                % number of times in futureWindow that cold threshold is
-                % surpassed
-                eventCount = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2));
-                
-                for y2 = y:y+futureWindow-1
-                    curTest(:,:) = futureExt{m}{y2}{3};
-                    
+        cutoff = [70 80 90 100];
+        futureWindow = 10;
+    else
+        cutoff = [-6 -7 -8 -10 -1] - 4;
+    end
+
+    for t = cutoff
+        lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
+
+        if probabilityThreshold
+            for m = 1:length(futureExt)
+                for y = 1:length(futureExt{m})-futureWindow
+
+                    % number of times in futureWindow that cold threshold is
+                    % surpassed
+                    eventCount = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2));
+
+                    for y2 = y:y+futureWindow-1
+                        curTest(:,:) = futureExt{m}{y2}{3};
+
+                        for xlat = 1:size(curTest, 1)
+                            for ylon = 1:size(curTest, 2)
+
+                                if curTest(xlat, ylon) <= tempThreshold
+                                    eventCount(xlat, ylon) = eventCount(xlat, ylon) + 1;
+                                end
+
+                            end
+                        end
+                    end
+
+                    for xlat = 1:size(eventCount, 1)
+                        for ylon = 1:size(eventCount, 2)
+                            if eventCount(xlat, ylon) >= 0.01*t*futureWindow
+                                lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
+                            elseif lastYear(xlat, ylon, m) == 0
+                                lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
+                            end
+                        end
+                    end
+
+                end
+            end
+        else
+            for m = 1:length(futureExt)
+                for y = 1:length(futureExt{m})
+                    curTest(:,:) = futureExt{m}{y}{3};
                     for xlat = 1:size(curTest, 1)
                         for ylon = 1:size(curTest, 2)
 
-                            if curTest(xlat, ylon) <= tempThreshold
-                                eventCount(xlat, ylon) = eventCount(xlat, ylon) + 1;
-                            end
-                            
-                        end
-                    end
-                end
-                
-                for xlat = 1:size(eventCount, 1)
-                    for ylon = 1:size(eventCount, 2)
-                        if eventCount(xlat, ylon) >= 0.01*t*futureWindow
-                            lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
-                        elseif lastYear(xlat, ylon, m) == 0
-                            lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
-                        end
-                    end
-                end
-                
-            end
-        end
-    else
-        for m = 1:length(futureExt)
-            for y = 1:length(futureExt{m})
-                curTest(:,:) = futureExt{m}{y}{3};
-                for xlat = 1:size(curTest, 1)
-                    for ylon = 1:size(curTest, 2)
-
-                        if t == -1
-                            if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
-                                lastYear(xlat, ylon, m) = y + testPeriodYears(1);
-                            end
-                        else
-                            if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
-                                lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                            if t == -1
+                                if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
+                                    lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                                end
+                            else
+                                if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
+                                    lastYear(xlat, ylon, m) = y + testPeriodYears(1);
+                                end
                             end
                         end
                     end
                 end
             end
         end
-    end
 
-    agreement = [];
-    agreementThresh = length(testModels) * 0.50;
-    % find number of models that agree on the decade
-    for xlat = 1:size(lastYear, 1)
-        for ylon = 1:size(lastYear, 2)
-            curToe = roundn(squeeze(lastYear(xlat, ylon, :)), 1);
-            curMode = mode(curToe);
-            n = length(find(curToe == curMode));
-            if n >= agreementThresh
-                agreement(xlat, ylon) = 1;
-            else
-                agreement(xlat, ylon) = 0;
-            end
-        end
-    end
-    
-    multiModelMean = false;
-    
-    if multiModelMean
-        lastYear = nanmean(lastYear, 3);
-        result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
-
-        cutoffStr = '';
-        if probabilityThreshold
-            cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
-            plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
-        else
-            if t == -1
-                cutoffStr = 'mean';
-                plotTitle = ['Time of emergence (' num2str(t) 'C)'];
-            else
-                cutoffStr = [num2str(t) 'C'];
-                plotTitle = ['Time of emergence (mean TNn)'];
+        showAgreement = false;
+        
+        agreement = [];
+        if showAgreement
+            agreementThresh = length(testModels) * 0.50;
+            % find number of models that agree on the decade
+            for xlat = 1:size(lastYear, 1)
+                for ylon = 1:size(lastYear, 2)
+                    curToe = roundn(squeeze(lastYear(xlat, ylon, :)), 1);
+                    curMode = mode(curToe);
+                    n = length(find(curToe == curMode));
+                    if n >= agreementThresh
+                        agreement(xlat, ylon) = 1;
+                    else
+                        agreement(xlat, ylon) = 0;
+                    end
+                end
             end
         end
 
-        fileTitle = ['bt-toe' bcStr '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
+        multiModelMean = false;
 
-        saveData = struct('data', {result}, ...
-                          'plotRegion', plotRegion, ...
-                          'plotRange', plotRange, ...
-                          'plotTitle', plotTitle, ...
-                          'fileTitle', fileTitle, ...
-                          'plotXUnits', plotXUnits, ...
-                          'blockWater', blockWater, ...
-                          'statData', agreement, ...
-                          'stippleInterval', 0.5, ...
-                          'colormap', 'autumn');
+        lastYearOrig = lastYear;
 
-        plotFromDataFile(saveData);
-    else
-        for modelnum = 1:size(lastYear,3)
-            result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear(:,:,modelnum)};
+        if multiModelMean
+            % plotting the multi-model mean
+            lastYear = nanmean(lastYearOrig, 3);
+            result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear};
 
             cutoffStr = '';
             if probabilityThreshold
                 cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
-                plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C) model = ' baseModels{modelnum}];
+                plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C)'];
             else
                 if t == -1
                     cutoffStr = 'mean';
@@ -342,7 +322,7 @@ for t = cutoff
                 end
             end
 
-            fileTitle = ['bt-toe' bcStr '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
+            fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
 
             saveData = struct('data', {result}, ...
                               'plotRegion', plotRegion, ...
@@ -356,6 +336,42 @@ for t = cutoff
                               'colormap', 'autumn');
 
             plotFromDataFile(saveData);
+        else
+            % no multi-model mean
+            lastYear = lastYearOrig;
+
+            for modelnum = 1:size(lastYearOrig,3)
+                result = {futureExt{m}{y}{1}, futureExt{m}{y}{2}, lastYear(:,:,modelnum)};
+
+                cutoffStr = '';
+                if probabilityThreshold
+                    cutoffStr = [num2str(t) '-perc-' num2str(tempThreshold)];
+                    plotTitle = ['Time of emergence (' num2str(t) '% chance of ' num2str(tempThreshold) 'C) model = ' baseModels{modelnum}];
+                else
+                    if t == -1
+                        cutoffStr = 'mean';
+                        plotTitle = ['Time of emergence (' num2str(t) 'C)'];
+                    else
+                        cutoffStr = [num2str(t) 'C'];
+                        plotTitle = ['Time of emergence (mean TNn)'];
+                    end
+                end
+
+                fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
+
+                saveData = struct('data', {result}, ...
+                                  'plotRegion', plotRegion, ...
+                                  'plotRange', plotRange, ...
+                                  'plotTitle', plotTitle, ...
+                                  'fileTitle', fileTitle, ...
+                                  'plotXUnits', plotXUnits, ...
+                                  'blockWater', blockWater, ...
+                                  'statData', agreement, ...
+                                  'stippleInterval', 0.5, ...
+                                  'colormap', 'autumn');
+
+                plotFromDataFile(saveData);
+            end
         end
     end
 end
