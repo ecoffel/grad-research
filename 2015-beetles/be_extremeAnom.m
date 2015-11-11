@@ -19,7 +19,7 @@ baseVar = 'tmin';
 testVar = 'tasmin';
 
 baseRegrid = false;
-modelRegrid = false;
+testRegrid = false;
 
 region = 'usne';
 
@@ -28,7 +28,7 @@ testPeriodYears = 1985:2004;
 %testPeriodYears = 2040:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = true;
+annualmean = false;
 exportformat = 'pdf';
 
 blockWater = true;
@@ -205,7 +205,10 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+
+            % for narr
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if strcmp(testVar, 'tmax') | strcmp(testVar, 'tmin')
                 testDaily{3} = testDaily{3} - 273.15;
@@ -245,6 +248,11 @@ if ~strcmp(testVar, '')
     end
     modelAvg = {futureExt{1}{1}{1}, futureExt{1}{1}{2}, nanmean(nanmean(modelAvg, 4), 3)};
     
+    if strcmp(baseDataset, 'ncep') && strcmp(testDataset, 'narr')
+        baseAvg{2} = baseAvg{2}-360;
+        modelAvg{3} = modelAvg{3}-273.15;
+    end
+
     % regrid the base data if needed
     if size(baseAvg{3}) ~= size(modelAvg{3})
         baseExtAvgRegrid = regridGriddata(baseAvg, modelAvg);
@@ -259,7 +267,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['NARR - NCEP mean daily minimum temperature bias'];
+plotTitle = ['NARR - NCEP annual minimum temperature bias'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

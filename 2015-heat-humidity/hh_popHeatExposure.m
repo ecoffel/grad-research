@@ -30,6 +30,7 @@ popRegrid = true;
 
 region = 'world';
 exposureThreshold = 32;
+ssp = 3;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -201,7 +202,7 @@ for m = 1:length(baseModels)
         
         meanBaseSelGrid(:, :, m, y-basePeriodYears(1)+1) = selGrid;
         
-        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid)
+        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid)
         
         clear baseDaily baseExtTmp;
     end
@@ -246,9 +247,9 @@ if ~strcmp(testVar, '')
                 end
             end
 
-            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], 5, popRegrid)
-            constPopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], 5, popRegrid);
-            constClimateCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [roundn(y, 1)], 5, popRegrid);
+            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], ssp, popRegrid)
+            constPopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
+            constClimateCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [roundn(y, 1)], ssp, popRegrid);
             
             clear testDaily testDailyExtTmp;
         end
@@ -318,7 +319,7 @@ for d = 1:length(futureDecX)
 end
 
 plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
-fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' region];
+fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-ssp' num2str(ssp) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...
                   'futureDecY', mmFutureDecY, ...
@@ -369,7 +370,7 @@ if barChart
               
     plotlyData = {trace1, trace2, trace3, trace4};
     plotlyLayout = struct('barmode', 'group');
-    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', 'error-bar-bar', 'fileopt', 'overwrite'));
+    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-ssp' num2str(ssp)], 'fileopt', 'overwrite'));
     
     figure('Color', [1, 1, 1]);
     hold on;

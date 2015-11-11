@@ -10,17 +10,17 @@ testDataset = 'cmip5';
 
 baseModels = {'csiro-mk3-6-0'};
 testModels = {'csiro-mk3-6-0'};
-% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'bt';
 testVar = 'bt';
 
 region = 'usne';
 
-ensembles = 1:10;
+ensembles = 1;
 
 baseRegrid = true;
 modelRegrid = true;
@@ -131,7 +131,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '-077';
+    kStr = '';
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];
@@ -210,7 +210,8 @@ for e = ensembles
 
     probabilityThreshold = true;
 
-    tempThreshold = -11;         % bark temp
+    %tempThreshold = -11;         % bark temp
+    tempThreshold = -15;         % new bark temp (11/11/15)
     %tempThreshold = -16;        % air temp
 
     if probabilityThreshold
@@ -299,7 +300,7 @@ for e = ensembles
             end
         end
 
-        multiModelMean = false;
+        multiModelMean = true;
 
         lastYearOrig = lastYear;
 
@@ -322,7 +323,9 @@ for e = ensembles
                 end
             end
 
-            fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
+            modelStr = 'mm';
+            
+            fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
 
             saveData = struct('data', {result}, ...
                               'plotRegion', plotRegion, ...
@@ -357,7 +360,9 @@ for e = ensembles
                     end
                 end
 
-                fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
+                modelStr = baseModels{modelnum};
+                
+                fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
 
                 saveData = struct('data', {result}, ...
                                   'plotRegion', plotRegion, ...

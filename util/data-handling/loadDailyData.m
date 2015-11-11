@@ -52,7 +52,7 @@ if ~obs
     dirNames = {dirNames(dirIndices).name}';
 
     if length(dirNames) == 0
-        dirNames(1) = '';
+        dindirNames(1) = '';
     end
     
     for d = 1:length(dirNames)

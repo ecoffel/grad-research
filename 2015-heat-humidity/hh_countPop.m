@@ -72,9 +72,9 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
     for y = 1:length(popYears)
 
         if regridded
-            load(['C:\git-ecoffel\grad-research\ssp\ssp5\output\ssp5\regrid\ssp5_' num2str(popYears(y)) '.mat']);
+            load(['C:\git-ecoffel\grad-research\ssp\ssp' num2str(sspNum) '\output\ssp' num2str(sspNum) '\regrid\ssp' num2str(sspNum) '_' num2str(popYears(y)) '.mat']);
         else
-            load(['C:\git-ecoffel\grad-research\ssp\ssp5\output\ssp5\ssp5_' num2str(popYears(y)) '.mat']);
+            load(['C:\git-ecoffel\grad-research\ssp\ssp' num2str(sspNum) '\output\ssp' num2str(sspNum) '\ssp' num2str(sspNum) '_' num2str(popYears(y)) '.mat']);
         end
         
         eval(['ssp = ssp' num2str(sspNum) '_' num2str(popYears(y)) ';']);
