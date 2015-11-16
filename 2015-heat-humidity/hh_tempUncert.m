@@ -13,6 +13,8 @@ var = 'wb';
 rcp = 'rcp85';
 ensemble = 'r1i1p1';
 
+wbThresh = 27;
+
 years = 2020:2069;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -42,7 +44,7 @@ for m = 1:length(models)
         curModel = [models{m} '/'];
     end
 
-    globalWb{m} = [];
+    globalWb{m} = {};
     
     decInd = 0;
     
@@ -52,6 +54,7 @@ for m = 1:length(models)
         
         if mod(y, 10) == 0
             decInd = decInd+1;
+            globalWb{m}{decInd} = [];
         end
         
         daily = loadDailyData([baseDir dataDir '/' curModel ensemble '/' rcp '/' var '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
@@ -61,10 +64,10 @@ for m = 1:length(models)
             lon = daily{2};
         end
         
-        % select wb temps about 28
-        %dailyLinear = reshape(daily{3}, [size(daily{3},1)*size(daily{3},2)*size(daily{3},3)*size(daily{3},4)*size(daily{3},5), 1]);
-        %dailyLinear = dailyLinear(dailyLinear >= 28);
-        %globalWb{m}(:, decInd) = cat(1, globalWb{m}(:, decInd), dailyLinear);
+        % select wb temps about 26
+        dailyLinear = reshape(daily{3}, [size(daily{3}, 1)*size(daily{3}, 2)*size(daily{3}, 3)*size(daily{3}, 4)*size(daily{3}, 5), 1]);
+        dailyLinear = dailyLinear(dailyLinear >= wbThresh);
+        globalWb{m}{decInd} = cat(1, globalWb{m}{decInd}, dailyLinear);
         
         ext(:, :, m, y-years(1)+1) = squeeze(nanmax(nanmax(daily{3}, [], 5), [], 4));
             
@@ -72,75 +75,122 @@ for m = 1:length(models)
     end
 end
 
-extStd30 = nanstd(nanmean(ext(:, :, :, 10:20), 4), [], 3);
-extStd40 = nanstd(nanmean(ext(:, :, :, 20:30), 4), [], 3);
-extStd50 = nanstd(nanmean(ext(:, :, :, 30:40), 4), [], 3);
-extStd60 = nanstd(nanmean(ext(:, :, :, 40:50), 4), [], 3);
+gevAnalysis = true;
+stdPlots = false;
 
 
-plotRange = [-5 5];
-plotRegion = 'world';
-plotXUnits = 'degrees C';
-blockWater = true;
-
-plotTitle = ['Mean annual maximum wet-bulb, 2030-2040'];
-fileTitle = 'tempUncert-std-2030.pdf';
-result = {lat, lon, extStd30};
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', true);
-
-plotFromDataFile(saveData);
-
-
-
-plotTitle = ['Mean annual maximum wet-bulb, 2040-2050'];
-fileTitle = 'tempUncert-std-2040.pdf';
-result = {lat, lon, extStd40};
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', true);
-
-plotFromDataFile(saveData);
-
-
-
-plotTitle = ['Mean annual maximum wet-bulb, 2050-2060'];
-fileTitle = 'tempUncert-std-2050.pdf';
-result = {lat, lon, extStd50};
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', true);
-
-plotFromDataFile(saveData);
+if gevAnalysis
+    
+    gpdfs = [];
+    
+    x = linspace(wbThresh, 35, 200);
+    
+    for m = 1:length(models)
+        ['fitting ' models{m}]
+        % generate GEV fit for current model in 2060s
+        [parmhat,parmci] = gevfit(globalWb{m}{5}(globalWb{m}{5} >= 30));
+        
+        kCI = parmci(:,1)
+        sigmaCI = parmci(:,2)
+        muCI = parmci(:,3)
+        
+        kMLE = parmhat(1)        % Shape parameter
+        sigmaMLE = parmhat(2)    % Scale parameter
+        muMLE = parmhat(3)       % Location parameter
+        
+        if ~isnan(kCI(1))
+            gpdf = gevpdf(x, kMLE,sigmaMLE, muMLE);
+            gpdfs(m, :) = gpdf;
+        else
+            gpdfs(m, :) = zeros(200);
+        end
+    end
+    
+    colors = distinguishable_colors(length(models));
+    
+    figure('Color',[1,1,1]);
+    hold on;
+    
+    for g = 1:size(gpdfs, 1)
+        rtnPeriod = zeros(size(gpdfs, 2));
+        rtnInd = find(~isinf(1 ./ gpdfs(g, :)));
+        rtnPeriod(rtnInd) = 1 ./ gpdfs(g, rtnInd);
+        plot(x, rtnPeriod, 'LineWidth', 2, 'Color', colors(g, :));
+    end
+    
+end
 
 
+if stdPlots
+    extStd30 = nanstd(nanmean(ext(:, :, :, 10:20), 4), [], 3);
+    extStd40 = nanstd(nanmean(ext(:, :, :, 20:30), 4), [], 3);
+    extStd50 = nanstd(nanmean(ext(:, :, :, 30:40), 4), [], 3);
+    extStd60 = nanstd(nanmean(ext(:, :, :, 40:50), 4), [], 3);
 
-plotTitle = ['Mean annual maximum wet-bulb, 2060-2070'];
-fileTitle = 'tempUncert-std-2060.pdf';
-result = {lat, lon, extStd60};
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', true);
+    plotRange = [-5 5];
+    plotRegion = 'world';
+    plotXUnits = 'degrees C';
+    blockWater = true;
 
-plotFromDataFile(saveData);
+    plotTitle = ['Mean annual maximum wet-bulb, 2030-2040'];
+    fileTitle = 'tempUncert-std-2030.pdf';
+    result = {lat, lon, extStd30};
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'blockWater', blockWater, ...
+                      'plotCountries', true);
+
+    plotFromDataFile(saveData);
+
+
+
+    plotTitle = ['Mean annual maximum wet-bulb, 2040-2050'];
+    fileTitle = 'tempUncert-std-2040.pdf';
+    result = {lat, lon, extStd40};
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'blockWater', blockWater, ...
+                      'plotCountries', true);
+
+    plotFromDataFile(saveData);
+
+
+
+    plotTitle = ['Mean annual maximum wet-bulb, 2050-2060'];
+    fileTitle = 'tempUncert-std-2050.pdf';
+    result = {lat, lon, extStd50};
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'blockWater', blockWater, ...
+                      'plotCountries', true);
+
+    plotFromDataFile(saveData);
+
+
+
+    plotTitle = ['Mean annual maximum wet-bulb, 2060-2070'];
+    fileTitle = 'tempUncert-std-2060.pdf';
+    result = {lat, lon, extStd60};
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'blockWater', blockWater, ...
+                      'plotCountries', true);
+
+    plotFromDataFile(saveData);
+end

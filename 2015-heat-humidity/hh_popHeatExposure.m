@@ -29,8 +29,8 @@ biasCorrect = true;
 popRegrid = true;
 
 region = 'world';
-exposureThreshold = 32;
-ssp = 3;
+exposureThreshold = 29;
+ssp = 5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
