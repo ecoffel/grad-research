@@ -2,23 +2,23 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'future';
+basePeriod = 'past';
 testPeriod = 'past';
 
-baseDataset = 'cmip5';
+baseDataset = 'ncep';
 testDataset = 'cmip5';
 
-%baseModels = {''};
+baseModels = {''};
 % testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'wb';
-testVar = '';
+testVar = 'wb';
 
 %basePeriodYears = 2060:2070;
 basePeriodYears = 1985:2004;
@@ -209,10 +209,6 @@ for m = 1:length(baseModels)
             if strcmp(baseVar, 'tmax')
                 baseDaily{3} = baseDaily{3}-273.15;
             end
-            
-            if length(size(baseDaily{3}) == 4)
-                baseDaily{3} = squeeze(baseDaily{3}(:,:,1,:));
-            end
         end
         
         baseExtTmp = {};
@@ -252,7 +248,10 @@ if ~strcmp(testVar, '')
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             else
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-                testDaily{3} = testDaily{3}-273.15;
+                
+                if strcmp(testVar, 'tasmax') | strcmp(testVar, 'tasmin')
+                    testDaily{3} = testDaily{3}-273.15;
+                end
             end
 
             if annualmean
@@ -301,7 +300,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['CMIP5 projected annual maxiimum wet bulb'];
+plotTitle = ['CMIP5 annual maximum wet-bulb temperature bias (corrected)'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...

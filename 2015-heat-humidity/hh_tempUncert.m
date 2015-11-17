@@ -15,7 +15,7 @@ ensemble = 'r1i1p1';
 
 wbThresh = 27;
 
-years = 2020:2069;
+years = 2021:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -65,15 +65,39 @@ for m = 1:length(models)
         end
         
         % select wb temps about 26
-        dailyLinear = reshape(daily{3}, [size(daily{3}, 1)*size(daily{3}, 2)*size(daily{3}, 3)*size(daily{3}, 4)*size(daily{3}, 5), 1]);
-        dailyLinear = dailyLinear(dailyLinear >= wbThresh);
-        globalWb{m}{decInd} = cat(1, globalWb{m}{decInd}, dailyLinear);
+        %dailyLinear = reshape(daily{3}, [size(daily{3}, 1)*size(daily{3}, 2)*size(daily{3}, 3)*size(daily{3}, 4)*size(daily{3}, 5), 1]);
+        %dailyLinear = dailyLinear(dailyLinear >= wbThresh);
+        %globalWb{m}{decInd} = cat(1, globalWb{m}{decInd}, dailyLinear);
         
+        % save annual maximum wet-bulb temperature for each gridbox
         ext(:, :, m, y-years(1)+1) = squeeze(nanmax(nanmax(daily{3}, [], 5), [], 4));
             
         clear daily dailyLinear extTmp;
     end
 end
+
+latbounds = [-40 40];
+lonbounds = [0 359];
+[latindex, lonindex] = latLonIndexRange({lat, lon, []}, latbounds, lonbounds);
+ext = ext(latindex, lonindex, :, :);
+ext = squeeze(nanmax(nanmax(ext, [], 2), [], 1));
+
+figure('Color', [1, 1, 1]);
+hold on;
+colors = distinguishable_colors(size(ext, 1));
+legStr = '';
+for m = 1:size(ext, 1)
+    plot(years, ext(m, :), 'LineWidth', 2, 'Color', colors(m, :));
+    legStr = [legStr '''' models{m} '''' ','];
+end
+
+% remove trailing comma
+legStr = legStr(1:end-1);
+eval(['legend(' legStr ');']);
+
+
+
+
 
 gevAnalysis = true;
 stdPlots = false;
