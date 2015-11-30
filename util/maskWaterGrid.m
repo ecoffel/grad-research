@@ -1,4 +1,4 @@
-function [maskedData] = maskWater(data)
+function [maskedData] = maskWaterGrid(data)
     
     [data, waterMask] = createWaterMask(data, []);
     

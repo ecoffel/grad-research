@@ -1,7 +1,7 @@
 function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
-    K = 0.221;
-    %K = [.221 .175 .156 .141 .077];
+    %K = 0.221;
+    K = [.221 .175 .156 .141 .077];
     timeStep = 1;
 
     maxTempVar = 'tasmax';
@@ -18,10 +18,10 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
     if biasCorrected
         bcStr = '-bc';
     else
-        bcStr = '-nbc';
+        %bcStr = '-nbc';
     end
     
-    kStr = '-221';
+    kStr = '-mean';
        
     maxTempDirNames = dir([dataDir '/' maxTempVar '/' regridStr '/' region bcStr]);
     maxTempDirIndices = [maxTempDirNames(:).isdir];
@@ -300,6 +300,23 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
             %continue;
         end
 
+        % if we are processing NARR, select USNE region only
+        if length(find(strfind(dataDir, 'narr'))) > 0
+            latBounds = [35 50];
+            lonBounds = [-90 -45];
+            
+            [latInd, lonInd] = latLonIndexRange({maxTempLat, maxTempLon, []}, latBounds, lonBounds);
+            
+            maxTempLat = maxTempLat(latInd, lonInd);
+            maxTempLon = maxTempLon(latInd, lonInd);
+            
+            minTempLat = minTempLat(latInd, lonInd);
+            minTempLon = minTempLon(latInd, lonInd);
+            
+            maxTempData = maxTempData(latInd, lonInd, :);
+            minTempData = minTempData(latInd, lonInd, :);
+        end
+        
         monthlyBarkT = [];
         monthlyBarkT(:,:,1) = (maxTempData(:,:,1)+minTempData(:,:,1)) ./ 2;
 
