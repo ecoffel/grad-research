@@ -1,12 +1,11 @@
-vars = {'tasmin', 'tasmax'};
-ensembles = {'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
+vars = {'tasmax'};
+ensembles = {'r1i1p1'};
 
-models = {'csiro-mk3-6-0'};
-%     models = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
-%               'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
-
-regions = {'usne'};
-rcps = {'historical', 'rcp85'};
+%     models = {'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
+%               'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
+models = {'gfdl-cm3'};
+regions = {'world'};
+rcps = {'rcp85'};
 
 for e = 1:length(ensembles)
     ensemble = ensembles{e};
@@ -14,13 +13,13 @@ for e = 1:length(ensembles)
         var = vars{v};
 
         baseYears = 1980:2005;
-        futureYears = 2006:2060;    
-        futureDecades = [2006, 2010, 2020, 2030, 2040, 2050, 2060];
+        futureYears = 2006:2090;    
+        futureDecades = [2006, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090];
 
         regridded = true;
-        skipExisting = false;
-        biasCorrect = true;
-        v7 = false;
+        skipExisting = true;
+        biasCorrect = false;
+        v7 = true;
 
         bcStr = '';
         if biasCorrect

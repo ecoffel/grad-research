@@ -1,7 +1,7 @@
 airports = {'LGA'};
 
 obsDir = 'e:\data\flight\wx\output\daily';
-obsPeriod = 1981:2010;
+obsPeriod = 2010;
 
 for a = 1:length(airports)
 

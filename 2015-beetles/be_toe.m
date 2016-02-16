@@ -8,13 +8,19 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'csiro-mk3-6-0'};
-testModels = {'csiro-mk3-6-0'};
+% baseModels = {'csiro-mk3-6-0'};
+% testModels = {'csiro-mk3-6-0'};
 baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-      
+
+% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'hadgem2-es', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'hadgem2-es', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'noresm1-m'};
+
+
 baseVar = 'bt';
 testVar = 'bt';
 
@@ -26,7 +32,7 @@ baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2006:2050;
+testPeriodYears = 2006:2090;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -131,7 +137,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '';
+    kStr = '-077';
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];
@@ -206,12 +212,12 @@ for e = ensembles
         baseAvg = nanmean(baseAvg, 4);
     end
 
-    plotRange = [2005 2040];
+    plotRange = [2005 2080];
 
     probabilityThreshold = true;
 
     %tempThreshold = -11;         % bark temp
-    tempThreshold = -15;         % new bark temp (11/11/15)
+    tempThreshold = -10;         % new bark temp (12/08/15)
     %tempThreshold = -16;        % air temp
 
     if probabilityThreshold
@@ -300,7 +306,7 @@ for e = ensembles
             end
         end
 
-        multiModelMean = true;
+        multiModelMean = false;
 
         lastYearOrig = lastYear;
 
