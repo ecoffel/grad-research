@@ -1,8 +1,8 @@
-targetYear = 2050;
+targetYear = 2080;
 fourColor = false;
 earthSA = 510.1e6;      % km^2
 
-computeAreas = false;
+computeAreas = true;
 
 pinubank = shaperead('2015-beetles/data/pinubank/pinubank.shp', 'UseGeoCoords', true);
 pinuresi = shaperead('2015-beetles/data/pinuresi/pinuresi.shp', 'UseGeoCoords', true);
@@ -32,7 +32,7 @@ b = geoshow(pinuresi, 'DisplayType', 'polygon', 'FaceColor', [204/255.0, 235/255
 c = geoshow(pinurigi, 'DisplayType', 'polygon', 'FaceColor', [251/255.0, 180/255.0, 174/255.0]);
 geoshow(states, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none', 'LineWidth', 1);
 
-load('bt-toe-bc-221-bt-90-perc--11-cmip5-all-ext-2006-2050-cmip5-1985-2004');
+load('bt-output\bt-toe-bc-mean-r1i1p1-mm-bt-100-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004');
 X=saveData.data{1};
 Y=saveData.data{2};
 Z=saveData.data{3};
@@ -40,8 +40,8 @@ Z=saveData.data{3};
 set(gcf, 'Position', get(0,'Screensize'));
 
 if ~fourColor    
-    [C, h] = contourm(X, Y, Z, 2015:5:2050, 'LineWidth', 2, 'LineColor', 'black');
-    labels = clabelm(C, h, 'manual');
+    [C, h] = contourm(X, Y, Z, [2020 2050 2080], 'LineWidth', 2, 'LineColor', 'black');
+    labels = clabelm(C, h);
     set(labels, 'FontSize', 22);
     
     contours = {};
@@ -63,10 +63,10 @@ else
     end
 end
 
-poly2040Lon = contours{end}{2}(1, :);
-poly2040Lon = [poly2040Lon(1) poly2040Lon poly2040Lon(end) poly2040Lon(1)];
-poly2040Lat = contours{end}{2}(2, :);
-poly2040Lat = [30 poly2040Lat 30 30];
+poly2040Lon = contours{2}{2}(1, :);
+poly2040Lon = [-50 poly2040Lon -100 -50];
+poly2040Lat = contours{2}{2}(2, :);
+poly2040Lat = [39 poly2040Lat 39 39];
 
 if computeAreas
     % area calculation

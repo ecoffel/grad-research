@@ -81,8 +81,8 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     
     if saveData.blockWater
-        load coast;
-        geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
+        %load coast;
+        %geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
     eval(['export_fig ' saveData.fileTitle ';']);

@@ -3,48 +3,57 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'past';
+testPeriod = 'future';
 
-baseDataset = 'ncep';
-testDataset = 'narr';
+baseDataset = 'cmip5';
+testDataset = 'cmip5';
 
-baseModels = {''};
-testModels = {''};
-% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {''};
+% testModels = {''};
+baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tmin';
-testVar = 'tasmin';
+baseVar = 'bt';
+testVar = 'bt';
 
-baseRegrid = false;
-testRegrid = false;
+baseRegrid = true;
+testRegrid = true;
 
 region = 'usne';
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 1985:2004;
-%testPeriodYears = 2040:2050;
+% testPeriodYears = 1985:2004;
+testPeriodYears = 2040:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'pdf';
 
 blockWater = true;
-baseBiasCorrect = false;
-testBiasCorrect = false;
+baseBiasCorrect = true;
+testBiasCorrect = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
 
-baseBcStr = '';
+
 
 if ~testBiasCorrect
     testBcStr = '-nbc';
 else
     testBcStr = '-bc';
 end
+
+if ~baseBiasCorrect
+    baseBcStr = '-nbc';
+else
+    baseBcStr = '-bc';
+end
+
+testBcStr = '-bc-mean';
+baseBcStr = '-bc-mean';
 
 if strcmp(season, 'summer')
     findMax = false;
@@ -205,10 +214,10 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             % for narr
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
             if strcmp(testVar, 'tmax') | strcmp(testVar, 'tmin')
                 testDaily{3} = testDaily{3} - 273.15;
@@ -267,7 +276,7 @@ else
     result = baseAvg;
 end
 
-plotTitle = ['NARR - NCEP annual minimum temperature bias'];
+plotTitle = ['CMIP5 air temperature change [2050-2040 - 1985-2005]'];
 
 saveData = struct('data', {result}, ...
                   'plotRegion', plotRegion, ...
