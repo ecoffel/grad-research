@@ -1,4 +1,4 @@
-regridVars = {'huss', 'psl', 'tasmax', 'tasmin'};
+regridVars = {'tasmax', 'tasmin'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -16,7 +16,7 @@ modelBaseDir = 'cmip5/output';
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
       
-models = {'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+models = {'hadgem2-es'};
 %models = {'gfdl-esm2g', 'gfdl-esm2m'};
 
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
@@ -28,10 +28,10 @@ plevs = {};
 %latLonBounds = [[15 45]; [70 100]];
 
 % usne
-%latLonBounds = [[30 55]; [-100 -62]+360];
+latLonBounds = [[30 55]; [-100 -62]+360];
 
 % world
-latLonBounds = [[-90 90]; [0 360]];
+%latLonBounds = [[-90 90]; [0 360]];
 
 v7 = false;
       
