@@ -1,8 +1,8 @@
 function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
-    K = 0.221;
+    %K = 0.221;
     %K = .077;
-	%K = [.221 .175 .156 .141 .077];
+	K = [.221 .175 .156 .141 .077];
     timeStep = 1;
 
     maxTempVar = 'tasmax';
@@ -22,7 +22,7 @@ function barkTemp(dataDir, isRegridded, region, biasCorrected)
         %bcStr = '-nbc';
     end
     
-    kStr = '-221';
+    kStr = '-mean';
        
     maxTempDirNames = dir([dataDir '/' maxTempVar '/' regridStr '/' region bcStr]);
     maxTempDirIndices = [maxTempDirNames(:).isdir];
