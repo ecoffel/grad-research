@@ -1,11 +1,11 @@
-vars = {'tasmax'};
+vars = {'tasmax', 'tasmin'};
 ensembles = {'r1i1p1'};
 
-%     models = {'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
-%               'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m', 'cmcc-cm', 'cmcc-cms'};
-models = {'gfdl-cm3'};
-regions = {'world'};
-rcps = {'rcp85'};
+models = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'gfdl-cm3', ...
+              'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'bnu-esm'};
+regions = {'usne'};
+rcps = {'rcp45'};
 
 for e = 1:length(ensembles)
     ensemble = ensembles{e};
@@ -18,8 +18,8 @@ for e = 1:length(ensembles)
 
         regridded = true;
         skipExisting = true;
-        biasCorrect = false;
-        v7 = true;
+        biasCorrect = true;
+        v7 = false;
 
         bcStr = '';
         if biasCorrect
@@ -31,7 +31,8 @@ for e = 1:length(ensembles)
         for m = 1:length(models)
             for r = 1:length(regions)
                 for rcp = 1:length(rcps)
-                    baseDir = ['E:\data\cmip5\output\' models{m} '\' ensemble '\' rcps{rcp} '\' var '\regrid'];
+                    baseDir = ['E:\data\cmip5\output\' models{m} '\' ensemble '\' rcps{rcp} '\' var '\regrid\' regions{r}];
+                    newBaseDir = ['E:\data\cmip5\output\' models{m} '\' ensemble '\' rcps{rcp} '\' var '\regrid\'];
                     dirNames = dir(baseDir);
                     dirIndices = [dirNames(:).isdir];
                     dirNames = {dirNames(dirIndices).name}';
@@ -47,13 +48,13 @@ for e = 1:length(ensembles)
                             continue;
                         end
 
-                        newDir = [baseDir '/' regions{r} '-' bcStr '/' dirNames{d}];
+                        newDir = [newBaseDir '/' regions{r} '-' bcStr '/' dirNames{d}];
                         if ~isdir(newDir) && length(find(isstrprop(dirNames{d},'digit'))) > 0
                             mkdir(newDir);
                         end
 
                         ['processing ' models{m} '/' regions{r} '-' bcStr '/' rcps{rcp} '...']
-                        selectDataRegion(curDir, newDir, baseYears, futureYears, futureDecades, var, models{m}, regions{r}, biasCorrect, v7, skipExisting);
+                        selectDataRegion(curDir, newDir, baseYears, futureYears, futureDecades, var, models{m}, rcps{rcp}, regions{r}, biasCorrect, v7, skipExisting);
 
                     end
                 end

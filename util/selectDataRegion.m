@@ -1,5 +1,5 @@
 
-function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDecades, variable, model, region, biasCorrect, v7, skipExisting)
+function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDecades, variable, model, rcp, region, biasCorrect, v7, skipExisting)
     %fileDir = ['E:\data\ncep-reanalysis\output\tmax\' num2str(y)];
     %outputDir = 'C:\git-ecoffel\climate-som\data\ncep\tmax';
 
@@ -66,7 +66,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         
         if biasCorrect
             
-            load(['bias-correction/cmip5BiasCorrection_' variable '_' region '.mat']);
+            load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
             eval(['cmip5BiasCor = cmip5BiasCorrection_' variable '_' region ';']);
             
             biasModel = -1;

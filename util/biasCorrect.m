@@ -9,7 +9,7 @@ baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-% testModels = {'csiro-mk3-6-0'};
+testModels = {'csiro-mk3-6-0'};
 % testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
 %           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
@@ -18,10 +18,11 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
+
 addToBC = false;
 
-baseVar = 'tmin';
-testVar = 'tasmin';
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
