@@ -14,10 +14,15 @@ testModels = {'csiro-mk3-6-0'};
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
 %           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-addToBC = true;
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'tmin';
-testVar = 'tasmin';
+
+addToBC = false;
+
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
@@ -26,7 +31,7 @@ testRegrid = true;
 
 basePeriodYears = 1985:2004;
 
-futureDecades = {2006:2010, 2010:2020, 2020:2030, 2030:2040, 2040:2050, 2050:2060, 2060:2070, 2070:2080, 2080:2090, 2090:2100};
+futureDecades = {2006:2010, 2010:2020, 2020:2030, 2030:2040, 2040:2050, 2050:2060, 2060:2070, 2070:2080, 2080:2090, 2090:2099};
 
 region = 'usne';
 
@@ -89,7 +94,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
-    futureRcp = 'rcp85/';
+    futureRcp = 'rcp45/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';
@@ -192,7 +197,7 @@ for m = 1:length(testModels)
         ['year ' num2str(y) '...']
         
         if testRegrid
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         else
             testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
@@ -222,7 +227,7 @@ for m = 1:length(testModels)
             ['year ' num2str(futureDecades{decade}(y)) '...']
         
             if testRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid'], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar '/regrid/' region], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
             else
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
             end
