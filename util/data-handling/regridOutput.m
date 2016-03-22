@@ -16,6 +16,7 @@ yearend = -1;
 skipExisting = true;
 latLonBounds = [];
 v7 = false;
+region = '';
 
 for i=1:2:length(varargin)
     key = varargin{i};
@@ -33,6 +34,9 @@ for i=1:2:length(varargin)
             latLonBounds = val;
         case 'v7'
             v7 = val;
+        case 'region'
+            region = val;
+            
     end
 end
 
@@ -58,7 +62,7 @@ for d = 1:length(dirNames)
         continue;
     end
     
-    regridDir = [dataDir '/regrid/' dirNames{d}];
+    regridDir = [dataDir '/regrid/' region '/' dirNames{d}];
     if ~isdir(regridDir) & length(findstr(dataDir, 'regrid')) == 0 & length(findstr(dirNames{d}, 'regrid')) == 0
         mkdir(regridDir);
     end

@@ -10,16 +10,13 @@ testDataset = 'cmip5';
 
 % baseModels = {'csiro-mk3-6-0'};
 % testModels = {'csiro-mk3-6-0'};
-baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
 
-% baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'hadgem2-es', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'hadgem2-es', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'noresm1-m'};
-
+baseModels = {'bnu-esm'};
+testModels = {'bnu-esm'};
 
 baseVar = 'bt';
 testVar = 'bt';
@@ -27,6 +24,7 @@ testVar = 'bt';
 region = 'usne';
 
 ensembles = 1;
+futureRcp = 'rcp45';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -67,7 +65,7 @@ end
 
 plotRegion = 'usne';
 
-plotRange = [2005 2040];
+plotRange = [2005 2090];
 plotXUnits = 'Year';
 
 if strcmp(basePeriod, 'past')
@@ -75,7 +73,7 @@ if strcmp(basePeriod, 'past')
     baseRcp = 'historical/';
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = 'rcp85/';
+    baseRcp = [futureRcp '/'];
 end
 
 if strcmp(testPeriod, 'past')
@@ -83,7 +81,7 @@ if strcmp(testPeriod, 'past')
     testRcp = 'historical/';
 elseif strcmp(testPeriod, 'future')
     testPeriod = testPeriodYears;
-    testRcp = 'rcp85/';
+    testRcp = [futureRcp '/'];
 end
 
 if ~strcmp(testVar, '')
@@ -221,7 +219,7 @@ for e = ensembles
     %tempThreshold = -16;        % air temp
 
     if probabilityThreshold
-        cutoff = [70 80 90 100];
+        cutoff = [100];
         futureWindow = 10;
     else
         cutoff = [-6 -7 -8 -10 -1] - 4;
@@ -243,7 +241,9 @@ for e = ensembles
 
                         for xlat = 1:size(curTest, 1)
                             for ylon = 1:size(curTest, 2)
-
+    
+                                % if the current gridcell is <= the temp
+                                % threshold, a killing event occurs
                                 if curTest(xlat, ylon) <= tempThreshold
                                     eventCount(xlat, ylon) = eventCount(xlat, ylon) + 1;
                                 end
@@ -254,8 +254,14 @@ for e = ensembles
 
                     for xlat = 1:size(eventCount, 1)
                         for ylon = 1:size(eventCount, 2)
+                            
+                            % if we exceed the threshold (more than x
+                            % occurances in the following futureWindow)
                             if eventCount(xlat, ylon) >= 0.01*t*futureWindow
                                 lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
+                                
+                            % if the value has not been set yet, set it
+                            % (initialization)
                             elseif lastYear(xlat, ylon, m) == 0
                                 lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
                             end
@@ -331,7 +337,7 @@ for e = ensembles
 
             modelStr = 'mm';
             
-            fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
+            fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' futureRcp '-' baseVar '-' cutoffStr '-' fileTimeStr '.' exportformat];
 
             saveData = struct('data', {result}, ...
                               'plotRegion', plotRegion, ...
@@ -342,7 +348,7 @@ for e = ensembles
                               'blockWater', blockWater, ...
                               'statData', agreement, ...
                               'stippleInterval', 0.5, ...
-                              'colormap', 'autumn');
+                              'colormap', brewermap(15, 'YlOrRd'));
 
             plotFromDataFile(saveData);
         else
@@ -368,7 +374,7 @@ for e = ensembles
 
                 modelStr = baseModels{modelnum};
                 
-                fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
+                fileTitle = ['bt-toe' bcStr '-' ensemble(1:end-1) '-' modelStr '-' futureRcp '-' baseVar '-' cutoffStr '-' fileTimeStr '-' baseModels{modelnum} '.' exportformat];
 
                 saveData = struct('data', {result}, ...
                                   'plotRegion', plotRegion, ...
@@ -379,7 +385,7 @@ for e = ensembles
                                   'blockWater', blockWater, ...
                                   'statData', agreement, ...
                                   'stippleInterval', 0.5, ...
-                                  'colormap', 'autumn');
+                                  'colormap', brewermap(15, 'YlOrRd'));
 
                 plotFromDataFile(saveData);
             end

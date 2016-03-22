@@ -5,7 +5,7 @@ models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'mri-cgcm3', 'noresm1-m'};
 
-%models = {'csiro-mk3-6-0'};
+% models = {'bnu-esm'};
 
 for m = 1:length(models)
     curModel = models{m};

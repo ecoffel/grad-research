@@ -9,20 +9,16 @@ baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-testModels = {'csiro-mk3-6-0'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%testModels = {'csiro-mk3-6-0'};
+testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
 
 addToBC = false;
 
-baseVar = 'tmax';
-testVar = 'tasmax';
+baseVar = 'tmin';
+testVar = 'tasmin';
 
 percentiles = 10:10:100;
 
@@ -124,7 +120,7 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         baseDaily = loadDailyData([baseDir baseDataDir '/' baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
     end
     
-    if strcmp(baseVar, 'tasmax') || strcmp(baseVar, 'tasmin') || strcmp(baseVar, 'tmax') || strcmp(baseVar, 'tmin')
+    if baseDaily{3}(1,1,1,1,1) > 100
         baseDaily{3} = baseDaily{3}-273.15;
     end
     
@@ -202,7 +198,7 @@ for m = 1:length(testModels)
             testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
         
-        if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+        if testDaily{3}(1,1,1,1,1) > 100
             testDaily{3} = testDaily{3}-273.15;
         end
         
@@ -326,20 +322,21 @@ for m = 1:length(testModels)
     clear testDist testData;
 end
 
-fileStr = ['cmip5BiasCorrection_' testVar '_' region '_tmp'];
+fileNewName = ['cmip5BiasCorrection_' testVar '_' region '_' futureRcp(1:end-1) '_tmp'];
+fileName = ['cmip5BiasCorrection_' testVar '_' region '_' futureRcp(1:end-1)];
 varName = ['cmip5BiasCorrection_' testVar '_' region];
 
 if addToBC
-    load([varName '.mat']);
+    load([fileName '.mat']);
     eval(['bc = ' varName ';']);
     for i = 1:length(testBiasCorrection)
         bc{end+1} = testBiasCorrection{i};
     end
     eval([varName ' =  bc;']);
-    save([fileStr '.mat'], varName);
+    save([fileNewName '.mat'], varName);
 else
     eval([varName ' =  testBiasCorrection;']);
-    save([fileStr '.mat'], varName);
+    save([fileNewName '.mat'], varName);
 end
 
 
