@@ -23,14 +23,14 @@ function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid)
     end
     
     % lon extension - rightward
-    while data1_lon(1,end) < data2_lon(1,end)
+    while data1_lon(1,end)+1 < data2_lon(1,end)
         data1_lon(:,end+1) = 360 - data1_lon(:,1);
         data1_lat(:,end+1) = data1_lat(:,end);
         data1_data(:,end+1) = data1_data(:,1);
     end
     
     % lat extension - downward
-    while data1_lat(end,1) < data2_lat(end,1)
+    while data1_lat(end,1)+1 < data2_lat(end,1)
         data1_lon(end+1,:) = data1_lon(end,:);
         data1_lat(end+1,:) = 180 + data1_lat(1,:);
         data1_data(end+1,:) = data1_data(1,:);

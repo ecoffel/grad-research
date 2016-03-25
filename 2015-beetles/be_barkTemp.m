@@ -1,17 +1,16 @@
 function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
-    %K = 0.221;
+    K = 0.221;
     %K = .077;
-	K = [.221 .175 .156 .141 .077];
-    kStr = '-mean';
-    
+	%K = [.221 .175 .156 .141 .077];
+    kStr = '-221';
     
     timeStep = 1;
 
     maxTempVar = 'tasmax';
     minTempVar = 'tasmin';
     
-    skipExisting = false;
+    skipExisting = true;
 
     regridStr = '';
     if isRegridded

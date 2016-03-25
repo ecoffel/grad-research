@@ -66,6 +66,10 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         
         if biasCorrect
             
+            if strcmp(rcp, 'historical')
+                rcp = 'rcp85';
+            end
+            
             load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
             eval(['cmip5BiasCor = cmip5BiasCorrection_' variable '_' region ';']);
             

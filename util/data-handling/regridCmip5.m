@@ -16,13 +16,11 @@ modelBaseDir = 'cmip5/output';
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
       
-models = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+models = {'inmcm4'};
 
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
 ensembles = {'r1i1p1'};
-rcps = {'rcp45'};
+rcps = {'historical', 'rcp85', 'rcp45'};
 plevs = {};
 
 region = 'usne';
