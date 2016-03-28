@@ -9,16 +9,16 @@ baseDataset = 'ncep';
 testDataset = 'cmip5';
 
 baseModels = {''};
-testModels = {'inmcm4', 'mri-cgcm3'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'cmcc-cm', 'cmcc-cms', ...
+%           'csiro-mk3-6-0', 'ec-earth', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'inmcm4', ...
+%           'hadgem2-es', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+testModels = {'ccsm4', 'cesm1-bgc', 'csiro-mk3-6-0', 'miroc-esm', 'mpi-esm-mr'};
 
-addToBC = true;
+addToBC = true;    
 
-baseVar = 'tmin';
-testVar = 'tasmin';
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
@@ -90,7 +90,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
-    futureRcp = 'rcp45/';
+    futureRcp = 'rcp85/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';

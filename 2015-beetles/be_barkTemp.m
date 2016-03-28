@@ -1,9 +1,9 @@
 function barkTemp(dataDir, isRegridded, region, biasCorrected)
 
-    K = 0.221;
+    %K = 0.221;
     %K = .077;
-	%K = [.221 .175 .156 .141 .077];
-    kStr = '-221';
+	K = [.221 .175 .156 .141 .077];
+    kStr = '-mean';
     
     timeStep = 1;
 
