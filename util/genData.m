@@ -3,7 +3,7 @@ ensembles = {'r1i1p1'};
 
 % models = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'gfdl-cm3', ...
 % 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'ccsm4', 'cesm1-bgc', 'csiro-mk3-6-0', 'miroc-esm', 'mpi-esm-mr'};
+models = {'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'csiro-mk3-6-0', 'miroc-esm', 'mpi-esm-mr'};
 regions = {'usne'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 
@@ -17,7 +17,7 @@ for e = 1:length(ensembles)
         futureDecades = [2006, 2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090];
 
         regridded = true;
-        skipExisting = false;
+        skipExisting = true;
         biasCorrect = true;
         v7 = false;
 
