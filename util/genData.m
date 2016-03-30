@@ -3,7 +3,7 @@ ensembles = {'r1i1p1'};
 
 % models = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'gfdl-cm3', ...
 % 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'csiro-mk3-6-0', 'miroc-esm', 'mpi-esm-mr'};
+models = {'inmcm4'};
 regions = {'usne'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 

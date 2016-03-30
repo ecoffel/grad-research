@@ -8,8 +8,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'csiro-mk3-6-0'};
-%testModels = {'csiro-mk3-6-0'};
+% baseModels = {'mpi-esm-mr'};
+% testModels = {'mpi-esm-mr'};
 baseModels = {'csiro-mk3-6-0', 'ccsm4', 'cesm1-bgc', ...
           'gfdl-cm3', 'mpi-esm-mr', ...
           'gfdl-esm2m', 'gfdl-esm2g', ...
@@ -38,7 +38,7 @@ testVar = 'bt';
 region = 'usne';
 
 ensembles = 1;
-futureRcp = 'rcp45';
+futureRcp = 'rcp85';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -149,7 +149,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '-077';
+    kStr = '-221';
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];

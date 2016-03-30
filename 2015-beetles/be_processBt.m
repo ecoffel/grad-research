@@ -5,7 +5,7 @@ ensembles = 1;
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
 %           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
 
-models = {'cesm1-cam5', 'ec-earth', 'inmcm4', 'miroc-esm', 'mpi-esm-mr'};
+models = {'inmcm4'};
 
 for m = 1:length(models)
     curModel = models{m};
