@@ -8,7 +8,7 @@ ncFileNames = dir([rawNcDir, '/', varName, '_*.nc']);
 ncFileNames = {ncFileNames.name};
 
 fileCount = 0;
-yearStep = 5;
+yearStep = 10;
 
 skipExistingFolders = true;
 skipExistingFiles = false;
@@ -138,7 +138,8 @@ for k = 1:length(ncFileNames)
        length(findstr(modelName, 'cnrm')) ~= 0 | ...
        length(findstr(modelName, 'miroc')) ~= 0 | ...
        length(findstr(modelName, 'mri')) ~= 0 | ...
-       length(findstr(modelName, 'ec')) ~= 0
+       length(findstr(modelName, 'ec')) ~= 0 | ...
+       length(findstr(modelName, 'access')) ~= 0
         calType = 1;
         
         % standard gregorian
@@ -168,7 +169,8 @@ for k = 1:length(ncFileNames)
            length(findstr(modelName, 'bnu')) ~= 0 | ...
            length(findstr(modelName, 'ipsl')) ~= 0 | ...
            length(findstr(modelName, 'csiro')) ~= 0 | ...
-           length(findstr(modelName, 'inmcm')) ~= 0
+           length(findstr(modelName, 'inmcm')) ~= 0 | ...
+           length(findstr(modelName, 'bcc')) ~= 0
         calType = 2;
         
         % 365 day no leap
