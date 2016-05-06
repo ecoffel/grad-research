@@ -13,12 +13,12 @@ baseModels = {''};
 %           'csiro-mk3-6-0', 'ec-earth', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'inmcm4', ...
 %           'hadgem2-es', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-testModels = {'bcc-csm1-1-m'};
+testModels = {'miroc-esm'};
 
 addToBC = true;    
 
-baseVar = 'tmax';
-testVar = 'tasmax';
+baseVar = 'tmin';
+testVar = 'tasmin';
 
 percentiles = 10:10:100;
 
@@ -29,7 +29,7 @@ basePeriodYears = 1985:2004;
 
 futureDecades = {2006:2010, 2010:2020, 2020:2030, 2030:2040, 2040:2050, 2050:2060, 2060:2070, 2070:2080, 2080:2090, 2090:2099};
 
-region = 'usne';
+region = 'world';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];

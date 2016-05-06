@@ -30,7 +30,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
     end
 
     load('waterGrid.mat');
-    load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\19800101-19841231\tasmax_1980_01_01');
+    load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world\19800101-19841231\tasmax_1980_01_01');
     [latIndexRange, lonIndexRange] = latLonIndexRange(tasmax_1980_01_01, latBounds, lonBounds);
     waterGrid = waterGrid(latIndexRange, lonIndexRange);
     clear tasmax_1980_01_01;

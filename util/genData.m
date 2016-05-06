@@ -1,10 +1,10 @@
-vars = {'tasmax', 'tasmin'};
+vars = {'tasmin'};
 ensembles = {'r1i1p1'};
 
 % models = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'gfdl-cm3', ...
 % 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'bcc-csm1-1-m'};
-regions = {'usne'};
+models = {'miroc-esm'};
+regions = {'world'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 
 for e = 1:length(ensembles)
