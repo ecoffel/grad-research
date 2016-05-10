@@ -28,7 +28,7 @@ testVar = 'bt';
 region = 'usne';
 
 ensembles = 1;
-futureRcp = 'rcp85';
+futureRcp = 'rcp45';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -139,7 +139,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '-221';
+    kStr = '-077';
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];

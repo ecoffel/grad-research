@@ -15,8 +15,8 @@ testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmax';
-testVar = 'tasmax';
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -231,7 +231,7 @@ testExceedences = nanmean(nanmean(testExceedences, 4), 3);
 result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, testExceedences};
 
 fileTitle = ['recurrance-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
-plotTitle = ['Temperature recurrence'];
+plotTitle = ['Wet-bulb temperature recurrence'];
 
 
 saveData = struct('data', {result}, ...

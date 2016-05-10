@@ -105,3 +105,4 @@ for i = 1:size(mortData{2}, 1)
     
 end
 
+save([city 'MergedMortData.mat'], 'mortData');
