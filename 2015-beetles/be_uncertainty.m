@@ -2,12 +2,20 @@ baseDir = 'C:\git-ecoffel\grad-research\bt-output';
 
 state = 'multi-model';
 
+ciPlot = false;
+modelRangePlot = true;
+
 if strcmp(state, 'multi-model')
-    models = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-    kvals = {'mean'};
+    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+          
+    kvals = {'077', '221'};
     ensembles = 1;
     thresholds = [100];
+    rcps = {'rcp45', 'rcp85'};
 elseif strcmp(state, 'ensemble')
     models = {'csiro-mk3-6-0'};
     kvals = {'077', 'mean', '221'};
@@ -28,7 +36,7 @@ rankings = [];
 rankingsNames = {};
 
 % confidence interval
-ciThresh = 95;
+ciThresh = 75;
 CI = [];
 
 cnt = 1;
@@ -41,33 +49,35 @@ for m = 1:length(models)
 
         for e = ensembles
             for thresh = thresholds
-                if strcmp(model, 'mm')
-                    path = [baseDir '\bt-toe-bc-' curK '-r' num2str(e) 'i1p1-' model '-bt-' num2str(thresh) '-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004.mat'];
-                else
-                    path = [baseDir '\bt-toe-bc-' curK '-r' num2str(e) 'i1p1-' model '-bt-' num2str(thresh) '-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004-' model '.mat'];
+                for r = 1:length(rcps)
+                    if strcmp(model, 'mm')
+                        path = [baseDir '\bt-toe-bc-' curK '-r' num2str(e) 'i1p1-' model '-' rcps{r} '-bt-' num2str(thresh) '-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004.mat'];
+                    else
+                        path = [baseDir '\bt-toe-bc-' curK '-r' num2str(e) 'i1p1-' model '-' rcps{r} '-bt-' num2str(thresh) '-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004-' model '.mat'];
+                    end
+                    load(path);
+
+                    if length(lat) == 0
+                        lat = saveData.data{1};
+                        lon = saveData.data{2};
+                    end
+
+                    data = saveData.data{3};
+                    rankings(:, :, cnt) = data;
+                    rankingsNames{end+1} = models{m};
+                    cnt = cnt + 1;
+
+                    clear data saveData;
                 end
-                load(path);
-
-                if length(lat) == 0
-                    lat = saveData.data{1};
-                    lon = saveData.data{2};
-                end
-
-                data = saveData.data{3};
-                rankings(:, :, cnt) = data;
-                rankingsNames{end+1} = models{m};
-                cnt = cnt + 1;
-
-                clear data saveData;
             end
         end
     end
 end
 
-if length(models) == 1
+if ciPlot
 
-    perc5 = round((100-ciThresh)/100.0 * size(rankings, 3));
-    perc95 = round(ciThresh/100.0 * size(rankings, 3));
+    perclow = round((100-ciThresh)/100.0 * size(rankings, 3));
+    perchigh = round(ciThresh/100.0 * size(rankings, 3));
 
     % rank & pick 5th & 95th percentile
     for xlat = 1:size(rankings, 1)
@@ -75,9 +85,9 @@ if length(models) == 1
             rankings(xlat, ylon, :) = sort(rankings(xlat, ylon, :));
 
             % lower
-            CI(xlat, ylon, 1) = rankings(xlat, ylon, perc5);
+            CI(xlat, ylon, 1) = rankings(xlat, ylon, perclow);
             % higher
-            CI(xlat, ylon, 2) = rankings(xlat, ylon, perc95);
+            CI(xlat, ylon, 2) = rankings(xlat, ylon, perchigh);
         end
     end
 
@@ -86,25 +96,30 @@ if length(models) == 1
 
     saveData = struct('data', {resultLow}, ...
                       'plotRegion', 'usne', ...
-                      'plotRange', [2006 2090], ...
-                      'plotTitle', 'Time of emergence, 5% threshold', ...
-                      'fileTitle', ['toe-ci-5p-' fileExt '.pdf'], ...
+                      'plotRange', [2005 2090], ...
+                      'plotTitle', 'Time of emergence, 25% threshold', ...
+                      'fileTitle', ['toe-ci-5p-' fileExt '.png'], ...
                       'plotXUnits', 'Year', ...
                       'blockWater', true, ...
-                      'colormap', brewermap(15, 'YlOrRd'));
+                      'plotStates', true, ...
+                      'plotCountries', false, ...
+                      'colormap', brewermap(17, 'YlOrRd'));
 
     plotFromDataFile(saveData);
 
     saveData = struct('data', {resultHigh}, ...
                       'plotRegion', 'usne', ...
-                      'plotRange', [2006 2090], ...
-                      'plotTitle', 'Time of emergence, 95% threshold', ...
-                      'fileTitle', ['toe-ci-95p-' fileExt '.pdf'], ...
+                      'plotRange', [2005 2090], ...
+                      'plotTitle', 'Time of emergence, 75% threshold', ...
+                      'fileTitle', ['toe-ci-95p-' fileExt '.png'], ...
                       'plotXUnits', 'Year', ...
                       'blockWater', true, ...
-                      'colormap', brewermap(15, 'YlOrRd'));
+                      'plotStates', true, ...
+                      'plotCountries', false, ...
+                      'colormap', brewermap(17, 'YlOrRd'));
 
     plotFromDataFile(saveData);
+end
 
 
 %     % plot std 
@@ -119,8 +134,7 @@ if length(models) == 1
 % 
 %     plotFromDataFile(saveData); 
 
-else
-    
+if modelRangePlot
     % search for highest and lowest models
     minModel = -1;
     minModelInd = -1;
@@ -147,23 +161,27 @@ else
     
     saveData = struct('data', {resultLow}, ...
                       'plotRegion', 'usne', ...
-                      'plotRange', [2006 2090], ...
+                      'plotRange', [2005 2090], ...
                       'plotTitle', 'Time of emergence, lower bound', ...
-                      'fileTitle', ['toe-ci-lower-' fileExt '.pdf'], ...
+                      'fileTitle', ['toe-ci-lower-' fileExt '.png'], ...
                       'plotXUnits', 'Year', ...
                       'blockWater', true, ...
-                      'colormap', brewermap(15, 'YlOrRd'));
+                      'plotStates', true, ...
+                      'plotCountries', true, ...
+                      'colormap', brewermap(17, 'YlOrRd'));
 
     plotFromDataFile(saveData);
 
     saveData = struct('data', {resultHigh}, ...
                       'plotRegion', 'usne', ...
-                      'plotRange', [2006 2090], ...
+                      'plotRange', [2005 2090], ...
                       'plotTitle', 'Time of emergence, upper bound', ...
-                      'fileTitle', ['toe-ci-upper-' fileExt '.pdf'], ...
+                      'fileTitle', ['toe-ci-upper-' fileExt '.png'], ...
                       'plotXUnits', 'Year', ...
                       'blockWater', true, ...
-                      'colormap', brewermap(15, 'YlOrRd'));
+                      'plotStates', true, ...
+                      'plotCountries', true, ...
+                      'colormap', brewermap(17, 'YlOrRd'));
 
     plotFromDataFile(saveData);
     
