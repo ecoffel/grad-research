@@ -20,29 +20,29 @@ deaths = detrend(deaths - nanmean(deaths));
 tempLag = mo_laggedTemp(tMean, 0:3, ones(length(0:3),1) ./ 4.0);
 wbLag = mo_laggedTemp(wbMean, 0:4, ones(length(0:4),1) ./ 5.0);
 
-data = tMean;
+data = deaths;
 time = 1:length(data);
 
 variance = std(data)^2;
 dt = time(2)-time(1);
 
-djs = [0.1];
+djs = [0.25];
 s0s = [2*dt];
 j1s = [8];
-lag1s = [0.7];
+lag1s = [0.75];
 
 for dj = djs
     for s0 = s0s
         for j1cur = j1s
             for lag1 = lag1s
-                j1 = round(j1cur/dj)
+                j1 = round(j1cur/dj);
                 n = length(deaths);
-                xlim = [time(1), time(end)];                 % plotting range
-                pad = 1;                            % pad the time series with zeroes (recommended)
-                %dj = 0.25;                          % this will do 4 sub-octaves per octave
-                %s0 = 2*dt;                          % this says start at a scale of 6 months
-                %j1 = 7/dj;                          % this says do 7 powers-of-two with dj sub-octaves each
-                %lag1 = 0.9;                        % lag-1 autocorrelation for red noise background
+                xlim = [time(1), time(end)];                    % plotting range
+                pad = 1;                                        % pad the time series with zeroes (recommended)
+                %dj = 0.25;                                     % this will do 4 sub-octaves per octave
+                %s0 = 2*dt;                                     % this says start at a scale of 6 months
+                %j1 = 7/dj;                                     % this says do 7 powers-of-two with dj sub-octaves each
+                %lag1 = 0.9;                                    % lag-1 autocorrelation for red noise background
                 mother = 'Morlet';
 
                 filename = [mother '-' num2str(dj) '-' num2str(s0) '-' num2str(j1) '-' num2str(lag1)];
@@ -81,9 +81,9 @@ for dj = djs
                 subplot(2, 1, 1)
                 plot(time, data)
                 set(gca,'XLim',xlim(:))
-                xlabel('Time (days)')
-                ylabel('')
-                title('NYC deaths')
+                xlabel('Time (days)', 'FontSize', 20)
+                ylabel('Deaths/day', 'FontSize', 20)
+                title('NYC deaths (detrended anomalies)', 'FontSize', 24)
                 hold off
 
                 %--- Contour plot wavelet power spectrum
@@ -92,9 +92,9 @@ for dj = djs
                 Yticks = 2.^(fix(log2(min(period))):fix(log2(max(period))));
                 contour(time,log2(period),log2(power),log2(levels));  %*** or use 'contourfill'
                 %imagesc(time,log2(period),log2(power));  %*** uncomment for 'image' plot
-                xlabel('Time (days)')
-                ylabel('Period (days)')
-                title('NYC deaths wavelet power spectrum')
+                xlabel('Time (days)', 'FontSize', 20);
+                ylabel('Period (days)', 'FontSize', 20);
+                title('NYC deaths wavelet power spectrum', 'FontSize', 24)
                 set(gca,'XLim',xlim(:))
                 set(gca,'YLim',log2([min(period),max(period)]), ...
                     'YDir','reverse', ...

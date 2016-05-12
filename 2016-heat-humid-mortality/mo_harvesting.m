@@ -18,31 +18,27 @@ tMean = tMean(indNotNan);
 tMax = tMax(indNotNan);
 tMin = tMin(indNotNan);
 
-tempVar = wbMax;
+tempVar = tMean;
 
 % remove linear trend and mean
 deathsDetrend = detrend(deaths - nanmean(deaths));
 
-% percentiles to test death anomalies
-prcTest = 0:5:100;
-
-% death anomalies for each percentile
-prcAnom = [];
-
-figure('Color', [1,1,1]);
-hold on;
-legendStr = 'legend(';
-
 % heat wave length
-heatLength = 1:7;
+heatLength = 5;
 
-colors = distinguishable_colors(length(heatLength));
+% percentiles to test death anomalies
+prcTest = 80:5:100
 
 % starting dates of heat waves for each n
 heatWaveInd = {};
 
+heatWaveDeaths = [];
+
 for n = heatLength
+    
     heatWaveInd{n} = {};
+    testLen = -3:n+10;
+    
     for p = 1:length(prcTest)-1
             
         % define heat wave as 3 consec days above 90th percentile of tMax
@@ -62,14 +58,14 @@ for n = heatLength
                 % above the upper end of the percentile bin (so allow
                 % colder temps)
                 if prcTest(p) < 50
-                    if tempVar(i+j-1) > tempThreshHigh %|| tempVar(i+j-1) >= tempThreshHigh
+                    if tempVar(i+j-1) > tempThreshHigh
                         wave = false;
                         break;
                     end
                 % above the 50th percentile do the opposite, so allow for
                 % hotter temperatures
                 elseif prcTest(p) > 50
-                    if tempVar(i+j-1) < tempThreshLow %|| tempVar(i+j-1) >= tempThreshHigh
+                    if tempVar(i+j-1) < tempThreshLow
                         wave = false;
                         break;
                     end
@@ -82,50 +78,59 @@ for n = heatLength
             if wave
                 heatWaveInd{n}{p}(end+1) = i;
             end
-
-            % skip to next non heat wave day
-%             while tempVar(i) > tempThreshLow && i < length(tempVar)
-%                 i = i + 1;
-%             end
-
-            % jump forward by n days
-            %i = i + n;
         end
         
-        % find death anomalies during heat waves and 3 days after
-        heatWaveDeaths = [];
-        testLen = 0:4;
-        for i = 1:length(heatWaveInd{n}{p}) - length(testLen)
-            s = 0;
-            for j = testLen
-                s = s + deathsDetrend(heatWaveInd{n}{p}(i) + j);
-            end
-            s = s / length(testLen);
-            heatWaveDeaths(i) = s;
-        end
-
-        % if there aren't enough heat waves, skip this n
         if length(heatWaveInd{n}{p}) < 30
-            prcAnom(n, p) = NaN;
-        else
-            prcAnom(n, p) = mean(heatWaveDeaths);
+            continue;
         end
-    end
-    
-    plot(prcTest(1:end-1), prcAnom(n, :), 'Color', colors(n, :), 'LineWidth', 2);
-    
-    if n == length(heatLength)
-        legendStr = [legendStr '''n = ' num2str(n) ''')'];
-    else
-        legendStr = [legendStr '''n = ' num2str(n) ''','];
+        
+        % find daily death anomalies 3 days before, during, and after heat
+        % event
+        
+        curHeatWaveDeaths = [];
+        
+        % loop over all heat events for this percentile
+        for h = 1:length(heatWaveInd{n}{p})
+            curHeatInd = heatWaveInd{n}{p}(h);
+            
+            
+            % if we are too close to the end of the deaths list
+            if curHeatInd + testLen(1) < 1 || curHeatInd + testLen(n) > length(deathsDetrend)
+                continue;
+            end
+            
+            for i = 1:length(testLen)
+                ind = curHeatInd + testLen(i);
+                curHeatWaveDeaths(i, h) = deathsDetrend(ind);
+            end
+            
+        end
+        
+        heatWaveDeaths = [heatWaveDeaths squeeze(nanmean(curHeatWaveDeaths, 2))];
+        
     end
     
 end
 
-eval(legendStr);
-ylim([-3 8]);
-xlabel('Percentile', 'FontSize', 20);
+colors = distinguishable_colors(size(heatWaveDeaths,2));
+
+figure('Color', [1,1,1]);
+hold on;
+legendStr = 'legend(';
+for i = 1:size(heatWaveDeaths, 2)
+    plot(testLen, heatWaveDeaths(:, i), 'Color', colors(i, :), 'LineWidth', 2);
+    
+    if i == size(heatWaveDeaths, 2)
+        legendStr = [legendStr '''percentile = ' num2str(prcTest(i)) ''')'];
+    else
+        legendStr = [legendStr '''percentile = ' num2str(prcTest(i)) ''','];
+    end
+end
+xlabel('Offset from start of heat wave (days)', 'FontSize', 20);
 ylabel('Daily death anomaly', 'FontSize', 20);
-title('Daily maximum wet-bulb temperature', 'FontSize', 24);
+title('Daily mean temperature, n = 5', 'FontSize', 24);
+eval(legendStr);
+
+
 
 
