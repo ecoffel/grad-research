@@ -1,12 +1,12 @@
 load nyMergedMortData
 
 deaths = mortData{2}(:,5);
-wbMax = mortData{2}(:,14);
-wbMin = mortData{2}(:,15);
-wbMean = mortData{2}(:,16);
-tMin = mortData{2}(:,12);
-tMax = mortData{2}(:,11);
-tMean = mortData{2}(:,13);
+wbMin = mortData{2}(:,11);
+wbMax = mortData{2}(:,12);
+wbMean = mortData{2}(:,13);
+tMin = mortData{2}(:,14);
+tMax = mortData{2}(:,15);
+tMean = mortData{2}(:,16);
 
 indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
 

@@ -2,10 +2,12 @@ load nyMergedMortData
 addpath('2016-heat-humid-mortality/wave_matlab');
 
 deaths = mortData{2}(:,5);
-wbMax = mortData{2}(:,14);
-wbMean = mortData{2}(:,16);
-tMax = mortData{2}(:,11);
-tMean = mortData{2}(:,13);
+wbMin = mortData{2}(:,11);
+wbMax = mortData{2}(:,12);
+wbMean = mortData{2}(:,13);
+tMin = mortData{2}(:,14);
+tMax = mortData{2}(:,15);
+tMean = mortData{2}(:,16);
 
 indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
 

@@ -2,23 +2,22 @@ load nyMergedMortData;
 addpath('2016-heat-humid-mortality/pcatool');
 
 deaths = mortData{2}(:,5);
-wbMax = mortData{2}(:,14);
-wbMean = mortData{2}(:,16);
-tMax = mortData{2}(:,11);
-tMean = mortData{2}(:,13);
+wbMin = mortData{2}(:,11);
+wbMax = mortData{2}(:,12);
+wbMean = mortData{2}(:,13);
+tMin = mortData{2}(:,14);
+tMax = mortData{2}(:,15);
+tMean = mortData{2}(:,16);
 
-indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
+%indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
 
-deaths = deaths(indNotNan);
-wbMean = wbMean(indNotNan);
-wbMax = wbMax(indNotNan);
-tMean = tMean(indNotNan);
-tMax = tMax(indNotNan);
+% deaths = deaths(indNotNan);
+% wbMean = wbMean(indNotNan);
+% wbMax = wbMax(indNotNan);
+% tMean = tMean(indNotNan);
+% tMax = tMax(indNotNan);
 
 deathsDetrend = detrend(deaths - nanmean(deaths));
-
-tempLag = mo_laggedTemp(tMean, 0:3, ones(length(0:3),1) ./ 4.0);
-wbLag = mo_laggedTemp(wbMean, 0:4, ones(length(0:4),1) ./ 5.0);
 
 data = deathsDetrend;
 time = length(data);
