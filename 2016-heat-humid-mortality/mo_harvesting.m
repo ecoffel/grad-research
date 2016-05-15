@@ -9,8 +9,6 @@ tMin = mortData{2}(:,14);
 tMax = mortData{2}(:,15);
 tMean = mortData{2}(:,16);
 
-indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
-
 % deaths = deaths(indNotNan);
 % wbMean = wbMean(indNotNan);
 % wbMax = wbMax(indNotNan);
@@ -31,6 +29,8 @@ deathsMovAvg = tsmovavg(deathsDetrend, 's', 30, 1);
 % at death anomalies for the proper season (since summer deaths are lower
 % than winter)
 deathsData = deathsDetrend-deathsMovAvg;
+
+indNotNan = find(~isnan(wbMean) & ~isnan(tMean) & ~isnan(deathsData));
 
 figure('Color', [1,1,1]);
 s = suptitle('Death data');

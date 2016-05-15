@@ -22,7 +22,7 @@ deathsDetrend = detrend(deaths - nanmean(deaths));
 data = deathsDetrend;
 time = length(data);
 
-pcLen = 50;
+pcLen = 30;
 heatWaveLen = 4;
 [eof, pc, err] = calEeof(data, 5, 1, pcLen, 1);
 
@@ -58,12 +58,14 @@ if shouldPlot
     plot(xAxis, pc(2,:), 'k', 'LineWidth', 2);
     plot(xAxis, 0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 2);
     ylim([-100 150]);
-    for i = 1:length(heatWaveInd{n}{end})
-        
+    
+    for i = 1:length(heatWaveInd{heatWaveLen}{end})
+        plot(xAxis(heatWaveInd{heatWaveLen}{end}(i)), -100:100, 'r--');
     end
+    
     xlabel('Year', 'FontSize', 24);
     ylabel('Daily mortality anomaly', 'FontSize', 24);
-    title('2st PC of detrended daily NYC mortality', 'FontSize', 30);
+    title('2nd PC of detrended daily NYC mortality', 'FontSize', 30);
     set(gca, 'FontSize', 20);
 end
 

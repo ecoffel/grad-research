@@ -9,7 +9,7 @@ function [ind, perc] = mo_findHeatWaves(tempVar)
     prcAnom = [];
 
     % heat wave length
-    heatLength = 1:7;
+    heatLength = 1:5;
 
     % starting dates of heat waves for each n
     ind = {};
@@ -55,15 +55,19 @@ function [ind, perc] = mo_findHeatWaves(tempVar)
                 if wave
                     ind{n}{p}(end+1) = i;
                     
-                    % skip to next non heat wave day
-                    while tempVar(i) >= tempThreshLow && i < length(tempVar)
-                        i = i + 1;
+                    % skip to next non heat wave / cold snap day
+                    if prcTest(p) < 50
+                        while tempVar(i) <= tempThreshHigh && i < length(tempVar)
+                            i = i + 1;
+                        end
+                    elseif prcTest(p) > 50
+                        while tempVar(i) >= tempThreshLow && i < length(tempVar)
+                            i = i + 1;
+                        end
                     end
                 end
 
                 i = i + 1;
-                % jump forward by n days
-                %i = i + n;
             end
         end
     end

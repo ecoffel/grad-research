@@ -9,29 +9,22 @@ tMin = mortData{2}(:,14);
 tMax = mortData{2}(:,15);
 tMean = mortData{2}(:,16);
 
-indNotNan = find(~isnan(wbMean) & ~isnan(tMean));
+% remove linear trend and mean
+deathsDetrend = detrend(deaths - nanmean(deaths));
 
-deaths = deaths(indNotNan);
-wbMean = wbMean(indNotNan);
-wbMax = wbMax(indNotNan);
-tMean = tMean(indNotNan);
-tMax = tMax(indNotNan);
+% moving average
+deathsMovAvg = tsmovavg(deaths, 's', 30, 1);
 
-deaths = detrend(deaths - nanmean(deaths));
+data = deaths-deathsMovAvg;
 
-tempLag = mo_laggedTemp(tMean, 0:3, ones(length(0:3),1) ./ 4.0);
-wbLag = mo_laggedTemp(wbMean, 0:4, ones(length(0:4),1) ./ 5.0);
-
-data = deaths;
 time = 1:length(data);
-
 variance = std(data)^2;
 dt = time(2)-time(1);
 
-djs = [0.25];
-s0s = [2*dt];
-j1s = [8];
-lag1s = [0.75];
+djs = [0.25];               % this will do 4 sub-octaves per octave
+s0s = [2*dt];               % this says start at a scale of 6 months
+j1s = [8];                  % this says do 7 powers-of-two with dj sub-octaves each
+lag1s = [0.75];             % lag-1 autocorrelation for red noise background
 
 for dj = djs
     for s0 = s0s
@@ -40,14 +33,8 @@ for dj = djs
                 j1 = round(j1cur/dj);
                 n = length(deaths);
                 xlim = [time(1), time(end)];                    % plotting range
-                pad = 1;                                        % pad the time series with zeroes (recommended)
-                %dj = 0.25;                                     % this will do 4 sub-octaves per octave
-                %s0 = 2*dt;                                     % this says start at a scale of 6 months
-                %j1 = 7/dj;                                     % this says do 7 powers-of-two with dj sub-octaves each
-                %lag1 = 0.9;                                    % lag-1 autocorrelation for red noise background
+                pad = 1;                                        % pad the time series with zeroes (recommended)                            
                 mother = 'Morlet';
-
-                filename = [mother '-' num2str(dj) '-' num2str(s0) '-' num2str(j1) '-' num2str(lag1)];
 
                 % Wavelet transform:
                 [wave, period, scale, coi] = wavelet(data, dt, pad, dj, s0, j1, mother);
