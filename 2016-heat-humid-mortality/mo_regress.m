@@ -10,18 +10,18 @@ tMin = mortData{2}(:,14);
 tMax = mortData{2}(:,15);
 tMean = mortData{2}(:,16);
 
-movAvgLag = 30;
+% movAvgLag = 1;
 
 % detrend death data and remove 30 day moving average
-deathsDetrend = detrend(deaths - nanmean(deaths));
-deathsMovAvg = tsmovavg(deathsDetrend, 's', movAvgLag, 1);
-deathsData = deathsDetrend-deathsMovAvg;
+deathsDetrend = deaths - nanmean(deaths);%detrend(deaths - nanmean(deaths));
+%deathsMovAvg = tsmovavg(deathsDetrend, 's', movAvgLag, 1);
+deathsData = deathsDetrend;%-deathsMovAvg;
 
-deathsData = deathsData(movAvgLag:end);
-wbMean = wbMean(movAvgLag:end);
-wbMin = wbMin(movAvgLag:end);
-tMean = tMean(movAvgLag:end);
-tMin = tMin(movAvgLag:end);
+% deathsData = deathsData(movAvgLag:end);
+% wbMean = wbMean(movAvgLag:end);
+% wbMin = wbMin(movAvgLag:end);
+% tMean = tMean(movAvgLag:end);
+% tMin = tMin(movAvgLag:end);
 
 % calculate month of year for each day
 date = datenum('1987-01-01','yyyy-mm-dd');
@@ -46,45 +46,85 @@ deathsSel = deathsData(indSelect);
 dow = dow(indSelect);
 moy = moy(indSelect);
 
-wbMeanVar = wbMeanSel;
-wbMinVar = wbMinSel;
-tMeanVar = tMeanSel;
-tMinVar = tMinSel;
-deathsVar = deathsSel;
+indNotNan = find(~isnan(wbMeanSel) & ~isnan(tMeanSel));
+
+wbMeanVar = wbMeanSel(indNotNan);
+wbMinVar = wbMinSel(indNotNan);
+tMeanVar = tMeanSel(indNotNan);
+tMinVar = tMinSel(indNotNan);
+deathsVar = deathsSel(indNotNan);
 
 % take the 4 day lag of temp variables
-wbMeanVar = mo_laggedTemp(wbMeanVar, 4);
-wbMinVar = mo_laggedTemp(wbMinVar, 4);
+wbMeanLag = mo_laggedTemp(wbMeanVar, 5);
+wbMean = wbMeanVar;
+wbMinLag = mo_laggedTemp(wbMinVar, 5);
 
-tMinVar = mo_laggedTemp(tMinVar, 4);
-tMeanVar = mo_laggedTemp(tMeanVar, 4);
+tMinLag = mo_laggedTemp(tMinVar, 5);
+tMean = tMeanVar;
+tMeanLag = mo_laggedTemp(tMeanVar, 5);
 
 % take the 1st PC of detrended death data
 [eof, pc, err] = calEeof(deathsVar, 5, 1, 10, 1);
 
 % adjust lengths to so that time series match
 deathsVar = pc(1,:);
-wbMeanVar = wbMeanVar(5:end);
-wbMinVar = wbMinVar(5:end);
+wbMeanLag = wbMeanLag(4:end);
+wbMinLag = wbMinLag(4:end);
 
-tMeanVar = tMeanVar(5:end);
-tMinVar = tMinVar(5:end);
+tMeanLag = tMeanLag(4:end);
+tMinLag = tMinLag(4:end);
 
-train = 1:length(deathsVar)-201;
-test = length(deathsVar)-200:length(deathsVar);
+wbMean = wbMean(9:end);
+tMean = tMean(9:end);
+dow = dow(9:end);
 
-Xtrain = [wbMeanVar(train) wbMinVar(train) tMeanVar(train) tMinVar(train)];
-mdl = fitlm(Xtrain, deathsVar(train));
+testingLength = 92;
 
-Xtest = [wbMeanVar(test) wbMinVar(test) tMeanVar(test) tMinVar(test)];
+modelPred = [];
+modelCi = [];
 
-pred = predict(mdl, Xtest);
+for i = 1:testingLength:length(deathsVar)
+    
+    if i+testingLength <= length(deathsVar)
+        test = i:i+testingLength;
+    else
+        test = i:length(deathsVar);
+    end
+    
+    trainTmp = ones(length(deathsVar), 1);
+    trainTmp(test) = 0;
+    train = find(trainTmp);
 
+    Xtrain = [dow(train) wbMean(train) tMean(train) wbMeanLag(train) wbMinLag(train) tMeanLag(train) tMinLag(train)];
+    mdl = fitlm(Xtrain, deathsVar(train));
+
+    Xtest = [dow(test) wbMean(test) tMean(test) wbMeanLag(test) wbMinLag(test) tMeanLag(test) tMinLag(test)];
+
+    [ypred, yci] = predict(mdl, Xtest);
+    
+    figure('Color', [1, 1, 1]);
+    hold on;
+    plot(wbMeanLag(test),'b');
+    plot(wbMean(test),'g');
+    plot(deathsVar(test),'r');
+    plot(ypred,'k','LineWidth',2);
+    plot(yci(:,1), ':k', 'LineWidth', 1);
+    plot(yci(:,2), ':k', 'LineWidth', 1);
+    legend('wb 5 day lag', 'wb', 'deaths', 'modeled deaths');
+    
+    modelPred(test) = ypred;
+    modelCi(test, :) = yci;
+end
+
+figure('Color', [1, 1, 1]);
 hold on;
-plot(wbMeanVar(test),'b');
-plot(tMinVar(test),'g');
-plot(deathsVar(test),'r');
-plot(pred,'k','LineWidth',2);
-legend('wb', 'deaths');
+plot(wbMeanLag,'b');
+plot(wbMean,'g');
+plot(deathsVar,'r');
+plot(modelPred,'k','LineWidth',2);
+plot(modelCi(:,1), ':k', 'LineWidth', 1);
+plot(modelCi(:,2), ':k', 'LineWidth', 1);
+%xlim([0 200]);
+legend('wb 5 day lag', 'wb', 'deaths', 'modeled deaths');
 
 
