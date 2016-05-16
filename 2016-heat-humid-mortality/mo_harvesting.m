@@ -17,7 +17,7 @@ tMean = mortData{2}(:,16);
 % tMax = tMax(indNotNan);
 % tMin = tMin(indNotNan);
 
-tempVar = wbMean;
+tempVar = tMin;
 
 % remove linear trend and mean
 deathsDetrend = detrend(deaths - nanmean(deaths));
@@ -32,31 +32,30 @@ deathsData = deathsDetrend-deathsMovAvg;
 
 indNotNan = find(~isnan(wbMean) & ~isnan(tMean) & ~isnan(deathsData));
 
-figure('Color', [1,1,1]);
-s = suptitle('Death data');
-set(s, 'FontSize', 30);
-
-s1 = subplot(2,1,1);
-hold on;
-p1 = plot(deathsDetrend, 'k');
-p2 = plot(deathsMovAvg, 'r','LineWidth',2);
-xlim([0 5500]);
-ylim([-40 50]);
-legend(s1, 'detrended mortality', '30 day moving average');
-set(gca, 'FontSize', 20);
-xlabel('Days', 'FontSize', 24);
-ylabel('Daily death anomaly', 'FontSize', 24);
-
-s2 = subplot(2,1,2);
-hold on;
-p3 = plot(deathsData, 'k');
-xlim([0 5500]);
-ylim([-40 50]);
-legend(s2, 'detrended mortality minus moving average');
-set(gca, 'FontSize', 20);
-xlabel('Days', 'FontSize', 24);
-ylabel('Daily death anomaly', 'FontSize', 24);
-
+% figure('Color', [1,1,1]);
+% s = suptitle('Death data');
+% set(s, 'FontSize', 30);
+% 
+% s1 = subplot(2,1,1);
+% hold on;
+% p1 = plot(deathsDetrend, 'k');
+% p2 = plot(deathsMovAvg, 'r','LineWidth',2);
+% xlim([0 5500]);
+% ylim([-40 50]);
+% legend(s1, 'detrended mortality', '30 day moving average');
+% set(gca, 'FontSize', 20);
+% xlabel('Days', 'FontSize', 24);
+% ylabel('Daily death anomaly', 'FontSize', 24);
+% 
+% s2 = subplot(2,1,2);
+% hold on;
+% p3 = plot(deathsData, 'k');
+% xlim([0 5500]);
+% ylim([-40 50]);
+% legend(s2, 'detrended mortality minus moving average');
+% set(gca, 'FontSize', 20);
+% xlabel('Days', 'FontSize', 24);
+% ylabel('Daily death anomaly', 'FontSize', 24);
 
 
 % heat wave length
@@ -65,16 +64,17 @@ heatLengths = [2 3 4 5];
 % starting dates of heat waves for each n
 [heatWaveInd, prcTest] = mo_findHeatWaves(tempVar);
 
-% how far on either side of the heat wave to look at death anomalies
-testLen = -10:heatLength+10;
 
-prc = length(prcTest)-4:length(prcTest);
+prc = 1:4;%length(prcTest)-4:length(prcTest);
 
 figure('Color', [1,1,1]);
 
 for l = 1:length(heatLengths)
     heatLength = heatLengths(l);
     heatWaveDeaths = [];
+    
+    % how far on either side of the heat wave to look at death anomalies
+    testLen = -10:heatLength+10;
     
     for p = prc
 

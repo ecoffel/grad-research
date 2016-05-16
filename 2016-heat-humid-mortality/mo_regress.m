@@ -82,6 +82,7 @@ testingLength = 92;
 
 modelPred = [];
 modelCi = [];
+modelR2 = [];
 
 for i = 1:testingLength:length(deathsVar)
     
@@ -97,34 +98,61 @@ for i = 1:testingLength:length(deathsVar)
 
     Xtrain = [dow(train) wbMean(train) tMean(train) wbMeanLag(train) wbMinLag(train) tMeanLag(train) tMinLag(train)];
     mdl = fitlm(Xtrain, deathsVar(train));
-
+    modelR2(end+1) = mdl.Rsquared.Ordinary;
+    
     Xtest = [dow(test) wbMean(test) tMean(test) wbMeanLag(test) wbMinLag(test) tMeanLag(test) tMinLag(test)];
 
     [ypred, yci] = predict(mdl, Xtest);
     
-    figure('Color', [1, 1, 1]);
-    hold on;
-    plot(wbMeanLag(test),'b');
-    plot(wbMean(test),'g');
-    plot(deathsVar(test),'r');
-    plot(ypred,'k','LineWidth',2);
-    plot(yci(:,1), ':k', 'LineWidth', 1);
-    plot(yci(:,2), ':k', 'LineWidth', 1);
-    legend('wb 5 day lag', 'wb', 'deaths', 'modeled deaths');
+%     figure('Color', [1, 1, 1]);
+%     hold on;
+%     plot(wbMeanLag(test),'b');
+%     plot(wbMean(test),'g');
+%     plot(deathsVar(test),'r');
+%     plot(ypred,'k','LineWidth',2);
+%     plot(yci(:,1), ':k', 'LineWidth', 1);
+%     plot(yci(:,2), ':k', 'LineWidth', 1);
+%     legend('wb 5 day lag', 'wb', 'deaths', 'modeled deaths');
     
     modelPred(test) = ypred;
     modelCi(test, :) = yci;
 end
 
 figure('Color', [1, 1, 1]);
-hold on;
-plot(wbMeanLag,'b');
-plot(wbMean,'g');
-plot(deathsVar,'r');
-plot(modelPred,'k','LineWidth',2);
-plot(modelCi(:,1), ':k', 'LineWidth', 1);
-plot(modelCi(:,2), ':k', 'LineWidth', 1);
-%xlim([0 200]);
-legend('wb 5 day lag', 'wb', 'deaths', 'modeled deaths');
 
+ax1 = subplot(1,2,1);
+hold on;
+plot(wbMeanLag, 'b', 'LineWidth', 2);
+plot(wbMean, 'g', 'LineWidth', 2);
+plot(deathsVar, 'r', 'LineWidth', 2);
+plot(modelPred,'k','LineWidth', 3);
+%plot(modelCi(:,1), ':k', 'LineWidth', 1);
+%plot(modelCi(:,2), ':k', 'LineWidth', 1);
+xlabel('Days', 'FontSize', 24);
+ylabel('Daily death anomaly', 'FontSize', 24);
+set(ax1, 'xlim', [828 920]);
+%set(ax1, 'xlim', [0 92]);
+set(gca, 'FontSize', 20);
+title('Summer 1996', 'FontSize', 26);
+%title('Summer 1987', 'FontSize', 26);
+legend('Wet-bulb 5 day lag', 'Wet-bulb', 'Deaths', 'Modeled deaths');
+
+ax2 = subplot(1,2,2);
+hold on;
+plot(wbMeanLag, 'b', 'LineWidth', 2);
+plot(wbMean, 'g', 'LineWidth', 2);
+plot(deathsVar, 'r', 'LineWidth', 2);
+plot(modelPred,'k','LineWidth', 3);
+%plot(modelCi(:,1), ':k', 'LineWidth', 1);
+%plot(modelCi(:,2), ':k', 'LineWidth', 1);
+set(ax2, 'xlim', [1012 1104]);
+%set(ax2, 'xlim', [276 368]);
+xlabel('Days', 'FontSize', 24);
+ylabel('Daily death anomaly', 'FontSize', 24);
+set(gca, 'FontSize', 20);
+title('Summer 1999', 'FontSize', 26);
+legend('Wet-bulb 5 day lag', 'Wet-bulb', 'Deaths', 'Modeled deaths');
+
+s = suptitle('Mortality model');
+set(s, 'FontSize', 30);
 

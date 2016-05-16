@@ -17,31 +17,42 @@ tMax = tMax(indNotNan);
 
 deathsDetrend = detrend(deaths - nanmean(deaths));
 
-tempLag = mo_laggedTemp(tMean, 0:3, ones(length(0:3),1) ./ 4.0);
-wbLag = mo_laggedTemp(wbMean, 0:4, ones(length(0:4),1) ./ 5.0);
+tempLag = mo_laggedTemp(tMean, 3);
+wbLag = mo_laggedTemp(wbMean, 3);
 
-data = deaths;
-
-Fs = 1;
-t = 1:length(data);
-L = length(data);
-
-freq = Fs*(0:(L/2))/L*365;
-f = fft(data, length(data));
-p2 = abs(f/L);
-p1 = p2(1:L/2+1);
-p1(2:end-1) = 2*p1(2:end-1);
-
-s = std(p1);
+dataSets = [tempLag wbLag deaths(4:end) deathsDetrend(4:end)];
+dataTitles = {'3-day lagged daily mean temperature', '3-day lagged daily mean wet-bulb temperature', 'Daily mortality', 'Detrended mortality anomalies'};
+dataYLabels = {'Power (deg C)', 'Power (deg C)', 'Power (deaths/day)', 'Power (deaths/day)'};
 
 figure('Color', [1, 1, 1]);
-hold on;
-plot(freq, p1, 'k', 'LineWidth', 2);
-plot(freq, s, 'k--', 'LineWidth', 2);
-plot(freq, 2*s, 'k:', 'LineWidth', 2);
-xlim([0 5]);
-ylim([0 12]);
-xlabel('Frequency (years)', 'FontSize', 26);
-ylabel('Power (deg C)', 'FontSize', 26);
-title('FFT of NYC daily mortality', 'FontSize', 30);
-set(gca, 'FontSize', 24);
+
+for d = 1:size(dataSets, 2)
+    data = dataSets(:, d);
+    
+    Fs = 1;
+    t = 1:length(data);
+    L = length(data);
+
+    freq = Fs*(0:(L/2))/L*365;
+    f = fft(data, length(data));
+    p2 = abs(f/L);
+    p1 = p2(1:L/2+1);
+    p1(2:end-1) = 2*p1(2:end-1);
+
+    s = std(p1);
+
+    subplot(2, 2, d);
+    hold on;
+    plot(freq, p1, 'k', 'LineWidth', 2);
+    plot(freq, s, 'k--', 'LineWidth', 2);
+    plot(freq, 2*s, 'k:', 'LineWidth', 2);
+    xlim([0 5]);
+    ylim([0 12]);
+    xlabel('Frequency (years)', 'FontSize', 24);
+    ylabel(dataYLabels{d}, 'FontSize', 24);
+    title(dataTitles{d}, 'FontSize', 26);
+    set(gca, 'FontSize', 24);
+end
+
+s = suptitle('FFT');
+set(s, 'FontSize', 30);

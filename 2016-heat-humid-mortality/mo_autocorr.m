@@ -20,19 +20,26 @@ tMean = tMean(indNotNan);
 tMax = tMax(indNotNan);
 tMin = tMin(indNotNan);
 
-data = tMean;
+dataSources = [wbMean tMean deaths deathsDetrend];
+dataTitles = {'Mean wet-bulb temperature', 'Mean temperature', 'Daily mortality', 'Detrended daily mortality'};
 
 % 2 years
 maxlag = 365*2;
-
-[acf, lags] = xcorr(data, maxlag);
-
 figure('Color', [1, 1, 1]);
-hold on;
-plot(lags, acf, 'k', 'LineWidth', 2);
 
-xlabel('Lag (days)', 'FontSize', 26);
-%ylabel('Daily death anomaly', 'FontSize', 20);
-title('Daily mean temperature autocorrelation', 'FontSize', 30);
-set(gca, 'FontSize', 24);
+
+for d = 1:size(dataSources, 2)
+    data = dataSources(:, d);
+    [acf, lags] = xcorr(data, maxlag);
+
+    subplot(2, 2, d);
+    hold on;
+    plot(lags, acf, 'k', 'LineWidth', 2);
+    xlabel('Lag (days)', 'FontSize', 24);
+    title(dataTitles{d}, 'FontSize', 26);
+    set(gca, 'FontSize', 20);
+end
+
+s = suptitle('Autocorrelations');
+set(s, 'FontSize', 30);
 

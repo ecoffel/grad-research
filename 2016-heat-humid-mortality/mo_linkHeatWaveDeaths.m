@@ -65,7 +65,7 @@ for t = 1:size(tempVars, 2)
             end
 
             % if there aren't enough heat waves, skip this n
-            if length(heatWaveInd{n}{p}) < 5
+            if length(	{n}{p}) < 5
                 prcAnom(n, p) = NaN;
                 prcStd(n, p) = NaN;
             else

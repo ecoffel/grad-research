@@ -1,4 +1,4 @@
-years = 1987:2000;
+years = 1947:2009;
 %years=1997;
 cities = {'nyc'};
 
@@ -7,7 +7,7 @@ for c = 1:length(cities)
     wxTable = table;
 
     % read ISH data into a table
-    data = mo_readUSAFHourly(['2016-heat-humid-mortality\ish-wx\' cities{c} '-wx.txt']);
+    data = mo_readUSAFHourly(['2016-heat-humid-mortality\ish-wx\' cities{c} '-wx-long.txt']);
 
     % remove any non-hourly obs (any with type different than 'SAO')
 %         ['removing non-hourly obs']
@@ -69,4 +69,4 @@ end
 wxTable.wb = wb;
 wxTable.rh = rh;
 
-save('nyWx', 'wxTable');
+save('nyWxLong', 'wxTable');

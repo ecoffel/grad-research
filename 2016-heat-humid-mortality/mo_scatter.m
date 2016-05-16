@@ -20,7 +20,7 @@ tMin = tMin(indNotNan);
 
 deathsDetrend = detrend(deaths - nanmean(deaths));
 
-tempVar = tMean;
+tempVar = wbMean;
 
 lags = 2:5
 
@@ -48,11 +48,13 @@ for l = 1:length(lags)
     end
 
     f = fit(laggedTemps', laggedDeaths', 'poly6');
-
+    fCi = predint(f, laggedTemps', 0.95, 'functional','on');
+    
     subplot(length(lags)/2, length(lags)/2, l);
     hold on;
     p1 = plot(laggedTemps, laggedDeaths, 'k*');
     fitLine = plot(f);
+    plot(laggedTemps, fCi, '--b');
     xlim([-10 40]);
     ylim([-20 40]);
     set(fitLine, 'Color', [1, 0, 0], 'LineWidth', 2);
@@ -64,7 +66,7 @@ for l = 1:length(lags)
     %legend([fitLine], ['6-order polynomial fit']);
 end
 
-s = suptitle('Daily mean temperature');
+s = suptitle('Daily mean wet-bulb temperature');
 set(s, 'FontSize', 30);
 
 

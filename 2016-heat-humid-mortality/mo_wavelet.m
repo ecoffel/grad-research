@@ -15,7 +15,7 @@ deathsDetrend = detrend(deaths - nanmean(deaths));
 % moving average
 deathsMovAvg = tsmovavg(deaths, 's', 30, 1);
 
-data = deaths-deathsMovAvg;
+data = deaths;
 
 time = 1:length(data);
 variance = std(data)^2;
@@ -26,15 +26,17 @@ s0s = [2*dt];               % this says start at a scale of 6 months
 j1s = [8];                  % this says do 7 powers-of-two with dj sub-octaves each
 lag1s = [0.75];             % lag-1 autocorrelation for red noise background
 
+figure('Color', [1, 1, 1]);
+
 for dj = djs
     for s0 = s0s
         for j1cur = j1s
             for lag1 = lag1s
                 j1 = round(j1cur/dj);
                 n = length(deaths);
-                xlim = [time(1), time(end)];                    % plotting range
+                
                 pad = 1;                                        % pad the time series with zeroes (recommended)                            
-                mother = 'Morlet';
+                mother = 'Dog';
 
                 % Wavelet transform:
                 [wave, period, scale, coi] = wavelet(data, dt, pad, dj, s0, j1, mother);
@@ -65,38 +67,45 @@ for dj = djs
                 scale_avg = variance*dj*dt/Cdelta*sum(scale_avg(avg,:));   % [Eqn(24)]
                 scaleavg_signif = wave_signif(variance,dt,scale,2,lag1,-1,[2,7.9],mother);
 
-
+                xAxis = linspace(1987, 2001, length(time));
+                xlim = [xAxis(1), xAxis(end)];                    % plotting range
+                
                 %--- Plot time series
                 subplot(2, 1, 1)
-                plot(time, data)
-                set(gca,'XLim',xlim(:))
-                xlabel('Time (days)', 'FontSize', 20)
-                ylabel('Deaths/day', 'FontSize', 20)
-                title('NYC deaths (detrended anomalies)', 'FontSize', 24)
+                hold on;
+                plot(xAxis, data)
+                plot(xAxis, deathsMovAvg, 'r', 'LineWidth', 2);
+                set(gca,'XLim',xlim(:), 'FontSize', 20)
+                xlabel('Year', 'FontSize', 24)
+                ylabel('Deaths/day', 'FontSize', 24)
+                title('NYC deaths', 'FontSize', 30)
+                legend('Daily mortality', '30-day moving average');
                 hold off
 
                 %--- Contour plot wavelet power spectrum
                 subplot(2, 1, 2)
+                hold on;
                 levels = [0.0625,0.125,0.25,0.5,1,2,4,8,16];
                 Yticks = 2.^(fix(log2(min(period))):fix(log2(max(period))));
-                contour(time,log2(period),log2(power),log2(levels));  %*** or use 'contourfill'
+                contour(xAxis,log2(period),log2(power),log2(levels));  %*** or use 'contourfill'
                 %imagesc(time,log2(period),log2(power));  %*** uncomment for 'image' plot
-                xlabel('Time (days)', 'FontSize', 20);
-                ylabel('Period (days)', 'FontSize', 20);
-                title('NYC deaths wavelet power spectrum', 'FontSize', 24)
+                xlabel('Year', 'FontSize', 24);
+                ylabel('Period (days)', 'FontSize', 24);
+                title('NYC deaths wavelet power spectrum', 'FontSize', 30)
                 set(gca,'XLim',xlim(:))
                 set(gca,'YLim',log2([min(period),max(period)]), ...
                     'YDir','reverse', ...
                     'YTick',log2(Yticks(:)), ...
-                    'YTickLabel',Yticks)
+                    'YTickLabel',Yticks, ...
+                    'FontSize', 20)
 
 
                 % % 95% significance contour, levels at -99 (fake) and 1 (95% signif)
                 hold on
-                contour(time,log2(period),sig95,[-99,1],'k');
+                contour(xAxis,log2(period),sig95,[-99,1],'k');
                 hold on
                 % cone-of-influence, anything "below" is dubious
-                plot(time,log2(coi),'k')
+                plot(xAxis,log2(coi),'k')
                 hold off
 
                 %eval(['export_fig ' filename '.png']);
