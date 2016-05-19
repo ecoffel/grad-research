@@ -13,9 +13,9 @@ baseModels = {''};
 %           'csiro-mk3-6-0', 'ec-earth', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'inmcm4', ...
 %           'hadgem2-es', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-testModels = {'miroc-esm'};
+testModels = {'mri-cgcm3'};
 
-addToBC = true;    
+addToBC = false;    
 
 baseVar = 'tmin';
 testVar = 'tasmin';
@@ -29,7 +29,7 @@ basePeriodYears = 1985:2004;
 
 futureDecades = {2006:2010, 2010:2020, 2020:2030, 2030:2040, 2040:2050, 2050:2060, 2060:2070, 2070:2080, 2080:2090, 2090:2099};
 
-region = 'world';
+region = 'usne';
 
 if strcmp(region, 'usne')
     latBounds = [30 55];
@@ -90,7 +90,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
-    futureRcp = 'rcp45/';
+    futureRcp = 'rcp85/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';
@@ -228,7 +228,7 @@ for m = 1:length(testModels)
                 testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble futureRcp testVar], 'yearStart', futureDecades{decade}(y), 'yearEnd', (futureDecades{decade}(y)+yearStep)-1);
             end
             
-            if strcmp(testVar, 'tasmax') || strcmp(testVar, 'tasmin')
+            if testDaily{3}(1,1,1,1,1) > 100
                 testDaily{3} = testDaily{3}-273.15;
             end
 

@@ -30,7 +30,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
     end
 
     load('waterGrid.mat');
-    load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world\19800101-19841231\tasmax_1980_01_01');
+    load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world-bc\19800101-19841231\tasmax_1980_01_01');
     [latIndexRange, lonIndexRange] = latLonIndexRange(tasmax_1980_01_01, latBounds, lonBounds);
     waterGrid = waterGrid(latIndexRange, lonIndexRange);
     clear tasmax_1980_01_01;
@@ -49,7 +49,8 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         
         dataOld = data{3};
         
-        if strcmp(variable, 'tasmax') || strcmp(variable, 'tasmin') || strcmp(variable, 'tmax') || strcmp(variable, 'tmin')
+        
+        if data{3}(1) > 100
             data{3} = data{3} - 273.15;
         end
         
@@ -70,7 +71,8 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
                 rcp = 'rcp85';
             end
             
-            load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
+            %load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
+            load(['cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
             eval(['cmip5BiasCor = cmip5BiasCorrection_' variable '_' region ';']);
             
             biasModel = -1;
