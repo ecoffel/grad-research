@@ -1,18 +1,25 @@
-function heatIndex(dataDir, isRegridded)
+function wetBulb(dataDir, isRegridded, region, biasCorrect)
 
 tempVar = 'tasmax';
 rhVar = 'rh';
 
+skipExisting = true;
+
 regridStr = '';
 if isRegridded
-    regridStr = 'regrid/';
+    regridStr = 'regrid';
 end
 
-tempDirNames = dir([dataDir '/' tempVar '/' regridStr]);
+bcStr = '';
+if biasCorrect
+    bcStr = '-bc';
+end
+
+tempDirNames = dir([dataDir '/' tempVar '/' regridStr '/' region bcStr]);
 tempDirIndices = [tempDirNames(:).isdir];
 tempDirNames = {tempDirNames(tempDirIndices).name}';
 
-rhDirNames = dir([dataDir '/' rhVar '/' regridStr]);
+rhDirNames = dir([dataDir '/' rhVar '/' regridStr '/' region]);
 rhDirIndices = [rhDirNames(:).isdir];
 rhDirNames = {rhDirNames(rhDirIndices).name}';
 
@@ -38,7 +45,7 @@ for d = 1:length(tempDirNames)
         continue;
     end
     
-    tempCurDir = [dataDir '/' tempVar '/' regridStr tempDirNames{d}];
+    tempCurDir = [dataDir '/' tempVar '/' regridStr '/' region bcStr '/' tempDirNames{d}];
     
     if ~isdir(tempCurDir)
         continue;
@@ -58,7 +65,7 @@ for d = 1:length(rhDirNames)
         continue;
     end
     
-    rhCurDir = [dataDir  '/' rhVar '/' regridStr rhDirNames{d}];
+    rhCurDir = [dataDir  '/' rhVar '/' regridStr '/' region '/' rhDirNames{d}];
     
     if ~isdir(rhCurDir)
         continue;
@@ -181,7 +188,7 @@ while rhEndYear > minEndYear | rhEndMonth > minEndMonth
     rhEndMonth = str2num(rhFileSubParts{3});
 end
 
-folDataTarget = [dataDir, '/wb/', regridStr, num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
+folDataTarget = [dataDir, '/wb/', regridStr, '/', region, '/', num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
 if ~isdir(folDataTarget)
     mkdir(folDataTarget);
 else
@@ -231,7 +238,7 @@ while tempStartInd <= tempEndInd & rhStartInd <= rhEndInd
 
     fileName = ['wb_', num2str(curYear), '_' monthStr, '_01'];
     
-    if exist([wbCurDir '/' fileName '.mat'], 'file')
+    if exist([wbCurDir '/' fileName '.mat'], 'file') && skipExisting
         ['skipping ' wbCurDir '/' fileName '.mat']
         tempStartInd = tempStartInd + 1;
         rhStartInd = rhStartInd + 1;

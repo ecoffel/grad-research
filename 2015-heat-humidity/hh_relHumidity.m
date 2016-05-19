@@ -4,6 +4,8 @@ tempVar = 'tasmax';
 hussVar = 'huss';
 pslVar = 'psl';
 
+skipExisting = true;
+
 regridStr = ['/' region];
 if isRegridded
     regridStr = ['regrid/' region];
@@ -303,6 +305,23 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
         curMonth = tempStartMonth;
     end
 
+    monthStr = '';
+    if curMonth < 10
+        monthStr = ['0', num2str(curMonth)];
+    else
+        monthStr = num2str(curMonth);
+    end
+
+    fileName = ['rh_', num2str(curYear), '_' monthStr, '_01'];
+    
+    if exist([rhCurDir '/' fileName '.mat'], 'file') && skipExisting
+        ['skipping ' rhCurDir '/' fileName]
+        tempStartInd = tempStartInd + 1;
+        hussStartInd = hussStartInd + 1;
+        pslStartInd = pslStartInd + 1;
+        continue;
+    end
+    
     tempCurFileName = [tempMatDirNames{tempStartInd}, '/', tempMatFileName];
     hussCurFileName = [hussMatDirNames{hussStartInd}, '/', hussMatFileName];
     pslCurFileName = [pslMatDirNames{pslStartInd}, '/', pslMatFileName];
@@ -351,19 +370,6 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
         es(:,:) = 611 .* exp(17.67 .* (tempData(:,:,d) - 273.16) ./ (tempData(:,:,d) - 29.65));
         ws = 0.622 * es(:,:) ./ pslData(:,:,d);
         monthlyRh(:,:,d) = 100 .* hussData(:,:,d) ./ ws;
-    end
-
-    monthStr = '';
-    if curMonth < 10
-        monthStr = ['0', num2str(curMonth)];
-    else
-        monthStr = num2str(curMonth);
-    end
-
-    fileName = ['rh_', num2str(curYear), '_' monthStr, '_01'];
-    
-    if exist([rhCurDir '/' fileName '.mat'], 'file')
-        %continue;
     end
     
     ['processing ' rhCurDir '/' fileName]

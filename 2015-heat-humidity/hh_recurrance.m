@@ -8,15 +8,18 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmax';
-testVar = 'tasmax';
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+      
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -75,9 +78,9 @@ elseif strcmp(baseVar, 'wb')
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [0 100];
+        plotRange = [0 365];
     else
-        plotRange = [0 100];
+        plotRange = [0 365];
     end
     plotXUnits = 'number of days';
 end
@@ -109,7 +112,7 @@ if ~strcmp(testVar, '')
         end
         
         testDataDir = 'cmip5/output';
-        testRcp = 'rcp85/';
+        testRcp = 'rcp45/';
         ensemble = 'r1i1p1/';
     elseif strcmp(testDatasetStr, 'ncep')
         testDatasetStr = ['ncep'];
@@ -231,7 +234,7 @@ testExceedences = nanmean(nanmean(testExceedences, 4), 3);
 result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, testExceedences};
 
 fileTitle = ['recurrance-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
-plotTitle = ['Temperature recurrence'];
+plotTitle = ['Wet-bulb temperature recurrence'];
 
 
 saveData = struct('data', {result}, ...
