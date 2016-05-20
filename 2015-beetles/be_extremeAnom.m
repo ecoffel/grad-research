@@ -3,32 +3,32 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'past';
+testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'mri-cgcm3'};
-testModels = {'mri-cgcm3'};
-% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'mri-cgcm3'};
+% testModels = {'mri-cgcm3'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'tasmin';
-testVar = '';
+baseVar = 'bt';
+testVar = 'bt';
 
 baseRegrid = true;
 testRegrid = true;
 
 region = 'usne';
-rcp = 'rcp85';
+rcp = 'rcp45';
 
 plotEachModel = false;
 
@@ -38,11 +38,13 @@ testPeriodYears = 2050:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
-exportFormat = 'png';
+exportFormat = 'pdf';
 
 blockWater = true;
-baseBiasCorrect = false;
-testBiasCorrect = false;
+baseBiasCorrect = true;
+testBiasCorrect = true;
+
+btK = '-mean';
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -58,6 +60,14 @@ if ~baseBiasCorrect
 else
     baseBcStr = '-bc';
 end
+
+if strcmp(baseVar, 'bt')
+    baseBcStr = [baseBcStr btK];
+end
+
+if strcmp(testVar, 'bt')
+    testBcStr = [testBcStr btK];
+end 
 
 if strcmp(season, 'summer')
     findMax = false;
@@ -85,7 +95,7 @@ plotRegion = 'usne';
 if strcmp(baseVar, 'bt')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [0 5];
+        plotRange = [0 10];
     else
         plotRange = [-20 20];
     end
@@ -93,7 +103,7 @@ if strcmp(baseVar, 'bt')
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
     gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
-        plotRange = [0 5];
+        plotRange = [0 10];
     else
         plotRange = [-40 40];
     end
@@ -284,7 +294,7 @@ if plotEachModel
             ydim = 1:min(size(curModelAvg{3}, 2), size(baseExtAvgRegrid{3}, 2));
             result = {curModelAvg{1}, curModelAvg{2}, curModelAvg{3}(xdim, ydim)-baseExtAvgRegrid{3}(xdim, ydim)};
             
-            plotTitle = ['Minimum air temperature (no BC)'];
+            plotTitle = ['Minimum air temperature (BC)'];
 
             saveData = struct('data', {result}, ...
                               'plotRegion', plotRegion, ...
@@ -303,7 +313,7 @@ if plotEachModel
             curBaseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, baseAvg(:, :, i)};
             result = curBaseAvg;
             
-            plotTitle = ['Minimum air temperature (no BC)'];
+            plotTitle = ['Minimum air temperature (BC)'];
 
             saveData = struct('data', {result}, ...
                               'plotRegion', plotRegion, ...
@@ -359,7 +369,7 @@ else
         result = baseAvg;
     end
 
-    plotTitle = ['Minimum air temperature'];
+    plotTitle = ['Minimum bark temperature (RCP8.5, BC)'];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...

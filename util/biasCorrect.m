@@ -90,7 +90,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
-    futureRcp = 'rcp85/';
+    futureRcp = 'rcp45/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';
