@@ -9,12 +9,12 @@
 %           'cnrm-cm5', 'ipsl-cm5a-mr', ...
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
-models = {'bcc-csm1-1-m'};      
-vars = {'tasmax', 'tasmin'};
+models = {'noresm1-m'};      
+vars = {'tasmax', 'tasmin', 'huss', 'psl'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 ensembles = {'r1i1p1'};
 
-baseDir = 'e:\data\cmip5\output';
+baseDir = 'f:\data\cmip5\output';
 
 for m = 1:length(models)
     for e = 1:length(ensembles)

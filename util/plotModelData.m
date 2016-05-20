@@ -16,6 +16,7 @@ noNewFig = false;
 colormapVal = '';
 vectorData = {};
 plotCountries = false;
+plotStates = false;
 
 if mod(length(varargin), 2) ~= 0
     'error: must have an even # of arguments.'
@@ -46,6 +47,8 @@ else
                 vectorData = val;
             case 'countries'
                 plotCountries = val;
+            case 'states'
+                plotStates = val;
         end
     end
 end
@@ -71,7 +74,7 @@ if strcmp(region, 'world')
     data{2}(:, end+1) = data{2}(:, end) + (data{2}(:, end)-data{2}(:, end-1));
     data{3}(:, end+1) = data{3}(:, end) + (data{3}(:, end)-data{3}(:, end-1));
     
-    mlabel off; plabel off;
+    framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north atlantic')
     worldmap([25 75], [-75 10]);
 elseif strcmp(region, 'usa')
@@ -103,6 +106,7 @@ elseif strcmp(region, 'asia-heat')
     
 else
     worldmap(region);
+    framem off; gridm off; mlabel off; plabel off;
     data{1}(:, end+1) = data{1}(:, end) + (data{1}(:, end)-data{1}(:, end-1));
     data{2}(:, end+1) = data{2}(:, end) + (data{2}(:, end)-data{2}(:, end-1));
 end
@@ -158,9 +162,11 @@ load coast;
 plotm(lat, long, 'Color', [0 0 0], 'LineWidth', 2);
 
 %if strcmp(region, 'usa')
-    states = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
-             {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
-    geoshow(states, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none');
+    if plotStates
+        states = shaperead('usastatelo', 'UseGeoCoords', true, 'Selector', ...
+                 {@(name) ~any(strcmp(name,{'Alaska','Hawaii'})), 'Name'});
+        geoshow(states, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none');
+    end
     
     if plotCountries
         countries = shaperead('countries', 'UseGeoCoords', true);

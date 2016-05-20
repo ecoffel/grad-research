@@ -23,12 +23,18 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     
     if isfield(saveData, 'plotCountries')
-        plotCountries = true;
+        plotCountries = saveData.plotCountries;
     else
         plotCountries = false;
     end
     
-    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries);
+    if isfield(saveData, 'plotStates')
+        plotStates = saveData.plotStates;
+    else
+        plotStates = false;
+    end
+    
+    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
     set(gca, 'Color', 'none');
     set(gca, 'FontSize', 24);
@@ -81,8 +87,8 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     
     if saveData.blockWater
-        %load coast;
-        %geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
+        load coast;
+        geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
     eval(['export_fig ' saveData.fileTitle ';']);

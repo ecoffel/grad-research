@@ -3,57 +3,61 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+testPeriod = 'past';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {''};
-% testModels = {''};
-baseModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'mri-cgcm3'};
+testModels = {'mri-cgcm3'};
+% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'bt';
-testVar = 'bt';
+baseVar = 'tasmin';
+testVar = '';
 
 baseRegrid = true;
 testRegrid = true;
 
 region = 'usne';
+rcp = 'rcp85';
+
+plotEachModel = false;
 
 basePeriodYears = 1985:2004;
 % testPeriodYears = 1985:2004;
-testPeriodYears = 2040:2050;
+testPeriodYears = 2050:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
-exportformat = 'pdf';
+exportFormat = 'png';
 
 blockWater = true;
-baseBiasCorrect = true;
-testBiasCorrect = true;
+baseBiasCorrect = false;
+testBiasCorrect = false;
 
 baseDir = 'e:/data/';
 yearStep = 1;
 
-
-
 if ~testBiasCorrect
-    testBcStr = '-nbc';
+    testBcStr = '';
 else
     testBcStr = '-bc';
 end
 
 if ~baseBiasCorrect
-    baseBcStr = '-nbc';
+    baseBcStr = '';
 else
     baseBcStr = '-bc';
 end
-
-testBcStr = '-bc-mean';
-baseBcStr = '-bc-mean';
 
 if strcmp(season, 'summer')
     findMax = false;
@@ -91,7 +95,7 @@ elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, '
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [0 5];
     else
-        plotRange = [0 50];
+        plotRange = [-40 40];
     end
     plotXUnits = 'degrees C';
 end
@@ -101,7 +105,7 @@ if strcmp(basePeriod, 'past')
     baseRcp = 'historical/';
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = 'rcp85/';
+    baseRcp = [rcp '/'];
 end
 
 if strcmp(testPeriod, 'past')
@@ -109,7 +113,7 @@ if strcmp(testPeriod, 'past')
     testRcp = 'historical/';
 elseif strcmp(testPeriod, 'future')
     testPeriod = testPeriodYears;
-    testRcp = 'rcp85/';
+    testRcp = [rcp '/'];
 end
 
 testDatasetStr = testDataset;
@@ -163,10 +167,10 @@ fileTimeStr = '';
 if ~strcmp(testVar, '')
     fileTimeStr = [testDatasetStr testBcStr '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 else
-    fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [testBcStr '-' season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
 
-fileTitle = ['extremeAnom-' baseVar '-' fileTimeStr '.' exportformat];
+fileTitle = ['extremeAnom-' baseVar '-' rcp '-' fileTimeStr];
 
 baseExt = {};
 futureExt = {};
@@ -185,7 +189,7 @@ for m = 1:length(baseModels)
         ['year ' num2str(y) '...']
         baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
-        if strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
+        if baseDaily{3}(1,1,1,1,1) > 100
             baseDaily{3} = baseDaily{3} - 273.15;
         end
         
@@ -219,7 +223,7 @@ if ~strcmp(testVar, '')
             % for narr
             %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
-            if strcmp(testVar, 'tmax') | strcmp(testVar, 'tmin')
+            if testDaily{3}(1,1,1,1,1) > 100
                 testDaily{3} = testDaily{3} - 273.15;
             end
         
@@ -236,55 +240,137 @@ if ~strcmp(testVar, '')
 end
 
 ['done loading...']
-modelAvg = [];
-baseAvg = [];
 
-% average over models and years
-for m = 1:length(baseExt)
-    for y = 1:length(baseExt{m})
-        baseAvg(:,:,m,y) = baseExt{m}{y}{3};
-    end
-end
+if plotEachModel
+    modelAvg = [];
+    baseAvg = [];
 
-% construct plotable structures
-baseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, squeeze(nanmean(nanmean(baseAvg, 4), 3))};
-
-if ~strcmp(testVar, '')
-    for m = 1:length(futureExt)
-        for y = 1:length(futureExt{m})
-            modelAvg(:,:,m,y) = futureExt{m}{y}{3};
+    % average over models and years
+    for m = 1:length(baseExt)
+        for y = 1:length(baseExt{m})
+            baseAvg(:,:,m,y) = baseExt{m}{y}{3};
         end
     end
-    modelAvg = {futureExt{1}{1}{1}, futureExt{1}{1}{2}, nanmean(nanmean(modelAvg, 4), 3)};
     
-    if strcmp(baseDataset, 'ncep') && strcmp(testDataset, 'narr')
-        baseAvg{2} = baseAvg{2}-360;
-        modelAvg{3} = modelAvg{3}-273.15;
-    end
+    baseAvg = nanmean(baseAvg, 4);
+    
+    if ~strcmp(testVar, '')
+        for m = 1:length(futureExt)
+            for y = 1:length(futureExt{m})
+                modelAvg(:,:,m,y) = futureExt{m}{y}{3};
+            end
+        end
+        
+        % average over years
+        modelAvg = nanmean(modelAvg, 4);
 
-    % regrid the base data if needed
-    if size(baseAvg{3}) ~= size(modelAvg{3})
-        baseExtAvgRegrid = regridGriddata(baseAvg, modelAvg);
+        for i = 1:size(modelAvg, 3)
+            curBaseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, baseAvg(:, :, i)};
+            curModelAvg = {futureExt{1}{1}{1}, futureExt{1}{1}{2}, modelAvg(:, :, i)};
+            
+            if strcmp(baseDataset, 'ncep') && strcmp(testDataset, 'narr')
+                curBaseAvg{2} = curBaseAvg{2}-360;
+                curModelAvg{3} = curModelAvg{3}-273.15;
+            end
+
+            % regrid the base data if needed
+            if size(curBaseAvg{3}) ~= size(curModelAvg{3})
+                baseExtAvgRegrid = regridGriddata(curBaseAvg, curModelAvg);
+            else
+                baseExtAvgRegrid = curBaseAvg;
+            end
+
+            xdim = 1:min(size(curModelAvg{3}, 1), size(baseExtAvgRegrid{3}, 1));
+            ydim = 1:min(size(curModelAvg{3}, 2), size(baseExtAvgRegrid{3}, 2));
+            result = {curModelAvg{1}, curModelAvg{2}, curModelAvg{3}(xdim, ydim)-baseExtAvgRegrid{3}(xdim, ydim)};
+            
+            plotTitle = ['Minimum air temperature (no BC)'];
+
+            saveData = struct('data', {result}, ...
+                              'plotRegion', plotRegion, ...
+                              'plotRange', plotRange, ...
+                              'plotTitle', [plotTitle ' (' baseModels{i} ')'], ...
+                              'fileTitle', [fileTitle '-' baseModels{i} '.' exportFormat], ...
+                              'plotXUnits', plotXUnits, ...
+                              'plotCountries', false, ...
+                              'plotStates', true, ...
+                              'blockWater', blockWater);
+
+            plotFromDataFile(saveData);
+        end
     else
-        baseExtAvgRegrid = baseAvg;
+        for i = 1:size(baseAvg, 3)
+            curBaseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, baseAvg(:, :, i)};
+            result = curBaseAvg;
+            
+            plotTitle = ['Minimum air temperature (no BC)'];
+
+            saveData = struct('data', {result}, ...
+                              'plotRegion', plotRegion, ...
+                              'plotRange', plotRange, ...
+                              'plotTitle', [plotTitle ' (' baseModels{i} ')'] , ...
+                              'fileTitle', [fileTitle '-' baseModels{i} '.' exportFormat], ...
+                              'plotXUnits', plotXUnits, ...
+                              'plotCountries', false, ...
+                              'plotStates', true, ...
+                              'blockWater', blockWater);
+
+            plotFromDataFile(saveData);
+        end
     end
-    
-    xdim = 1:min(size(modelAvg{3}, 1), size(baseExtAvgRegrid{3}, 1));
-    ydim = 1:min(size(modelAvg{3}, 2), size(baseExtAvgRegrid{3}, 2));
-    result = {modelAvg{1}, modelAvg{2}, modelAvg{3}(xdim, ydim)-baseExtAvgRegrid{3}(xdim, ydim)};
 else
-    result = baseAvg;
+    modelAvg = [];
+    baseAvg = [];
+
+    % average over models and years
+    for m = 1:length(baseExt)
+        for y = 1:length(baseExt{m})
+            baseAvg(:,:,m,y) = baseExt{m}{y}{3};
+        end
+    end
+
+    % construct plotable structures
+    baseAvg = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, squeeze(nanmean(nanmean(baseAvg, 4), 3))};
+
+    if ~strcmp(testVar, '')
+        for m = 1:length(futureExt)
+            for y = 1:length(futureExt{m})
+                modelAvg(:,:,m,y) = futureExt{m}{y}{3};
+            end
+        end
+        modelAvg = {futureExt{1}{1}{1}, futureExt{1}{1}{2}, nanmean(nanmean(modelAvg, 4), 3)};
+
+        if strcmp(baseDataset, 'ncep') && strcmp(testDataset, 'narr')
+            baseAvg{2} = baseAvg{2}-360;
+            modelAvg{3} = modelAvg{3}-273.15;
+        end
+
+        % regrid the base data if needed
+        if size(baseAvg{3}) ~= size(modelAvg{3})
+            baseExtAvgRegrid = regridGriddata(baseAvg, modelAvg);
+        else
+            baseExtAvgRegrid = baseAvg;
+        end
+
+        xdim = 1:min(size(modelAvg{3}, 1), size(baseExtAvgRegrid{3}, 1));
+        ydim = 1:min(size(modelAvg{3}, 2), size(baseExtAvgRegrid{3}, 2));
+        result = {modelAvg{1}, modelAvg{2}, modelAvg{3}(xdim, ydim)-baseExtAvgRegrid{3}(xdim, ydim)};
+    else
+        result = baseAvg;
+    end
+
+    plotTitle = ['Minimum air temperature'];
+
+    saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', [fileTitle '.' exportFormat], ...
+                      'plotXUnits', plotXUnits, ...
+                      'plotCountries', false, ...
+                      'plotStates', true, ...
+                      'blockWater', blockWater);
+
+    plotFromDataFile(saveData);
 end
-
-plotTitle = ['CMIP5 air temperature change [2050-2040 - 1985-2005]'];
-
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater);
-
-plotFromDataFile(saveData);
 
