@@ -25,7 +25,7 @@ ensembleRangeResults(nanind) = NaN;
 mmRangeResults(infind) = NaN;
 mmRangeResults(nanind) = NaN;
 
-plotTitle = ['Ensemble range vs model range ratio'];
+plotTitle = ['Internal variability'];
 
 saveData = struct('data', {ratio}, ...
                   'plotRegion', 'usne', ...

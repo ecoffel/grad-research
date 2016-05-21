@@ -28,7 +28,7 @@ testVar = 'bt';
 region = 'usne';
 
 ensembles = 1;
-futureRcp = 'rcp45';
+futureRcp = 'rcp85';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -139,7 +139,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '-mean';
+    kStr = '-221';
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];
@@ -316,7 +316,7 @@ for e = ensembles
             end
         end
 
-        multiModelMean = true;
+        multiModelMean = false;
 
         lastYearOrig = lastYear;
 
@@ -352,6 +352,8 @@ for e = ensembles
                               'blockWater', blockWater, ...
                               'statData', agreement, ...
                               'stippleInterval', 0.5, ...
+                              'plotCountries', false, ...
+                              'plotStates', true, ...
                               'colormap', brewermap(15, 'YlOrRd'));
 
             plotFromDataFile(saveData);
@@ -389,6 +391,8 @@ for e = ensembles
                                   'blockWater', blockWater, ...
                                   'statData', agreement, ...
                                   'stippleInterval', 0.5, ...
+                                  'plotCountries', false, ...
+                                  'plotStates', true, ...
                                   'colormap', brewermap(15, 'YlOrRd'));
 
                 plotFromDataFile(saveData);

@@ -40,7 +40,7 @@ function [fg, cb] = plotFromDataFile(saveData)
     set(gca, 'FontSize', 24);
     xlabel(cb, saveData.plotXUnits, 'FontSize', 24);
     cbPos = get(cb, 'Position');
-    title(saveData.plotTitle, 'FontSize', 24);
+    title(saveData.plotTitle, 'FontSize', 30);
     
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');

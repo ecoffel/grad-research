@@ -1,6 +1,6 @@
 baseDir = 'C:\git-ecoffel\grad-research\bt-output';
 
-state = 'multi-model';
+state = 'ensemble';
 
 ciPlot = true;
 modelRangePlot = true;

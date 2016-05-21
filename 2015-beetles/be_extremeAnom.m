@@ -3,32 +3,32 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+testPeriod = 'past';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
 % baseModels = {'mri-cgcm3'};
-% testModels = {'mri-cgcm3'};
+testModels = {''};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'bt';
-testVar = 'bt';
+baseVar = 'tasmin';
+testVar = 'tasmin';
 
-baseRegrid = true;
-testRegrid = true;
+baseRegrid = false;
+testRegrid = false;
 
 region = 'usne';
-rcp = 'rcp45';
+rcp = 'rcp85';
 
 plotEachModel = false;
 
@@ -37,7 +37,7 @@ basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
+annualmean = true;
 exportFormat = 'pdf';
 
 blockWater = true;
@@ -227,9 +227,12 @@ if ~strcmp(testVar, '')
         ['loading ' curModel ' future']
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
-            % load daily data
+            % load daily data, for cmip5
             testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-
+            
+            % for ncep
+            %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            
             % for narr
             %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
@@ -369,7 +372,7 @@ else
         result = baseAvg;
     end
 
-    plotTitle = ['Minimum bark temperature (RCP8.5, BC)'];
+    plotTitle = ['CMIP5 mean minimum temperature (corrected)'];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...
