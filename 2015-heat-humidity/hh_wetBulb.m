@@ -291,7 +291,12 @@ while tempStartInd <= tempEndInd & rhStartInd <= rhEndInd
         for ypos = 1:size(tempData,2)
             for d = 1:size(tempData,3)
 
-                T = (tempData(xpos,ypos,d) - 273.15);   % deg C
+                if tempData(xpos,ypos,d) > 200
+                    T = (tempData(xpos,ypos,d) - 273.15);   % deg C
+                else
+                    T = (tempData(xpos,ypos,d));            % deg C
+                end
+                
                 RH = rhData(xpos,ypos,d);               % percentage
                 
                 wb(xpos, ypos, d) = T * atan(0.151977 * sqrt(RH + 8.313659)) + ...
