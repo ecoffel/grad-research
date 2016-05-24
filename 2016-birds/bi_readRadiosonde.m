@@ -62,7 +62,7 @@ function obst = bi_readRadiosonde(fname)
           curObj.windDir(end+1) = str2num(s(27:31));
           curObj.windSpd(end+1) = str2num(s(32:36));
       end
-
+      
       if mod(ii, 1000) == 0
           ['processed ' num2str(ii) ' lines...']
       end
@@ -71,8 +71,8 @@ function obst = bi_readRadiosonde(fname)
     
     if obsCnt > 0
         dat(obsCnt).data = curObj;
-	end
-
+    end
+    
     % create table from structure 
     obst=struct2table(dat);
 
