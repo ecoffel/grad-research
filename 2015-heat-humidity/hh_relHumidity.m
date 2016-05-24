@@ -366,6 +366,11 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
         continue;
     end
 
+    % convert to kelvin if needed
+    if tempData(1,1,1) < 200
+        tempData = tempData + 273.15;
+    end
+    
     for d = 1:size(tempData, 3)
         es(:,:) = 611 .* exp(17.67 .* (tempData(:,:,d) - 273.16) ./ (tempData(:,:,d) - 29.65));
         ws = 0.622 * es(:,:) ./ pslData(:,:,d);
