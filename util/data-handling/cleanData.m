@@ -9,18 +9,31 @@
 %           'cnrm-cm5', 'ipsl-cm5a-mr', ...
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
-models = {'noresm1-m'};      
-vars = {'tasmax', 'tasmin', 'huss', 'psl'};
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};    
+vars = {'rh', 'wb'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 ensembles = {'r1i1p1'};
 
-baseDir = 'f:\data\cmip5\output';
+% should we just remove the regridded data or the whole variable
+removeAll = true;
+
+baseDir = 'e:\data\cmip5\output';
 
 for m = 1:length(models)
     for e = 1:length(ensembles)
         for r = 1:length(rcps)
             for v = 1:length(vars)
-                curDir = [baseDir '\' models{m} '\' ensembles{e} '\' rcps{r} '\' vars{v}];
+                
+                % select base folder for scenario
+                if removeAll
+                    curDir = [baseDir '\' models{m} '\' ensembles{e} '\' rcps{r}];
+                % select folder for variable to select regrid dir
+                else
+                    curDir = [baseDir '\' models{m} '\' ensembles{e} '\' rcps{r} '\' vars{v}];
+                end
                 
                 if ~isdir(curDir)
                     continue;
@@ -31,13 +44,24 @@ for m = 1:length(models)
                 subDirs = {subDirs(subDirInd).name}';
 
                 for d = 1:length(subDirs)
-                    % keep everything in regrid
-                    if strcmp(subDirs{d}, 'regrid') || strcmp(subDirs{d}, '.') || strcmp(subDirs{d}, '..')
-                        continue;
-                    % delete everything else
+                    
+                    if removeAll
+                        % kill everything
+                        if ~strcmp(subDirs{d}, vars{v})
+                            continue;
+                        else
+                            delDir = [curDir '\' subDirs{d}]
+                            rmdir(delDir, 's');
+                        end
                     else
-                        delDir = [curDir '\' subDirs{d}]
-                        rmdir(delDir, 's');
+                        % keep everything in regrid
+                        if strcmp(subDirs{d}, 'regrid') || strcmp(subDirs{d}, '.') || strcmp(subDirs{d}, '..')
+                            continue;
+                        % delete everything else
+                        else
+                            delDir = [curDir '\' subDirs{d}]
+                            rmdir(delDir, 's');
+                        end
                     end
                 end
             end
