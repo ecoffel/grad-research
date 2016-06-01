@@ -3,13 +3,13 @@
 
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'past';
+testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'access1-0'};
-testModels = {'access1-0'};
+% baseModels = {'bnu-esm'};
+% testModels = {'bnu-esm'};
 % baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
@@ -19,6 +19,15 @@ testModels = {'access1-0'};
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
+          'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
+          'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+      
 baseVar = 'wb';
 testVar = 'wb';
 
@@ -26,20 +35,20 @@ baseRegrid = false;
 testRegrid = false;
 
 region = 'world';
-rcp = 'rcp85';
+rcp = 'rcp45';
 
 plotRegion = 'world';
 
-plotEachModel = false;
+plotEachModel = true;
 
-plotTitle = ['CMIP5 annual maximum wet-bulb'];
+plotTitle = ['CMIP5 annual maximum wet-bulb change'];
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
-exportFormat = 'pdf';
+exportFormat = 'png';
 
 blockWater = true;
 baseBiasCorrect = true;
@@ -86,7 +95,7 @@ if strcmp(baseVar, 'wb')
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [0 10];
     else
-        plotRange = [-20 20];
+        plotRange = [0 35];
     end
     plotXUnits = 'degrees C';
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
