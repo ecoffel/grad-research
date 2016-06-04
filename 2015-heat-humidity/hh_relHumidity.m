@@ -293,14 +293,20 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
 
     if tempStartYear ~= hussStartYear || tempStartYear ~= pslStartYear || pslStartYear ~= hussStartYear
         ['years do not match']
-        return;
+        tempStartInd = tempStartInd + 1;
+        hussStartInd = hussStartInd + 1;
+        pslStartInd = pslStartInd + 1;
+        continue;
     else
         curYear = tempStartYear;
     end
 
     if tempStartMonth ~= hussStartMonth || tempStartMonth ~= pslStartMonth || pslStartMonth ~= hussStartMonth
         ['months do not match']
-        return;
+        tempStartInd = tempStartInd + 1;
+        hussStartInd = hussStartInd + 1;
+        pslStartInd = pslStartInd + 1;
+        continue;
     else
         curMonth = tempStartMonth;
     end

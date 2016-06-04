@@ -13,12 +13,12 @@ baseModels = {''};
 %           'csiro-mk3-6-0', 'ec-earth', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', 'inmcm4', ...
 %           'hadgem2-es', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-testModels = {'mri-cgcm3'};
+testModels = {'bnu-esm'};
 
 addToBC = false;    
 
-baseVar = 'tmin';
-testVar = 'tasmin';
+baseVar = 'tmax';
+testVar = 'tasmax';
 
 percentiles = 10:10:100;
 
@@ -51,7 +51,7 @@ elseif strcmp(region, 'nepal')
     lonBounds = [75, 100];
 end
 
-baseDir = 'e:/data/';
+baseDir = 'f:/data/';
 yearStep = 1;
 
 baseDataDir = '';
@@ -90,7 +90,7 @@ if strcmp(testDataset, 'cmip5')
     testDataDir = 'cmip5/output';
     testEnsemble = 'r1i1p1/';
     testRcp = 'historical/';
-    futureRcp = 'rcp45/';
+    futureRcp = 'rcp85/';
 elseif strcmp(testDataset, 'ncep')
     testDatasetStr = ['ncep'];
     testDataDir = 'ncep-reanalysis/output';

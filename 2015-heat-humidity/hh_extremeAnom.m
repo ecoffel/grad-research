@@ -2,14 +2,14 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'past';
+basePeriod = 'future';
 testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm'};
-% testModels = {'bnu-esm'};
+baseModels = {'access1-3'};
+testModels = {'access1-3'};
 % baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
@@ -19,20 +19,11 @@ testDataset = 'cmip5';
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
-          'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
-          'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-      
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'rh';
+testVar = '';
 
-baseRegrid = false;
-testRegrid = false;
+baseRegrid = true;
+testRegrid = true;
 
 region = 'world';
 rcp = 'rcp45';
@@ -41,7 +32,7 @@ plotRegion = 'world';
 
 plotEachModel = true;
 
-plotTitle = ['CMIP5 annual maximum wet-bulb change'];
+plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2070;
@@ -51,8 +42,8 @@ annualmean = false;
 exportFormat = 'png';
 
 blockWater = true;
-baseBiasCorrect = true;
-testBiasCorrect = true;
+baseBiasCorrect = false;
+testBiasCorrect = false;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -195,9 +186,9 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
-        if baseDaily{3}(1,1,1,1,1) > 100
+        if ~strcmp(baseVar, 'rh') && baseDaily{3}(1,1,1,1,1) > 100
             baseDaily{3} = baseDaily{3} - 273.15;
         end
         
@@ -226,7 +217,7 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data, for cmip5
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             
             % for ncep
             %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
@@ -234,7 +225,7 @@ if ~strcmp(testVar, '')
             % for narr
             %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
-            if testDaily{3}(1,1,1,1,1) > 100
+            if ~strcmp(testVar, 'rh') && testDaily{3}(1,1,1,1,1) > 100
                 testDaily{3} = testDaily{3} - 273.15;
             end
         

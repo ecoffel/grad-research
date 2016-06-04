@@ -4,9 +4,9 @@
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {'ipsl-cm5a-mr'};
+models = {'access1-3'};
       
-rcps = {'historical'};
+rcps = {'rcp45'};
 ensembles = 1;
 
 for m = 1:length(models)
