@@ -2,25 +2,25 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'future';
+basePeriod = 'past';
 testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'access1-3'};
-testModels = {'access1-3'};
-% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'access1-3'};
+% testModels = {'access1-3'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'rh';
-testVar = '';
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 testRegrid = true;
@@ -82,15 +82,16 @@ else
 end
 
 if strcmp(baseVar, 'wb')
-    gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [0 10];
     else
         plotRange = [0 35];
     end
     plotXUnits = 'degrees C';
+elseif strcmp(baseVar, 'rh')
+    plotRange = [0 100];
+    plotXUnits = '%';
 elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
-    gridbox = true;
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [0 10];
     else
@@ -186,7 +187,12 @@ for m = 1:length(baseModels)
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        
+        if baseRegrid
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        else
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        end
         
         if ~strcmp(baseVar, 'rh') && baseDaily{3}(1,1,1,1,1) > 100
             baseDaily{3} = baseDaily{3} - 273.15;
@@ -217,7 +223,11 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data, for cmip5
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            if testRegrid
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            else
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            end
             
             % for ncep
             %testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);

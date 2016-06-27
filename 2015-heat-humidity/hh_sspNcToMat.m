@@ -2,7 +2,7 @@
 % 1. Automatically identify deltaT
 % 2. Fix missing data at lon = 0
 
-function cmip5NcToMat(rawNcDir, outputDir, varName, maxNum)
+function sspNcToMat(rawNcDir, outputDir, varName, maxNum)
 
 ncFileNames = dir([rawNcDir, '/', varName, '_*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -55,10 +55,6 @@ for k = 1:length(ncFileNames)
     for i = 0:ndim-1
         [dimname, dimlen] = netcdf.inqDim(ncid,i);
         
-        if length(findstr(dimname, 'lev')) ~= 0
-            dimIdLev = i+1;
-        end
-        
         if length(findstr(dimname, 'lat')) ~= 0
             dimIdLat = i+1;
         end
@@ -67,13 +63,9 @@ for k = 1:length(ncFileNames)
             dimIdLon = i+1;
         end
         
-        if length(findstr(dimname, 'time')) ~= 0
-            dimIdTime = i+1;
-        end
         dims{i+1} = {dimname, dimlen};
     end
 
-    varIdPLev = 0;
     varIdLat = 0;
     varIdLon = 0;
     varIdMain = 0;

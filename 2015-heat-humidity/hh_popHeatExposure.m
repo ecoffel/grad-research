@@ -5,15 +5,15 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm', 'canesm2'};
-% testModels = {'bnu-esm', 'canesm2'};
+baseModels = {'bnu-esm'};
+testModels = {'bnu-esm'};
 
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
+%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
+%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'wb';
 testVar = 'wb';
@@ -22,12 +22,14 @@ baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2070;
+testPeriodYears = 2020:2090;
 
-biasCorrect = true;
+baseBiasCorrect = false;
+testBiasCorrect = false;
 
 popRegrid = true;
 
+rcp = 'rcp85';
 region = 'world';
 exposureThreshold = 29;
 ssp = 5;
@@ -38,6 +40,18 @@ exportformat = 'pdf';
 
 baseDir = 'e:/data/';
 yearStep = 1;
+
+if ~testBiasCorrect
+    testBcStr = '';
+else
+    testBcStr = '-bc';
+end
+
+if ~baseBiasCorrect
+    baseBcStr = '';
+else
+    baseBcStr = '-bc';
+end
 
 if strcmp(season, 'summer')
     findMax = true;
@@ -82,7 +96,7 @@ if strcmp(basePeriod, 'past')
     baseRcp = 'historical/'
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = 'rcp85/';
+    baseRcp = [rcp '/'];
 end
 
 if strcmp(testPeriod, 'past')
@@ -90,7 +104,7 @@ if strcmp(testPeriod, 'past')
     testRcp = 'historical/'
 elseif strcmp(testPeriod, 'future')
     testPeriod = testPeriodYears;
-    testRcp = 'rcp85/';
+    testRcp = [rcp '/'];
 end
 
 if ~strcmp(testVar, '')
@@ -151,11 +165,6 @@ futurePopCount = [];
 constPopCount = [];
 constClimateCount = [];
 
-if biasCorrect
-     load(['bias-correction/cmip5BiasCorrection_' baseVar '_' region '.mat']);
-     eval(['cmip5BiasCor = cmip5BiasCorrection_' baseVar '_' region ';']);
-end
-
 meanBaseSelGrid = [];
 
 for m = 1:length(baseModels)
@@ -171,7 +180,7 @@ for m = 1:length(baseModels)
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
         if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         else
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
@@ -225,7 +234,11 @@ if ~strcmp(testVar, '')
         for y = testPeriodYears(1):yearStep:testPeriodYears(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            if testRegrid
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            else
+                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            end
             
             [latIndexRange, lonIndexRange] = latLonIndexRange(testDaily, latRange, lonRange);
             testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);

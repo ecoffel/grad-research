@@ -1,6 +1,6 @@
 baseDir = 'C:\git-ecoffel\grad-research\bt-output';
 
-state = 'ensemble';
+state = 'multi-model';
 
 ciPlot = true;
 modelRangePlot = true;
@@ -19,6 +19,7 @@ if strcmp(state, 'multi-model')
 elseif strcmp(state, 'ensemble')
     models = {'csiro-mk3-6-0'};
     kvals = {'077', 'mean', '221'};
+    rcps = {'rcp45', 'rcp85'};
     ensembles = 1:10;
     thresholds = [100];
 end
@@ -79,7 +80,7 @@ if ciPlot
     perclow = round((100-ciThresh)/100.0 * size(rankings, 3));
     perchigh = round(ciThresh/100.0 * size(rankings, 3));
 
-    % rank & pick 5th & 95th percentile
+    % rank & pick percentiles
     for xlat = 1:size(rankings, 1)
         for ylon = 1:size(rankings, 2)
             rankings(xlat, ylon, :) = sort(rankings(xlat, ylon, :));

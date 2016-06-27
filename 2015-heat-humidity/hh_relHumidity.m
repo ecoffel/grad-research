@@ -383,6 +383,8 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
         monthlyRh(:,:,d) = 100 .* hussData(:,:,d) ./ ws;
     end
     
+    monthlyRh(monthlyRh > 1e10) = NaN;
+    
     ['processing ' rhCurDir '/' fileName]
     eval([fileName ' = {tempLat, tempLon, monthlyRh};']);
     save([rhCurDir, '/', fileName, '.mat'], fileName, '-v7.3');
