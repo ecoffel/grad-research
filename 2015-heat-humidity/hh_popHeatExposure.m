@@ -5,8 +5,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm'};
-testModels = {'bnu-esm'};
+baseModels = {'bnu-esm', 'canesm2'};
+testModels = {'bnu-esm', 'canesm2'};
 
 % baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
 %           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
@@ -19,10 +19,10 @@ baseVar = 'wb';
 testVar = 'wb';
 
 baseRegrid = true;
-modelRegrid = true;
+testRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2020:2090;
+testPeriodYears = 2021:2080;
 
 baseBiasCorrect = false;
 testBiasCorrect = false;
@@ -286,10 +286,10 @@ popPopEffect = constClimateCount;
 interactionEffect = futurePopCount - climatePopEffect - popPopEffect;
 
 % calculate uncertainties
-climEstd = squeeze(nanstd(climatePopEffect, 1));
-popEstd = squeeze(nanstd(popPopEffect, 1));
-intEstd = squeeze(nanstd(interactionEffect, 1));
-futPopStd = squeeze(nanstd(futurePopCount, 1));
+climEstd = squeeze(nanstd(climatePopEffect, [], 1));
+popEstd = squeeze(nanstd(popPopEffect, [], 1));
+intEstd = squeeze(nanstd(interactionEffect, [], 1));
+futPopStd = squeeze(nanstd(futurePopCount, [], 1));
 
 mmClimatePopEffect = nanmean(climatePopEffect, 1);
 mmPopPopEffect = nanmean(popPopEffect, 1);
@@ -305,18 +305,9 @@ futureDecYerr = [];
 
 for d = 1:length(futureDecX)
     mmPopE = nanmean(mmPopPopEffect((d-1)*10+1 : d*10));
-    mmPopEerr = nanmean(popEstd((d-1)*10+1 : d*10));
-    
     mmClimE = nanmean(mmClimatePopEffect((d-1)*10+1 : d*10));
-    mmClimEerr = nanmean(climEstd((d-1)*10+1 : d*10));
-    
     mmIntE = nanmean(mmInteractionEffect((d-1)*10+1 : d*10));
-    mmIntEerr = nanmean(intEstd((d-1)*10+1 : d*10));
-    
-    mmFutEerr = nanmean(futPopStd((d-1)*10+1 : d*10));
-    
     mmFutureDecY(d,:) = [mmPopE, mmClimE, mmIntE, mmPopE+mmClimE+mmIntE];
-    mmFutureDecYerr(d,:) = [mmPopEerr, mmClimEerr, mmIntEerr, mmFutEerr];
     
     popE = squeeze(nanmean(popPopEffect(:, (d-1)*10+1 : d*10), 2));
     climE = squeeze(nanmean(climatePopEffect(:, (d-1)*10+1 : d*10), 2));
@@ -326,6 +317,12 @@ for d = 1:length(futureDecX)
     futureDecY(d, 2, :) = climE;
     futureDecY(d, 3, :) = intE;
     futureDecY(d, 4, :) = popE+climE+intE;
+    
+    mmPopEerr = nanmean(popEstd((d-1)*10+1 : d*10));
+    mmClimEerr = nanmean(climEstd((d-1)*10+1 : d*10));
+    mmIntEerr = nanmean(intEstd((d-1)*10+1 : d*10));
+    mmFutEerr = nanmean(futPopStd((d-1)*10+1 : d*10));
+    mmFutureDecYerr(d,:) = [mmPopEerr, mmClimEerr, mmIntEerr, mmFutEerr];
     
     futureDecYerr(d, 1) = nanstd(popE);
     futureDecYerr(d, 2) = nanstd(climE);
@@ -353,7 +350,6 @@ if barChart
                   'name', 'Population effect', ...
                   'error_y', struct(...
                     'type', 'data', ...
-                    'array', saveData.futureDecYerr(:,1), ...
                     'visible', true), ...
                   'type', 'bar');
               
@@ -362,7 +358,6 @@ if barChart
                   'name', 'Climate effect', ...
                   'error_y', struct(...
                     'type', 'data', ...
-                    'array', saveData.futureDecYerr(:,2), ...
                     'visible', true), ...
                   'type', 'bar');
     trace3 = struct('x', { saveData.futureDecX }, ...
@@ -370,7 +365,6 @@ if barChart
                   'name', 'Interaction effect', ...
                   'error_y', struct(...
                     'type', 'data', ...
-                    'array', saveData.futureDecYerr(:,3), ...
                     'visible', true), ...
                   'type', 'bar');
               
@@ -379,7 +373,6 @@ if barChart
                   'name', 'Total', ...
                   'error_y', struct(...
                     'type', 'data', ...
-                    'array', saveData.futureDecYerr(:,4), ...
                     'visible', true), ...
                   'type', 'bar');
               
