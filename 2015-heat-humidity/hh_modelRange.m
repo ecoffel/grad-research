@@ -10,32 +10,56 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'bnu-esm', 'canesm2'};
-% testModels = {'bnu-esm', 'canesm2'};
-baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'bnu-esm', 'canesm2'};
+testModels = {'bnu-esm', 'canesm2'};
+% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 baseVar = 'wb';
 testVar = 'wb';
 
 baseRegrid = true;
-modelRegrid = true;
+testRegrid = true;
+
+baseBiasCorrect = false;
+testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2050:2069;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
-exportformat = 'pdf';
+exportformat = 'png';
+
+rcps = {'rcp45', 'rcp85'};
+region = 'world';
+plotRegion = 'world';
+
+% percentile range to show
+percentiles = [25 75];
 
 blockWater = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
+
+if ~testBiasCorrect
+    testBcStr = '';
+else
+    testBcStr = '-bc';
+end
+
+if ~baseBiasCorrect
+    baseBcStr = '';
+else
+    baseBcStr = '-bc';
+end
 
 if strcmp(season, 'summer')
     findMax = true;
@@ -58,58 +82,19 @@ else
     maxMinFileStr = 'ext';
 end
 
-plotRegion = 'world';
-
-if strcmp(baseVar, 'huss')
-    plotRange = [-0.003 0.003];
-    plotXUnits = 'kg water vapor / kg air';
-elseif strcmp(baseVar, 'hi')
-    plotRange = [0 5];
-    plotXUnits = 'degrees C';
-elseif strcmp(baseVar, 'rh')
-    plotRange = [-5 5];
-    plotXUnits = 'percent';
-elseif strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin')
+if strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin') | strcmp(baseVar, 'wb')
     plotRange = [0 5];
     plotXUnits = 'degrees C';
 end
 
 if strcmp(basePeriod, 'past')
     basePeriod = basePeriodYears;
-    baseRcp = 'historical'
-elseif strcmp(basePeriod, 'future')
-    basePeriod = testPeriodYears;
-    baseRcp = 'rcp85';
+    baseRcp = 'historical/'
 end
 
 if strcmp(testPeriod, 'past')
     testPeriod = basePeriodYears;
-    testRcp = 'historical'
-elseif strcmp(testPeriod, 'future')
-    testPeriod = testPeriodYears;
-    testRcp = 'rcp85';
-end
-
-if ~strcmp(testVar, '')
-    testDatasetStr = testDataset;
-    if strcmp(testDatasetStr, 'cmip5')
-        if length(testModels) == 1
-            modelStr = strsplit(testModels{1}, '/');
-            testDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}];
-        else 
-            testDatasetStr = ['cmip5-mm'];
-        end
-        
-        testDataDir = 'cmip5/output';
-        testRcp = 'rcp85/';
-        ensemble = 'r1i1p1/';
-    elseif strcmp(testDatasetStr, 'ncep')
-        testDatasetStr = ['ncep'];
-        testDataDir = 'ncep-reanalysis/output';
-        ensemble = '';
-        testRcp = '';
-    end
-    
+    testRcp = 'historical/'
 end
 
 baseDatasetStr = baseDataset;
@@ -120,17 +105,15 @@ if strcmp(baseDatasetStr, 'cmip5')
     else
         baseDatasetStr = ['cmip5-mm'];
     end
-    
+
     baseDataDir = 'cmip5/output';
-    baseRcp = 'historical/';
-    ensemble = 'r1i1p1/';
+    baseEnsemble = 'r1i1p1/';
 elseif strcmp(baseDatasetStr, 'ncep')
     baseDatasetStr = ['ncep'];
     baseDataDir = 'ncep-reanalysis/output';
-    ensemble = '';
+    baseEnsemble = '';
     baseRcp = '';
 end
-
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
@@ -138,12 +121,9 @@ if ~strcmp(testVar, '')
 else
     fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
 end
-
-fileTitle = ['modelRange-' baseVar '-' fileTimeStr '.' exportformat];
-
+    
+% load base dataset
 baseExt = {};
-futureExt = {};
-
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
         curModel = baseModels{m};
@@ -152,52 +132,103 @@ for m = 1:length(baseModels)
     end
 
     baseExt{m} = {};
-    
+
     ['loading ' curModel ' base']
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        
+
+        if baseRegrid
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        else
+            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        end
+
         if annualmean
             baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
         else
             baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
         end
-        
+
         baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
         clear baseDaily baseExtTmp;
     end
 end
 
-if ~strcmp(testVar, '')
-    for m = 1:length(testModels)
-        if strcmp(testModels{m}, '')
-            curModel = testModels{m};
-        else
-            curModel = [testModels{m} '/'];
-        end
-        
-        futureExt{m} = {};
+% loop over rcps and load future data
+futureExt = {};
+for r = 1:length(rcps)
+    rcp = rcps{r};
+    
+    if strcmp(basePeriod, 'future')
+        basePeriod = testPeriodYears;
+        baseRcp = [rcp '/'];
+    end
 
-        ['loading ' curModel ' future']
-        for y = testPeriod(1):yearStep:testPeriod(end)
-            ['year ' num2str(y) '...']
-            % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            
-            if annualmean
-                testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
-            else
-                testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+    if strcmp(testPeriod, 'future')
+        testPeriod = testPeriodYears;
+        testRcp = [rcp '/'];
+    end
+
+    if ~strcmp(testVar, '')
+        testDatasetStr = testDataset;
+        if strcmp(testDatasetStr, 'cmip5')
+            if length(testModels) == 1
+                modelStr = strsplit(testModels{1}, '/');
+                testDatasetStr = ['cmip5-' modelStr{1} '-' modelStr{2}];
+            else 
+                testDatasetStr = ['cmip5-mm'];
             end
 
-            futureExt{m} = {futureExt{m}{:}, testDailyExtTmp{:}};
-            clear testDaily testDailyExtTmp;
+            testDataDir = 'cmip5/output';
+            testEnsemble = 'r1i1p1/';
+        elseif strcmp(testDatasetStr, 'ncep')
+            testDatasetStr = ['ncep'];
+            testDataDir = 'ncep-reanalysis/output';
+            testEnsemble = '';
+            testRcp = '';
+        end
+
+    end
+
+    
+    futureExt{r} = {};
+    if ~strcmp(testVar, '')
+        for m = 1:length(testModels)
+            if strcmp(testModels{m}, '')
+                curModel = testModels{m};
+            else
+                curModel = [testModels{m} '/'];
+            end
+
+            futureExt{r}{m} = {};
+
+            ['loading ' curModel ' future']
+            for y = testPeriod(1):yearStep:testPeriod(end)
+                ['year ' num2str(y) '...']
+
+                % load daily data
+                if testRegrid
+                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                else
+                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                end
+
+                if annualmean
+                    testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
+                else
+                    testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
+                end
+
+                futureExt{r}{m} = {futureExt{r}{m}{:}, testDailyExtTmp{:}};
+                clear testDaily testDailyExtTmp;
+            end
         end
     end
 end
 
 ['done loading...']
+
+% average over the future period and rank each gridbox from the models & rcps
 testData = [];
 baseData = [];
 chgData = [];
@@ -209,28 +240,81 @@ for m = 1:length(baseExt)
     end
 end
 
-for m = 1:length(futureExt)
-    for y = 1:length(futureExt{m})
-        testData(:,:,m,y) = futureExt{m}{y}{3};
+for r = 1:length(rcps)
+    for m = 1:length(futureExt{r})
+        for y = 1:length(futureExt{r}{m})
+            testData(:,:,m,r,y) = futureExt{r}{m}{y}{3};
+        end
     end
 end
 
-baseData = nanmean(baseData, 4);
-testData = nanmean(testData, 4);
+% average over future period
+baseData = nanmean(baseData, 5);
+testData = nanmean(testData, 5);
 
-chgData = testData - baseData;
-chgData = nanstd(chgData, [], 3);
 
-result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, chgData};
+% loop over models and rcps to make a list of all possible changes
+i = 1;
+for m = 1:size(testData, 3)
+    for r = 1:size(testData, 4)
+        chgData(:,:,i) = squeeze(testData(:,:,m,r)) - baseData(:,:,m);
+        i = i+1;
+    end
+end
 
-plotTitle = ['Wet bulb temperature'];
+% loop over all models
+for m = 1:size(baseData, 3)
+    
+    % and over all gridboxes
+    for x = 1:size(baseData, 1)
+        for y = 1:size(baseData, 2)
+            % sort the models
+            baseData(x, y, :) = sort(baseData(x, y, :));
+            testData(x, y, :) = sort(reshape(testData(x, y, :, :), [1 1 size(testData, 3)*size(testData, 4)]));
+            chgData(x, y, :) = sort(chgData(x, y, :));
+        end
+    end
+end
 
-saveData = struct('data', {result}, ...
+chgLow = squeeze(chgData(:, :, round(percentiles(1)/100.0 * size(chgData, 3))));
+chgHigh = squeeze(chgData(:, :, round(percentiles(2)/100.0 * size(chgData, 3))));
+
+baseLow = squeeze(baseData(:, :, round(percentiles(1)/100.0 * size(baseData, 3))));
+baseHigh = squeeze(baseData(:, :, round(percentiles(2)/100.0 * size(baseData, 3))));
+
+testLow = squeeze(testData(:, :, round(percentiles(1)/100.0 * size(testData, 3))));
+testHigh = squeeze(testData(:, :, round(percentiles(2)/100.0 * size(testData, 3))));
+
+resultLow = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, chgLow};
+resultHigh = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, chgHigh};
+
+plotTitle = ['Lower bound'];
+fileTitle = ['modelRange-low-' baseVar '-' fileTimeStr '.' exportformat];
+
+saveData = struct('data', {resultLow}, ...
                   'plotRegion', plotRegion, ...
-                  'plotRange', [-3 3], ...
+                  'plotRange', [-5 5], ...
                   'plotTitle', plotTitle, ...
                   'fileTitle', fileTitle, ...
-                  'plotXUnits', 'STD', ...
-                  'blockWater', blockWater);
+                  'plotXUnits', 'degrees C', ...
+                  'blockWater', blockWater, ...
+                  'plotCountries', false, ...
+                  'plotStates', false);
+
+plotFromDataFile(saveData);
+
+
+plotTitle = ['Upper bound'];
+fileTitle = ['modelRange-high-' baseVar '-' fileTimeStr '.' exportformat];
+
+saveData = struct('data', {resultHigh}, ...
+                  'plotRegion', plotRegion, ...
+                  'plotRange', [-5 5], ...
+                  'plotTitle', plotTitle, ...
+                  'fileTitle', fileTitle, ...
+                  'plotXUnits', 'degrees C', ...
+                  'blockWater', blockWater, ...
+                  'plotCountries', false, ...
+                  'plotStates', false);
 
 plotFromDataFile(saveData);

@@ -1,9 +1,9 @@
-targetYear = 2080;
+targetYear = 2020;
 earthSA = 510.1e6;      % km^2
 
 computeAreas = true;
 computeStateAreas = false;
-plotMap = false;
+plotMap = true;
 
 pinubank = shaperead('2015-beetles/data/pinubank/pinubank.shp', 'UseGeoCoords', true);
 pinuresi = shaperead('2015-beetles/data/pinuresi/pinuresi.shp', 'UseGeoCoords', true);
@@ -271,6 +271,14 @@ if computeAreas
     ['destroyed jack pine by ' num2str(targetYear) ': ' num2str(jackArea) ' km^2']
     ['destroyed red pine by ' num2str(targetYear) ': ' num2str(redArea) ' km^2']
     ['destroyed pitch pine by ' num2str(targetYear) ': ' num2str(pitchArea) ' km^2']
+    
+    jackPerc = jackArea/totalJackArea;
+    redPerc = redArea/totalRedArea;
+    pitchPerc = pitchArea/totalPitchArea;
+    
+    ['jack percentage by ' num2str(targetYear) ': ' num2str(jackPerc) ' %']
+    ['red percentage by ' num2str(targetYear) ': ' num2str(redPerc) ' %']
+    ['pitch percentage by ' num2str(targetYear) ': ' num2str(pitchPerc) ' %']
 end
 
 if plotMap

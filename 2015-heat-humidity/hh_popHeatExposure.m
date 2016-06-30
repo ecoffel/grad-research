@@ -5,15 +5,17 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'bnu-esm', 'canesm2'};
-testModels = {'bnu-esm', 'canesm2'};
+%baseModels = {'bnu-esm', 'canesm2'};
+%testModels = {'bnu-esm', 'canesm2'};
 
-% baseModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-%           'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-%           'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'wb';
 testVar = 'wb';
@@ -31,7 +33,7 @@ popRegrid = true;
 
 rcp = 'rcp85';
 region = 'world';
-exposureThreshold = 29;
+exposureThreshold = 32;
 ssp = 5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
