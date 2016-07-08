@@ -24,6 +24,8 @@ ncFileNames = {ncFileNames.name};
 
 fileCount = 0;
 
+monthly = false;
+
 for k = 1:length(ncFileNames)
     if fileCount >= maxNum & maxNum ~= -1
         return
@@ -51,7 +53,7 @@ for k = 1:length(ncFileNames)
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
-        continue;
+        %continue;
     end
     
     dimIdLat = -1;
@@ -139,16 +141,28 @@ for k = 1:length(ncFileNames)
     deltaT = 0;
     
     % start at jan 1 of the file year
-    startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
+    if strcmp(year, 'mean')
+        startDate = datenum(1979, 1, 1, 0, 0, 0);
+        monthly = true;
+    else
+        startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
+    end
     
     % find timestep
-    if length(findstr('4x', atts{attIdTitle}{2})) ~= 0
-        % 6 hr timestep
-        deltaT = etime(datevec('6', 'HH'), datevec('00', 'HH'));
-    elseif length(findstr('daily', atts{attIdTitle}{2})) ~= 0
-        deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
+    
+    % we are monthly
+    if monthly
+        deltaT = etime(datevec('1', 'mm'), datevec('00', 'mm'));
     else
-        deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
+        % either daily or 4x daily
+        if length(findstr('4x', atts{attIdTitle}{2})) ~= 0
+            % 6 hr timestep
+            deltaT = etime(datevec('6', 'HH'), datevec('00', 'HH'));
+        elseif length(findstr('daily', atts{attIdTitle}{2})) ~= 0
+            deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
+        else
+            deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
+        end
     end
 
     lat = double(netcdf.getVar(ncid, varIdLat-1, [0], [dims{dimIdLat}{2}]));
@@ -171,39 +185,75 @@ for k = 1:length(ncFileNames)
     end
     
     curTime = timestep(1);
-    endTime = addtodate(startDate, dims{dimIdTime}{2}*deltaT, 'second');
-
-    while curTime < endTime
-        nextTime = addtodate(curTime, 1, 'month');
+    if monthly
+        % for monthly data we will export a single mat file with the full
+        % dataset
+        endTime = addtodate(startDate, dims{dimIdTime}{2}*deltaT, 'month');
         
-        % find indices in the timestep matrix
-        curIndex = find(timestep >= curTime, 1, 'first');
-        nextIndex = find(timestep < nextTime, 1, 'last');
-
-        % get monthly data
-        monthlyData = [];
         if dimIdLev ~= -1
-            monthlyData = double(data(:, :, :, curIndex:nextIndex))*scale_factor + add_offset;  
+            monthlyData = double(data(:, :, :, :))*scale_factor + add_offset;  
+            
+            for d=1:size(monthlyData, 4)
+                for l = 1:size(monthlyData, 3)
+                    monthlyData(:,:,l,d) = flipud(squeeze(monthlyData(:,:,l,d)));
+                end
+            end
+            
         else
-            monthlyData = double(data(:, :, curIndex:nextIndex))*scale_factor + add_offset;
-        end
-        
-        for d=1:size(monthlyData,length(size(monthlyData)))
-            monthlyData(:,:,d) = flipud(squeeze(monthlyData(:,:,d)));
+            monthlyData = double(data(:, :, :))*scale_factor + add_offset;
+            
+            for d=1:size(monthlyData,4)
+                monthlyData(:,:,d) = flipud(squeeze(monthlyData(:,:,d)));
+            end
         end
         
         monthlyDataSet = {lat, lon, squeeze(monthlyData)};
-
+        
         % save the .mat file in the correct location and w/ the correct name
-        fileName = [varName, '_', datestr(timestep(curIndex), 'yyyy_mm_dd')];
+        fileName = [varName, '_mon_', datestr(startDate, 'yyyy_mm_dd')];
         eval([fileName ' = monthlyDataSet;']);
         save([folDataTarget, '/', fileName, '.mat'], fileName);
 
-        curTime = nextTime;
         clear monthlyData monthlyDataSet;
         eval(['clear ' fileName ';']);
+        
+    else
+        
+        % if we are daily or sub daily, separate into monthly files
+        endTime = addtodate(startDate, dims{dimIdTime}{2}*deltaT, 'second');
+        
+        while curTime < endTime
+            nextTime = addtodate(curTime, 1, 'month');
+
+            % find indices in the timestep matrix
+            curIndex = find(timestep >= curTime, 1, 'first');
+            nextIndex = find(timestep < nextTime, 1, 'last');
+
+            % get monthly data
+            monthlyData = [];
+            if dimIdLev ~= -1
+                monthlyData = double(data(:, :, :, curIndex:nextIndex))*scale_factor + add_offset;  
+            else
+                monthlyData = double(data(:, :, curIndex:nextIndex))*scale_factor + add_offset;
+            end
+
+            for d=1:size(monthlyData,length(size(monthlyData)))
+                monthlyData(:,:,d) = flipud(squeeze(monthlyData(:,:,d)));
+            end
+
+            monthlyDataSet = {lat, lon, squeeze(monthlyData)};
+
+            % save the .mat file in the correct location and w/ the correct name
+            fileName = [varName, '_', datestr(timestep(curIndex), 'yyyy_mm_dd')];
+            eval([fileName ' = monthlyDataSet;']);
+            save([folDataTarget, '/', fileName, '.mat'], fileName);
+
+            curTime = nextTime;
+            clear monthlyData monthlyDataSet;
+            eval(['clear ' fileName ';']);
+        end
     end
-    
+
     clear data dims vars timestep;
     netcdf.close(ncid);
     fileCount = fileCount + 1;
