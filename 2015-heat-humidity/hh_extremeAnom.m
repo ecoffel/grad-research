@@ -2,8 +2,8 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'past';
-testPeriod = 'past';
+basePeriod = 'future';
+testPeriod = 'future';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';

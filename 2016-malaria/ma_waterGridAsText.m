@@ -1,10 +1,10 @@
-load suitable;
+load waterGrid-suitable
 
-fout = fopen('suitable.txt', 'w');
+fout = fopen('waterGrid.txt', 'w');
 
-lat = suitable{1};
-lon = suitable{2};
-data = suitable{3};
+lat = waterGrid{1};
+lon = waterGrid{2};
+data = waterGrid{3};
 
 % output lat grid
 for x = 1:size(lat, 1)
@@ -38,26 +38,19 @@ end
 
 fprintf(fout, '\r\n');
 
-% output data grids, each grid separated by a new line
-for m = 1:size(data, 3)
-    for x = 1:size(data, 1)
-        for y = 1:size(data, 2)
-            if y == size(data, 2)
-                % no comma
-                fprintf(fout, '%d', data(x,y,m));
-            else
-                % comma
-                fprintf(fout, '%d,', data(x,y,m));
-            end
+% output water grid
+for x = 1:size(data, 1)
+    for y = 1:size(data, 2)
+        if y == size(data, 2)
+            % no comma
+            fprintf(fout, '%d', round(data(x,y)));
+        else
+            % comma
+            fprintf(fout, '%d,', round(data(x,y)));
         end
-        % new line after each row
-        fprintf(fout, '\r\n');
     end
-    
-    % line between grids
-    if m < size(data, 3)
-        fprintf(fout, '\r\n');
-    end
+    % new line after each row
+    fprintf(fout, '\r\n');
 end
 
 fclose(fout);
