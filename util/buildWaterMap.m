@@ -1,5 +1,5 @@
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
-load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\19800101-19841231\tasmax_1980_01_01');
+load('E:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world-bc\19800101-19841231\tasmax_1980_01_01');
 
 lat = tasmax_1980_01_01{1};
 lon = tasmax_1980_01_01{2};

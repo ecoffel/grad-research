@@ -7,6 +7,7 @@ addpath('C:\git-ecoffel\grad-research\2015-beetles');
 addpath('C:\git-ecoffel\grad-research\2015-heat-humidity');
 addpath('C:\git-ecoffel\grad-research\2016-birds');
 addpath('C:\git-ecoffel\grad-research\2016-malaria');
+addpath('C:\git-ecoffel\grad-research\2016-stock-prices');
 addpath('C:\git-ecoffel\grad-research\2016-heat-humid-mortality');
 addpath('C:\git-ecoffel\grad-research\econ-extremes');
 userpath('C:\git-ecoffel\grad-research');

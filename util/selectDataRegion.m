@@ -1,5 +1,5 @@
 
-function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDecades, variable, model, rcp, region, biasCorrect, v7, skipExisting)
+function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureDecades, bc_variable, bc_model, bc_rcp, region, biasCorrect, v7, skipExisting)
     %fileDir = ['E:\data\ncep-reanalysis\output\tmax\' num2str(y)];
     %outputDir = 'C:\git-ecoffel\climate-som\data\ncep\tmax';
 
@@ -12,6 +12,9 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
     elseif strcmp(region, 'nepal')
         latBounds = [15 45];
         lonBounds = [70 100];
+    elseif strcmp(region, 'cambodia')
+        latBounds = [5 20];
+        lonBounds = [95 120];
     elseif strcmp(region, 'nh')
         latBounds = [25 60];
         lonBounds = [0 359];
@@ -27,10 +30,13 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
     elseif strcmp(region, 'india')
         latBounds = [8, 34];
         lonBounds = [67, 90];
+    elseif strcmp(region, 'mexico')
+        latBounds = [10 35];
+        lonBounds = [-120, -85] + 360;
     end
 
     load('waterGrid.mat');
-    load('f:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world-bc\19800101-19841231\tasmax_1980_01_01');
+    load('e:\data\cmip5\output\gfdl-cm3\r1i1p1\historical\tasmax\regrid\world-bc\19800101-19841231\tasmax_1980_01_01');
     [latIndexRange, lonIndexRange] = latLonIndexRange(tasmax_1980_01_01, latBounds, lonBounds);
     waterGrid = waterGrid(latIndexRange, lonIndexRange);
     clear tasmax_1980_01_01;
@@ -67,17 +73,17 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
         
         if biasCorrect
             
-            if strcmp(rcp, 'historical')
-                rcp = 'rcp85';
+            if strcmp(bc_rcp, 'historical')
+                bc_rcp = 'rcp85';
             end
             
             %load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
-            load(['cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
-            eval(['cmip5BiasCor = cmip5BiasCorrection_' variable '_' region ';']);
+            load(['cmip5BiasCorrection_' bc_variable '_' region '_' bc_rcp '.mat']);
+            eval(['cmip5BiasCor = cmip5BiasCorrection_' bc_variable '_' region ';']);
             
             biasModel = -1;
             for mn = 1:length(cmip5BiasCor)
-                if strcmp(cmip5BiasCor{mn}{1}, model)
+                if strcmp(cmip5BiasCor{mn}{1}, bc_model)
                     biasModel = mn;
                     break;
                 end
@@ -89,8 +95,8 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, futureDeca
             end
 
             roundedYear = roundn(fNameYear, 1);
-            closestDecade = 3 + find(futureDecades == roundedYear);
-            if roundedYear >= futureDecades(end)
+            closestDecade = 3 + find(bc_futureDecades == roundedYear);
+            if roundedYear >= bc_futureDecades(end)
                 closestDecade = closestDecade - 1;
             end
             

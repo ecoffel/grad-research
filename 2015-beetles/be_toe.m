@@ -28,7 +28,7 @@ testVar = 'bt';
 region = 'usne';
 
 ensembles = 1;
-futureRcp = 'rcp85';
+rcps = {'rcp45', 'rcp85'};
 
 baseRegrid = true;
 modelRegrid = true;
@@ -72,22 +72,6 @@ plotRegion = 'usne';
 plotRange = [2005 2090];
 plotXUnits = 'Year';
 
-if strcmp(basePeriod, 'past')
-    basePeriod = basePeriodYears;
-    baseRcp = 'historical/';
-elseif strcmp(basePeriod, 'future')
-    basePeriod = testPeriodYears;
-    baseRcp = [futureRcp '/'];
-end
-
-if strcmp(testPeriod, 'past')
-    testPeriod = basePeriodYears;
-    testRcp = 'historical/';
-elseif strcmp(testPeriod, 'future')
-    testPeriod = testPeriodYears;
-    testRcp = [futureRcp '/'];
-end
-
 if ~strcmp(testVar, '')
     testDatasetStr = testDataset;
     if strcmp(testDatasetStr, 'cmip5')
@@ -123,6 +107,22 @@ elseif strcmp(baseDatasetStr, 'ncep')
     baseDataDir = 'ncep-reanalysis/output';
     ensemble = '';
     baseRcp = '';
+end
+
+if strcmp(basePeriod, 'past')
+    basePeriod = basePeriodYears;
+    baseRcp = 'historical/';
+elseif strcmp(basePeriod, 'future')
+    basePeriod = testPeriodYears;
+    baseRcp = [futureRcp '/'];
+end
+
+if strcmp(testPeriod, 'past')
+    testPeriod = basePeriodYears;
+    testRcp = 'historical/';
+elseif strcmp(testPeriod, 'future')
+    testPeriod = testPeriodYears;
+    testRcp = [futureRcp '/'];
 end
 
 for e = ensembles
@@ -202,6 +202,7 @@ for e = ensembles
             end
         end
     end
+    
 
     ['done loading...']
     baseAvg = [];
@@ -209,7 +210,7 @@ for e = ensembles
     % average over models and years
     for m = 1:length(baseExt)
         for y = 1:length(baseExt{m})
-            baseAvg(:,:,m, y) = baseExt{m}{y}{3};
+            baseAvg(:,:,m,y) = baseExt{m}{y}{3};
         end
         baseAvg = nanmean(baseAvg, 4);
     end

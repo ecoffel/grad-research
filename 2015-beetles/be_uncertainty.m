@@ -1,6 +1,6 @@
 baseDir = 'C:\git-ecoffel\grad-research\bt-output';
 
-state = 'multi-model';
+state = 'ensemble';
 
 ciPlot = true;
 modelRangePlot = true;
@@ -37,7 +37,7 @@ rankings = [];
 rankingsNames = {};
 
 % confidence interval
-ciThresh = 75;
+ciThresh = 100;
 CI = [];
 
 cnt = 1;
@@ -86,7 +86,7 @@ if ciPlot
             rankings(xlat, ylon, :) = sort(rankings(xlat, ylon, :));
 
             % lower
-            CI(xlat, ylon, 1) = rankings(xlat, ylon, perclow);
+            CI(xlat, ylon, 1) = rankings(xlat, ylon, perclow+1);
             % higher
             CI(xlat, ylon, 2) = rankings(xlat, ylon, perchigh);
         end

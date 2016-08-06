@@ -9,13 +9,10 @@
 %           'cnrm-cm5', 'ipsl-cm5a-mr', ...
 %           'bnu-esm', 'miroc-esm', ...
 %           'mri-cgcm3'};
-models = {'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'noresm1-m'};    
-vars = {'rh', 'wb'};
-rcps = {'historical'};
-ensembles = {'r1i1p1'};
+models = {'csiro-mk3-6-0'};    
+vars = {'huss', 'psl'};
+rcps = {'historical', 'rcp45', 'rcp85'};
+ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1',};
 
 % should we just remove the regridded data or the whole variable
 removeAll = true;
