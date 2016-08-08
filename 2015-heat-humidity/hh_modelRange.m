@@ -37,7 +37,7 @@ testPeriodYears = 2070:2080;
 annualmean = false;
 exportformat = 'png';
 
-ensembles = 1;
+ensembles = 1:10;
 rcps = {'rcp45', 'rcp85'};
 region = 'world';
 plotRegion = 'world';
@@ -126,9 +126,9 @@ for e = ensembles
 
     fileTimeStr = '';
     if ~strcmp(testVar, '')
-        fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '-' baseDataset '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
+        fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '-' baseDatasetStr '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
     else
-        fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
+        fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
     end
 
     % load base dataset
