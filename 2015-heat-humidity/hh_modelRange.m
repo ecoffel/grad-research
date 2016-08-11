@@ -10,16 +10,16 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'csiro-mk3-6-0'};
-% testModels = {'csiro-mk3-6-0'};
-baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+baseModels = {'csiro-mk3-6-0'};
+testModels = {'csiro-mk3-6-0'};
+% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 baseVar = 'wb';
 testVar = 'wb';
@@ -31,16 +31,23 @@ baseBiasCorrect = false;
 testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2070:2080;
+testPeriodYears = 2020:2030;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'png';
 
+outputAll = true;
+
 ensembles = 1:10;
 rcps = {'rcp45', 'rcp85'};
 region = 'world';
 plotRegion = 'world';
+
+mode = 'ensemble';
+if length(baseModels) > 1
+    mode = 'multi-model';
+end
 
 % percentile range to show
 percentiles = [25 75];
@@ -235,7 +242,7 @@ for e = ensembles
 end
 
 ['done loading...']
-
+  
 % average over the future period and rank each gridbox from the models & rcps
 testData = [];
 baseData = [];
@@ -277,7 +284,7 @@ end
 
 % loop over all models
 for m = 1:size(baseData, 4)
-    
+
     % and over all gridboxes
     for x = 1:size(baseData, 1)
         for y = 1:size(baseData, 2)
@@ -288,6 +295,10 @@ for m = 1:size(baseData, 4)
         end
     end
 end
+
+
+
+save(['chg-data-' mode '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');
 
 chgLow = squeeze(chgData(:, :, round(percentiles(1)/100.0 * size(chgData, 3))));
 chgHigh = squeeze(chgData(:, :, round(percentiles(2)/100.0 * size(chgData, 3))));

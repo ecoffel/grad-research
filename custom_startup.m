@@ -9,7 +9,7 @@ addpath('C:\git-ecoffel\grad-research\2016-birds');
 addpath('C:\git-ecoffel\grad-research\2016-malaria');
 addpath('C:\git-ecoffel\grad-research\2016-stock-prices');
 addpath('C:\git-ecoffel\grad-research\2016-heat-humid-mortality');
-addpath('C:\git-ecoffel\grad-research\econ-extremes');
+addpath('C:\git-ecoffel\grad-research\2016-local-clim');
 userpath('C:\git-ecoffel\grad-research');
 
 plotlysetup('ecoffel', 'zo5qjdmelk')
