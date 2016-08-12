@@ -10,16 +10,16 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'csiro-mk3-6-0'};
-testModels = {'csiro-mk3-6-0'};
-% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'csiro-mk3-6-0'};
+% testModels = {'csiro-mk3-6-0'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 baseVar = 'wb';
 testVar = 'wb';
@@ -31,15 +31,13 @@ baseBiasCorrect = false;
 testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2020:2030;
+testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
 exportformat = 'png';
 
-outputAll = true;
-
-ensembles = 1:10;
+ensembles = 1;
 rcps = {'rcp45', 'rcp85'};
 region = 'world';
 plotRegion = 'world';
@@ -96,12 +94,10 @@ if strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax
 end
 
 if strcmp(basePeriod, 'past')
-    basePeriod = basePeriodYears;
     baseRcp = 'historical/'
 end
 
 if strcmp(testPeriod, 'past')
-    testPeriod = basePeriodYears;
     testRcp = 'historical/'
 end
 
@@ -149,7 +145,7 @@ for e = ensembles
         baseExt{e}{m} = {};
 
         ['loading ' curModel ' base']
-        for y = basePeriod(1):yearStep:basePeriod(end)
+        for y = basePeriodYears(1):yearStep:basePeriodYears(end)
             ['year ' num2str(y) '...']
 
             if baseRegrid
@@ -175,12 +171,10 @@ for e = ensembles
         rcp = rcps{r};
 
         if strcmp(basePeriod, 'future')
-            basePeriod = testPeriodYears;
             baseRcp = [rcp '/'];
         end
 
         if strcmp(testPeriod, 'future')
-            testPeriod = testPeriodYears;
             testRcp = [rcp '/'];
         end
 
@@ -217,7 +211,7 @@ for e = ensembles
                 futureExt{e}{r}{m} = {};
 
                 ['loading ' curModel ' future']
-                for y = testPeriod(1):yearStep:testPeriod(end)
+                for y = testPeriodYears(1):yearStep:testPeriodYears(end)
                     ['year ' num2str(y) '...']
 
                     % load daily data
@@ -282,63 +276,61 @@ for e = 1:size(testData, 3)
     end
 end
 
-% loop over all models
-for m = 1:size(baseData, 4)
-
-    % and over all gridboxes
-    for x = 1:size(baseData, 1)
-        for y = 1:size(baseData, 2)
-            % sort the models
-            %baseData(x, y, :) = sort(baseData(x, y, :));
-            %testData(x, y, :) = sort(reshape(testData(x, y, :, :), [1 1 size(testData, 3)*size(testData, 4)]));
-            chgData(x, y, :) = sort(chgData(x, y, :));
-        end
-    end
-end
-
-
-
 save(['chg-data-' mode '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');
-
-chgLow = squeeze(chgData(:, :, round(percentiles(1)/100.0 * size(chgData, 3))));
-chgHigh = squeeze(chgData(:, :, round(percentiles(2)/100.0 * size(chgData, 3))));
-
-%baseLow = squeeze(baseData(:, :, round(percentiles(1)/100.0 * size(baseData, 3))));
-%baseHigh = squeeze(baseData(:, :, round(percentiles(2)/100.0 * size(baseData, 3))));
-
-%testLow = squeeze(testData(:, :, round(percentiles(1)/100.0 * size(testData, 3))));
-%testHigh = squeeze(testData(:, :, round(percentiles(2)/100.0 * size(testData, 3))));
-
-resultLow = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgLow};
-resultHigh = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgHigh};
-
-plotTitle = ['Lower bound'];
-fileTitle = ['modelRange-low-' baseVar '-' fileTimeStr '.' exportformat];
-
-saveData = struct('data', {resultLow}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', [0 10], ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', 'degrees C', ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', false, ...
-                  'plotStates', false);
-
-plotFromDataFile(saveData);
-
-
-plotTitle = ['Upper bound'];
-fileTitle = ['modelRange-high-' baseVar '-' fileTimeStr '.' exportformat];
-
-saveData = struct('data', {resultHigh}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', [0 10], ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', 'degrees C', ...
-                  'blockWater', blockWater, ...
-                  'plotCountries', false, ...
-                  'plotStates', false);
-
-plotFromDataFile(saveData);
+% 
+% % loop over all models
+% for m = 1:size(baseData, 4)
+% 
+%     % and over all gridboxes
+%     for x = 1:size(baseData, 1)
+%         for y = 1:size(baseData, 2)
+%             % sort the models
+%             %baseData(x, y, :) = sort(baseData(x, y, :));
+%             %testData(x, y, :) = sort(reshape(testData(x, y, :, :), [1 1 size(testData, 3)*size(testData, 4)]));
+%             chgData(x, y, :) = sort(chgData(x, y, :));
+%         end
+%     end
+% end
+% 
+% chgLow = squeeze(chgData(:, :, round(percentiles(1)/100.0 * size(chgData, 3))));
+% chgHigh = squeeze(chgData(:, :, round(percentiles(2)/100.0 * size(chgData, 3))));
+% 
+% %baseLow = squeeze(baseData(:, :, round(percentiles(1)/100.0 * size(baseData, 3))));
+% %baseHigh = squeeze(baseData(:, :, round(percentiles(2)/100.0 * size(baseData, 3))));
+% 
+% %testLow = squeeze(testData(:, :, round(percentiles(1)/100.0 * size(testData, 3))));
+% %testHigh = squeeze(testData(:, :, round(percentiles(2)/100.0 * size(testData, 3))));
+% 
+% resultLow = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgLow};
+% resultHigh = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgHigh};
+% 
+% plotTitle = ['Lower bound'];
+% fileTitle = ['modelRange-low-' baseVar '-' fileTimeStr '.' exportformat];
+% 
+% saveData = struct('data', {resultLow}, ...
+%                   'plotRegion', plotRegion, ...
+%                   'plotRange', [0 10], ...
+%                   'plotTitle', plotTitle, ...
+%                   'fileTitle', fileTitle, ...
+%                   'plotXUnits', 'degrees C', ...
+%                   'blockWater', blockWater, ...
+%                   'plotCountries', false, ...
+%                   'plotStates', false);
+% 
+% plotFromDataFile(saveData);
+% 
+% 
+% plotTitle = ['Upper bound'];
+% fileTitle = ['modelRange-high-' baseVar '-' fileTimeStr '.' exportformat];
+% 
+% saveData = struct('data', {resultHigh}, ...
+%                   'plotRegion', plotRegion, ...
+%                   'plotRange', [0 10], ...
+%                   'plotTitle', plotTitle, ...
+%                   'fileTitle', fileTitle, ...
+%                   'plotXUnits', 'degrees C', ...
+%                   'blockWater', blockWater, ...
+%                   'plotCountries', false, ...
+%                   'plotStates', false);
+% 
+% plotFromDataFile(saveData);
