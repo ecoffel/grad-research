@@ -1,6 +1,6 @@
 popYears = 2010:10:2100;
 
-sspNum = 5;
+sspNum = 4;
 
 sspInputDir = ['C:/git-ecoffel/grad-research/ssp/ssp' num2str(sspNum) '/output/ssp' num2str(sspNum)];
 sspOutputDir = ['C:/git-ecoffel/grad-research/ssp/ssp' num2str(sspNum) '/output/ssp' num2str(sspNum) '/regrid'];

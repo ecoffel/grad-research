@@ -1,53 +1,36 @@
 season = 'all';
 basePeriod = 'past';
-testPeriod = 'future';
+baseDataset = 'ncep';
 
-baseDataset = 'cmip5';
-testDataset = 'cmip5';
+baseModels = {''};
 
-%baseModels = {'bnu-esm', 'canesm2'};
-%testModels = {'bnu-esm', 'canesm2'};
-
-baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
 baseVar = 'wb';
 testVar = 'wb';
 
 baseRegrid = true;
-testRegrid = true;
 
-basePeriodYears = 1985:2004;
-testPeriodYears = 2021:2080;
+basePeriodYears = 1985:2010;
+testPeriodYears = 2020:2080;
 
 baseBiasCorrect = false;
-testBiasCorrect = false;
 
 popRegrid = true;
 
 rcp = 'rcp85';
 region = 'world';
-exposureThreshold = 32;
-ssp = 5;
+exposureThreshold = 27;
+ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
-exportformat = 'pdf';
+exportformat = 'png';
 
 baseDir = 'e:/data/';
 yearStep = 1;
-
-if ~testBiasCorrect
-    testBcStr = '';
-else
-    testBcStr = '-bc';
-end
 
 if ~baseBiasCorrect
     baseBcStr = '';
@@ -67,13 +50,6 @@ elseif strcmp(season, 'all')
     findMax = true;
     months = 1:12;
     maxMinStr = 'maximum';
-end
-
-if annualmean
-    maxMinStr = ['mean ' maxMinStr];
-    maxMinFileStr = 'mean';
-else
-    maxMinFileStr = 'ext';
 end
 
 if strcmp(region, 'usne')
@@ -101,34 +77,6 @@ elseif strcmp(basePeriod, 'future')
     baseRcp = [rcp '/'];
 end
 
-if strcmp(testPeriod, 'past')
-    testPeriod = basePeriodYears;
-    testRcp = 'historical/'
-elseif strcmp(testPeriod, 'future')
-    testPeriod = testPeriodYears;
-    testRcp = [rcp '/'];
-end
-
-if ~strcmp(testVar, '')
-    testDatasetStr = testDataset;
-    if strcmp(testDatasetStr, 'cmip5')
-        if length(testModels) == 1
-            testDatasetStr = ['cmip5-' testModels{1}];
-        else 
-            testDatasetStr = ['cmip5-mm'];
-        end
-        
-        testDataDir = 'cmip5/output';
-        ensemble = 'r1i1p1/';
-    elseif strcmp(testDatasetStr, 'ncep')
-        testDatasetStr = ['ncep'];
-        testDataDir = 'ncep-reanalysis/output';
-        ensemble = '';
-        testRcp = '';
-    end
-    
-end
-
 baseDatasetStr = baseDataset;
 if strcmp(baseDatasetStr, 'cmip5')
     if length(baseModels) == 1
@@ -148,22 +96,20 @@ end
 
 fileTimeStr = '';
 if ~strcmp(testVar, '')
-    fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [season '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '-' baseDataset '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
 else
-    fileTimeStr = [season '-' maxMinFileStr '-' baseDataset '-' num2str(basePeriod(1)) '-' num2str(basePeriod(end))];
+    fileTimeStr = [season '-' baseDataset '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
 end
 
-plotTitle = [testDataset ' [' num2str(testPeriod(1)) '-' num2str(testPeriod(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriod(1)) '-' num2str(basePeriod(end)) ']'];
+plotTitle = ['[' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end)) ']'];
 fileTitle = ['popExposure-' baseVar '-' region '-' fileTimeStr '.' exportformat];
 
 baseExt = {};
-futureExt = {};
 
 lat = [];
 lon = [];
 
 basePopCount = [];
-futurePopCount = [];
 constPopCount = [];
 constClimateCount = [];
 
@@ -195,11 +141,9 @@ for m = 1:length(baseModels)
             lon = baseDaily{2}(latIndexRange, lonIndexRange);
         end
         
-        if annualmean
-            baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
-        else
-            baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
-        end
+        baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
+        
+        baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
         baseExtTmp = baseExtTmp{1}{3};
         
         selGrid = zeros(size(lat));
@@ -213,131 +157,157 @@ for m = 1:length(baseModels)
         
         meanBaseSelGrid(:, :, m, y-basePeriodYears(1)+1) = selGrid;
         
-        basePopCount(m, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid)
+        for ssp = ssps
+            basePopCount(m, ssp, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
+        end
         
         clear baseDaily baseExtTmp;
     end
 end
 
 meanBaseSelGrid = nanmean(nanmean(meanBaseSelGrid, 4), 3);
-futureSelGrid = zeros(size(lat, 1), size(lat, 2), length(testPeriodYears), length(baseModels));
 
-if ~strcmp(testVar, '')
-    for m = 1:length(testModels)
-        if strcmp(testModels{m}, '')
-            curModel = testModels{m};
-        else
-            curModel = [testModels{m} '/'];
-        end
-        
-        futureExt{m} = {};
-
-        ['loading ' curModel ' future']
-        for y = testPeriodYears(1):yearStep:testPeriodYears(end)
-            ['year ' num2str(y) '...']
-            % load daily data
-            if testRegrid
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            else
-                testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            end
-            
-            [latIndexRange, lonIndexRange] = latLonIndexRange(testDaily, latRange, lonRange);
-            testDaily{3} = testDaily{3}(latIndexRange, lonIndexRange, :, :, :);
-            
-            if annualmean
-                testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
-            else
-                testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
-            end
-            testDailyExtTmp = testDailyExtTmp{1}{3};
-            
-            selGrid = zeros(size(lat));
-            for xlat = 1:size(testDailyExtTmp,  1)
-                for ylon = 1:size(testDailyExtTmp, 2)
-                    if testDailyExtTmp(xlat, ylon) >= exposureThreshold
-                        selGrid(xlat, ylon) = 1;
-                        futureSelGrid(xlat, ylon, y-testPeriodYears(1)+1, m) = 1;
-                    end
-                end
-            end
-
-            futurePopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [roundn(y, 1)], ssp, popRegrid)
-            constPopCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
-            constClimateCount(m, y-testPeriodYears(1)+1) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [roundn(y, 1)], ssp, popRegrid);
-            
-            clear testDaily testDailyExtTmp;
-        end
-    end
-end
 ['done loading...']
 
-save([num2str(exposureThreshold) 'c-ssp' num2str(ssp) '-grid.mat'], 'futureSelGrid');
+% average over ensembles, models, and years
+%for e = 1:length(ensembles)
+    for m = 1:length(baseExt)
+        for y = 1:length(baseExt{m})
+            baseData(:,:,m,y) = baseExt{m}{y}{3};
+        end
+    end
+%end
 
-% average over models
-mmBasePopCount = nanmean(basePopCount, 1);
-mmFuturePopCount = nanmean(futurePopCount, 1);
-mmConstPopCount = nanmean(constPopCount, 1);
-mmConstClimateCount = nanmean(constClimateCount, 1);
+clear baseExt;
+
+% average over years in base period
+baseData = nanmean(baseData, 4);
+
+futureData = [];
+
+% load projected change data
+decCount = 1;
+for t = testPeriodYears(1):10:testPeriodYears(end-1)
+    load(['chg-data-wb-multi-model-' num2str(t) '-' num2str(t+10) '.mat']);
+    
+    chgData(chgData > 10) = NaN;
+    
+    for x = 1:size(chgData, 1)
+        for y = 1:size(chgData, 2)
+            chgData(x, y, :) = sort(chgData(x, y, :));
+        end
+    end
+    
+    for c = 1:size(chgData, 3)
+        % compute future scenarios by adding change onto base data
+        futureData(:, :, decCount, c) = squeeze(baseData(:, :, 1)) + chgData(:, :, c);
+    end
+    
+    decCount = decCount + 1;
+    clear chgData;
+end
+
+%count future population
+futurePopCount = [];
+constPopCount = [];
+
+for d = 1:size(futureData, 3)
+    for s = 1:size(futureData, 4)
+        selGrid = zeros(size(lat));
+        for xlat = 1:size(futureData, 1)
+            for ylon = 1:size(futureData, 2)
+                if futureData(xlat, ylon, d, s) >= exposureThreshold
+                    selGrid(xlat, ylon) = 1;
+                end
+            end
+        end
+        
+        for ssp = ssps
+            futurePopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
+            constPopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
+        end
+        
+    end
+    
+    for ssp = ssps
+        constClimateCount(d, ssp) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
+    end
+    
+end
+
+% average over models and ssps
+mmBasePopCount = nanmean(nanmean(basePopCount, 3), 1);
+mmFuturePopCount = nanmean(nanmean(futurePopCount, 3), 1);
+mmConstPopCount = nanmean(nanmean(constPopCount, 3), 1);
+mmConstClimateCount = nanmean(constClimateCount, 2);
 
 % exposure rise due to climate alone
 climatePopEffect = constPopCount;
 % exposure rise due to pop change alone
 popPopEffect = constClimateCount;
 % exposure rise due to climate & pop
-interactionEffect = futurePopCount - climatePopEffect - popPopEffect;
+interactionEffect = [];
+for i = 1:size(futurePopCount, 2)
+    for j = 1:size(futurePopCount, 1)
+        interactionEffect(j, i, :) = squeeze(futurePopCount(j, i, :)) - squeeze(climatePopEffect(j, i, :)) - squeeze(popPopEffect(i, :))';
+    end
+end
+
+prcRange = [25 75];
 
 % calculate uncertainties
-climEstd = squeeze(nanstd(climatePopEffect, [], 1));
-popEstd = squeeze(nanstd(popPopEffect, [], 1));
-intEstd = squeeze(nanstd(interactionEffect, [], 1));
-futPopStd = squeeze(nanstd(futurePopCount, [], 1));
+climE = [];
+popE = [];
+intE = [];
+futPopE = [];
+
+%for c = 1:size(climatePopEffect, 
+
+
+climE = [climatePopEffect(round((prcRange(1)/100.0)*size(climatePopEffect, 1)), :); ...
+            climatePopEffect(round((prcRange(2)/100.0)*size(climatePopEffect, 1)), :)];
+
+% no uncertainty estimate yet, incorperate multiple SSPs
+popE = zeros(length(popPopEffect));
+
+intE = [interactionEffect(round((prcRange(1)/100.0)*size(interactionEffect, 1)), :); ...
+           interactionEffect(round((prcRange(2)/100.0)*size(interactionEffect, 1)), :)];
+        
+futPopE= [futurePopCount(round((prcRange(1)/100.0)*size(futurePopCount, 1)), :); ...
+             futurePopCount(round((prcRange(2)/100.0)*size(futurePopCount, 1)), :)];
 
 mmClimatePopEffect = nanmean(climatePopEffect, 1);
 mmPopPopEffect = nanmean(popPopEffect, 1);
 mmInteractionEffect = nanmean(interactionEffect, 1);
+mmFutPopEffect = nanmean(futurePopCount, 1);
 
 % calc decadal means
-futureDecX = (testPeriodYears(1)-1)+5:10:(testPeriodYears(end)-1)+5;
+futureDecX = (testPeriodYears(1))+5:10:(testPeriodYears(end)-5);
 mmFutureDecY = [];
 mmFutureDecYerr = [];
 
 futureDecY = [];
 futureDecYerr = [];
 
-for d = 1:length(futureDecX)
-    mmPopE = nanmean(mmPopPopEffect((d-1)*10+1 : d*10));
-    mmClimE = nanmean(mmClimatePopEffect((d-1)*10+1 : d*10));
-    mmIntE = nanmean(mmInteractionEffect((d-1)*10+1 : d*10));
-    mmFutureDecY(d,:) = [mmPopE, mmClimE, mmIntE, mmPopE+mmClimE+mmIntE];
+for d = 1:size(mmClimatePopEffect, 2)
+    futureDecY(d, 1) = mmPopPopEffect(d);
+    futureDecY(d, 2) = mmClimatePopEffect(d);
+    futureDecY(d, 3) = mmInteractionEffect(d);
+    %futureDecY(d, 4) = popE(d)+climE(d)+intE(d);
+    futureDecY(d, 4) = mmFutPopEffect(d);
     
-    popE = squeeze(nanmean(popPopEffect(:, (d-1)*10+1 : d*10), 2));
-    climE = squeeze(nanmean(climatePopEffect(:, (d-1)*10+1 : d*10), 2));
-    intE = squeeze(nanmean(interactionEffect(:, (d-1)*10+1 : d*10), 2));
-    
-    futureDecY(d, 1, :) = popE;
-    futureDecY(d, 2, :) = climE;
-    futureDecY(d, 3, :) = intE;
-    futureDecY(d, 4, :) = popE+climE+intE;
-    
-    mmPopEerr = nanmean(popEstd((d-1)*10+1 : d*10));
-    mmClimEerr = nanmean(climEstd((d-1)*10+1 : d*10));
-    mmIntEerr = nanmean(intEstd((d-1)*10+1 : d*10));
-    mmFutEerr = nanmean(futPopStd((d-1)*10+1 : d*10));
-    mmFutureDecYerr(d,:) = [mmPopEerr, mmClimEerr, mmIntEerr, mmFutEerr];
-    
-    futureDecYerr(d, 1) = nanstd(popE);
-    futureDecYerr(d, 2) = nanstd(climE);
-    futureDecYerr(d, 3) = nanstd(intE);
-    futureDecYerr(d, 4) = nanstd(popE+climE+intE);
+    futureDecYerr(d, 1) = (popE(2, d) - popE(1, d))/2;
+    futureDecYerr(d, 2) = (climE(2, d) - climE(1, d))/2;
+    futureDecYerr(d, 3) = (intE(2, d) - intE(1, d))/2;
+    futureDecYerr(d, 4) = (futPopE(2, d) - futPopE(1, d))/2;
 end
 
 plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-ssp' num2str(ssp) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...
-                  'futureDecY', mmFutureDecY, ...
-                  'futureDecYerr', mmFutureDecYerr, ...
+                  'futureDecY', futureDecY, ...
+                  'futureDecYerr', futureDecYerr, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...

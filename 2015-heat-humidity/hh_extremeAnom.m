@@ -9,7 +9,7 @@ baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
 % baseModels = {'csiro-mk3-6-0'};
-% testModels = {'csiro-mk3-6-0'};
+% testModels = {''};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
@@ -26,7 +26,7 @@ baseRegrid = true;
 testRegrid = true;
 
 region = 'world';
-rcp = 'rcp85';
+rcp = 'rcp45';
 ensembles = 1;
 
 plotRegion = 'world';
@@ -36,7 +36,7 @@ plotEachModel = true;
 plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2020:2080;
+testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
