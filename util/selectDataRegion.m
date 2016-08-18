@@ -33,6 +33,9 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureD
     elseif strcmp(region, 'mexico')
         latBounds = [10 35];
         lonBounds = [-120, -85] + 360;
+    elseif strcmp(region, 'nyc')
+        latBounds = [40 42];
+        lonBounds = [-75 -73] + 360;
     end
 
     load('waterGrid.mat');

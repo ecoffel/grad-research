@@ -115,6 +115,9 @@ for k = 1:length(ncFileNames)
         vars{i+1} = {vname, vtype, vdim};
     end
     
+    % get the missing value param
+    missingVal = netcdf.getAtt(ncid, varIdMain, 'missing_value');
+    
     % 24 hr timestep
     deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
         
@@ -229,6 +232,10 @@ for k = 1:length(ncFileNames)
         else
             data(:,:,:) = single(netcdf.getVar(ncid, varIdMain, [0, 0, curTimeStepStart], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, min(curTimeStepEnd-curTimeStepStart, dims{dimIdTime}{2}-curTimeStepStart)]));
             data = permute(data, [2 1 3]);
+        end
+        
+        if strcmp(varName, 'tos')
+            data(data == missingVal) = NaN;
         end
 
         curTime = timestep(curTimeStepStart+1);

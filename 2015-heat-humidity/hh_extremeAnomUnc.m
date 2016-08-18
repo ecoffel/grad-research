@@ -24,7 +24,7 @@ plotRegion = 'world';
 plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2060:2070;
+testPeriodYears = 2040:2050;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportFormat = 'png';
@@ -175,7 +175,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
     clear chgData;
 end
 
-prcRange = [25 75];
+prcRange = [10 90];
 prcInd = [round(size(futureData, 4) * (prcRange(1)/100.0)), round(size(futureData, 4) * (prcRange(2)/100.0))];
 
 for d = 1:size(futureData, 3)

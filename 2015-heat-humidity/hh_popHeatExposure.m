@@ -23,7 +23,7 @@ popRegrid = true;
 
 rcp = 'rcp85';
 region = 'world';
-exposureThreshold = 27;
+exposureThreshold = 29;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -235,8 +235,12 @@ for d = 1:size(futureData, 3)
     
 end
 
+futurePopCountSorted = [];
+constPopCountSorted = [];
+constClimateCountSorted = constClimateCount;
+
 % average over models and ssps
-mmBasePopCount = nanmean(nanmean(basePopCount, 3), 1);
+%mmBasePopCount = nanmean(nanmean(basePopCount, 3), 1);
 mmFuturePopCount = nanmean(nanmean(futurePopCount, 3), 1);
 mmConstPopCount = nanmean(nanmean(constPopCount, 3), 1);
 mmConstClimateCount = nanmean(constClimateCount, 2);
@@ -249,11 +253,36 @@ popPopEffect = constClimateCount;
 interactionEffect = [];
 for i = 1:size(futurePopCount, 2)
     for j = 1:size(futurePopCount, 1)
-        interactionEffect(j, i, :) = squeeze(futurePopCount(j, i, :)) - squeeze(climatePopEffect(j, i, :)) - squeeze(popPopEffect(i, :))';
+        for s = 1:size(futurePopCount, 3)
+            interactionEffect(j, i, s) = squeeze(futurePopCount(j, i, s)) - squeeze(climatePopEffect(j, i, s)) - squeeze(popPopEffect(i, s))';
+        end
     end
 end
 
-prcRange = [25 75];
+futurePopCountSorted = [];
+climPopEffectSorted = [];
+popPopEffectSorted = [];
+interactionEffectSorted = [];
+
+% combine ssps, models, & ensembles into scenario list
+for d = 1:size(futurePopCount, 2)
+    ind = 1;
+    for ssp = 1:size(futurePopCount, 3)
+        for c = 1:size(futurePopCount, 1)
+            futurePopCountSorted(d, ind) = futurePopCount(c, d, ssp);
+            climPopEffectSorted(d, ind) = climatePopEffect(c, d, ssp);
+            interactionEffectSorted(d, ind) = interactionEffect(c, d, ssp);
+            ind = ind + 1;
+        end
+    end
+    
+    futurePopCountSorted(d, :) = sort(futurePopCountSorted(d, :));
+    climPopEffectSorted(d, :) = sort(climPopEffectSorted(d, :));
+    interactionEffectSorted(d, :) = sort(interactionEffectSorted(d, :));
+    popPopEffectSorted(d, :) = sort(popPopEffect(d, :));
+end
+
+prcRange = [10 90];
 
 % calculate uncertainties
 climE = [];
@@ -261,25 +290,22 @@ popE = [];
 intE = [];
 futPopE = [];
 
-%for c = 1:size(climatePopEffect, 
+climE = [climPopEffectSorted(:, round((prcRange(1)/100.0)*size(climPopEffectSorted, 2))), ...
+            climPopEffectSorted(:, round((prcRange(2)/100.0)*size(climPopEffectSorted, 2)))];
 
+popE = [popPopEffectSorted(:, round((prcRange(1)/100.0)*size(popPopEffectSorted, 2))), ...
+            popPopEffectSorted(:, round((prcRange(2)/100.0)*size(popPopEffectSorted, 2)))];
 
-climE = [climatePopEffect(round((prcRange(1)/100.0)*size(climatePopEffect, 1)), :); ...
-            climatePopEffect(round((prcRange(2)/100.0)*size(climatePopEffect, 1)), :)];
+intE = [interactionEffectSorted(:, round((prcRange(1)/100.0)*size(interactionEffectSorted, 2))), ...
+           interactionEffectSorted(:, round((prcRange(2)/100.0)*size(interactionEffectSorted, 2)))];
 
-% no uncertainty estimate yet, incorperate multiple SSPs
-popE = zeros(length(popPopEffect));
+futPopE= [futurePopCountSorted(:, round((prcRange(1)/100.0)*size(futurePopCountSorted, 2))), ...
+             futurePopCountSorted(:, round((prcRange(2)/100.0)*size(futurePopCountSorted, 2)))];
 
-intE = [interactionEffect(round((prcRange(1)/100.0)*size(interactionEffect, 1)), :); ...
-           interactionEffect(round((prcRange(2)/100.0)*size(interactionEffect, 1)), :)];
-        
-futPopE= [futurePopCount(round((prcRange(1)/100.0)*size(futurePopCount, 1)), :); ...
-             futurePopCount(round((prcRange(2)/100.0)*size(futurePopCount, 1)), :)];
-
-mmClimatePopEffect = nanmean(climatePopEffect, 1);
-mmPopPopEffect = nanmean(popPopEffect, 1);
-mmInteractionEffect = nanmean(interactionEffect, 1);
-mmFutPopEffect = nanmean(futurePopCount, 1);
+mmClimatePopEffect = nanmean(climPopEffectSorted, 2);
+mmPopPopEffect = nanmean(popPopEffectSorted, 2);
+mmInteractionEffect = nanmean(interactionEffectSorted, 2);
+mmFutPopEffect = nanmean(futurePopCountSorted, 2);
 
 % calc decadal means
 futureDecX = (testPeriodYears(1))+5:10:(testPeriodYears(end)-5);
@@ -289,17 +315,17 @@ mmFutureDecYerr = [];
 futureDecY = [];
 futureDecYerr = [];
 
-for d = 1:size(mmClimatePopEffect, 2)
+for d = 1:size(mmClimatePopEffect, 1)
     futureDecY(d, 1) = mmPopPopEffect(d);
     futureDecY(d, 2) = mmClimatePopEffect(d);
     futureDecY(d, 3) = mmInteractionEffect(d);
     %futureDecY(d, 4) = popE(d)+climE(d)+intE(d);
     futureDecY(d, 4) = mmFutPopEffect(d);
     
-    futureDecYerr(d, 1) = (popE(2, d) - popE(1, d))/2;
-    futureDecYerr(d, 2) = (climE(2, d) - climE(1, d))/2;
-    futureDecYerr(d, 3) = (intE(2, d) - intE(1, d))/2;
-    futureDecYerr(d, 4) = (futPopE(2, d) - futPopE(1, d))/2;
+    futureDecYerr(d, 1, :) = [popE(d, 1)-futureDecY(d, 1) popE(d, 2)-futureDecY(d, 1)];
+    futureDecYerr(d, 2, :) = [climE(d, 1)-futureDecY(d, 2) climE(d, 2)-futureDecY(d, 2)];
+    futureDecYerr(d, 3, :) = [intE(d, 1)-futureDecY(d, 3) intE(d, 2)-futureDecY(d, 3)];
+    futureDecYerr(d, 4, :) = [futPopE(d, 1)-futureDecY(d, 4) futPopE(d, 2)-futureDecY(d, 4)];
 end
 
 plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
@@ -355,9 +381,10 @@ if barChart
     figure('Color', [1, 1, 1]);
     hold on;
 
-    B = barwitherr([saveData.futureDecYerr(:,1), saveData.futureDecYerr(:,2), saveData.futureDecYerr(:,3), saveData.futureDecYerr(:,4)], ...
-                   saveData.futureDecX, ...
-                   [saveData.futureDecY(:,1), saveData.futureDecY(:,2), saveData.futureDecY(:,3), saveData.futureDecY(:,4)]);
+    B = barwitherr(saveData.futureDecYerr, saveData.futureDecX, saveData.futureDecY);
+%     B = barwitherr([squeeze(saveData.futureDecYerr(:,1,:)), squeeze(saveData.futureDecYerr(:,2,:)), squeeze(saveData.futureDecYerr(:,3,:)), squeeze(saveData.futureDecYerr(:,4,:))], ...
+%                    saveData.futureDecX, ...
+%                    [saveData.futureDecY(:,1), saveData.futureDecY(:,2), saveData.futureDecY(:,3), saveData.futureDecY(:,4)]);
     
     set(B(1), 'FaceColor', [181,82,124] ./ 255.0);
     set(B(2), 'FaceColor', [107,169,61] ./ 255.0);
@@ -387,6 +414,6 @@ else
     set(l, 'FontSize', 24, 'Location', 'best');
 end
 
-eval(['export_fig ' saveData.fileTitle '.pdf;']);
+eval(['export_fig ' saveData.fileTitle '.' exportformat ';']);
 save([saveData.fileTitle '.mat'], 'saveData');
-%close all;
+close all;
