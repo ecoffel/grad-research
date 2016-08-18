@@ -65,6 +65,8 @@ for k = 1:length(ncFileNames)
     dimIdLev = -1;
     dimIdTime = -1;
     
+    latLonDimSwitch = false;
+    
     dims = {};
     for i = 0:ndim-1
         [dimname, dimlen] = netcdf.inqDim(ncid,i);
@@ -73,12 +75,18 @@ for k = 1:length(ncFileNames)
             dimIdLev = i+1;
         end
         
-        if length(findstr(dimname, 'lat')) ~= 0
+        if strcmp(dimname, 'lat') || strcmp(dimname, 'rlat') || strcmp(dimname, 'j')
             dimIdLat = i+1;
+            if strcmp(dimname, 'j')
+                latLonDimSwitch = true;
+            end
         end
         
-        if length(findstr(dimname, 'lon')) ~= 0
+        if strcmp(dimname, 'lon')|| strcmp(dimname, 'rlon') || strcmp(dimname, 'i')
             dimIdLon = i+1;
+            if strcmp(dimname, 'i')
+                latLonDimSwitch = true;
+            end
         end
         
         if length(findstr(dimname, 'time')) ~= 0
@@ -96,11 +104,11 @@ for k = 1:length(ncFileNames)
     for i = 0:nvar-1
         [vname, vtype, vdim] = netcdf.inqVar(ncid,i);
         
-        if length(findstr(vname, 'lat')) ~= 0
+        if strcmp(vname, 'lat')
             varIdLat = i;
         end
         
-        if length(findstr(vname, 'lon')) ~= 0
+        if strcmp(vname, 'lon')
             varIdLon = i;
         end
         
@@ -125,8 +133,25 @@ for k = 1:length(ncFileNames)
     startDate = datenum(startDate, 'yyyymmdd');
     endDate = datenum(endDate, 'yyyymmdd');
 
-    lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
-    lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [1 dims{dimIdLon}{2}]));
+    if length(vars{varIdLat+1}{3}) == 2
+        if vars{varIdLat+1}{3}(1) == 2
+            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
+        else
+            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
+        end
+    else
+        lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
+    end
+    
+    if length(vars{varIdLon+1}{3}) == 2
+        if vars{varIdLon+1}{3}(1) == 2
+            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} 1]));
+        else
+            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [1 dims{dimIdLon}{2}]));
+        end
+    else
+        lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
+    end
     
     [lon, lat] = meshgrid(lon, lat);
     
