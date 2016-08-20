@@ -10,7 +10,7 @@ ncFileNames = {ncFileNames.name};
 fileCount = 0;
 yearStep = 20;
 
-skipExistingFolders = true;
+skipExistingFolders = false;
 skipExistingFiles = false;
 
 for k = 1:length(ncFileNames)
@@ -89,7 +89,7 @@ for k = 1:length(ncFileNames)
             end
         end
         
-        if length(findstr(dimname, 'time')) ~= 0
+        if strcmp(dimname, 'time')
             dimIdTime = i+1;
         end
         dims{i+1} = {dimname, dimlen};
@@ -135,9 +135,9 @@ for k = 1:length(ncFileNames)
 
     try
         try
-            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
-        catch
             lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
+        catch
+            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
         end
     catch
         lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
@@ -153,7 +153,6 @@ for k = 1:length(ncFileNames)
         lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
     end
       
-    
     [lon, lat] = meshgrid(lon, lat);
     
     timestep = [];
