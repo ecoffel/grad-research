@@ -133,25 +133,26 @@ for k = 1:length(ncFileNames)
     startDate = datenum(startDate, 'yyyymmdd');
     endDate = datenum(endDate, 'yyyymmdd');
 
-    if length(vars{varIdLat+1}{3}) == 2
-        if vars{varIdLat+1}{3}(1) == 2
+    try
+        try
             lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
-        else
+        catch
             lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
         end
-    else
+    catch
         lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
     end
     
-    if length(vars{varIdLon+1}{3}) == 2
-        if vars{varIdLon+1}{3}(1) == 1
-            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} 1]));
-        elseif vars{varIdLon+1}{3}(1) == 2
+    try
+        try
             lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [1 dims{dimIdLon}{2}]));
+        catch
+            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} 1]));
         end
-    else
+    catch
         lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
     end
+      
     
     [lon, lat] = meshgrid(lon, lat);
     
@@ -198,7 +199,8 @@ for k = 1:length(ncFileNames)
            length(findstr(modelName, 'ipsl')) ~= 0 | ...
            length(findstr(modelName, 'csiro')) ~= 0 | ...
            length(findstr(modelName, 'inmcm')) ~= 0 | ...
-           length(findstr(modelName, 'bcc')) ~= 0
+           length(findstr(modelName, 'bcc')) ~= 0 | ...
+           length(findstr(modelName, 'fgoals')) ~= 0
         calType = 2;
         
         % 365 day no leap
