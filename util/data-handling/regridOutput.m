@@ -17,6 +17,8 @@ skipExisting = true;
 latLonBounds = [];
 v7 = false;
 region = '';
+tosMod = false;
+gridCor = true;
 
 for i=1:2:length(varargin)
     key = varargin{i};
@@ -36,8 +38,13 @@ for i=1:2:length(varargin)
             v7 = val;
         case 'region'
             region = val;
-            
+        case 'tos-strangegrid'
+            tosMod = true;
     end
+end
+
+if tosMod
+    gridCor = false;
 end
 
 dirNames = dir(dataDir);
@@ -107,20 +114,25 @@ for d = 1:length(dirNames)
         lon = double(eval([matFileNameNoExt, '{2}']));        
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
-        if length(latLonBounds) > 0
-            if latLonBounds(2, 1) < 0
-                latLonBounds(2, 1) = latLonBounds(2, 1) + 360;
-                latLonBounds(2, 2) = latLonBounds(2, 2) + 360;
-            end
-            
-            [latIndexM, lonIndexM] = latLonIndexRange({lat, lon, curMonthlyData}, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
-            lat = lat(latIndexM, lonIndexM);
-            lon = lon(latIndexM, lonIndexM);
-            curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :);
+        if ~tosMod
+            if length(latLonBounds) > 0
+                if latLonBounds(2, 1) < 0
+                    latLonBounds(2, 1) = latLonBounds(2, 1) + 360;
+                    latLonBounds(2, 2) = latLonBounds(2, 2) + 360;
+                end
 
-            [latIndexB, lonIndexB] = latLonIndexRange(baseGrid, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
-            baseGrid{1} = baseGrid{1}(latIndexB, lonIndexB);
-            baseGrid{2} = baseGrid{2}(latIndexB, lonIndexB);
+                [latIndexM, lonIndexM] = latLonIndexRange({lat, lon, curMonthlyData}, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
+                lat = lat(latIndexM, lonIndexM);
+                lon = lon(latIndexM, lonIndexM);
+                curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :);
+
+                [latIndexB, lonIndexB] = latLonIndexRange(baseGrid, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
+                baseGrid{1} = baseGrid{1}(latIndexB, lonIndexB);
+                baseGrid{2} = baseGrid{2}(latIndexB, lonIndexB);
+            end
+        else
+            lon = lon + 360;
+            lon(lon > 360) = lon(lon > 360) - 360;
         end
         
         if plev == -1
@@ -131,7 +143,7 @@ for d = 1:length(dirNames)
             
             for d=1:size(curMonthlyData, 3)
                 curData = squeeze(curMonthlyData(:,:,d));
-                regridCurData = regridGriddata({lat, lon, curData}, baseGrid);
+                regridCurData = regridGriddata({lat, lon, curData}, baseGrid, gridCor);
                 
                 if length(regridLat) == 0 | length(regridLon) == 0
                     regridLat = regridCurData{1};

@@ -133,27 +133,46 @@ for k = 1:length(ncFileNames)
     startDate = datenum(startDate, 'yyyymmdd');
     endDate = datenum(endDate, 'yyyymmdd');
 
-    try
+    if strcmp(varName, 'tos') && (length(findstr('ipsl', rawNcDir)) ~= 0 || ...
+                                  length(findstr('gfdl', rawNcDir)) ~= 0 || ...
+                                  length(findstr('cnrm', rawNcDir)) ~= 0 || ...
+                                  length(findstr('noresm', rawNcDir)) ~= 0 || ...
+                                  length(findstr('miroc', rawNcDir)) ~= 0 || ...
+                                  length(findstr('bcc-csm', rawNcDir)) ~= 0 || ...
+                                  length(findstr('mri-cgcm3', rawNcDir)) ~= 0 || ...
+                                  length(findstr('access', rawNcDir)) ~= 0)
+        lat = netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]);
+        lat = double(lat');
+        %indMax = find(lat(end, :) == max(lat(end, :)));
+        %lat = lat(:, indMax(1));
+        
+        lon = netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]);
+        lon = double(lon');
+        %indMax = find(lon(:, end) == max(lon(:, end)));
+        %lon = lon(indMax(1), :);
+        
+    else
         try
-            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
+            try
+                lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [1 dims{dimIdLat}{2}]));
+            catch
+                lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
+            end
         catch
-            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLat}{2} 1]));
+            lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
         end
-    catch
-        lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
-    end
-    
-    try
+
         try
-            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [1 dims{dimIdLon}{2}]));
+            try
+                lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [1 dims{dimIdLon}{2}]));
+            catch
+                lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} 1]));
+            end
         catch
-            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} 1]));
+            lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
         end
-    catch
-        lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
+        [lon, lat] = meshgrid(lon, lat);
     end
-      
-    [lon, lat] = meshgrid(lon, lat);
     
     timestep = [];
     febDayCounter = 1;
@@ -261,6 +280,10 @@ for k = 1:length(ncFileNames)
         end
         
         if strcmp(varName, 'tos')
+            if length(findstr(rawNcDir, 'miroc5')) ~= 0 || ...
+               length(findstr(rawNcDir, 'mri-cgcm3')) ~= 0
+                data(data == 0) = NaN;
+            end
             data(data == missingVal) = NaN;
         end
 

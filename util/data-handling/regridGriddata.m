@@ -3,7 +3,7 @@
 % lon
 
 % regridds data1 to be along data2's grid
-function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid)
+function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid, gridCor)
     
     data1_lat = dataOldGrid{1};
     data1_lon = dataOldGrid{2};
@@ -16,37 +16,36 @@ function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid)
     % new grid
     
     % lon extension - leftward
-    while data1_lon(1,1) > data2_lon(1,1)
-        data1_lon = [data1_lon(:,end)-360, data1_lon(:,:)];
-        data1_lat = [data1_lat(:,end), data1_lat(:,:)];
-        data1_data = [data1_data(:,end), data1_data(:,:)];
+    if gridCor
+        while data1_lon(1,1) > data2_lon(1,1)
+            data1_lon = [data1_lon(:,end)-360, data1_lon(:,:)];
+            data1_lat = [data1_lat(:,end), data1_lat(:,:)];
+            data1_data = [data1_data(:,end), data1_data(:,:)];
+        end
+
+        % lon extension - rightward
+        while data1_lon(1,end)+1 < data2_lon(1,end)
+            data1_lon(:,end+1) = 360 - data1_lon(:,1);
+            data1_lat(:,end+1) = data1_lat(:,end);
+            data1_data(:,end+1) = data1_data(:,1);
+        end
+
+        % lat extension - downward
+        while data1_lat(end,1)+1 < data2_lat(end,1)
+            data1_lon(end+1,:) = data1_lon(end,:);
+            data1_lat(end+1,:) = 180 + data1_lat(1,:);
+            data1_data(end+1,:) = data1_data(1,:);
+        end
+
+        % lat extension - upward
+        cnt = 1;
+        while data1_lat(1,1) > data2_lat(1,1)
+            data1_lat = [data1_lat(end-cnt,:)-180; data1_lat(:,:)];
+            data1_lon = [data1_lon(end,:); data1_lon(:,:)];
+            data1_data = [data1_data(end,:); data1_data(:,:)];
+            cnt = cnt+1;
+        end
     end
-    
-    % lon extension - rightward
-    while data1_lon(1,end)+1 < data2_lon(1,end)
-        data1_lon(:,end+1) = 360 - data1_lon(:,1);
-        data1_lat(:,end+1) = data1_lat(:,end);
-        data1_data(:,end+1) = data1_data(:,1);
-    end
-    
-    % lat extension - downward
-    while data1_lat(end,1)+1 < data2_lat(end,1)
-        data1_lon(end+1,:) = data1_lon(end,:);
-        data1_lat(end+1,:) = 180 + data1_lat(1,:);
-        data1_data(end+1,:) = data1_data(1,:);
-    end
-    
-    % lat extension - upward
-    cnt = 1;
-    while data1_lat(1,1) > data2_lat(1,1)
-        data1_lat = [data1_lat(end-cnt,:)-180; data1_lat(:,:)];
-        data1_lon = [data1_lon(end,:); data1_lon(:,:)];
-        data1_data = [data1_data(end,:); data1_data(:,:)];
-        cnt = cnt+1;
-    end
-    
-    data2_x_size = size(dataNewGrid{3},1);
-    data2_y_size = size(dataNewGrid{3},2);
     
     data1_lat_1d = reshape(data1_lat, [1, size(data1_lat,1)*size(data1_lat,2)])';
     data1_lon_1d = reshape(data1_lon, [1, size(data1_lon,1)*size(data1_lon,2)])';
