@@ -136,7 +136,11 @@ for k = 1:length(ncFileNames)
     if strcmp(varName, 'tos') && (length(findstr('ipsl', rawNcDir)) ~= 0 || ...
                                   length(findstr('gfdl', rawNcDir)) ~= 0 || ...
                                   length(findstr('cnrm', rawNcDir)) ~= 0 || ...
-                                  length(findstr('noresm', rawNcDir)) ~= 0)
+                                  length(findstr('noresm', rawNcDir)) ~= 0 || ...
+                                  length(findstr('miroc', rawNcDir)) ~= 0 || ...
+                                  length(findstr('bcc-csm', rawNcDir)) ~= 0 || ...
+                                  length(findstr('mri-cgcm3', rawNcDir)) ~= 0 || ...
+                                  length(findstr('access', rawNcDir)) ~= 0)
         lat = netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]);
         lat = double(lat');
         %indMax = find(lat(end, :) == max(lat(end, :)));
@@ -169,10 +173,6 @@ for k = 1:length(ncFileNames)
         end
         [lon, lat] = meshgrid(lon, lat);
     end
-    
-    
-      
-    
     
     timestep = [];
     febDayCounter = 1;
@@ -280,6 +280,10 @@ for k = 1:length(ncFileNames)
         end
         
         if strcmp(varName, 'tos')
+            if length(findstr(rawNcDir, 'miroc5')) ~= 0 || ...
+               length(findstr(rawNcDir, 'mri-cgcm3')) ~= 0
+                data(data == 0) = NaN;
+            end
             data(data == missingVal) = NaN;
         end
 
