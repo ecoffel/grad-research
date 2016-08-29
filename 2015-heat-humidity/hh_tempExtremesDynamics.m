@@ -5,6 +5,7 @@ testPeriod = 'past';
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
+dataset = 'cmip5';
 models = {'bnu-esm'};
 
 testVar = 'tos';
@@ -13,7 +14,7 @@ baseVar = 'wb';
 baseRcp = 'historical'
 
 % whether to find the annual extreme or use a temp percentile
-annualExtreme = false;
+annualExtreme = true;
 
 % if using annual extreme, find the max or the min?
 findMax = true;
@@ -29,12 +30,11 @@ region = 'india';
 plotRegion = 'world';
 fileformat = 'pdf';
 
-baseDir = 'e:/';
+baseDir = 'e:/data/';
 ensemble = 'r1i1p1';
 modelDir = 'cmip5/output';
 
-basePeriod = 1985:2005;
-futurePeriod = 2051:2069;
+timePeriod = 1985:2005;
 
 baseRegrid = true;
 testRegrid = true;
@@ -71,16 +71,6 @@ if strcmp(testVar, 'tos')
     plotXUnits = 'degrees C';
 end
 
-if strcmp(testPeriod, 'past')
-    varPeriods = {basePeriod};
-elseif strcmp(testPeriod, 'future')
-    if diff
-        varPeriods = {basePeriod, futurePeriod};
-    else
-        varPeriods = {futurePeriod};
-    end
-end
-
 tempDispStr = '';
 if annualExtreme
     if findMax
@@ -96,267 +86,119 @@ yearStep = 1; % the number of years loaded at a time for memory  reasons
 
 outputTestData = {};
 
+lat = [];
+lon = [];
+
 for d = 1:length(models)
-    
-    if strcmp(models{d}, 'ncep')
-        vars = {'ncep-reanalysis/output'};
-    elseif strcmp(models{d}, 'narr')
-        vars = {'narr/output'};
-    else
-        if diff
-            vars = {[models{d}], [models{d}]};
-        else
-            vars = {[models{d}]};
-        end    
-    end
-    
-    if length(findstr(vars{1}, 'narr')) ~= 0
-        if summer
-            tempVar = 'tasmax';
-        else
-            tempVar = 'tasmin';
-        end
-        tempPlev = -1;
-
-        isTempRegridded = false;
-        istestVarRegridded = false;
-    elseif length(findstr(vars{1}, 'ncep')) ~= 0
-        if summer
-            tempVar = 'tmax';
-        else
-            tempVar = 'tmin';
-        end
-        tempPlev = -1;
-
-        isTempRegridded = false;
-    end
     
     tempTargetFileStr = '';
     tempTargetPlotStr = '';
 
-    if strcmp(models{d}, 'ncep')
-        if diff
-            plotTitle = ['NCEP ' testVar ' diff at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{2}(1)), '-', num2str(varPeriods{2}(end)), '] - [', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)), ']'];
-            fileTitle = [testVar 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-diff-ncep.' fileformat];
-        else
-            plotTitle = ['NCEP ' testVar ' at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)) ']'];
-            fileTitle = [testVar 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-ncep.' fileformat];
-        end
-    elseif strcmp(models{d}, 'narr')
-        if diff
-            plotTitle = ['NARR ' testVarName ' diff at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{2}(1)), '-', num2str(varPeriods{2}(end)), '] - [', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)), ']'];
-            fileTitle = [testVarName 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-diff-narr.' fileformat];
-        else
-            plotTitle = ['NARR ' testVarName ' at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)) ']'];
-            fileTitle = [testVarName 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-narr.' fileformat];
-        end
+    if length(models) > 2
+        modelStr = 'cmip5';
     else
-        if length(models) > 2
-            modelStr = 'cmip5';
-        else
-            modelStr = models{d};
-        end
-
-        if diff
-            vars = {['cmip5/output/' models{d} '/' ensemble '/' baseRcp], ['cmip5/output/' models{d} '/' ensemble '/' testRcp]};
-            plotTitle = [modelStr ' ' testVar ' diff at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{2}(1)), '-', num2str(varPeriods{2}(end)), '] - [', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)), ']'];
-            fileTitle = [testVar 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-diff-' modelStr '.' fileformat];
-        else
-            vars = {['cmip5/output/' models{d} '/' ensemble '/' baseRcp]};
-            plotTitle = [modelStr ' ' testVar ' at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(varPeriods{1}(1)), '-', num2str(varPeriods{1}(end)) ']'];
-            fileTitle = [testVar 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
-        end    
+        modelStr = models{d};
     end
 
-    lat = [];
-    lon = [];
+    plotTitle = [modelStr ' ' testVar ' at ', tempDispStr, ' temps ', tempTargetPlotStr, '[', num2str(timePeriod(1)), '-', num2str(timePeriod(end)) ']'];
+    fileTitle = [testVar 'TempExtremes-', testPeriod, '-', '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
+    
     baseGrid = {};
-
-    dailyBaseData = {};
-    dailyTestData = {};
-
     yearLengths = [];
     
-    for v = 1:length(vars)
-        dailyBaseData{v} = [];
-        dailyTestData{v} = [];
+    monthlySSTMeans = [];
+    extremeSSTVals = [];
+    
+    ['loading ' models{d} '...']
+    for y = timePeriod(1):yearStep:timePeriod(end)
+        ['year ' num2str(y)]
 
-        ['loading ' vars{v} '...']
-        for y = varPeriods{v}(1):yearStep:varPeriods{v}(end)
-            ['year ' num2str(y)]
-
-            if baseRegrid
-                baseStr = [baseDir 'data/' vars{v} '/' baseVar '/regrid/world'];
-            else
-                baseStr = [baseDir 'data/' vars{v} '/' baseVar];
-            end
-
-            if testRegrid
-                testStr = [baseDir 'data/' vars{v} '/' testVar '/regrid/world'];
-            else
-                testStr = [baseDir 'data/' vars{v} '/' testVar];
-            end
-
-            dailyBase = loadDailyData(baseStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
-
-            if length(lat) == 0 | length(lon) == 0
-                lat = dailyBase{1};
-                lon = dailyBase{2};
-            end
-
-            if strcmp(baseVar, 'tos')
-                dailyBase{3} = dailyBase{3} - 273.15;
-            end
-            
-            if ~gridbox
-                [latIndexRange, lonIndexRange] = latLonIndexRange(dailyBase, latBounds, lonBounds);
-            end
-
-            curDailyBaseData = dailyBase{3};
-            clear dailyBase;
-
-            if testVarLevel ~= -1
-                dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1), 'plev', testVarLevel);
-            else
-                dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
-            end
-
-            if strcmp(testVar, 'tos')
-                dailyTest{3} = dailyTest{3} - 273.15;
-            end
-            
-            curDailyTestData = dailyTest{3};
-            clear dailyTest;
-
-            curDailyBaseData = single(curDailyBaseData);
-            curDailyTestData = single(curDailyTestData);
-
-            if ~gridbox
-                curDailyBaseData = reshape(curDailyBaseData(latIndexRange, lonIndexRange, :, :, :), ...
-                                           [length(latIndexRange), ...
-                                           length(lonIndexRange), ...
-                                           size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]);
-                curDailyTestData = reshape(curDailyTestData(:, :, :, :, :), ...
-                                            [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
-                                             size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
-            else
-                curDailyBaseData = reshape(curDailyBaseData, ...
-                                       [size(curDailyBaseData, 1), size(curDailyBaseData, 2), ...
-                                       size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]);
-                curDailyTestData = reshape(curDailyTestData, ...
-                                        [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
-                                         size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
-            end
-
-            % make sure temp and comp are same length
-            curDailyTestData = curDailyTestData(:,:,1:min(size(curDailyTestData, 3), size(curDailyBaseData, 3)));
-            curDailyBaseData = curDailyBaseData(:,:,1:min(size(curDailyTestData, 3), size(curDailyBaseData, 3)));
-            
-            if length(yearLengths) < d
-                yearLengths(d) = size(curDailyBaseData, 3);
-            end
-            
-            dailyBaseData{v} = cat(3, dailyBaseData{v}, curDailyBaseData);
-            clear curDailyBaseData;
-            dailyTestData{v} = cat(3, dailyTestData{v}, curDailyTestData);
-            clear curDailyTestData;
+        if baseRegrid
+            baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' baseRcp '/' baseVar '/regrid/world'];
+        else
+            baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' baseRcp '/' baseVar];
         end
 
+        if testRegrid
+            testStr = [baseDir modelDir '/' models{d} '/' ensemble '/' testRcp '/' testVar '/regrid/world'];
+        else
+            testStr = [baseDir modelDir '/' models{d} '/' ensemble '/' testRcp '/' testVar];
+        end
+
+        dailyBase = loadDailyData(baseStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
+
+        if length(lat) == 0 | length(lon) == 0
+            lat = dailyBase{1};
+            lon = dailyBase{2};
+        end
+
+        if strcmp(baseVar, 'tos')
+            dailyBase{3} = dailyBase{3} - 273.15;
+        end
+        
+        [latIndexRange, lonIndexRange] = latLonIndexRange(dailyBase, latBounds, lonBounds);
+        
+        curDailyBaseData = dailyBase{3};
+        clear dailyBase;
+
+        if testVarLevel ~= -1
+            dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1), 'plev', testVarLevel);
+        else
+            dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
+        end
+
+        if strcmp(testVar, 'tos')
+            dailyTest{3} = dailyTest{3} - 273.15;
+        end
+
+        curDailyTestData = dailyTest{3};
+        clear dailyTest;
+
+        curDailyBaseData = squeeze(reshape(curDailyBaseData(latIndexRange, lonIndexRange, :, :, :), ...
+                                   [length(latIndexRange), ...
+                                   length(lonIndexRange), ...
+                                   size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
+        curDailyTestData = reshape(curDailyTestData(:, :, :, :, :), ...
+                                    [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
+                                     size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
+
+        if annualExtreme
+            % find index of once-per-year highest land temperature
+            if findMax
+                tempInd = find(curDailyBaseData == max(curDailyBaseData));
+            else
+                tempInd = find(curDailyBaseData == min(curDailyBaseData));
+            end
+        else
+            dailyBaseAvgCutoff = prctile(curDailyBaseData, tempPercentile);
+            tempInd = find(curDailyBaseData <= dailyBaseAvgCutoff);
+        end
+        
+        % now find corresponding 30 day mean SST
+        lBound = max(1, tempInd-30);
+        uBound = min(tempInd+30, size(curDailyTestData, 3));
+        monthlySSTMeans(:, :, y-timePeriod(1)+1) = nanmean(curDailyTestData(:, :, lBound:uBound), 3);
+        extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
+        
+        if length(yearLengths) < d
+            yearLengths(d) = size(curDailyBaseData, 3);
+        end
+
+        clear curDailyBaseData;
+        clear curDailyTestData;
     end
 
     outputTestData{d} = [];
 
-    if diff
-        for v = 1:length(vars)
-
-            dailyBaseAvg = squeeze(nanmean(nanmean(dailyBaseData{v}, 2), 1));
-
-            if annualExtreme
-                if findMax
-                    tempInd = find(dailyBaseAvg == max(dailyBaseAvg));
-                else
-                    tempInd = find(dailyBaseAvg == min(dailyBaseAvg));
-                end
-            else
-                dailyBaseAvgCutoff = prctile(dailyBaseAvg, tempPercentile);
-                if summer
-                    tempInd = find(dailyBaseAvg >= dailyBaseAvgCutoff);
-                else
-                    tempInd = find(dailyBaseAvg <= dailyBaseAvgCutoff);
-                end
-            end
-
-            notTempInd = 1:length(dailyBaseAvg);
-            notTempInd(tempInd) = [];
-
-            if minusMean
-                dailyTestMean = nanmean(dailyTestData{v}(:,:,notTempInd), 3);
-                dailyTestData{v} = nanmean(dailyTestData{v}(:,:,tempInd), 3)-dailyTestMean;
-                clear dailyTestMean;
-            else
-                dailyTestData{v} = nanmean(dailyTestData{v}(:,:,tempInd), 3);
-            end
-        end
-
-        outputTestData{d} = dailyTestData{2} - dailyTestData{1};
+    if minusMean
+        monthlySSTMeans = nanmean(monthlySSTMeans, 3);
+        extremeSSTVals = nanmean(extremeSSTVals, 3);
+        outputTestData{d} = extremeSSTVals - monthlySSTMeans;
     else
-            
-        dailyBaseAvg = squeeze(nanmean(nanmean(dailyBaseData{1}, 2), 1));
-
-        if annualExtreme
-            if findMax
-                tempInd = find(dailyBaseAvg == max(dailyBaseAvg));
-            else
-                tempInd = find(dailyBaseAvg == min(dailyBaseAvg));
-            end
-        else
-            dailyBaseAvgCutoff = prctile(dailyBaseAvg, tempPercentile);
-            if summer
-                tempInd = find(dailyBaseAvg >= dailyBaseAvgCutoff);
-            else
-                tempInd = find(dailyBaseAvg <= dailyBaseAvgCutoff);
-            end
-        end
-
-        % ------------------------------------------------------------
-        % need to find index for each year
-        
-        % for now, take average +- 15 days from index and add/sub year
-        % length to get monthly average across base period
-        monthlyMeans = [];
-        
-        % loop backwards
-        i = tempInd;
-        while i > 15
-            monthlyMeans(:, :, d) = nanmean(dailyTestData{1}(:,:,i-15:i+15), 3);
-            i = i - yearLengths(d);
-        end
-        
-        % loop forward
-        i = tempInd;
-        while i < size(dailyTestData{1}, 3)-15
-            monthlyMeans(:, :, d) = nanmean(dailyTestData{1}(:,:,i-15:i+15), 3);
-            i = i + yearLengths(d);
-        end
-
-        notTempInd = 1:length(dailyBaseAvg);
-        notTempInd(tempInd) = [];
-        
-        if minusMean
-            dailyTestMean = nanmean(dailyTestData{1}(:,:,notTempInd), 3);
-            if monthlyMean
-                outputTestData{d} = nanmean(dailyTestData{1}(:,:,tempInd), 3) - nanmean(monthlyMeans, 3);
-            else
-                outputTestData{d} = nanmean(dailyTestData{1}(:,:,tempInd), 3) - dailyTestMean;
-            end
-            clear dailyTestMean;
-        else
-            outputTestData{d} = nanmean(dailyTestData{1}(:,:,tempInd), 3);
-        end
+        outputTestData{d} = extremeSSTVals;
     end
+    
 end
-
-clear curDailyTestData curDailyBaseData dailyBaseData dailyTestData;
 
 % average over all models
 finalOutputTestData = [];

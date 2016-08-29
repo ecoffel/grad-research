@@ -4,7 +4,7 @@
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {'bnu-esm'};
+models = {'bnu-esm', 'gfdl-cm3', 'noresm1-m'};
 
 rcps = {'historical', 'rcp85'};
 ensembles = 1;
