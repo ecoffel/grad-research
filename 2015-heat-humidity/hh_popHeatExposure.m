@@ -21,9 +21,8 @@ baseBiasCorrect = false;
 
 popRegrid = true;
 
-rcp = 'rcp85';
-region = 'world';
-exposureThreshold = 29;
+region = 'middle-east';
+exposureThreshold = 31;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -67,14 +66,15 @@ elseif strcmp(region, 'world')
 elseif strcmp(region, 'india')
     latRange = [8, 34];
     lonRange = [67, 90];
+elseif strcmp(region, 'middle-east')
+    latRange = [10, 35];
+    lonRange = [35, 60];
 end
 
 if strcmp(basePeriod, 'past')
     basePeriod = basePeriodYears;
-    baseRcp = 'historical/'
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = [rcp '/'];
 end
 
 baseDatasetStr = baseDataset;
@@ -115,6 +115,11 @@ constClimateCount = [];
 
 meanBaseSelGrid = [];
 
+latIndexRange = [];
+lonIndexRange = [];
+
+baseData = [];
+
 for m = 1:length(baseModels)
     if strcmp(baseModels{m}, '')
         curModel = baseModels{m};
@@ -128,12 +133,18 @@ for m = 1:length(baseModels)
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
         if baseRegrid
-            baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            if strcmp(baseDataset, 'ncep')
+                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            else
+                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            end
         else
             baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         end
         
-        [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
+        if length(latIndexRange) == 0
+            [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
+        end
         baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
         
         if length(lat) == 0
@@ -200,7 +211,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
     
     for c = 1:size(chgData, 3)
         % compute future scenarios by adding change onto base data
-        futureData(:, :, decCount, c) = squeeze(baseData(:, :, 1)) + chgData(:, :, c);
+        futureData(:, :, decCount, c) = squeeze(baseData(:, :, 1)) + chgData(latIndexRange, lonIndexRange, c);
     end
     
     decCount = decCount + 1;

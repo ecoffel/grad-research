@@ -5,27 +5,19 @@ testPeriod = 'past';
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
+models = {'bnu-esm'};
+
 dataset = 'cmip5';
-models = {'access1-0', 'access1-3', 'bnu-esm'};
 
 testVar = 'tos';
 testRcp = 'historical';
 baseVar = 'wb';
 baseRcp = 'historical'
 
-% whether to find the annual extreme or use a temp percentile
-annualExtreme = true;
+plotEachModel = true;
 
-% if using annual extreme, find the max or the min?
-findMax = true;
-
-% if not annual extreme, specify temp percentile
-tempPercentile = 98;
-
-% whether we're taking the difference of two different time periods
-diff = false;
-
-plotEachModel = false;
+% look at correlation for ssts to wet bulbs above this percentile
+percentileThreshold = 10;
 
 % the temperature reference area
 region = 'india';
@@ -46,13 +38,6 @@ end
 baseRegrid = true;
 testRegrid = true;
 
-% should we look at anomalies
-minusMean = true;
-% relative to the mean of the month where the extreme anom is?
-monthlyMean = true;
-
-testVarLevel = -1;
-
 if strcmp(region, 'us-ne')
     % right around NYC
     latBounds = [40 40];
@@ -70,28 +55,18 @@ end
 
 if strcmp(testVar, 'tos')
     gridbox = false;
-    if minusMean || diff
-        plotRange = [-10 10];
-    else
-        plotRange = [0 40];
-    end
-    plotXUnits = 'degrees C';
+    plotRange = [-1 1]
+    plotXUnits = 'correlation coefficient';
 end
 
-tempDispStr = '';
-if annualExtreme
-    if findMax
-        tempDispStr = 'ann-max';
-    else
-        tempDispStr = 'ann-min';
-    end
-else
-    tempDispStr = [num2str(tempPercentile) 'p'];
-end
+tempDispStr = [num2str(percentileThreshold) 'p']
 
 yearStep = 1; % the number of years loaded at a time for memory  reasons
 
-outputTestData = {};
+wbData = {};
+sstData = {};
+corrData = {};
+
 
 lat = [];
 lon = [];
@@ -110,11 +85,8 @@ for d = 1:length(models)
     baseGrid = {};
     yearLengths = [];
     
-    SSTMeans = [];
+    monthlySSTMeans = [];
     extremeSSTVals = [];
-    
-    sstData = [];
-    tempIndData = [];
     
     ['loading ' models{d} '...']
     for y = timePeriod(1):yearStep:timePeriod(end)
@@ -145,14 +117,21 @@ for d = 1:length(models)
         
         [latIndexRange, lonIndexRange] = latLonIndexRange(dailyBase, latBounds, lonBounds);
         
-        curDailyBaseData = dailyBase{3};
+        % select region and reshape to 1D array
+        curDailyBaseData = dailyBase{3}(latIndexRange, lonIndexRange, :, :, :);
+        curDailyBaseData = squeeze(reshape(curDailyBaseData, ...
+                                   [length(latIndexRange), ...
+                                   length(lonIndexRange), ...
+                                   size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
+        
         clear dailyBase;
 
-        if testVarLevel ~= -1
-            dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1), 'plev', testVarLevel);
-        else
-            dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
-        end
+        
+        % find values above thresh
+        baseInd = find(curDailyBaseData > prctile(curDailyBaseData, percentileThreshold));
+        curDailyBaseData = curDailyBaseData(baseInd);
+        
+        dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
 
         if strcmp(testVar, 'tos')
             dailyTest{3} = dailyTest{3} - 273.15;
@@ -161,89 +140,49 @@ for d = 1:length(models)
         curDailyTestData = dailyTest{3};
         clear dailyTest;
 
-        curDailyBaseData = squeeze(reshape(curDailyBaseData(latIndexRange, lonIndexRange, :, :, :), ...
-                                   [length(latIndexRange), ...
-                                   length(lonIndexRange), ...
-                                   size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
-        curDailyTestData = reshape(curDailyTestData(:, :, :, :, :), ...
+        
+        curDailyTestData = reshape(curDailyTestData, ...
                                     [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
                                      size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
-                         
-        if annualExtreme
-            % find index of once-per-year highest land temperature
-            if findMax
-                tempInd = find(curDailyBaseData == max(curDailyBaseData));
-            else
-                tempInd = find(curDailyBaseData == min(curDailyBaseData));
-            end
-        else
-            dailyBaseAvgCutoff = prctile(curDailyBaseData, tempPercentile);
-            tempInd = find(curDailyBaseData <= dailyBaseAvgCutoff);
+
+        % select sst values that correspond to the wb indices
+        curDailyTestData = curDailyTestData(:, :, baseInd);
+        
+        if length(wbData) < d
+            wbData{d} = [];
+            sstData{d} = [];
         end
         
-        if length(yearLengths) < d
-            yearLengths(d) = size(curDailyBaseData, 3);
-        end
-        
-        sstData = cat(3, sstData, curDailyTestData);
-        tempIndData(end+1) = tempInd;
-        extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
-        
+        wbData{d} = cat(1, wbData{d}, curDailyBaseData);
+        sstData{d} = cat(3, sstData{d}, curDailyTestData);
+                                 
         clear curDailyBaseData;
         clear curDailyTestData;
     end
-    
-    outputTestData{d} = [];
 
-    if minusMean
-        
-        SSTMeans = {};
-        
-        for t = 1:length(tempIndData)
-            % now find corresponding day mean SST for whole period
-            curInd = tempIndData(t) - yearLengths(d);
-            SSTMeans{t} = [];
+    corrData{d} = [];
+    for x = 1:size(sstData{d}, 1)
+        for y = 1:size(sstData{d}, 2)
+            sst = squeeze(sstData{d}(x,y,:));
+            wb = wbData{d};
             
-            meanInd = 1;
-            while curInd > 0
-                SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
-                curInd = curInd - yearLengths(d);
-                meanInd = meanInd + 1;
-            end
-            curInd = t + yearLengths(d);
-            while curInd < size(sstData, 3)
-                SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
-                curInd = curInd + yearLengths(d);
-                meanInd = meanInd + 1;
-            end
-            
-            SSTMeans{t} = nanmean(SSTMeans{t}, 3);
+            notnanInd = find(~isnan(sst) & ~isnan(wb));
+            c = corrcoef(sst(notnanInd), wb(notnanInd));
+            corrData{d}(x, y) = c(1,2);
         end
-        
-        finalSSTMean = [];
-        for t = 1:length(SSTMeans)
-            finalSSTMean(:, :, t) = SSTMeans{t};
-        end
-        finalSSTMean = nanmean(finalSSTMean, 3);
-        
-        extremeSSTVals = nanmean(extremeSSTVals, 3);
-        outputTestData{d} = extremeSSTVals - finalSSTMean;
-    else
-        outputTestData{d} = finalSSTMean;
     end
     
-    clear SSTMeans sstData extremeSSTVals finalSSTMean;
     
 end
 
 if plotEachModel
     for d = 1:length(models)
         
-        plotTitle = ['SST anomalies on highest WB day (' region ', ' models{d} ')'];
-        fileTitle = [testVar 'TempExtremes-', region, '-', tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
+        plotTitle = ['SST correlations on > ' num2str(percentileThreshold) 'p WB days (' region ', ' models{d} ')'];
+        fileTitle = [testVar 'WbCorr-', testPeriod, '-', region, '-', tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
     
         % plotting code
-        [fg,cb] = plotModelData({lat, lon, double(outputTestData{d})}, plotRegion, 'caxis', plotRange);
+        [fg,cb] = plotModelData({lat, lon, corrData{d}}, plotRegion, 'caxis', plotRange);
         set(gca, 'Color', 'none');
         xlabel(cb, plotXUnits, 'FontSize', 18);
         cbPos = get(cb, 'Position');
@@ -259,13 +198,13 @@ if plotEachModel
     end
 else
     
-    plotTitle = ['SST anomalies on highest WB day (' region ', CMIP5 mean)'];
-    fileTitle = [testVar 'TempExtremes-', region '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
+    plotTitle = ['SST correlations on > ' num2str(percentileThreshold) 'p WB days (' region ', CMIP5 mean)'];
+    fileTitle = [testVar 'WbCorr-', testPeriod, '-', region, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
     
     % average over all models
     finalOutputTestData = [];
     for d = 1:length(models)
-        finalOutputTestData(:,:,d) = outputTestData{d};
+        finalOutputTestData(:,:,d) = corrData{d};
     end
     finalOutputTestData = nanmean(finalOutputTestData, 3);
 
