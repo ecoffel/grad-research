@@ -1,12 +1,12 @@
 testPeriod = 'past';
 
-% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 dataset = 'cmip5';
-models = {'access1-0', 'access1-3', 'bnu-esm'};
+% models = {'access1-0', 'access1-3', 'bnu-esm'};
 
 testVar = 'tos';
 testRcp = 'historical';
@@ -25,7 +25,7 @@ tempPercentile = 98;
 % whether we're taking the difference of two different time periods
 diff = false;
 
-plotEachModel = false;
+plotEachModel = true;
 
 % the temperature reference area
 region = 'india';
@@ -202,22 +202,25 @@ for d = 1:length(models)
         for t = 1:length(tempIndData)
             % now find corresponding day mean SST for whole period
             curInd = tempIndData(t) - yearLengths(d);
+            sstInds = [];
             SSTMeans{t} = [];
             
             meanInd = 1;
             while curInd > 0
-                SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                sstInds(end+1) = curInd;
                 curInd = curInd - yearLengths(d);
-                meanInd = meanInd + 1;
+                %meanInd = meanInd + 1;
             end
             curInd = t + yearLengths(d);
             while curInd < size(sstData, 3)
-                SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                sstInds(end+1) = curInd;
                 curInd = curInd + yearLengths(d);
-                meanInd = meanInd + 1;
+                %meanInd = meanInd + 1;
             end
             
-            SSTMeans{t} = nanmean(SSTMeans{t}, 3);
+            SSTMeans{t} = nanmean(sstData(:, :, sstInds), 3);
         end
         
         finalSSTMean = [];
