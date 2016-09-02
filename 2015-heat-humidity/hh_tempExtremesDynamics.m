@@ -6,7 +6,7 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 dataset = 'cmip5';
-% models = {'access1-0', 'access1-3', 'bnu-esm'};
+% models = {'access1-3'};
 
 testVar = 'tos';
 testRcp = 'historical';
@@ -25,7 +25,7 @@ tempPercentile = 98;
 % whether we're taking the difference of two different time periods
 diff = false;
 
-plotEachModel = true;
+plotEachModel = false;
 
 % the temperature reference area
 region = 'india';
@@ -48,8 +48,13 @@ testRegrid = true;
 
 % should we look at anomalies
 minusMean = true;
-% relative to the mean of the month where the extreme anom is?
-monthlyMean = true;
+% relative to the mean of the SST on the same day as the extreme
+sameDayMean = true;
+
+sameDayStr = 'day-mean';
+if ~sameDayMean
+    sameDayStr = 'year-mean';
+end
 
 testVarLevel = -1;
 
@@ -114,6 +119,7 @@ for d = 1:length(models)
     extremeSSTVals = [];
     
     sstData = [];
+    wbData = [];
     tempIndData = [];
     
     ['loading ' models{d} '...']
@@ -172,9 +178,9 @@ for d = 1:length(models)
         if annualExtreme
             % find index of once-per-year highest land temperature
             if findMax
-                tempInd = find(curDailyBaseData == max(curDailyBaseData));
+                tempInd = find(curDailyBaseData == nanmax(curDailyBaseData));
             else
-                tempInd = find(curDailyBaseData == min(curDailyBaseData));
+                tempInd = find(curDailyBaseData == nanmin(curDailyBaseData));
             end
         else
             dailyBaseAvgCutoff = prctile(curDailyBaseData, tempPercentile);
@@ -182,11 +188,12 @@ for d = 1:length(models)
         end
         
         if length(yearLengths) < d
-            yearLengths(d) = size(curDailyBaseData, 3);
+            yearLengths(d) = length(curDailyBaseData);
         end
         
         sstData = cat(3, sstData, curDailyTestData);
-        tempIndData(end+1) = tempInd;
+        tempIndData(end+1) = tempInd + yearLengths(d)*(y-timePeriod(1));
+        wbData(end+1) = curDailyBaseData(tempInd);
         extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
         
         clear curDailyBaseData;
@@ -199,35 +206,39 @@ for d = 1:length(models)
         
         SSTMeans = {};
         
-        for t = 1:length(tempIndData)
-            % now find corresponding day mean SST for whole period
-            curInd = tempIndData(t) - yearLengths(d);
-            sstInds = [];
-            SSTMeans{t} = [];
-            
-            meanInd = 1;
-            while curInd > 0
-                %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
-                sstInds(end+1) = curInd;
-                curInd = curInd - yearLengths(d);
-                %meanInd = meanInd + 1;
+        if sameDayMean
+            for t = 1:length(tempIndData)
+                % now find corresponding day mean SST for whole period
+                curInd = tempIndData(t) - yearLengths(d);
+                sstInds = [];
+                SSTMeans{t} = [];
+
+                meanInd = 1;
+                while curInd > 0
+                    %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                    sstInds(end+1) = curInd;
+                    curInd = curInd - yearLengths(d);
+                    %meanInd = meanInd + 1;
+                end
+                curInd = t + yearLengths(d);
+                while curInd < size(sstData, 3)
+                    %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
+                    sstInds(end+1) = curInd;
+                    curInd = curInd + yearLengths(d);
+                    %meanInd = meanInd + 1;
+                end
+
+                SSTMeans{t} = nanmean(sstData(:, :, sstInds), 3);
             end
-            curInd = t + yearLengths(d);
-            while curInd < size(sstData, 3)
-                %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
-                sstInds(end+1) = curInd;
-                curInd = curInd + yearLengths(d);
-                %meanInd = meanInd + 1;
+
+            finalSSTMean = [];
+            for t = 1:length(SSTMeans)
+                finalSSTMean(:, :, t) = SSTMeans{t};
             end
-            
-            SSTMeans{t} = nanmean(sstData(:, :, sstInds), 3);
+            finalSSTMean = nanmean(finalSSTMean, 3);
+        else
+            finalSSTMean = nanmean(sstData, 3);
         end
-        
-        finalSSTMean = [];
-        for t = 1:length(SSTMeans)
-            finalSSTMean(:, :, t) = SSTMeans{t};
-        end
-        finalSSTMean = nanmean(finalSSTMean, 3);
         
         extremeSSTVals = nanmean(extremeSSTVals, 3);
         outputTestData{d} = extremeSSTVals - finalSSTMean;
@@ -243,7 +254,7 @@ if plotEachModel
     for d = 1:length(models)
         
         plotTitle = ['SST anomalies on highest WB day (' region ', ' models{d} ')'];
-        fileTitle = [testVar 'TempExtremes-', region, '-', tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
+        fileTitle = [testVar 'TempExtremes-', region, '-', sameDayStr '-' tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
     
         % plotting code
         [fg,cb] = plotModelData({lat, lon, double(outputTestData{d})}, plotRegion, 'caxis', plotRange);
@@ -263,7 +274,7 @@ if plotEachModel
 else
     
     plotTitle = ['SST anomalies on highest WB day (' region ', CMIP5 mean)'];
-    fileTitle = [testVar 'TempExtremes-', region '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
+    fileTitle = [testVar 'TempExtremes-', region '-' sameDayStr '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
     
     % average over all models
     finalOutputTestData = [];
