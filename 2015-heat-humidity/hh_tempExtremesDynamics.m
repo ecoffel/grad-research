@@ -6,7 +6,7 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 dataset = 'cmip5';
-% models = {'access1-3'};
+% models = {'bnu-esm'};
 
 testVar = 'tos';
 testRcp = 'historical';
@@ -28,7 +28,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'india';
+region = 'west-africa';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -66,8 +66,8 @@ elseif strcmp(region, 'india')
     latBounds = [25 26];
     lonBounds = [82 83];   
 elseif strcmp(region, 'west-africa')
-    latBounds = [34.5 36.5];
-    lonBounds = [256 260];   
+    latBounds = [35 35];
+    lonBounds = [256 256];   
 elseif strcmp(region, 'china')
     latBounds = [35 35];
     lonBounds = [256 256];   
@@ -76,7 +76,7 @@ end
 if strcmp(testVar, 'tos')
     gridbox = false;
     if minusMean || diff
-        plotRange = [-10 10];
+        plotRange = [-0.5 0.5];
     else
         plotRange = [0 40];
     end
@@ -220,7 +220,7 @@ for d = 1:length(models)
                     curInd = curInd - yearLengths(d);
                     %meanInd = meanInd + 1;
                 end
-                curInd = t + yearLengths(d);
+                curInd = tempIndData(t) + yearLengths(d);
                 while curInd < size(sstData, 3)
                     %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
                     sstInds(end+1) = curInd;
