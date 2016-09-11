@@ -24,14 +24,23 @@ ncFileNames = {ncFileNames.name};
 
 fileCount = 0;
 
-monthly = false;
-
 for k = 1:length(ncFileNames)
     if fileCount >= maxNum & maxNum ~= -1
         return
     end
     
+    monthly = false;
+    weekly = false;
+    
     ncFileName = ncFileNames{k}
+    
+    
+    if findstr(ncFileName, 'wkmean')
+        weekly = true;
+    %------------------- TEST HERE FOR MONTHLY FILES ---------------------
+    elseif false
+        
+    end
     
     ncid = netcdf.open([rawNcDir, '/', ncFileName]);
     [ndim, nvar, natts] = netcdf.inq(ncid);
@@ -47,6 +56,11 @@ for k = 1:length(ncFileNames)
     %if length(parts) == 3
     varName = lower(parts{1});
     year = lower(parts{end-1});
+    
+    if weekly
+        yearParts = strsplit(year, '-');
+        year = yearParts{1};
+    end
     
     % check for output folder and make it if it doesn't exist
     folDataTarget = [outputDir, '/', varName, '/', year];
@@ -141,9 +155,10 @@ for k = 1:length(ncFileNames)
     deltaT = 0;
     
     % start at jan 1 of the file year
-    if strcmp(year, 'mean')
+    if monthly
         startDate = datenum(1979, 1, 1, 0, 0, 0);
-        monthly = true;
+    elseif weekly
+        startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
     else
         startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
     end
@@ -153,6 +168,8 @@ for k = 1:length(ncFileNames)
     % we are monthly
     if monthly
         deltaT = etime(datevec('1', 'mm'), datevec('00', 'mm'));
+    elseif weekly
+        deltaT = etime(datevec('07', 'dd'), datevec('00', 'dd'));
     else
         % either daily or 4x daily
         if length(findstr('4x', atts{attIdTitle}{2})) ~= 0
@@ -185,7 +202,43 @@ for k = 1:length(ncFileNames)
     end
     
     curTime = timestep(1);
-    if monthly
+    
+    if weekly
+        
+        % if we are daily or sub daily, separate into monthly files
+        endTime = addtodate(startDate, dims{dimIdTime}{2}*deltaT, 'second');
+        
+        % ---- THIS LOOP NOT NEEDED BUT DOESN'T HURT... -----
+        while curTime < endTime
+            nextTime = addtodate(curTime, 7, 'day');
+
+            % find indices in the timestep matrix
+            curIndex = find(timestep >= curTime, 1, 'first');
+            nextIndex = find(timestep < nextTime, 1, 'last');
+
+            % get monthly data
+            weeklyData = [];
+            if dimIdLev ~= -1
+                weeklyData = double(data(:, :, :, curIndex:nextIndex))*scale_factor + add_offset;  
+            else
+                weeklyData = double(data(:, :, curIndex:nextIndex))*scale_factor + add_offset;
+            end
+            
+            weeklyData(:,:) = flipud(squeeze(weeklyData(:,:)));
+            
+            weeklyDataSet = {lat, lon, squeeze(weeklyData)};
+            
+            % save the .mat file in the correct location and w/ the correct name
+            fileName = [varName, '_', datestr(timestep(curIndex), 'yyyy_mm_dd')];
+            eval([fileName ' = weeklyDataSet;']);
+            save([folDataTarget, '/', fileName, '.mat'], fileName);
+
+            curTime = nextTime;
+            clear weeklyData weeklyDataSet;
+            eval(['clear ' fileName ';']);
+        end
+        
+    elseif monthly
         % for monthly data we will export a single mat file with the full
         % dataset
         endTime = addtodate(startDate, dims{dimIdTime}{2}*deltaT, 'month');

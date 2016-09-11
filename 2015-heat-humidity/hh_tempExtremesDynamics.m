@@ -27,7 +27,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'china';
+region = 'west-africa';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -65,11 +65,11 @@ elseif strcmp(region, 'india')
     latBounds = [25 26];
     lonBounds = [82 83];   
 elseif strcmp(region, 'west-africa')
-    latBounds = [35 35];
-    lonBounds = [256 256];   
+    latBounds = [6 6];
+    lonBounds = [-1 -1] + 360;   
 elseif strcmp(region, 'china')
-    latBounds = [35 35];
-    lonBounds = [256 256];   
+    latBounds = [23 23];
+    lonBounds = [113 113];   
 end
 
 if strcmp(testVar, 'tos')
