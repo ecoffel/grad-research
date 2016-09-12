@@ -116,6 +116,7 @@ for k = 1:length(ncFileNames)
     varIdLon = 0;
     varIdLev = 0;
     varIdMain = 0;
+    varIdTime = 0;
     
     vars = {};
     for i = 0:nvar-1
@@ -135,6 +136,10 @@ for k = 1:length(ncFileNames)
         
         if length(findstr(vname, 'level')) ~= 0
             varIdLev = i+1;
+        end
+        
+        if strcmp(vname, 'time')
+            varIdTime = i+1;
         end
         
         vars{i+1} = {vname, vtype, vdim, vatts};
@@ -158,7 +163,7 @@ for k = 1:length(ncFileNames)
     if monthly
         startDate = datenum(1979, 1, 1, 0, 0, 0);
     elseif weekly
-        startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
+        startDate = addtodate(netcdf.getVar(ncid, varIdTime-1, [0], [1]), 1800, 'year');
     else
         startDate = datenum(double(str2num(year)), 1, 1, 0, 0, 0);
     end

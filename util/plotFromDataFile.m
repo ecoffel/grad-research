@@ -34,6 +34,18 @@ function [fg, cb] = plotFromDataFile(saveData)
         plotStates = false;
     end
     
+    if isfield(saveData, 'blockLand')
+        blockLand = saveData.blockLand;
+    else
+        blockLand = false;
+    end
+    
+    if isfield(saveData, 'blockWater')
+        blockWater = saveData.blockWater;
+    else
+        blockWater = false;
+    end
+    
     [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
     set(gca, 'Color', 'none');
@@ -89,6 +101,10 @@ function [fg, cb] = plotFromDataFile(saveData)
     if saveData.blockWater
         load coast;
         geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
+    end
+    
+    if saveData.blockLand
+        geoshow('landareas.shp','DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
     eval(['export_fig ' saveData.fileTitle ';']);

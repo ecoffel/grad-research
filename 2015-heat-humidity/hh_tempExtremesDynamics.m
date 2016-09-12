@@ -1,22 +1,30 @@
 testPeriod = 'past';
 
-models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+
+models = {''};
 
 % models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'noresm1-m'};
 
-dataset = 'cmip5';
+dataset = 'ncep';
 % models = {'access1-0', 'access1-3', 'bnu-esm'};
 
-testVar = 'tos';
-testRcp = 'historical';
-baseVar = 'wb';
-baseRcp = 'historical'
+sstVar = 'tos';
+sstRcp = 'historical';
+
+if strcmp(dataset, 'ncep')
+    sstVar = 'sst';
+    sstRcp = '';
+end
+
+tempVar = 'wb';
+tempRcp = 'historical'
 
 % whether to find the annual extreme or the top 20
 annualExtreme = false;
@@ -27,7 +35,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'west-africa';
+region = 'us-ne';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -57,6 +65,10 @@ end
 
 testVarLevel = -1;
 
+if strcmp(dataset, 'ncep')
+    models = {'ncep'};
+end
+
 if strcmp(region, 'us-ne')
     % right around NYC
     latBounds = [40 40];
@@ -72,7 +84,7 @@ elseif strcmp(region, 'china')
     lonBounds = [113 113];   
 end
 
-if strcmp(testVar, 'tos')
+if strcmp(sstVar, 'tos') || strcmp(sstVar, 'sst')
     gridbox = false;
     if minusMean || diff
         plotRange = [-0.5 0.5];
@@ -120,18 +132,14 @@ for d = 1:length(models)
     for y = timePeriod(1):yearStep:timePeriod(end)
         ['year ' num2str(y)]
 
-        if baseRegrid
-            baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' baseRcp '/' baseVar '/regrid/world'];
+        if strcmp(dataset, 'ncep')
+            baseStr = [baseDir 'ncep-reanalysis/output/' tempVar '/regrid'];
+            testStr = [baseDir 'ncep-reanalysis/output/' sstVar];
         else
-            baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' baseRcp '/' baseVar];
+            baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' tempRcp '/' tempVar '/regrid/world'];
+            testStr = [baseDir modelDir '/' models{d} '/' ensemble '/' sstRcp '/' sstVar '/regrid/world'];
         end
-
-        if testRegrid
-            testStr = [baseDir modelDir '/' models{d} '/' ensemble '/' testRcp '/' testVar '/regrid/world'];
-        else
-            testStr = [baseDir modelDir '/' models{d} '/' ensemble '/' testRcp '/' testVar];
-        end
-
+        
         dailyBase = loadDailyData(baseStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
 
         if length(lat) == 0 | length(lon) == 0
@@ -139,7 +147,7 @@ for d = 1:length(models)
             lon = dailyBase{2};
         end
 
-        if strcmp(baseVar, 'tos')
+        if strcmp(tempVar, 'tos')
             dailyBase{3} = dailyBase{3} - 273.15;
         end
         
@@ -148,13 +156,13 @@ for d = 1:length(models)
         curDailyBaseData = dailyBase{3};
         clear dailyBase;
 
-        if testVarLevel ~= -1
-            dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1), 'plev', testVarLevel);
+        if strcmp(dataset, 'ncep')
+            dailyTest = loadWeeklyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
         else
             dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
         end
 
-        if strcmp(testVar, 'tos')
+        if strcmp(sstVar, 'tos')
             dailyTest{3} = dailyTest{3} - 273.15;
         end
 
@@ -165,16 +173,38 @@ for d = 1:length(models)
                                    [length(latIndexRange), ...
                                    length(lonIndexRange), ...
                                    size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
+                  
         curDailyTestData = reshape(curDailyTestData(:, :, :, :, :), ...
                                     [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
                                      size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
                          
+        % remove nans caused by having each month be 31 days
+        nanInd = find(isnan(curDailyBaseData));
+        curDailyBaseData(nanInd) = [];
+        if ~strcmp(dataset, 'ncep')
+            curDailyTestData(:, :, nanInd) = [];
+        end
+        
+        if length(yearLengths) < d
+            yearLengths(d) = length(curDailyBaseData);
+            
+            % weeks instead of days
+            if strcmp(dataset, 'ncep')
+                yearLengths(d) = round(yearLengths(d) / 7);
+            end
+        end
+                                 
         if annualExtreme
             % find index of once-per-year highest land temperature
             tempInd = find(curDailyBaseData == nanmax(curDailyBaseData));
             
+            % weeks instead of days
+            if strcmp(dataset, 'ncep')
+                tempInd = round(tempInd / 7);
+            end
+            
             sstData = cat(3, sstData, curDailyTestData);
-            tempIndData(end+1) = tempInd + yearLengths(d)*(y-timePeriod(1));
+            tempIndData(end+1) = round(tempInd + yearLengths(d)*(y-timePeriod(1)));
             wbData(end+1) = curDailyBaseData(tempInd);
             extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
         else
@@ -182,12 +212,11 @@ for d = 1:length(models)
             % later
             sstData = cat(3, sstData, curDailyTestData);
             wbData = cat(1, wbData, curDailyBaseData);
+            
+            ['sst len = ' num2str(size(curDailyTestData, 3))]
+            ['wb len = ' num2str(length(curDailyBaseData))]
         end
-        
-        if length(yearLengths) < d
-            yearLengths(d) = length(curDailyBaseData);
-        end
-        
+       
         clear curDailyBaseData;
         clear curDailyTestData;
     end
@@ -203,6 +232,12 @@ for d = 1:length(models)
         
         for i = 1:20
             tempIndData(end+1) = find(wbData == wbSort(i));
+            
+            % weeks instead of days
+            if strcmp(dataset, 'ncep')
+                tempIndData(end) = round(tempIndData(end) / 7);
+            end
+            
             extremeSSTVals(:, :, i) = sstData(:, :, tempIndData(end));
         end
         
@@ -259,8 +294,8 @@ end
 if plotEachModel
     for d = 1:length(models)
         
-        plotTitle = ['SST anomalies on highest ' baseVar ' day (' region ', ' models{d} ')'];
-        fileTitle = [testVar 'TempExtremes-', baseVar '-' region, '-', sameDayStr '-' tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
+        plotTitle = ['SST anomalies on highest ' tempVar ' day (' region ', ' models{d} ')'];
+        fileTitle = [sstVar 'TempExtremes-', tempVar '-' region, '-', sameDayStr '-' tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
     
         result = {lat, lon, outputTestData{d}};
     
@@ -272,14 +307,15 @@ if plotEachModel
                           'plotXUnits', plotXUnits, ...
                           'plotCountries', false, ...
                           'plotStates', false, ...
-                          'blockWater', false);
+                          'blockWater', false, ...
+                          'blockLand', true);
 
         plotFromDataFile(saveData);
     end
 else
     
-    plotTitle = ['SST anomalies on highest ' baseVar ' day (' region ', CMIP5 mean)'];
-    fileTitle = [testVar 'TempExtremes-', baseVar '-' region '-' sameDayStr '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
+    plotTitle = ['SST anomalies on highest ' tempVar ' day (' region ', CMIP5 mean)'];
+    fileTitle = [sstVar 'TempExtremes-', tempVar '-' region '-' sameDayStr '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
     
     % average over all models
     finalOutputTestData = [];
@@ -298,7 +334,8 @@ else
                       'plotXUnits', plotXUnits, ...
                       'plotCountries', false, ...
                       'plotStates', false, ...
-                      'blockWater', false);
+                      'blockWater', false, ...
+                      'blockLand', true);
     
     plotFromDataFile(saveData);
 end
