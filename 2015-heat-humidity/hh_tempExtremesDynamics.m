@@ -5,15 +5,15 @@ testPeriod = 'past';
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {''};
+% models = {''};
 
 % models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'noresm1-m'};
 
-dataset = 'ncep';
-% models = {'access1-0', 'access1-3', 'bnu-esm'};
+dataset = 'cmip5';
+ models = {'access1-0', 'access1-3', 'bnu-esm'};
 
 sstVar = 'tos';
 sstRcp = 'historical';
@@ -178,12 +178,13 @@ for d = 1:length(models)
                                     [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
                                      size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
                          
-        % remove nans caused by having each month be 31 days
-        nanInd = find(isnan(curDailyBaseData));
-        curDailyBaseData(nanInd) = [];
-        if ~strcmp(dataset, 'ncep')
+        
+        %if strcmp(dataset, 'ncep')
+            % remove nans caused by having each month be 31 days
+            nanInd = find(isnan(curDailyBaseData));
+            curDailyBaseData(nanInd) = [];
             curDailyTestData(:, :, nanInd) = [];
-        end
+        %end
         
         if length(yearLengths) < d
             yearLengths(d) = length(curDailyBaseData);
@@ -227,7 +228,7 @@ for d = 1:length(models)
         % find top 20 events in wb data
         wbSort = sort(wbData, 'descend');
         
-        indNan = isnan(wbSort);
+        indNan = find(isnan(wbSort));
         wbSort(indNan) = [];
         
         for i = 1:20
