@@ -1,11 +1,11 @@
 testPeriod = 'past';
 
-% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-% models = {''};
+%models = {'canesm2'};
 
 % models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
@@ -13,7 +13,6 @@ testPeriod = 'past';
 %           'ipsl-cm5b-lr', 'miroc5', 'noresm1-m'};
 
 dataset = 'cmip5';
- models = {'access1-0', 'access1-3', 'bnu-esm'};
 
 sstVar = 'tos';
 sstRcp = 'historical';
@@ -119,7 +118,8 @@ for d = 1:length(models)
     end
 
     baseGrid = {};
-    yearLengths = [];
+    yearLengthsTemp = [];
+    yearLengthsSST = [];
     
     SSTMeans = [];
     extremeSSTVals = [];
@@ -179,20 +179,16 @@ for d = 1:length(models)
                                      size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
                          
         
-        %if strcmp(dataset, 'ncep')
-            % remove nans caused by having each month be 31 days
+        % remove nans caused by having each month be 31 days
+        if strcmp(dataset, 'ncep')
             nanInd = find(isnan(curDailyBaseData));
             curDailyBaseData(nanInd) = [];
-            curDailyTestData(:, :, nanInd) = [];
-        %end
+%             curDailyTestData(:, :, nanInd) = [];
+        end
         
-        if length(yearLengths) < d
-            yearLengths(d) = length(curDailyBaseData);
-            
-            % weeks instead of days
-            if strcmp(dataset, 'ncep')
-                yearLengths(d) = round(yearLengths(d) / 7);
-            end
+        if length(yearLengthsTemp) < d
+            yearLengthsTemp(d) = length(curDailyBaseData);
+            yearLengthsSST(d) = size(curDailyTestData, 3);
         end
                                  
         if annualExtreme
@@ -205,7 +201,7 @@ for d = 1:length(models)
             end
             
             sstData = cat(3, sstData, curDailyTestData);
-            tempIndData(end+1) = round(tempInd + yearLengths(d)*(y-timePeriod(1)));
+            tempIndData(end+1) = round(tempInd + yearLengthsTemp(d)*(y-timePeriod(1)));
             wbData(end+1) = curDailyBaseData(tempInd);
             extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
         else
@@ -228,8 +224,10 @@ for d = 1:length(models)
         % find top 20 events in wb data
         wbSort = sort(wbData, 'descend');
         
-        indNan = find(isnan(wbSort));
-        wbSort(indNan) = [];
+        indNanSort = find(isnan(wbSort));
+        wbSort(indNanSort) = [];
+%         indNan = find(isnan(wbData));
+%         wbData(indNan) = [];
         
         for i = 1:20
             tempIndData(end+1) = find(wbData == wbSort(i));
@@ -251,7 +249,7 @@ for d = 1:length(models)
         if sameDayMean
             for t = 1:length(tempIndData)
                 % now find corresponding day mean SST for whole period
-                curInd = tempIndData(t) - yearLengths(d);
+                curInd = tempIndData(t) - yearLengthsSST(d);
                 sstInds = [];
                 SSTMeans{t} = [];
 
@@ -259,14 +257,14 @@ for d = 1:length(models)
                 while curInd > 0
                     %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
                     sstInds(end+1) = curInd;
-                    curInd = curInd - yearLengths(d);
+                    curInd = curInd - yearLengthsSST(d);
                     %meanInd = meanInd + 1;
                 end
-                curInd = tempIndData(t) + yearLengths(d);
+                curInd = tempIndData(t) + yearLengthsSST(d);
                 while curInd < size(sstData, 3)
                     %SSTMeans{t}(:, :, meanInd) = sstData(:, :, curInd);
                     sstInds(end+1) = curInd;
-                    curInd = curInd + yearLengths(d);
+                    curInd = curInd + yearLengthsSST(d);
                     %meanInd = meanInd + 1;
                 end
 
