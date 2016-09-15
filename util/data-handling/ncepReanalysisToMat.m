@@ -204,6 +204,7 @@ for k = 1:length(ncFileNames)
     else
         data(:,:,:) = netcdf.getVar(ncid, varIdMain-1, [0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, dims{dimIdTime}{2}]);
         data = permute(data, [2 1 3]);
+        data = flipud(data);
     end
     
     curTime = timestep(1);

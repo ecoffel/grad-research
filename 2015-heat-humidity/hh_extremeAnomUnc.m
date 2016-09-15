@@ -16,7 +16,6 @@ baseVar = 'wb';
 baseRegrid = true;
 
 region = 'world';
-rcp = 'rcp45';
 ensembles = 1;
 
 plotRegion = 'world';
@@ -24,7 +23,7 @@ plotRegion = 'world';
 plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2040:2050;
+testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportFormat = 'png';
@@ -68,7 +67,7 @@ if strcmp(basePeriod, 'past')
     baseRcp = 'historical/';
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = [rcp '/'];
+    baseRcp = '';
 end
 
 lat = [];

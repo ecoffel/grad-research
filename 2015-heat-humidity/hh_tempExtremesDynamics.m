@@ -1,18 +1,18 @@
 testPeriod = 'past';
 
-models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-%models = {'canesm2'};
+models = {''};
 
 % models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
 %           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'noresm1-m'};
 
-dataset = 'cmip5';
+dataset = 'ncep';
 
 sstVar = 'tos';
 sstRcp = 'historical';
@@ -25,8 +25,9 @@ end
 tempVar = 'wb';
 tempRcp = 'historical'
 
-% whether to find the annual extreme or the top 20
+% whether to find the annual extreme or the top N
 annualExtreme = false;
+topN = 200;
 
 % whether we're taking the difference of two different time periods
 diff = false;
@@ -34,7 +35,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'us-ne';
+region = 'india';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -70,17 +71,17 @@ end
 
 if strcmp(region, 'us-ne')
     % right around NYC
-    latBounds = [40 40];
-    lonBounds = [-75 -75] + 360;
+    latBounds = [34 36];
+    lonBounds = [-82 -80] + 360;
 elseif strcmp(region, 'india')
-    latBounds = [25 26];
-    lonBounds = [82 83];   
+    latBounds = [23 25];
+    lonBounds = [80 82];   
 elseif strcmp(region, 'west-africa')
-    latBounds = [6 6];
-    lonBounds = [-1 -1] + 360;   
+    latBounds = [6 8];
+    lonBounds = [-3 -1] + 360;   
 elseif strcmp(region, 'china')
-    latBounds = [23 23];
-    lonBounds = [113 113];   
+    latBounds = [26 28];
+    lonBounds = [116 118];   
 end
 
 if strcmp(sstVar, 'tos') || strcmp(sstVar, 'sst')
@@ -102,6 +103,7 @@ end
 yearStep = 1; % the number of years loaded at a time for memory  reasons
 
 outputTestData = {};
+outputIndData = {};
 
 lat = [];
 lon = [];
@@ -133,7 +135,7 @@ for d = 1:length(models)
         ['year ' num2str(y)]
 
         if strcmp(dataset, 'ncep')
-            baseStr = [baseDir 'ncep-reanalysis/output/' tempVar '/regrid'];
+            baseStr = [baseDir 'ncep-reanalysis/output/' tempVar '/regrid/world'];
             testStr = [baseDir 'ncep-reanalysis/output/' sstVar];
         else
             baseStr = [baseDir modelDir '/' models{d} '/' ensemble '/' tempRcp '/' tempVar '/regrid/world'];
@@ -141,11 +143,6 @@ for d = 1:length(models)
         end
         
         dailyBase = loadDailyData(baseStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
-
-        if length(lat) == 0 | length(lon) == 0
-            lat = dailyBase{1};
-            lon = dailyBase{2};
-        end
 
         if strcmp(tempVar, 'tos')
             dailyBase{3} = dailyBase{3} - 273.15;
@@ -162,6 +159,12 @@ for d = 1:length(models)
             dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
         end
 
+        if length(lat) == 0 | length(lon) == 0
+            lat = dailyTest{1};
+            lon = dailyTest{2};
+        end
+
+        
         if strcmp(sstVar, 'tos')
             dailyTest{3} = dailyTest{3} - 273.15;
         end
@@ -173,7 +176,9 @@ for d = 1:length(models)
                                    [length(latIndexRange), ...
                                    length(lonIndexRange), ...
                                    size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
-                  
+        % average over temperature area
+        curDailyBaseData = squeeze(nanmean(nanmean(curDailyBaseData, 2), 1));
+        
         curDailyTestData = reshape(curDailyTestData(:, :, :, :, :), ...
                                     [size(curDailyTestData, 1), size(curDailyTestData, 2), ...
                                      size(curDailyTestData, 3)*size(curDailyTestData,4)*size(curDailyTestData,5)]);
@@ -183,7 +188,7 @@ for d = 1:length(models)
         if strcmp(dataset, 'ncep')
             nanInd = find(isnan(curDailyBaseData));
             curDailyBaseData(nanInd) = [];
-%             curDailyTestData(:, :, nanInd) = [];
+            %curDailyTestData(:, :, nanInd) = [];
         end
         
         if length(yearLengthsTemp) < d
@@ -195,15 +200,15 @@ for d = 1:length(models)
             % find index of once-per-year highest land temperature
             tempInd = find(curDailyBaseData == nanmax(curDailyBaseData));
             
-            % weeks instead of days
-            if strcmp(dataset, 'ncep')
-                tempInd = round(tempInd / 7);
-            end
-            
             sstData = cat(3, sstData, curDailyTestData);
-            tempIndData(end+1) = round(tempInd + yearLengthsTemp(d)*(y-timePeriod(1)));
-            wbData(end+1) = curDailyBaseData(tempInd);
-            extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
+            wbData(end+1) = curDailyBaseData(tempInd)
+            if strcmp(dataset, 'ncep')
+                tempIndData(end+1) = round((tempInd + yearLengthsTemp(d)*(y-timePeriod(1))) / 7);
+                extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, round(tempInd / 7));
+            else
+                tempIndData(end+1) = round(tempInd + yearLengthsTemp(d)*(y-timePeriod(1)));
+                extremeSSTVals(:, :, y-timePeriod(1)+1) = curDailyTestData(:, :, tempInd);
+            end
         else
             % store wb temps as well as SSTs to find the top 20 events
             % later
@@ -226,18 +231,18 @@ for d = 1:length(models)
         
         indNanSort = find(isnan(wbSort));
         wbSort(indNanSort) = [];
-%         indNan = find(isnan(wbData));
-%         wbData(indNan) = [];
+        %indNan = find(isnan(wbData));
+        %wbData(indNan) = [];
         
-        for i = 1:20
-            tempIndData(end+1) = find(wbData == wbSort(i));
-            
-            % weeks instead of days
+        for i = 1:topN
             if strcmp(dataset, 'ncep')
-                tempIndData(end) = round(tempIndData(end) / 7);
+                tempIndData(end+1) = round(find(wbData == wbSort(i)) / 7);
+            else
+                tempIndData(end+1) = find(wbData == wbSort(i));
             end
             
             extremeSSTVals(:, :, i) = sstData(:, :, tempIndData(end));
+            
         end
         
     end
@@ -275,6 +280,7 @@ for d = 1:length(models)
             for t = 1:length(SSTMeans)
                 finalSSTMean(:, :, t) = SSTMeans{t};
             end
+            
             finalSSTMean = nanmean(finalSSTMean, 3);
         else
             finalSSTMean = nanmean(sstData, 3);
@@ -283,8 +289,30 @@ for d = 1:length(models)
         extremeSSTVals = nanmean(extremeSSTVals, 3);
         outputTestData{d} = extremeSSTVals - finalSSTMean;
     else
-        outputTestData{d} = finalSSTMean;
+        outputTestData{d} = nanmean(extremeSSTVals, 3);
     end
+    
+%     outputIndData{d} = tempIndData;
+%     outputInd = [];
+%     
+%     for m = 1:length(outputIndData)
+%         if strcmp(dataset, 'ncep')
+%             mList = round(sort(outputIndData{m}) ./ 53) + 1;
+%         else
+%             mList = round(sort(outputIndData{m}) ./ 365) + 1;
+%         end
+%         outputInd(m,:) = zeros(length(timePeriod)+1,1);
+%         for i1 = 1:length(mList)
+%             outputInd(m, mList(i1)) = outputInd(m, mList(i1)) + 1;
+%         end
+%     end
+%     
+%     figure('Color', [1,1,1]);
+%     hold on;
+%     for o = 1:size(outputInd, 1)
+%         plot(outputInd(o,:));
+%     end
+%     plot(nanmean(outputInd, 1), '.k', 'LineWidth', 2)
     
     clear SSTMeans sstData extremeSSTVals finalSSTMean;
     
@@ -307,7 +335,8 @@ if plotEachModel
                           'plotCountries', false, ...
                           'plotStates', false, ...
                           'blockWater', false, ...
-                          'blockLand', true);
+                          'blockLand', true, ...
+                          'boxCoords', [[latBounds(1)-0.5 latBounds(1)+0.5]; [lonBounds(1)-0.5 lonBounds(1)+0.5]]);
 
         plotFromDataFile(saveData);
     end
@@ -334,7 +363,8 @@ else
                       'plotCountries', false, ...
                       'plotStates', false, ...
                       'blockWater', false, ...
-                      'blockLand', true);
+                      'blockLand', true, ...
+                      'boxCoords', [[latBounds(1)-0.5 latBounds(1)+0.5]; [lonBounds(1)-0.5 lonBounds(1)+0.5]]);
     
     plotFromDataFile(saveData);
 end

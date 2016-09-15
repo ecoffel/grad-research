@@ -92,10 +92,10 @@ function [fg, cb] = plotFromDataFile(saveData)
         lon1 = boxCoords(2,1);
         lon2 = boxCoords(2,2);
         
-        plotm([lat1; lat2], [lon1; lon1], 'LineWidth', 2, 'Color', 'k');
-        plotm([lat2; lat2], [lon1; lon2], 'LineWidth', 2, 'Color', 'k');
-        plotm([lat2; lat1], [lon2; lon2], 'LineWidth', 2, 'Color', 'k');
-        plotm([lat1; lat1], [lon2; lon1], 'LineWidth', 2, 'Color', 'k');
+        plotm([lat1; lat2], [lon1; lon1], 'LineWidth', 2, 'Color', 'r');
+        plotm([lat2; lat2], [lon1; lon2], 'LineWidth', 2, 'Color', 'r');
+        plotm([lat2; lat1], [lon2; lon2], 'LineWidth', 2, 'Color', 'r');
+        plotm([lat1; lat1], [lon2; lon1], 'LineWidth', 2, 'Color', 'r');
     end
     
     if saveData.blockWater
@@ -103,7 +103,7 @@ function [fg, cb] = plotFromDataFile(saveData)
         geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
-    if saveData.blockLand
+    if blockLand
         geoshow('landareas.shp','DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
