@@ -1,18 +1,15 @@
 testPeriod = 'past';
 
-% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {''};
+%models = {'access1-0', 'access1-3'};
 
-% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'noresm1-m'};
+%models = {''};
 
-dataset = 'ncep';
+dataset = 'cmip5';
 
 sstVar = 'tos';
 sstRcp = 'historical';
@@ -35,7 +32,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'us-ne';
+region = 'india';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -104,6 +101,7 @@ yearStep = 1; % the number of years loaded at a time for memory  reasons
 
 outputTestData = {};
 outputIndData = {};
+outputInd = [];
 
 lat = [];
 lon = [];
@@ -293,33 +291,29 @@ for d = 1:length(models)
     end
     
     outputIndData{d} = tempIndData;
-    outputInd = [];
     
-    for m = 1:length(outputIndData)
-        if strcmp(dataset, 'ncep')
-            mList = round(sort(outputIndData{m}) ./ 53) + 1;
-        else
-            mList = round(sort(outputIndData{m}) ./ 365) + 1;
-        end
-        outputInd(m,:) = zeros(length(timePeriod)+1,1);
-        for i1 = 1:length(mList)
-            outputInd(m, mList(i1)) = outputInd(m, mList(i1)) + 1;
-        end
+    if strcmp(dataset, 'ncep')
+        mList = round(sort(outputIndData{d}) ./ 53) + 1;
+    else
+        mList = round(sort(outputIndData{d}) ./ 365) + 1;
     end
-    
-    figure('Color', [1,1,1]);
-    hold on;
-    for o = 1:size(outputInd, 1)
-        plot(outputInd(o,:));
+    outputInd(d,:) = zeros(length(timePeriod)+1,1);
+    for i1 = 1:length(mList)
+        outputInd(d, mList(i1)) = outputInd(d, mList(i1)) + 1;
     end
-    save(['events-' region '-' num2str(topN) '.mat'], 'outputInd');
-    plot(nanmean(outputInd, 1), '.k', 'LineWidth', 2)
-    export_fig(['events-' region '-' num2str(topN) '.png']);
-    close all;
     
     clear SSTMeans sstData extremeSSTVals finalSSTMean;
     
 end
+
+outputInd = nanmean(outputInd, 1);
+figure('Color', [1,1,1]);
+hold on;
+plot(outputInd);
+save(['events-' dataset '-' region '-' num2str(topN) '.mat'], 'outputInd');
+plot(outputInd, '.k', 'LineWidth', 2)
+export_fig(['events-' dataset '-' region '-' num2str(topN) '.png']);
+close all;
 
 if plotEachModel
     for d = 1:length(models)
