@@ -27,7 +27,7 @@ tempRcp = 'historical'
 
 % whether to find the annual extreme or the top N
 annualExtreme = false;
-topN = 200;
+topN = 100;
 
 % whether we're taking the difference of two different time periods
 diff = false;
@@ -35,7 +35,7 @@ diff = false;
 plotEachModel = false;
 
 % the temperature reference area
-region = 'india';
+region = 'us-ne';
 plotRegion = 'world';
 fileformat = 'png';
 
@@ -292,27 +292,30 @@ for d = 1:length(models)
         outputTestData{d} = nanmean(extremeSSTVals, 3);
     end
     
-%     outputIndData{d} = tempIndData;
-%     outputInd = [];
-%     
-%     for m = 1:length(outputIndData)
-%         if strcmp(dataset, 'ncep')
-%             mList = round(sort(outputIndData{m}) ./ 53) + 1;
-%         else
-%             mList = round(sort(outputIndData{m}) ./ 365) + 1;
-%         end
-%         outputInd(m,:) = zeros(length(timePeriod)+1,1);
-%         for i1 = 1:length(mList)
-%             outputInd(m, mList(i1)) = outputInd(m, mList(i1)) + 1;
-%         end
-%     end
-%     
-%     figure('Color', [1,1,1]);
-%     hold on;
-%     for o = 1:size(outputInd, 1)
-%         plot(outputInd(o,:));
-%     end
-%     plot(nanmean(outputInd, 1), '.k', 'LineWidth', 2)
+    outputIndData{d} = tempIndData;
+    outputInd = [];
+    
+    for m = 1:length(outputIndData)
+        if strcmp(dataset, 'ncep')
+            mList = round(sort(outputIndData{m}) ./ 53) + 1;
+        else
+            mList = round(sort(outputIndData{m}) ./ 365) + 1;
+        end
+        outputInd(m,:) = zeros(length(timePeriod)+1,1);
+        for i1 = 1:length(mList)
+            outputInd(m, mList(i1)) = outputInd(m, mList(i1)) + 1;
+        end
+    end
+    
+    figure('Color', [1,1,1]);
+    hold on;
+    for o = 1:size(outputInd, 1)
+        plot(outputInd(o,:));
+    end
+    save(['events-' region '-' num2str(topN) '.mat'], 'outputInd');
+    plot(nanmean(outputInd, 1), '.k', 'LineWidth', 2)
+    export_fig(['events-' region '-' num2str(topN) '.png']);
+    close all;
     
     clear SSTMeans sstData extremeSSTVals finalSSTMean;
     
@@ -343,7 +346,7 @@ if plotEachModel
 else
     
     plotTitle = ['SST anomalies on highest ' tempVar ' day (' region ', CMIP5 mean)'];
-    fileTitle = [sstVar 'TempExtremes-', tempVar '-' region '-' sameDayStr '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '.' fileformat];
+    fileTitle = [sstVar 'TempExtremes-', tempVar '-' region '-' sameDayStr '-' testPeriod, '-', tempDispStr, tempTargetFileStr, '-' modelStr '-' num2str(topN) '.' fileformat];
     
     % average over all models
     finalOutputTestData = [];

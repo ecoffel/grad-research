@@ -21,8 +21,8 @@ testModels = {'csiro-mk3-6-0'};
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'tasmax';
+testVar = 'tasmax';
 
 baseRegrid = true;
 testRegrid = true;
@@ -35,22 +35,15 @@ testPeriodYears = 2020:2030;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
-exportformat = 'png';
 
 ensembles = 1:10;
 rcps = {'rcp45', 'rcp85'};
 region = 'world';
-plotRegion = 'world';
 
 mode = 'ensemble';
 if length(baseModels) > 1
     mode = 'multi-model';
 end
-
-% percentile range to show
-percentiles = [25 75];
-
-blockWater = true;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -79,18 +72,6 @@ elseif strcmp(season, 'all')
     findMax = true;
     months = 1:12;
     maxMinStr = 'maximum';
-end
-
-if annualmean
-    maxMinStr = ['mean ' maxMinStr];
-    maxMinFileStr = 'mean';
-else
-    maxMinFileStr = 'ext';
-end
-
-if strcmp(baseVar, 'tasmax') | strcmp(baseVar, 'tasmin') | strcmp(baseVar, 'tmax') | strcmp(baseVar, 'tmin') | strcmp(baseVar, 'wb')
-    plotRange = [0 10];
-    plotXUnits = 'degrees C';
 end
 
 if strcmp(basePeriod, 'past')
@@ -125,13 +106,6 @@ for e = ensembles
         baseDataDir = 'ncep-reanalysis/output';
         baseEnsemble = '';
         baseRcp = '';
-    end
-
-    fileTimeStr = '';
-    if ~strcmp(testVar, '')
-        fileTimeStr = [testDataset '-' season '-' maxMinFileStr '-'  num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '-' baseDatasetStr '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
-    else
-        fileTimeStr = [season '-' maxMinFileStr '-' baseDatasetStr '-' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end))];
     end
 
     % load base dataset
@@ -276,61 +250,4 @@ for e = 1:size(testData, 3)
     end
 end
 
-save(['chg-data-' mode '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');
-% 
-% % loop over all models
-% for m = 1:size(baseData, 4)
-% 
-%     % and over all gridboxes
-%     for x = 1:size(baseData, 1)
-%         for y = 1:size(baseData, 2)
-%             % sort the models
-%             %baseData(x, y, :) = sort(baseData(x, y, :));
-%             %testData(x, y, :) = sort(reshape(testData(x, y, :, :), [1 1 size(testData, 3)*size(testData, 4)]));
-%             chgData(x, y, :) = sort(chgData(x, y, :));
-%         end
-%     end
-% end
-% 
-% chgLow = squeeze(chgData(:, :, round(percentiles(1)/100.0 * size(chgData, 3))));
-% chgHigh = squeeze(chgData(:, :, round(percentiles(2)/100.0 * size(chgData, 3))));
-% 
-% %baseLow = squeeze(baseData(:, :, round(percentiles(1)/100.0 * size(baseData, 3))));
-% %baseHigh = squeeze(baseData(:, :, round(percentiles(2)/100.0 * size(baseData, 3))));
-% 
-% %testLow = squeeze(testData(:, :, round(percentiles(1)/100.0 * size(testData, 3))));
-% %testHigh = squeeze(testData(:, :, round(percentiles(2)/100.0 * size(testData, 3))));
-% 
-% resultLow = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgLow};
-% resultHigh = {baseExt{1}{1}{1}{1}, baseExt{1}{1}{1}{2}, chgHigh};
-% 
-% plotTitle = ['Lower bound'];
-% fileTitle = ['modelRange-low-' baseVar '-' fileTimeStr '.' exportformat];
-% 
-% saveData = struct('data', {resultLow}, ...
-%                   'plotRegion', plotRegion, ...
-%                   'plotRange', [0 10], ...
-%                   'plotTitle', plotTitle, ...
-%                   'fileTitle', fileTitle, ...
-%                   'plotXUnits', 'degrees C', ...
-%                   'blockWater', blockWater, ...
-%                   'plotCountries', false, ...
-%                   'plotStates', false);
-% 
-% plotFromDataFile(saveData);
-% 
-% 
-% plotTitle = ['Upper bound'];
-% fileTitle = ['modelRange-high-' baseVar '-' fileTimeStr '.' exportformat];
-% 
-% saveData = struct('data', {resultHigh}, ...
-%                   'plotRegion', plotRegion, ...
-%                   'plotRange', [0 10], ...
-%                   'plotTitle', plotTitle, ...
-%                   'fileTitle', fileTitle, ...
-%                   'plotXUnits', 'degrees C', ...
-%                   'blockWater', blockWater, ...
-%                   'plotCountries', false, ...
-%                   'plotStates', false);
-% 
-% plotFromDataFile(saveData);
+save(['chg-data-' baseVar '-' mode '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');
