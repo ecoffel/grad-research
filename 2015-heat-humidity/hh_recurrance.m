@@ -25,7 +25,7 @@ baseRegrid = true;
 modelRegrid = true;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2050:2069;
+testPeriodYears = 2060:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -33,7 +33,7 @@ exportformat = 'pdf';
 
 blockWater = true;
 
-baseDir = 'e:/data/';
+baseDir = 'f:/data/';
 yearStep = 1;
 
 if strcmp(season, 'summer')

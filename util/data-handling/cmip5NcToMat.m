@@ -143,13 +143,9 @@ for k = 1:length(ncFileNames)
                                   length(findstr('access', rawNcDir)) ~= 0)
         lat = netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]);
         lat = double(lat');
-        %indMax = find(lat(end, :) == max(lat(end, :)));
-        %lat = lat(:, indMax(1));
         
         lon = netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]);
         lon = double(lon');
-        %indMax = find(lon(:, end) == max(lon(:, end)));
-        %lon = lon(indMax(1), :);
         
     else
         try

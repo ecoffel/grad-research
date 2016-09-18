@@ -1,4 +1,4 @@
-type = 'multi-model';
+type = 'ensemble';
 years = [2070, 2080];
 percentiles = [10 25 75 90];
 
@@ -7,7 +7,7 @@ plotRange = [0 5];
 plotXUnits = 'degrees C';
 
 % load lat/lon grid
-load('E:\data\cmip5\output\access1-0\r1i1p1\historical\tasmax\regrid\world\19750101-19991231\tasmax_1975_01_01');
+load('F:\data\cmip5\output\access1-0\r1i1p1\historical\tasmax\regrid\world\19750101-19991231\tasmax_1975_01_01');
 lat = tasmax_1975_01_01{1};
 lon = tasmax_1975_01_01{2};
 clear tasmax_1975_01_01;
@@ -33,7 +33,7 @@ for p = 1:length(percentiles)
     data = chgData(:, :, prcInd);
     
     plotTitle = ['Wet-bulb change, ' num2str(prc) 'th percentile, ' num2str(years(1)) '-' num2str(years(2))];
-    fileTitle = ['wbChange-' num2str(prc) 'p-' num2str(years(1)) '-' num2str(years(2))];
+    fileTitle = ['wbChange-' type '-' num2str(prc) 'p-' num2str(years(1)) '-' num2str(years(2))];
     
     result = {lat, lon, data};
     saveData = struct('data', {result}, ...
