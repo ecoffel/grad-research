@@ -23,7 +23,7 @@ exportFormat = 'png';
 blockWater = true;
 baseBiasCorrect = false;
 
-heatThreshold = 31;
+heatThreshold = 29;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -100,7 +100,6 @@ end
 clear baseData;
 
 
-futureData = [];
 
 % load projected change data
 decCount = 1;
@@ -115,13 +114,34 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
         end
     end
     
-    for y = 1:size(baseDataGrid, 3)
-        for c = 1:size(chgData, 3)
+    futureCount = zeros(size(chgData, 1), size(chgData, 2), size(chgData, 3));
+    
+    for c = 1:size(chgData, 3)
+        curCount = zeros(size(chgData, 1), size(chgData, 2), size(baseDataGrid, 3), size(baseDataGrid, 4));
+        futureData = [];
+        for y = 1:size(baseDataGrid, 3)
+        
             for d = 1:size(baseDataGrid, 4)
                 % compute future scenarios by adding change onto base data
-                futureData(:, :, decCount, c, y, d) = squeeze(baseDataGrid(:, :, y, d)) + chgData(:, :, c);
+                futureData(:, :, y, d) = squeeze(baseDataGrid(:, :, y, d)) + chgData(:, :, c);
             end
         end
+        
+        % count number of exceedences
+        for x = 1:size(futureData, 1)
+            for y = 1:size(futureData, 2)
+                for year = 1:size(futureData, 3)
+                    for d = 1:size(futureData, 4)
+                        if futureData(x, y, year, d) > heatThreshold
+                            curCount(x, y, year, d) = curCount(x, y, year, d) + 1;
+                        end
+                    end
+                end
+            end
+        end
+        futureCount(:, :, c) = nanmean(nanmean(curCount, 4), 3);
+        clear curCount;
+        
     end
     
     decCount = decCount + 1;
