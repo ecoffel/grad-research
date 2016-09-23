@@ -23,7 +23,7 @@ exportFormat = 'png';
 blockWater = true;
 baseBiasCorrect = false;
 
-heatThreshold = 31;
+heatThreshold = 34;
 
 baseDir = 'e:/data/';
 yearStep = 1;
