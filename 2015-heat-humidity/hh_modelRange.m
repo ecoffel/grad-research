@@ -13,11 +13,11 @@ testDataset = 'cmip5';
 %baseModels = {'csiro-mk3-6-0'};
 %testModels = {'csiro-mk3-6-0'};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
@@ -128,12 +128,17 @@ for e = ensembles
                 baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             end
 
+            if nanmean(nanmean(nanmean(nanmean(nanmean(baseDaily{3}, 5), 4), 3), 2), 1) > 100
+                baseDaily{3} = baseDaily{3} - 273.15;
+                ['K -> C...']
+            end
+            
             if annualmean
                 baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
             else
                 baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
             end
-
+            
             baseExt{e}{m} = {baseExt{e}{m}{:} baseExtTmp{:}};
             clear baseDaily baseExtTmp;
         end
@@ -193,6 +198,11 @@ for e = ensembles
                         testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
                     else
                         testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                    end
+                    
+                    if nanmean(nanmean(nanmean(nanmean(nanmean(testDaily{3}, 5), 4), 3), 2), 1) > 100
+                        testDaily{3} = testDaily{3} - 273.15;
+                        ['K -> C...']
                     end
 
                     if annualmean

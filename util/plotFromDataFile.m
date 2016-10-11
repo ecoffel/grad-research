@@ -1,3 +1,4 @@
+
 function [fg, cb] = plotFromDataFile(saveData)
 
     boxCoordsExists = false;

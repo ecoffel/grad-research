@@ -6,18 +6,18 @@ basePeriod = 'past';
 baseDataset = 'ncep';
 
 baseModels = {''};
-baseVar = 'wb';
+baseVar = 'tmax';
 
 baseRegrid = true;
 
 region = 'world';
-chgType = 'ensemble';
+chgType = 'multi-model';
 
 plotRegion = 'world';
 plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2060:2070;
+testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportFormat = 'png';
@@ -160,7 +160,7 @@ for d = 1:size(futureData, 3)
     
     result = {lat, lon, futureData(:, :, d, prcInd(1))};
     fileTitle = ['extremeAnomUnc-' chgType '-' num2str(prcRange(1)) '-' num2str(testPeriodYears(d)) '-' num2str(testPeriodYears(d)+10)];
-    plotTitle = ['Annual maximum wet-bulb, ' num2str(prcRange(1)) ' percentile'];
+    plotTitle = ['Annual maximum temperature, ' num2str(prcRange(1)) ' percentile'];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...
@@ -176,7 +176,7 @@ for d = 1:size(futureData, 3)
 
     result = {lat, lon, futureData(:, :, d, prcInd(2))};
     fileTitle = ['extremeAnomUnc-' chgType '-' num2str(prcRange(2)) '-' num2str(testPeriodYears(d)) '-' num2str(testPeriodYears(d)+10)];
-    plotTitle = ['Annual maximum wet-bulb, ' num2str(prcRange(2)) ' percentile'];
+    plotTitle = ['Annual maximum temperature, ' num2str(prcRange(2)) ' percentile'];
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...

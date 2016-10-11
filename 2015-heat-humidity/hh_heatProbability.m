@@ -23,7 +23,7 @@ exportFormat = 'png';
 blockWater = true;
 baseBiasCorrect = false;
 
-heatThreshold = 34;
+heatThreshold = 30;
 
 baseDir = 'e:/data/';
 yearStep = 1;
@@ -197,6 +197,7 @@ else
 
         end
 
+        save('futureCount-34.mat', 'futureCount');
         decCount = decCount + 1;
         clear chgData;
     end
