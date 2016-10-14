@@ -7,8 +7,8 @@ plotRange = [0 10];
 plotXUnits = 'degrees C';
 
 meanStr = 'extreme';   
-rcpStr = 'all-rcp';
-var = 'tasmax';
+rcpStr = 'rcp45';
+var = 'wb';
 
 varTitle = 'Temperature';
 if strcmp(var, 'wb')

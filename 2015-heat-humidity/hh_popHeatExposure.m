@@ -22,13 +22,14 @@ baseBiasCorrect = false;
 popRegrid = true;
 
 region = 'world';
-exposureThreshold = 32;
+rcp = 'rcp45';
+exposureThreshold = 31;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportformat = 'png';
 
-baseDir = 'f:/data/';
+baseDir = 'e:/data/';
 yearStep = 1;
 
 if ~baseBiasCorrect
@@ -199,7 +200,7 @@ futureData = [];
 % load projected change data
 decCount = 1;
 for t = testPeriodYears(1):10:testPeriodYears(end-1)
-    load(['chg-data-wb-multi-model-' num2str(t) '-' num2str(t+10) '.mat']);
+    load(['chg-data-wb-' rcp '-multi-model-extreme' num2str(t) '-' num2str(t+10) '.mat']);
     
     chgData(chgData > 10) = NaN;
     
@@ -399,7 +400,7 @@ if barChart
               
     plotlyData = {trace1, trace2, trace3, trace4};
     plotlyLayout = struct('barmode', 'group');
-    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-ssp' num2str(ssp)], 'fileopt', 'overwrite'));
+    %plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-ssp' num2str(ssp)], 'fileopt', 'overwrite'));
     
     figure('Color', [1, 1, 1]);
     hold on;
