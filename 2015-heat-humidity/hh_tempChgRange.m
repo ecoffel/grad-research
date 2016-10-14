@@ -1,10 +1,19 @@
 type = 'multi-model';
 years = [2070, 2080];
-percentiles = [10 25 75 90];
+percentiles = [10 50 90];
 
 plotRegion = 'world';
 plotRange = [0 10];
 plotXUnits = 'degrees C';
+
+meanStr = 'extreme';   
+rcpStr = 'all-rcp';
+var = 'tasmax';
+
+varTitle = 'Temperature';
+if strcmp(var, 'wb')
+    varTitle = 'Wet bulb temperature';
+end
 
 % load lat/lon grid
 load('e:\data\cmip5\output\access1-0\r1i1p1\historical\tasmax\regrid\world\19750101-19991231\tasmax_1975_01_01');
@@ -12,7 +21,7 @@ lat = tasmax_1975_01_01{1};
 lon = tasmax_1975_01_01{2};
 clear tasmax_1975_01_01;
 
-load(['chg-data-tmax-' type '-' num2str(years(1)) '-' num2str(years(2)) '.mat']);
+load(['chg-data-' var '-' rcpStr '-' type '-' meanStr '-' num2str(years(1)) '-' num2str(years(2)) '.mat']);
 
 % eliminate nonsense gridboxes (usually near poles)
 %chgData(chgData > 10) = NaN;
@@ -32,8 +41,8 @@ for p = 1:length(percentiles)
     prcInd = [round(size(chgData, 3) * (prc/100.0))];
     data = chgData(:, :, prcInd);
     
-    plotTitle = ['Temperature change, ' num2str(prc) 'th percentile, ' num2str(years(1)) '-' num2str(years(2))];
-    fileTitle = ['tasmaxChange-' type '-' num2str(prc) 'p-' num2str(years(1)) '-' num2str(years(2))];
+    plotTitle = [varTitle ' change, ' num2str(prc) 'th percentile, ' num2str(years(1)) '-' num2str(years(2))];
+    fileTitle = [var 'Change-' rcpStr '-' type '-' meanStr '-' num2str(prc) 'p-' num2str(years(1)) '-' num2str(years(2))];
     
     result = {lat, lon, data};
     saveData = struct('data', {result}, ...
@@ -47,4 +56,20 @@ for p = 1:length(percentiles)
                       'blockWater', true);
     plotFromDataFile(saveData);
 end
+
+% plot the mean of the change distribution
+plotTitle = [varTitle ' change, mean, ' num2str(years(1)) '-' num2str(years(2))];
+fileTitle = [var 'Change-' rcpStr '-' type '-' meanStr '-mean-' num2str(years(1)) '-' num2str(years(2))];
+
+result = {lat, lon, nanmean(chgData, 3)};
+saveData = struct('data', {result}, ...
+                  'plotRegion', plotRegion, ...
+                  'plotRange', plotRange, ...
+                  'plotTitle', plotTitle, ...
+                  'fileTitle', fileTitle, ...
+                  'plotXUnits', plotXUnits, ...
+                  'plotCountries', false, ...
+                  'plotStates', false, ...
+                  'blockWater', true);
+plotFromDataFile(saveData);
 

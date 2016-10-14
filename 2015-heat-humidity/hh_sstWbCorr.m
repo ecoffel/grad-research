@@ -1,11 +1,11 @@
 testPeriod = 'past';
 
-% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {'bnu-esm'};
+% models = {''};
 
 dataset = 'cmip5';
 
@@ -17,12 +17,12 @@ baseRcp = 'historical'
 plotEachModel = true;
 
 % look at correlation for ssts to wet bulbs above this percentile
-percentileThreshold = 10;
+percentileThreshold = 75;
 
 % the temperature reference area
 region = 'india';
 plotRegion = 'world';
-fileformat = 'png';
+fileformat = 'pdf';
 
 baseDir = 'e:/data/';
 ensemble = 'r1i1p1';
@@ -36,24 +36,24 @@ elseif strcmp(testPeriod, 'future')
 end
 
 baseRegrid = true;
-testRegrid = true;
+testRegrid = false;
 
 if strcmp(region, 'us-ne')
     % right around NYC
-    latBounds = [40 40];
-    lonBounds = [-75 -75] + 360;
+    latBounds = [34 36];
+    lonBounds = [-82 -80] + 360;
 elseif strcmp(region, 'india')
-    latBounds = [25 26];
-    lonBounds = [82 83];   
+    latBounds = [23 25];
+    lonBounds = [80 82];   
 elseif strcmp(region, 'west-africa')
-    latBounds = [34.5 36.5];
-    lonBounds = [256 260];   
+    latBounds = [6 8];
+    lonBounds = [-3 -1] + 360;   
 elseif strcmp(region, 'china')
-    latBounds = [35 35];
-    lonBounds = [256 256];   
+    latBounds = [26 28];
+    lonBounds = [116 118];   
 end
 
-if strcmp(testVar, 'tos')
+if strcmp(testVar, 'tos') || strcmp(testVar, 'sst')
     gridbox = false;
     plotRange = [-1 1]
     plotXUnits = 'correlation coefficient';
@@ -66,7 +66,6 @@ yearStep = 1; % the number of years loaded at a time for memory  reasons
 wbData = {};
 sstData = {};
 corrData = {};
-
 
 lat = [];
 lon = [];
@@ -124,6 +123,15 @@ for d = 1:length(models)
                                    length(lonIndexRange), ...
                                    size(curDailyBaseData, 3)*size(curDailyBaseData,4)*size(curDailyBaseData,5)]));
         
+        % take spatial average over gridboxes - do this up to twice,
+        % depending on size of selected area
+        if size(curDailyBaseData, 1) > 1
+            curDailyBaseData = squeeze(nanmean(curDailyBaseData, 1));
+            if size(curDailyBaseData, 1) > 1
+                curDailyBaseData = squeeze(nanmean(curDailyBaseData, 1));
+            end
+        end
+                               
         clear dailyBase;
 
         
