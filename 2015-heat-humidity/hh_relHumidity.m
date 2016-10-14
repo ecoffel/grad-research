@@ -1,10 +1,16 @@
 function relHumidity(dataDir, isRegridded, region, biasCorrect)
 
-tempVar = 'tasmax';
-hussVar = 'huss';
-pslVar = 'psl';
+tempVar = 'air';
+hussVar = 'shum';
+pslVar = 'pres';
 
-skipExisting = true;
+x4 = true;
+skipExisting = false;
+
+x4Str = '';
+if x4
+    x4Str = 'x4/';
+end
 
 regridStr = ['/' region];
 if isRegridded
@@ -16,15 +22,15 @@ if biasCorrect
     bcStr = '-bc';
 end
 
-tempDirNames = dir([dataDir '/' tempVar '/' regridStr bcStr]);
+tempDirNames = dir([dataDir '/' tempVar '/' x4Str regridStr bcStr]);
 tempDirIndices = [tempDirNames(:).isdir];
 tempDirNames = {tempDirNames(tempDirIndices).name}';
 
-hussDirNames = dir([dataDir '/' hussVar '/' regridStr]);
+hussDirNames = dir([dataDir '/' hussVar '/' x4Str regridStr]);
 hussDirIndices = [hussDirNames(:).isdir];
 hussDirNames = {hussDirNames(hussDirIndices).name}';
 
-pslDirNames = dir([dataDir '/' pslVar '/' regridStr]);
+pslDirNames = dir([dataDir '/' pslVar '/' x4Str regridStr]);
 pslDirIndices = [pslDirNames(:).isdir];
 pslDirNames = {pslDirNames(pslDirIndices).name}';
 
@@ -55,7 +61,7 @@ for d = 1:length(tempDirNames)
         continue;
     end
     
-    tempCurDir = [dataDir '/' tempVar '/' regridStr bcStr '/' tempDirNames{d}];
+    tempCurDir = [dataDir '/' tempVar '/' x4Str regridStr bcStr '/' tempDirNames{d}];
     
     if ~isdir(tempCurDir)
         continue;
@@ -75,7 +81,7 @@ for d = 1:length(hussDirNames)
         continue;
     end
     
-    hussCurDir = [dataDir  '/' hussVar '/' regridStr '/' hussDirNames{d}];
+    hussCurDir = [dataDir  '/' hussVar '/' x4Str regridStr '/' hussDirNames{d}];
     
     if ~isdir(hussCurDir)
         continue;
@@ -94,7 +100,7 @@ for d = 1:length(pslDirNames)
         continue;
     end
     
-    pslCurDir = [dataDir  '/' pslVar '/' regridStr '/' pslDirNames{d}];
+    pslCurDir = [dataDir  '/' pslVar '/' x4Str regridStr '/' pslDirNames{d}];
     
     if ~isdir(pslCurDir)
         continue;
@@ -257,7 +263,7 @@ while pslEndYear > minEndYear | pslEndMonth > minEndMonth
     pslEndMonth = str2num(pslFileSubParts{3});
 end
 
-folDataTarget = [dataDir, '/rh/', regridStr, '/', num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
+folDataTarget = [dataDir, '/rh/', regridStr, x4Str, num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
 if ~isdir(folDataTarget)
     mkdir(folDataTarget);
 else
@@ -378,8 +384,8 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
     end
     
     for d = 1:size(tempData, 3)
-        es(:,:) = 611 .* exp(17.67 .* (tempData(:,:,d) - 273.16) ./ (tempData(:,:,d) - 29.65));
-        ws = 0.622 * es(:,:) ./ pslData(:,:,d);
+        es(:,:) = 611 .* exp((17.67 .* (tempData(:,:,d) - 273.16)) ./ (tempData(:,:,d) - 29.65));
+        ws = (0.622 .* es(:,:)) ./ pslData(:,:,d);
         monthlyRh(:,:,d) = 100 .* hussData(:,:,d) ./ ws;
     end
     

@@ -17,7 +17,7 @@
 %   16      20
 %   17      10
 
-function ncepReanalysisToMat(rawNcDir, outputDir, varName, maxNum)
+function ncepReanalysisToMat(rawNcDir, outputDir, varName, maxNum, selLev)
 
 ncFileNames = dir([rawNcDir, '/', varName, '*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -31,9 +31,9 @@ for k = 1:length(ncFileNames)
     
     monthly = false;
     weekly = false;
+    x4 = false;
     
     ncFileName = ncFileNames{k}
-    
     
     if findstr(ncFileName, 'wkmean')
         weekly = true;
@@ -60,14 +60,6 @@ for k = 1:length(ncFileNames)
     if weekly
         yearParts = strsplit(year, '-');
         year = yearParts{1};
-    end
-    
-    % check for output folder and make it if it doesn't exist
-    folDataTarget = [outputDir, '/', varName, '/', year];
-    if ~isdir(folDataTarget)
-        mkdir(folDataTarget);
-    else
-        %continue;
     end
     
     dimIdLat = -1;
@@ -105,7 +97,7 @@ for k = 1:length(ncFileNames)
         attname = netcdf.inqAttName(ncid, netcdf.getConstant('NC_GLOBAL'), i);
         attval = netcdf.getAtt(ncid, netcdf.getConstant('NC_GLOBAL'), attname);
         
-        if length(findstr(attname, 'title')) ~= 0
+        if strcmp(attname, 'title')
             attIdTitle = i+1;
         end
         
@@ -180,6 +172,7 @@ for k = 1:length(ncFileNames)
         if length(findstr('4x', atts{attIdTitle}{2})) ~= 0
             % 6 hr timestep
             deltaT = etime(datevec('6', 'HH'), datevec('00', 'HH'));
+            x4 = true;
         elseif length(findstr('daily', atts{attIdTitle}{2})) ~= 0
             deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
         else
@@ -187,6 +180,20 @@ for k = 1:length(ncFileNames)
         end
     end
 
+    % check for output folder and make it if it doesn't exist
+    if monthly
+        folDataTarget = [outputDir, '/', varName, '/monthly', year];
+    elseif weekly
+        folDataTarget = [outputDir, '/', varName, '/weekly/', year];
+    elseif x4
+        folDataTarget = [outputDir, '/', varName, '/x4/', year];
+    end
+    if ~isdir(folDataTarget)
+        mkdir(folDataTarget);
+    else
+        %continue;
+    end
+    
     lat = double(netcdf.getVar(ncid, varIdLat-1, [0], [dims{dimIdLat}{2}]));
     lon = double(netcdf.getVar(ncid, varIdLon-1, [0], [dims{dimIdLon}{2}]));
     
@@ -199,7 +206,7 @@ for k = 1:length(ncFileNames)
     end
 
     if dimIdLev ~= -1
-        data(:,:,:,:) = netcdf.getVar(ncid, varIdMain-1, [0, 0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, dims{dimIdLev}{2}, dims{dimIdTime}{2}]);
+        data(:,:,:,:) = netcdf.getVar(ncid, varIdMain-1, [0, 0, selLev(1), 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, selLev(end), dims{dimIdTime}{2}]);
         data = permute(data, [2 1 3 4]);
     else
         data(:,:,:) = netcdf.getVar(ncid, varIdMain-1, [0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, dims{dimIdTime}{2}]);
@@ -292,13 +299,18 @@ for k = 1:length(ncFileNames)
             monthlyData = [];
             if dimIdLev ~= -1
                 monthlyData = double(data(:, :, :, curIndex:nextIndex))*scale_factor + add_offset;  
+                for d=1:size(monthlyData,length(size(monthlyData)))
+                    monthlyData(:,:,:,d) = flipud(squeeze(monthlyData(:,:,:,d)));
+                end
             else
                 monthlyData = double(data(:, :, curIndex:nextIndex))*scale_factor + add_offset;
+                
+                for d=1:size(monthlyData,length(size(monthlyData)))
+                    monthlyData(:,:,d) = flipud(squeeze(monthlyData(:,:,d)));
+                end
             end
-
-            for d=1:size(monthlyData,length(size(monthlyData)))
-                monthlyData(:,:,d) = flipud(squeeze(monthlyData(:,:,d)));
-            end
+            
+            monthlyData = squeeze(monthlyData);
 
             monthlyDataSet = {lat, lon, squeeze(monthlyData)};
 

@@ -1,9 +1,15 @@
 function wetBulb(dataDir, isRegridded, region, biasCorrect)
 
-tempVar = 'tasmax';
+tempVar = 'air';
 rhVar = 'rh';
 
-skipExisting = true;
+skipExisting = false;
+x4 = true;
+
+x4Str = '';
+if x4
+    x4Str = 'x4/';
+end
 
 regridStr = '';
 if isRegridded
@@ -15,11 +21,11 @@ if biasCorrect
     bcStr = '-bc';
 end
 
-tempDirNames = dir([dataDir '/' tempVar '/' regridStr '/' region bcStr]);
+tempDirNames = dir([dataDir '/' tempVar '/' x4Str regridStr '/' region bcStr]);
 tempDirIndices = [tempDirNames(:).isdir];
 tempDirNames = {tempDirNames(tempDirIndices).name}';
 
-rhDirNames = dir([dataDir '/' rhVar '/' regridStr '/' region]);
+rhDirNames = dir([dataDir '/' rhVar '/' x4Str regridStr '/' region]);
 rhDirIndices = [rhDirNames(:).isdir];
 rhDirNames = {rhDirNames(rhDirIndices).name}';
 
@@ -45,7 +51,7 @@ for d = 1:length(tempDirNames)
         continue;
     end
     
-    tempCurDir = [dataDir '/' tempVar '/' regridStr '/' region bcStr '/' tempDirNames{d}];
+    tempCurDir = [dataDir '/' tempVar '/' x4Str regridStr '/' region bcStr '/' tempDirNames{d}];
     
     if ~isdir(tempCurDir)
         continue;
@@ -65,7 +71,7 @@ for d = 1:length(rhDirNames)
         continue;
     end
     
-    rhCurDir = [dataDir  '/' rhVar '/' regridStr '/' region '/' rhDirNames{d}];
+    rhCurDir = [dataDir  '/' rhVar '/' x4Str regridStr '/' region '/' rhDirNames{d}];
     
     if ~isdir(rhCurDir)
         continue;
@@ -188,7 +194,7 @@ while rhEndYear > minEndYear | rhEndMonth > minEndMonth
     rhEndMonth = str2num(rhFileSubParts{3});
 end
 
-folDataTarget = [dataDir, '/wb/', regridStr, '/', region, '/', num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
+folDataTarget = [dataDir, '/wb/', x4Str regridStr, '/', region, '/', num2str(maxStartYear) num2str(maxStartMonth) '01-' num2str(minEndYear) num2str(minEndMonth) '31'];
 if ~isdir(folDataTarget)
     mkdir(folDataTarget);
 else
