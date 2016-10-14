@@ -10,7 +10,7 @@ ncFileNames = {ncFileNames.name};
 fileCount = 0;
 yearStep = 20;
 
-skipExistingFolders = true;
+skipExistingFolders = false;
 skipExistingFiles = false;
 
 for k = 1:length(ncFileNames)
@@ -191,7 +191,10 @@ for k = 1:length(ncFileNames)
     if length(findstr('bcc-csm', rawNcDir)) ~= 0 || ...
        length(findstr('bnu-esm', rawNcDir)) ~= 0 || ...
        length(findstr('canesm', rawNcDir)) ~= 0 || ...
-       length(findstr('cnrm', rawNcDir)) ~= 0
+       length(findstr('cnrm', rawNcDir)) ~= 0 || ...
+       length(findstr('inmcm', rawNcDir)) ~= 0 || ...
+       length(findstr('ipsl', rawNcDir)) ~= 0 || ...
+       length(findstr('miroc', rawNcDir)) ~= 0
         startDate = datenum([1850 01 01 00 00 00]);
     else
         startDate = datenum([0001 01 01 00 00 00]);

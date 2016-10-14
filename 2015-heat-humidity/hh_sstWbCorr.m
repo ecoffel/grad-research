@@ -5,7 +5,7 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-% models = {''};
+%models = {'access1-0', 'gfdl-cm3'};
 
 dataset = 'cmip5';
 
@@ -17,12 +17,12 @@ baseRcp = 'historical'
 plotEachModel = true;
 
 % look at correlation for ssts to wet bulbs above this percentile
-percentileThreshold = 75;
+percentileThreshold = 90;
 
 % the temperature reference area
 region = 'india';
 plotRegion = 'world';
-fileformat = 'pdf';
+fileformat = 'png';
 
 baseDir = 'e:/data/';
 ensemble = 'r1i1p1';
@@ -66,9 +66,8 @@ yearStep = 1; % the number of years loaded at a time for memory  reasons
 wbData = {};
 sstData = {};
 corrData = {};
-
-lat = [];
-lon = [];
+sstLatData = {};
+sstLonData = {};
 
 for d = 1:length(models)
     
@@ -105,11 +104,6 @@ for d = 1:length(models)
 
         dailyBase = loadDailyData(baseStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
 
-        if length(lat) == 0 | length(lon) == 0
-            lat = dailyBase{1};
-            lon = dailyBase{2};
-        end
-
         if strcmp(baseVar, 'tos')
             dailyBase{3} = dailyBase{3} - 273.15;
         end
@@ -141,6 +135,9 @@ for d = 1:length(models)
         
         dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
 
+        sstLatData{d} = dailyTest{1};
+        sstLonData{d} = dailyTest{2};
+        
         if strcmp(testVar, 'tos')
             dailyTest{3} = dailyTest{3} - 273.15;
         end
@@ -161,7 +158,7 @@ for d = 1:length(models)
             sstData{d} = [];
         end
         
-        wbData{d} = cat(1, wbData{d}, curDailyBaseData);
+        wbData{d} = cat(1, wbData{d}, curDailyBaseData');
         sstData{d} = cat(3, sstData{d}, curDailyTestData);
                                  
         clear curDailyBaseData;
@@ -189,20 +186,34 @@ if plotEachModel
         plotTitle = ['SST correlations on > ' num2str(percentileThreshold) 'p WB days (' region ', ' models{d} ')'];
         fileTitle = [testVar 'WbCorr-', testPeriod, '-', region, '-', tempDispStr, tempTargetFileStr, '-' models{d} '.' fileformat];
     
-        % plotting code
-        [fg,cb] = plotModelData({lat, lon, corrData{d}}, plotRegion, 'caxis', plotRange);
-        set(gca, 'Color', 'none');
-        xlabel(cb, plotXUnits, 'FontSize', 18);
-        cbPos = get(cb, 'Position');
-        title(plotTitle, 'FontSize', 18);
-        set(gcf, 'Position', get(0,'Screensize'));
-        set(gcf, 'Units', 'normalized');
-        set(gca, 'Units', 'normalized');
+        result = {sstLatData{d}, sstLonData{d}, corrData{d}};
+        saveData = struct('data', {result}, ...
+                      'plotRegion', plotRegion, ...
+                      'plotRange', plotRange, ...
+                      'plotTitle', plotTitle, ...
+                      'fileTitle', fileTitle, ...
+                      'plotXUnits', plotXUnits, ...
+                      'plotCountries', false, ...
+                      'plotStates', false, ...
+                      'blockWater', false, ...
+                      'blockLand', true);
 
-        ti = get(gca,'TightInset');
-        set(gca,'Position',[ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
-        eval(['export_fig ' fileTitle ';']);
-        close all;
+        plotFromDataFile(saveData);
+        
+%         % plotting code
+%         [fg,cb] = plotModelData(, plotRegion, 'caxis', plotRange);
+%         set(gca, 'Color', 'none');
+%         xlabel(cb, plotXUnits, 'FontSize', 18);
+%         cbPos = get(cb, 'Position');
+%         title(plotTitle, 'FontSize', 18);
+%         set(gcf, 'Position', get(0,'Screensize'));
+%         set(gcf, 'Units', 'normalized');
+%         set(gca, 'Units', 'normalized');
+% 
+%         ti = get(gca,'TightInset');
+%         set(gca,'Position',[ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
+%         eval(['export_fig ' fileTitle ';']);
+%         close all;
     end
 else
     
