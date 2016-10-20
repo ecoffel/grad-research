@@ -1,17 +1,17 @@
 season = 'all';
 testPeriod = 'future';
 
-
-dataset = {'bnu-esm', 'canesm2', 'cnrm-cm5', ...
-          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'ipsl-cm5a-mr', ...
-          'hadgem2-es', 'mri-cgcm3', 'noresm1-m'};
+dataset = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-testVar = 'wb';
+testVar = 'huss';
 testRcp = 'rcp85';
 testVarLevel = -1;
 
-baseVar = 'hi';
-baseRcp = 'historical'
+baseVar = 'tasmax';
+baseRcp = 'rcp85'
 baseVarLevel = -1;
 
 % whether to find the annual extreme or use a temp percentile
@@ -24,15 +24,15 @@ findMax = true;
 basePercentile = 90;
 
 % whether we're taking the difference of two different time periods
-diff = true;
+diff = false;
 
 % whether to subtract the period (base or future) mean to look at anomalies
-anomalies = false;
+anomalies = true;
 
 % the temperature reference area
-region = 'ne';
+region = 'india';
 plotRegion = 'world';
-fileformat = 'pdf';
+fileformat = 'png';
 
 % show water tiles in output map?
 blockWater = true;
@@ -51,18 +51,25 @@ baseDir = 'e:/';
 ensemble = 'r1i1p1';
 modelDir = 'cmip5/output';
 
-basePeriod = 1980:2004;
+basePeriod = 1985:2004;
 futurePeriod = 2060:2079;
 
 baseRegrid = true;
 testRegrid = true;
 
-if strcmp(region, 'ne')
-    latRange = [39 41];
-    lonRange = [280 284];
-elseif strcmp(region, 'sw')
-    latRange = [34.5 36.5];
-    lonRange = [256 260];   
+if strcmp(region, 'us-ne')
+    % right around NYC
+    latBounds = [34 36];
+    lonBounds = [-82 -80] + 360;
+elseif strcmp(region, 'india')
+    latBounds = [23 25];
+    lonBounds = [80 82];   
+elseif strcmp(region, 'west-africa')
+    latBounds = [6 8];
+    lonBounds = [-3 -1] + 360;   
+elseif strcmp(region, 'china')
+    latBounds = [26 28];
+    lonBounds = [116 118];   
 end
 
 if strcmp(testVar, 'zg500')
@@ -75,7 +82,7 @@ elseif strcmp(testVar, 'va850') | strcmp(testVar, 'ua850')
     plotXUnits = 'm/s';
 elseif strcmp(testVar, 'huss')
     gridbox = true;
-    plotRange = [-0.003 0.003];
+    plotRange = [-0.01 0.01];
     plotXUnits = 'kg water vapor / kg air';
 elseif strcmp(testVar, 'rh')
     gridbox = true;
@@ -107,7 +114,7 @@ elseif strcmp(testVar, 'psl')
 end
 
 if ~gridbox
-    boxCoords = [latRange; lonRange];
+    boxCoords = [latBounds; lonBounds];
 else
     boxCoords = [];
 end
@@ -195,7 +202,7 @@ for d = 1:length(dataset)
             fileTitle = [testVar 'TempExtremes-' baseVar '-' maxMinStr '-' modelStr '-' testPeriodStr, '-minus-' basePeriodStr '-' seasonStr '.' fileformat];
         else
             vars = {['cmip5/output/' dataset{d} '/' ensemble '/' baseRcp]};
-            fileTitle = [testVar 'TempExtremes-' baseVar '-' maxMinStr '-' modelStr '-' basePeriodStr '-' seasonStr '.' fileformat];
+            fileTitle = [testVar 'TempExtremes-' testPeriod '-' baseVar '-' modelStr '.' fileformat];
         end 
     end
     
@@ -222,13 +229,13 @@ for d = 1:length(dataset)
             ['year ' num2str(y)]
 
             if baseRegrid
-                baseStr = [baseDir 'data/' vars{v} '/' baseVar '/regrid'];
+                baseStr = [baseDir 'data/' vars{v} '/' baseVar '/regrid/world'];
             else
                 baseStr = [baseDir 'data/' vars{v} '/' baseVar];
             end
 
             if testRegrid
-                testVarStr = [baseDir 'data/' vars{v} '/' testVar '/regrid'];
+                testVarStr = [baseDir 'data/' vars{v} '/' testVar '/regrid/world'];
             else
                 testVarStr = [baseDir 'data/' vars{v} '/' testVar];
             end
@@ -245,7 +252,7 @@ for d = 1:length(dataset)
             end
             
             if ~gridbox
-                [latIndexRange, lonIndexRange] = latLonIndexRange(dailyBase, latRange, lonRange);
+                [latIndexRange, lonIndexRange] = latLonIndexRange(dailyBase, latBounds, lonBounds);
             end
 
             curDailyBaseData = dailyBase{3};

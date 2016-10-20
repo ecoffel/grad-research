@@ -1,11 +1,11 @@
 testPeriod = 'past';
 
-models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
-          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
+%           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-%models = {'access1-0', 'access1-3'};
+models = {'access1-0', 'access1-3'};
 
 %models = {''};
 
@@ -19,7 +19,7 @@ if strcmp(dataset, 'ncep')
     sstRcp = '';
 end
 
-tempVar = 'wb';
+tempVar = 'huss';
 tempRcp = 'historical'
 
 % whether to find the annual extreme or the top N
@@ -82,7 +82,6 @@ elseif strcmp(region, 'china')
 end
 
 if strcmp(sstVar, 'tos') || strcmp(sstVar, 'sst')
-    gridbox = false;
     if minusMean || diff
         plotRange = [-0.5 0.5];
     else
@@ -156,6 +155,7 @@ for d = 1:length(models)
         else
             dailyTest = loadDailyData(testStr, 'yearStart', y, 'yearEnd', y+(yearStep-1));
         end
+        
 
         if length(lat) == 0 | length(lon) == 0
             lat = dailyTest{1};

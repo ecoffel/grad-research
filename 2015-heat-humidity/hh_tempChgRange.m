@@ -4,11 +4,11 @@ percentiles = [10 50 90];
 
 plotRegion = 'world';
 plotRange = [0 10];
-plotXUnits = 'degrees C';
+plotXUnits = 'Degrees C';
 
-meanStr = 'extreme';   
-rcpStr = 'rcp45';
-var = 'wb';
+meanStr = 'mean';   
+rcpStr = 'rcp85';
+var = 'tasmax';
 
 varTitle = 'Temperature';
 if strcmp(var, 'wb')
@@ -53,7 +53,7 @@ for p = 1:length(percentiles)
                       'plotXUnits', plotXUnits, ...
                       'plotCountries', false, ...
                       'plotStates', false, ...
-                      'blockWater', true);
+                      'blockWater', false);
     plotFromDataFile(saveData);
 end
 
@@ -70,6 +70,6 @@ saveData = struct('data', {result}, ...
                   'plotXUnits', plotXUnits, ...
                   'plotCountries', false, ...
                   'plotStates', false, ...
-                  'blockWater', true);
+                  'blockWater', false);
 plotFromDataFile(saveData);
 

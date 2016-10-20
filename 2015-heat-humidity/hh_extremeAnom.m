@@ -2,8 +2,8 @@
 % temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
-basePeriod = 'future';
-testPeriod = 'future';
+basePeriod = 'past';
+testPeriod = 'past';
 
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
@@ -19,7 +19,7 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
+baseVar = 'huss';
 testVar = '';
 
 baseRegrid = true;
@@ -31,18 +31,18 @@ ensembles = 1;
 
 plotRegion = 'world';
 
-plotEachModel = true;
+plotEachModel = false;
 
-plotTitle = ['CMIP5 annual maximum wet-bulb'];
+plotTitle = ['CMIP5 specific humidity'];
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
+annualmean = true;
 exportFormat = 'png';
 
-blockWater = true;
+blockWater = false;
 baseBiasCorrect = false;
 testBiasCorrect = false;
 

@@ -21,8 +21,8 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'tasmax';
-testVar = 'tasmax';
+baseVar = 'huss';
+testVar = 'huss';
 
 baseRegrid = true;
 testRegrid = true;
@@ -43,8 +43,8 @@ end
 
 ensembles = 1;
 
-rcps = {'rcp45', 'rcp85'};
-rcpStr = 'all-rcp';
+rcps = {'rcp85'};
+rcpStr = 'rcp85';
 
 region = 'world';
 
