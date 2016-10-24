@@ -29,6 +29,8 @@ baseDir = 'e:/data/';
 yearStep = 1;
 ssps = 1:5;
 
+rcp = 'all-rcp';
+
 if ~baseBiasCorrect
     baseBcStr = '';
 else
@@ -89,7 +91,7 @@ for h = 1:length(heatThresholds)
         lat = wb_1980_01_01{1};
         lon = wb_1980_01_01{2};
 
-        popBins = [100 500 1000 5000 1e4 5e4 1e5 5e5 1e6 5e6 1e7 5e7 1e8 5e8 1e9 5e9 1e10];
+        popBins = [1 10 100 500 1000 5000 1e4 5e4 1e5 5e5 1e6 5e6 1e7 5e7 1e8 5e8 1e9 5e9 1e10];
         popVals = zeros(length(popBins), 1);
         popExposure = [];
 

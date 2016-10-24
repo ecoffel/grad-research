@@ -1,28 +1,30 @@
-load outputHuss-india-historical
+region = 'us-ne';
+
+load(['outputHuss-' region '-historical'])
 hussHistorical = outputHuss;
 
-load outputHuss-india-rcp45
+load(['outputHuss-' region '-rcp45']);
 hussRcp45 = outputHuss;
 
-load outputHuss-india-rcp85
+load(['outputHuss-' region '-rcp85']);
 hussRcp85 = outputHuss;
 
-load outputTemp-india-historical
+load(['outputTemp-' region '-historical']);
 tempHistorical = outputTemp;
 
-load outputTemp-india-rcp45
+load(['outputTemp-' region '-rcp45']);
 tempRcp45 = outputTemp;
 
-load outputTemp-india-rcp85
+load(['outputTemp-' region '-rcp85']);
 tempRcp85 = outputTemp;
 
-load outputWb-india-historical
+load(['outputWb-' region '-historical']);
 wbHistorical = outputWb;
 
-load outputWb-india-rcp45
+load(['outputWb-' region '-rcp45']);
 wbRcp45 = outputWb;
 
-load outputWb-india-rcp85
+load(['outputWb-' region '-rcp85']);
 wbRcp85 = outputWb;
 
 tempChg45Data = [];
@@ -66,6 +68,7 @@ xlim([0 30]);
 ylim([0 30]);
 xlabel('Percent change in specific humidity', 'FontSize', 26);
 ylabel('Percent change in temperature', 'FontSize', 26);
+title('U.S. Southeast', 'FontSize', 30);
 set(gca, 'FontSize', 24);
 legend([p1, p2], 'RCP4.5 average', 'RCP8.5 average');
 
