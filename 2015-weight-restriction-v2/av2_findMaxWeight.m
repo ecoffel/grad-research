@@ -1,6 +1,13 @@
-function [maxWeight] = findMaxWeight(temp, runway, elevation)
+function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
     
-    [f0, f2, f4] = av2_loadSurfaces();
+    if isnan(temp)
+        maxWeight = NaN;
+        return;
+    end
+
+    f0 = acSurfaces{1};
+    f2 = acSurfaces{2};
+    f4 = acSurfaces{3};
     
     % minimum weight to start search (for 737-800)
     startingWeight = 140;

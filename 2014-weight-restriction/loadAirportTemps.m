@@ -7,7 +7,7 @@ wxObsAdded = 0;
 
 f = fopen([wxDir]);
 header = false;
-
+    
 curTmax = [];
 curTmin = [];
 curStation = -1;
