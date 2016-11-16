@@ -2,9 +2,9 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-obsAirports = {'PHX', 'LGA', 'DCA', 'DEN'};
-airportRunway = {11500, 7000, 7170, 16000};
-airportElevation = {1135, 23, 14, 5433};
+obsAirports = {'PHX', 'LGA', 'DCA', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
+airportRunway = {11500, 7000, 7170, 16000};%, 13000, 12000, 12000, 13000};
+airportElevation = {1135, 23, 14, 5433};%, 680, 96, 127, 9};
 
 airportLats = [];
 airportLons = [];
@@ -48,30 +48,33 @@ for a = 1:length(obsAirports)
     end
 end
 
-maxWeight = {};
+weightRestriction = {};
 acSurfaces = av2_loadSurfaces();
 
 figure('Color', [1,1,1]);
 hold on;
 
 colors = ['r', 'b', 'g', 'k'];
+hours = 10:15;
 
 for a = 1:length(obsAirports)
-    for h = 10:15
+    weightRestriction{a} = [];
+    for h = hours
         count = 1;
-        maxWeight{h} = [];
-        for y = 1:size(obsData{2}, 1)
-            for d = 1:size(obsData{2}, 2)
-                maxWeight{a}(h, count) = av2_findMaxWeight(obsData{2}(y,d,h), airportRunway{a}, airportElevation{a}, acSurfaces);
+        for y = 1:size(obsData{a}, 1)
+            for d = 1:size(obsData{a}, 2)
+                weightRestriction{a}(h-hours(1)+1, count) = av2_calcWeightRestriction(obsData{a}(y,d,h), airportRunway{a}, airportElevation{a}, '737-800', acSurfaces);
                 count = count+1;
             end
         end
     end
     
-    s = smooth(maxWeight{a}(12, :), 15);
+    s = smooth(weightRestriction{a}(12-hours(1), :), 15);
     plot(s, colors(a), 'LineWidth', 2);
     
 end
+
+save('weight-restriction.mat', 'weightRestriction');
 
 
 

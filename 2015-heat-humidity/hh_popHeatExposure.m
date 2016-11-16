@@ -22,8 +22,8 @@ baseBiasCorrect = false;
 popRegrid = true;
 
 region = 'world';
-rcp = 'rcp45';
-exposureThreshold = 31;
+rcp = 'all-rcp';
+exposureThreshold = 30;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -105,7 +105,7 @@ end
 plotTitle = ['[' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '] yearly ' season ' ' maxMinStr ' - ' baseDataset ' [' num2str(basePeriodYears(1)) '-' num2str(basePeriodYears(end)) ']'];
 fileTitle = ['popExposure-' baseVar '-' region '-' fileTimeStr '.' exportformat];
 
-baseExt = {};
+%baseExt = {};
 
 lat = [];
 lon = [];
@@ -119,6 +119,7 @@ meanBaseSelGrid = [];
 latIndexRange = [];
 lonIndexRange = [];
 
+baseDataRaw = {};
 baseData = [];
 
 for m = 1:length(baseModels)
@@ -128,7 +129,8 @@ for m = 1:length(baseModels)
         curModel = [baseModels{m} '/'];
     end
 
-    baseExt{m} = {};
+    %baseExt{m} = {};
+    baseDataRaw{m} = {};
     
     ['loading ' curModel ' base']
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
@@ -147,23 +149,30 @@ for m = 1:length(baseModels)
             [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
         end
         baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
+        baseDaily{3} = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
+                                              size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
         
         if length(lat) == 0
             lat = baseDaily{1}(latIndexRange, lonIndexRange);
             lon = baseDaily{2}(latIndexRange, lonIndexRange);
         end
         
-        baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
-        
-        baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
-        baseExtTmp = baseExtTmp{1}{3};
+        %baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
+        %baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
+        %baseExtTmp = baseExtTmp{1}{3};
+        baseDataRaw{m}{y-basePeriodYears(1)+1} = baseDaily{3};
         
         selGrid = zeros(size(lat));
-        for xlat = 1:size(baseExtTmp, 1)
-            for ylon = 1:size(baseExtTmp, 2)
-                if baseExtTmp(xlat, ylon) >= exposureThreshold
-                    selGrid(xlat, ylon) = 1;
-                end
+        for xlat = 1:size(baseDaily{3}, 1)
+            for ylon = 1:size(baseDaily{3}, 2)
+                
+                selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(baseDaily{3}(xlat, ylon, :) > exposureThreshold));
+                
+%                 for d = 1:size(baseDaily{3}, 3)
+%                     if baseDaily{3}(xlat, ylon, d) >= exposureThreshold
+%                          + 1;
+%                     end
+%                 end
             end
         end
         
@@ -183,24 +192,33 @@ meanBaseSelGrid = nanmean(nanmean(meanBaseSelGrid, 4), 3);
 
 % average over ensembles, models, and years
 %for e = 1:length(ensembles)
-    for m = 1:length(baseExt)
-        for y = 1:length(baseExt{m})
-            baseData(:,:,m,y) = baseExt{m}{y}{3};
+    for m = 1:length(baseDataRaw)
+        for y = 1:length(baseDataRaw{m})
+            baseData(:,:,:,m,y) = baseDataRaw{m}{y};
         end
     end
 %end
 
-clear baseExt;
+clear baseDataRaw;
+
+% if ncep, select 1st model
+if strcmp(baseDataset, 'ncep')
+    baseData = squeeze(baseData(:, :, :, 1, :));
+end
 
 % average over years in base period
-baseData = nanmean(baseData, 4);
+%baseData = nanmean(baseData, 4);
 
-futureData = [];
+%futureData = [];
+
+%count future population
+futurePopCount = [];
+constPopCount = [];
 
 % load projected change data
 decCount = 1;
 for t = testPeriodYears(1):10:testPeriodYears(end-1)
-    load(['chg-data-wb-' rcp '-multi-model-extreme' num2str(t) '-' num2str(t+10) '.mat']);
+    load(['chg-data-wb-' rcp '-multi-model-mean-' num2str(t) '-' num2str(t+10) '.mat']);
     
     chgData(chgData > 10) = NaN;
     
@@ -211,41 +229,90 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
     end
     
     for c = 1:size(chgData, 3)
-        % compute future scenarios by adding change onto base data
-        futureData(:, :, decCount, c) = squeeze(baseData(:, :, 1)) + chgData(latIndexRange, lonIndexRange, c);
+        
+        % one sel grid for each scenario
+        selGrid = zeros(size(lat));
+        
+        for year = 1:size(baseData, 4)
+            curFutureData = baseData(:, :, :, year) + repmat(chgData(latIndexRange, lonIndexRange, c), [1, 1, size(baseData, 3)]);
+            for xlat = 1:size(chgData, 1)
+                for ylon = 1:size(chgData, 2)
+                    selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(curFutureData(xlat, ylon, :) > exposureThreshold));
+                end
+            end
+        end
+        
+%         for year = 1:size(baseData, 4)
+%             for day = 1:size(baseData, 3)
+%                 % compute future scenarios by adding change onto base data
+%                 curFutureData = baseData(:, :, day, year) + repmat(chgData(latIndexRange, lonIndexRange, c);
+%                 
+%                 for xlat = 1:size(curFutureData, 1)
+%                     for ylon = 1:size(curFutureData, 2)
+%                         % add up all exceedences for this scenario (loop
+%                         % over day, year, x, y)
+%                         if curFutureData(xlat, ylon, day, year) >= exposureThreshold
+%                             selGrid(xlat, ylon) = selGrid(xlat, ylon) + 1;
+%                         end
+%                     end
+%                 end
+%                 
+%                 %futureData(:, :, day, year, decCount, c) = baseData(:, :, day, year) + chgData(latIndexRange, lonIndexRange, c);
+%             end
+%         end
+        
+        % divide by number of years to get mean exceedences per year in
+        % this scenario & decade
+        selGrid = selGrid ./ size(baseData, 4);
+        clear curFutureData;
+        
+        save(['selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        
+        % loop over scenario 
+        for ssp = ssps
+            futurePopCount(c, decCount, ssp) = hh_countPop({lat, lon, selGrid}, region, [testPeriodYears(1+((decCount-1)*10))], ssp, popRegrid);
+            constPopCount(c, decCount, ssp) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
+        end
+        
+        clear selGrid;
+        
+    end
+    
+    for ssp = ssps
+        constClimateCount(decCount, ssp) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [testPeriodYears(1+((decCount-1)*10))], ssp, popRegrid);
     end
     
     decCount = decCount + 1;
     clear chgData;
 end
 
-%count future population
-futurePopCount = [];
-constPopCount = [];
 
-for d = 1:size(futureData, 3)
-    for s = 1:size(futureData, 4)
-        selGrid = zeros(size(lat));
-        for xlat = 1:size(futureData, 1)
-            for ylon = 1:size(futureData, 2)
-                if futureData(xlat, ylon, d, s) >= exposureThreshold
-                    selGrid(xlat, ylon) = 1;
-                end
-            end
-        end
-        
-        for ssp = ssps
-            futurePopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
-            constPopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
-        end
-        
-    end
-    
-    for ssp = ssps
-        constClimateCount(d, ssp) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
-    end
-    
-end
+
+% decade
+% for d = 1:size(futureData, 3)
+%     % scenario (model/rcp)
+%     for s = 1:size(futureData, 4)
+%         selGrid = zeros(size(lat));
+%         for xlat = 1:size(futureData, 1)
+%             for ylon = 1:size(futureData, 2)
+%                 if futureData(xlat, ylon, d, s) >= exposureThreshold
+%                     selGrid(xlat, ylon) = 1;
+%                 end
+%             end
+%         end
+%         
+%         for ssp = ssps
+%             futurePopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
+%             constPopCount(s, d, ssp) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
+%         end
+%         
+%     end
+%     
+%     for ssp = ssps
+%         constClimateCount(d, ssp) = hh_countPop({lat, lon, meanBaseSelGrid}, region, [testPeriodYears(1+((d-1)*10))], ssp, popRegrid);
+%     end
+%     
+% end
 
 futurePopCountSorted = [];
 constPopCountSorted = [];
@@ -341,7 +408,7 @@ for d = 1:size(mmClimatePopEffect, 1)
 end
 
 plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
-fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-ssp' num2str(ssp) '-' region];
+fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' rcp '-ssp' num2str(ssp) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...
                   'futureDecY', futureDecY, ...
@@ -400,7 +467,7 @@ if barChart
               
     plotlyData = {trace1, trace2, trace3, trace4};
     plotlyLayout = struct('barmode', 'group');
-    %plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-ssp' num2str(ssp)], 'fileopt', 'overwrite'));
+    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-' rcp '-all-ssp'], 'fileopt', 'overwrite'));
     
     figure('Color', [1, 1, 1]);
     hold on;

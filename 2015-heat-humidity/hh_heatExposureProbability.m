@@ -23,13 +23,13 @@ exportFormat = 'png';
 blockWater = true;
 baseBiasCorrect = false;
 
-heatThresholds = 35;
+heatThresholds = [34 35];
 
 baseDir = 'e:/data/';
 yearStep = 1;
 ssps = 1:5;
 
-rcp = 'all-rcp';
+rcp = 'rcp85';
 
 if ~baseBiasCorrect
     baseBcStr = '';
@@ -70,6 +70,9 @@ baseRcp = '';
 colors = {[0 0 0], [.2 0 0], [.4 0 0], [.6 0 0], [.8 0 0], [.9 0 0], [1 0 0]};
 lStr = '';
 
+figure('Color', [1,1,1]);
+hold on;
+
 for h = 1:length(heatThresholds)
     heatThreshold = heatThresholds(h);
     
@@ -91,7 +94,7 @@ for h = 1:length(heatThresholds)
         lat = wb_1980_01_01{1};
         lon = wb_1980_01_01{2};
 
-        popBins = [1 10 100 500 1000 5000 1e4 5e4 1e5 5e5 1e6 5e6 1e7 5e7 1e8 5e8 1e9 5e9 1e10];
+        popBins = [1 10 100 500 1000 5000 1e4 5e4 1e5 5e5 1e6 5e6 1e7 5e7 1e8];% 5e8 1e9 5e9 1e10];
         popVals = zeros(length(popBins), 1);
         popExposure = [];
 
@@ -111,19 +114,22 @@ for h = 1:length(heatThresholds)
 
         popVals = popVals ./ sum(popVals) .* 100;
 
+        subplot(2, 1, h);
+        
         semilogx(popBins, popVals, 'Color', colors{h}, 'LineWidth', 2);
         hold on;
-        xlabel('People exposed annually', 'FontSize', 24);
-        ylabel('Probability', 'FontSize', 24);
+        xlabel('People exposed annually', 'FontSize', 30);
+        ylabel('Probability', 'FontSize', 30);
+        ylim([0 100]);
+        legend([num2str(heatThresholds(h)) 'C']);
         %title(['Exposure to ' num2str(heatThreshold) 'C wet-bulb'], 'FontSize', 30);
-        set(gca,'FontSize', 20);
+        set(gca,'FontSize', 28);
         
-
     end
 end
 
 set(gcf, 'Position', get(0,'Screensize'));
 set(gcf, 'Color', [1,1,1]);
-l = legend(lStr);
-set(l, 'FontSize', 24);
-export_fig(['heatExposureProbability-' num2str(heatThreshold) '.png']);
+%l = legend(lStr);
+%set(l, 'FontSize', 24);
+%export_fig(['heatExposureProbability-' num2str(heatThreshold) '.png']);

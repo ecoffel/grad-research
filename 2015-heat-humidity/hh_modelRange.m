@@ -1,7 +1,3 @@
-% % find the variability between models for a given variable
-
-% computes the difference in the yearly mean of maximum summertime
-% temperatures between NARCCAP models and NARR reanalysis.
 
 season = 'all';
 basePeriod = 'past';
@@ -21,8 +17,8 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'huss';
-testVar = 'huss';
+baseVar = 'wb';
+testVar = 'wb';
 
 baseRegrid = true;
 testRegrid = true;
@@ -31,10 +27,10 @@ baseBiasCorrect = false;
 testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2070:2080;
+testPeriodYears = 2060:2070;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = true;
+annualmean = false;
 
 meanStr = 'mean';
 if ~annualmean
@@ -43,8 +39,8 @@ end
 
 ensembles = 1;
 
-rcps = {'rcp85'};
-rcpStr = 'rcp85';
+rcps = {'rcp45'};
+rcpStr = 'rcp45';
 
 region = 'world';
 
