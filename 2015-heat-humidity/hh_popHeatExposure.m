@@ -218,26 +218,26 @@ constPopCount = [];
 % load projected change data
 decCount = 1;
 for t = testPeriodYears(1):10:testPeriodYears(end-1)
-    load(['chg-data-wb-' rcp '-multi-model-extreme-' num2str(t) '-' num2str(t+10) '.mat']);
+    load(['chg-data-wb-' rcp '-multi-model-mean-' num2str(t) '-' num2str(t+10) '.mat']);
     
     chgData(chgData > 10) = NaN;
     
     % calc mean change for each scenario
-    chgDataMeans = [];
-    for c = 1:size(chgData, 3)
-        chgDataMeans(c) = nanmean(nanmean(chgData(20:70 , :, c), 2), 1);
-    end
-    
-    % sort by mean change
-    [chgDataMeans, chgDataMeansI] = sort(chgDataMeans);
-    
-    chgData = chgData(:, :, chgDataMeansI);
-    
-%     for x = 1:size(chgData, 1)
-%         for y = 1:size(chgData, 2)
-%             chgData(x, y, :) = sort(chgData(x, y, :));
-%         end
+%     chgDataMeans = [];
+%     for c = 1:size(chgData, 3)
+%         chgDataMeans(c) = nanmean(nanmean(chgData(20:70 , :, c), 2), 1);
 %     end
+%     
+%     % sort by mean change
+%     [chgDataMeans, chgDataMeansI] = sort(chgDataMeans);
+%     
+%     chgData = chgData(:, :, chgDataMeansI);
+    
+    for x = 1:size(chgData, 1)
+        for y = 1:size(chgData, 2)
+            chgData(x, y, :) = sort(chgData(x, y, :));
+        end
+    end
     
     for c = 1:size(chgData, 3)
         
