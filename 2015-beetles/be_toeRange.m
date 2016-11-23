@@ -65,7 +65,7 @@ saveData = struct('data', {result}, ...
                   'plotRange', [0 50], ...
                   'plotTitle', plotTitle, ...
                   'fileTitle', 'internal-var.pdf', ...
-                  'plotXUnits', 'Percent', ...
+                  'plotXUnits', 'Internal variability percentage', ...
                   'blockWater', true, ...
                   'plotStates', true, ...
                   'plotCountries', false, ...
@@ -291,7 +291,7 @@ ratioRCP = nanmean(nanmean(ratioRCP));
 ratioK = nanmean(nanmean(ratioK));
 
 m = (ratioInternal + ratioModel + ratioRCP + ratioK) / 100.0;
-ratios = [ratioInternal/m, ratioModel/m, ratioRCP/m, ratioK/m,; 0 0 0 0];
+ratios = [ratioInternal/m, ratioModel/m, ratioRCP/m, ratioK/m; 0 0 0 0];
 
 x = colormap('summer');
 b = bar(ratios,'stacked')
@@ -303,6 +303,9 @@ set(b(4),'FaceColor',x(64,:))
 set(gca,'FontSize',24);
 xlabel('Variability', 'FontSize',26)
 set(gca,'xtick',[])
-ylabel('Percent','FontSize',26);
-legend('Internal', 'Model','RCP','K-Value');
+ylabel('Percent of total variability','FontSize',26);
+%legend('Internal', 'Model','RCP','K-Value');
+legendList = {'Internal', 'Model', 'RCP', 'K-Value'};
+order = [4 3 2 1];
+legend(b(order), legendList{order});
 set(gcf,'Color',[1,1,1]);

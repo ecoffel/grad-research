@@ -1,4 +1,4 @@
-testPeriod = 'past';
+testPeriod = 'future';
 
 models = {'access1-0', 'access1-3', 'bnu-esm', 'bcc-csm1-1-m', ...
           'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
@@ -15,14 +15,14 @@ tempVar = 'tasmax';
 hussVar = 'huss';
 wbVar = 'wb';
 
-rcp = 'historical';
+rcp = 'rcp85';
 
 % whether to find the annual extreme wet bulb day or the top N
 annualExtreme = false;
-topN = 1000;
+topN = 100;
 
 % the temperature reference area
-region = 'us-ne';
+region = 'west-africa';
 plotRegion = 'world';
 fileformat = 'png';
 

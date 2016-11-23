@@ -1,4 +1,4 @@
-region = 'india';
+region = 'china';
 
 load(['outputHuss-' region '-historical'])
 hussHistorical = outputHuss;
@@ -67,8 +67,8 @@ for m = 1:length(hussHistorical)
     hussChg45Data(end+1) = hussChg45;
     hussChg85Data(end+1) = hussChg85;
     
-    plot(hussChg45Prc, tempChg45, 'ob', 'LineWidth', 1);
-    plot(hussChg85Prc, tempChg85, 'or', 'LineWidth', 1);
+    plot(hussChg45Prc, tempChg45, 'ob', 'LineWidth', 2);
+    plot(hussChg85Prc, tempChg85, 'or', 'LineWidth', 2);
     
 end
 
@@ -77,9 +77,9 @@ p2 = plot(nanmean(hussPrcChg85Data), nanmean(tempChg85Data), 'or', 'LineWidth', 
 
 xlim([0 30]);
 ylim([0 10]);
-xlabel('Percent change in specific humidity', 'FontSize', 26);
-ylabel('Change in temperature (degrees C)', 'FontSize', 30);
-title('India', 'FontSize', 36);
-set(gca, 'FontSize', 28);
+xlabel('Percent change in specific humidity', 'FontSize', 30);
+ylabel('Change in temperature (degrees C)', 'FontSize', 32);
+title('China', 'FontSize', 40);
+set(gca, 'FontSize', 30);
 legend([p1, p2], 'RCP4.5 average', 'RCP8.5 average');
 
