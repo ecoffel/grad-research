@@ -13,10 +13,13 @@ plotRegion = 'world';
 plotTitle = ['CMIP5 annual maximum wet-bulb'];
 
 basePeriodYears = 1980:2010;
-testPeriodYears = 2070:2080;
+testPeriodYears = 2020:30:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportFormat = 'png';
+
+% should we use a threshold for each gridcell or for the entire globe/land area
+gridcellAverage = true;
 
 blockWater = true;
 
@@ -41,6 +44,7 @@ lon = [];
 thresh = 90;
 
 ncepBaseData = [];
+cmip5FutureData = [];
 
 % cutoff for the nth percentile in the base period data for each gridcell
 baseThres = [];
@@ -60,9 +64,6 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         baseDaily{3} = baseDaily{3} - 273.15;
     end
     
-    %[latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latBounds, lonBounds);
-    %baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange);
-
     ncepBaseData(:, :, :, y-basePeriodYears(1)+1) = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
                                                                       size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
     clear baseDaily;
@@ -76,12 +77,19 @@ waterGrid = logical(waterGrid);
 % find x/y grid points of land areas (1 = land, 0 = water)
 [waterGridX, waterGridY] = ind2sub(size(waterGrid), find(~waterGrid));
 
-for x = 1:size(ncepBaseData, 1)
-    for y = 1:size(ncepBaseData, 2)
-        curCellData = reshape(squeeze(ncepBaseData(x, y, :, :)), [size(ncepBaseData, 3)*size(ncepBaseData, 4), 1]);
-        baseThresh(x, y) = prctile(curCellData, thresh);
-        clear curCellData;
+if gridcellAverage
+    for x = 1:size(ncepBaseData, 1)
+        for y = 1:size(ncepBaseData, 2)
+            curCellData = reshape(squeeze(ncepBaseData(x, y, :, :)), [size(ncepBaseData, 3)*size(ncepBaseData, 4), 1]);
+            baseThresh(x, y) = prctile(curCellData, thresh);
+            clear curCellData;
+        end
     end
+else
+    ncepBase1d = reshape(ncepBaseData, [numel(ncepBaseData), 1]);
+    thresh1d = prctile(ncepBase1d, thresh);
+    clear ncepBase1d;
+    baseThresh = ones(size(ncepBaseData, 1), size(ncepBaseData, 2)) .* thresh1d;
 end
 
 % earth surface area
@@ -106,6 +114,8 @@ for year = 1:size(ncepBaseData, 4)
     areaGlobalTrend(year) = nansum(nansum(earthSA .* selDataCurYear));
     areaLandTrend(year) = nansum(nansum(earthSA .* selDataCurYearLand));
 end
+
+clear ncepBaseData;
 
 areaGlobalTrend = areaGlobalTrend ./ earthTotalSA .* 100;
 areaLandTrend = areaLandTrend  ./ earthLandSA .* 100;
@@ -138,8 +148,8 @@ set(gca, 'FontSize', 26);
 legend([p1, p2], 'land', 'global');
 ylabel('Percent coverage');
 
-fitLandStr = [sprintf('%.3f', roundn(fitLandSlope, -3)) char(176) 'C/year ' char(177) sprintf('%.3f', roundn(fitLandSE, -3))];
-fitGlobalStr = [sprintf('%.3f', roundn(fitGlobalSlope, -3)) char(176) 'C/year ' char(177) sprintf('%.3f', roundn(fitGlobalSE, -3))];
+fitLandStr = [sprintf('%.3f', roundn(fitLandSlope, -3)) char(176) '%/year ' char(177) sprintf('%.3f', roundn(fitLandSE, -3))];
+fitGlobalStr = [sprintf('%.3f', roundn(fitGlobalSlope, -3)) char(176) '%/year ' char(177) sprintf('%.3f', roundn(fitGlobalSE, -3))];
 text(2, 9.6, fitLandStr, 'FontSize', 26);
 text(13.5, 11, fitGlobalStr, 'FontSize', 26);
 %ylim([6 10.5]);
