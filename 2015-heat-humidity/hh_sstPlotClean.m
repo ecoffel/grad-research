@@ -1,6 +1,6 @@
 % remove the line from the middle of the SST maps by averaging
 
-load tosTempExtremes-wb-us-ne-day-mean-past-top-max-cmip5
+load tosTempExtremes-wb-west-africa-day-mean-future-top-max-cmip5-100
 
 data = saveData.data{3};
 

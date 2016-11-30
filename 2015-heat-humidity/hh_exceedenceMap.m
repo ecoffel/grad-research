@@ -1,6 +1,6 @@
 decade = 2070;
-rcp = 'rcp85';
-thresh = 34;
+rcp = 'rcp45';
+thresh = 32;
 
 baseDir = 'selGrid/';
 
