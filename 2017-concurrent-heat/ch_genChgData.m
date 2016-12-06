@@ -14,7 +14,7 @@ baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ..
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%baseModels = {''};
+% baseModels = {'access1-0'};
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
@@ -26,7 +26,7 @@ futureModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%futureModels = {'access1-0', 'access1-3'};
+% futureModels = {'access1-0'};
 futureRcps = {'rcp85'};
 futureEnsemble = 'r1i1p1';
 
@@ -65,8 +65,8 @@ futureData = zeros(size(lat, 1), size(lat, 2), numDays, length(futurePeriodYears
 futureData(futureData == 0) = NaN;
 
 % mean temps (above thresh) in the base period
-baseMeans = [];
-futureMeans = [];
+baseThresh = [];
+futureThresh = [];
 chgData = [];
 
 ['loading base: ' baseDataset]
@@ -94,8 +94,7 @@ for m = 1:length(baseModels)
     for x = 1:size(baseData, 1)
         for y = 1:size(baseData, 2)
             curGridCell = squeeze(reshape(baseData(x, y, :, :), [size(baseData, 3)*size(baseData, 4), 1]));
-            cutoff = prctile(curGridCell, thresh);
-            baseMeans(x, y, m) = nanmean(curGridCell(curGridCell > cutoff));
+            baseThresh(x, y, m) = prctile(curGridCell, thresh);
         end
     end
     
@@ -128,14 +127,15 @@ for m = 1:length(futureModels)
     
     for x = 1:size(futureData, 1)
         for y = 1:size(futureData, 2)
-            curGridCell = squeeze(reshape(futureData(x, y, :, :), [size(futureData, 3)*size(futureData, 4), 1]));
-            cutoff = prctile(curGridCell, thresh);
-            futureMeans(x, y, m) = nanmean(curGridCell(curGridCell > cutoff));
-            chgData(x, y, m) = futureMeans(x, y, m) - baseMeans(x, y, m);
+            for year = 1:size(futureData, 4)
+                curGridCell = squeeze(reshape(futureData(x, y, :, year), [size(futureData, 3), 1]));
+                futureThresh(x, y, year, m) = prctile(curGridCell, thresh);
+                chgData(x, y, year, m) = futureThresh(x, y, year, m) - baseThresh(x, y, m);
+            end
         end
     end
 
-    clear cmip5FutureData;
+    clear futureData;
 end
 
 save(['chgData-cmip5-' num2str(thresh) '-' futureRcps{1} '.mat'], 'chgData');
