@@ -6,17 +6,17 @@ basePeriod = 'past';
 
 % add in base models and add to the base loading loop
 
-baseDataset = 'cmip5';
-baseVar = 'tasmax';
+baseDataset = 'ncep-reanalysis';
+baseVar = 'tmax';
 
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%baseModels = {'hadgem2-cc'};
-baseRcps = {'historical'};
-baseEnsemble = 'r1i1p1';
+%baseModels = {''};
+baseRcps = {''};
+baseEnsemble = '';
 
 futureDataset = 'cmip5';
 futureVar = 'tasmax';
@@ -167,20 +167,20 @@ if ~preload
         clear cmip5FutureData;
     end
 else
+    load(['selData-cmip5-' num2str(thresh) '-historical']);
+    selDataBase = selData;
+    
     % rcp85
     load(['selData-cmip5-' num2str(thresh) '-rcp85']);
-    
-    selDataBase = selData{1};
-    selDataRcp85 = selData{2};
+    selDataRcp85 = selData;
     
     % rcp45
-    load(['selData-cmip5-' num2str(thresh) '-rcp45']);
-    
-    selDataRcp45 = selData{2};
+    load(['selData-cmip5-' num2str(thresh) '-rcp45']);    
+    selDataRcp45 = selData;
     
     % shifted dist by 2c
-    load(['selData-cmip5-' num2str(thresh) '-shifted-2']);
-    selDataShifted2 = selData;
+    load(['selData-cmip5-' num2str(thresh) '-shifted-1.5-1.5.mat']);
+    selDataShifted = selData;
 end
 
 ['done loading...']
@@ -194,13 +194,15 @@ earthLandSA = ch_selDataSA(~waterGrid);
 % ------------ calculate trends for the base ----------------
 areaGlobalTrendBase = [];
 areaLandTrendBase = [];
-for year = 1:length(basePeriodYears)
-    selDataCurYear = selDataBase(:, :, year);
-    selDataCurYearLand = selDataCurYear;
-    selDataCurYearLand(waterGrid) = 0;
-    
-    areaGlobalTrendBase(year) = nansum(nansum(earthSA .* selDataCurYear));
-    areaLandTrendBase(year) = nansum(nansum(earthSA .* selDataCurYearLand));
+for m = 1:length(baseModels)
+    for year = 1:length(basePeriodYears)
+        selDataCurYear = selDataBase(:, :, year, m);
+        selDataCurYearLand = selDataCurYear;
+        selDataCurYearLand(waterGrid) = 0;
+
+        areaGlobalTrendBase(m, year) = nansum(nansum(earthSA .* selDataCurYear));
+        areaLandTrendBase(m, year) = nansum(nansum(earthSA .* selDataCurYearLand));
+    end
 end
 
 areaGlobalTrendBase = areaGlobalTrendBase ./ earthTotalSA .* 100;
@@ -212,8 +214,8 @@ areaGlobalTrendRcp45 = [];
 areaLandTrendRcp45 = [];
 areaGlobalTrendRcp85 = [];
 areaLandTrendRcp85 = [];
-areaGlobalTrendShifted2 = [];
-areaLandTrendRcpShifted2 = [];
+areaGlobalTrendShifted = [];
+areaLandTrendRcpShifted = [];
 
 for m = 1:length(futureModels)
     for year = 1:length(futurePeriodYears)
@@ -232,55 +234,74 @@ for m = 1:length(futureModels)
         areaLandTrendRcp85(m, year) = nansum(nansum(earthSA .* selDataCurYearLand));
         
         % shifted by 2C
-        selDataCurYear = selDataShifted2(:, :, year, m);
+        selDataCurYear = selDataShifted(:, :, year, m);
         selDataCurYearLand = selDataCurYear;
         selDataCurYearLand(waterGrid) = 0;
-        areaGlobalTrendShifted2(m, year) = nansum(nansum(earthSA .* selDataCurYear));
-        areaLandTrendShifted2(m, year) = nansum(nansum(earthSA .* selDataCurYearLand));
+        areaGlobalTrendShifted(m, year) = nansum(nansum(earthSA .* selDataCurYear));
+        areaLandTrendShifted(m, year) = nansum(nansum(earthSA .* selDataCurYearLand));
     end
 end
 
 areaGlobalTrendRcp45 = areaGlobalTrendRcp45 ./ earthTotalSA .* 100;
 areaLandTrendRcp45 = areaLandTrendRcp45  ./ earthLandSA .* 100;
-areaGlobalTrendRcp45 = squeeze(nanmean(areaGlobalTrendRcp45, 1))
-areaLandTrendRcp45 = squeeze(nanmean(areaLandTrendRcp45, 1))
+%areaGlobalTrendRcp45 = squeeze(nanmean(areaGlobalTrendRcp45, 1))
+%areaLandTrendRcp45 = squeeze(nanmean(areaLandTrendRcp45, 1))
 
 areaGlobalTrendRcp85 = areaGlobalTrendRcp85 ./ earthTotalSA .* 100;
 areaLandTrendRcp85 = areaLandTrendRcp85  ./ earthLandSA .* 100;
-areaGlobalTrendRcp85 = squeeze(nanmean(areaGlobalTrendRcp85, 1))
-areaLandTrendRcp85 = squeeze(nanmean(areaLandTrendRcp85, 1))
+%areaGlobalTrendRcp85 = squeeze(nanmean(areaGlobalTrendRcp85, 1))
+%areaLandTrendRcp85 = squeeze(nanmean(areaLandTrendRcp85, 1))
 
-areaGlobalTrendShifted2 = areaGlobalTrendShifted2 ./ earthTotalSA .* 100;
-areaLandTrendShifted2 = areaLandTrendShifted2  ./ earthLandSA .* 100;
-areaGlobalTrendShifted2 = squeeze(nanmean(areaGlobalTrendShifted2, 1))
-areaLandTrendShifted2 = squeeze(nanmean(areaLandTrendShifted2, 1))
+areaGlobalTrendShifted = areaGlobalTrendShifted ./ earthTotalSA .* 100;
+areaLandTrendShifted = areaLandTrendShifted  ./ earthLandSA .* 100;
+%areaGlobalTrendShifted2 = squeeze(nanmean(areaGlobalTrendShifted2, 1))
+%areaLandTrendShifted2 = squeeze(nanmean(areaLandTrendShifted2, 1))
 
-fitLandBase = fitlm(1:length(areaLandTrendBase), areaLandTrendBase);
-fitLandRcp45 = fitlm(1:length(areaLandTrendRcp45), areaLandTrendRcp45);
-fitLandRcp85 = fitlm(1:length(areaLandTrendRcp85), areaLandTrendRcp85);
-fitLandShifted2 = fitlm(1:length(areaLandTrendShifted2), areaLandTrendShifted2);
+fitLandBase = fitlm(1:size(areaLandTrendBase, 2), squeeze(nanmean(areaLandTrendBase, 1)));
+fitLandRcp45 = fitlm(1:size(areaLandTrendRcp45, 2), squeeze(nanmean(areaLandTrendRcp45, 1)));
+fitLandRcp85 = fitlm(1:size(areaLandTrendRcp85, 2), squeeze(nanmean(areaLandTrendRcp85, 1)));
+fitLandShifted = fitlm(1:size(areaLandTrendShifted, 2), squeeze(nanmean(areaLandTrendShifted, 1)));
 
-fitGlobalBase = fitlm(1:length(areaGlobalTrendBase), areaGlobalTrendBase);
-fitGlobalRcp45 = fitlm(1:length(areaGlobalTrendRcp45), areaGlobalTrendRcp45);
-fitGlobalRcp85 = fitlm(1:length(areaGlobalTrendRcp85), areaGlobalTrendRcp85);
-fitGlobalShifted2 = fitlm(1:length(areaGlobalTrendShifted2), areaGlobalTrendShifted2);
+fitGlobalBase = fitlm(1:size(areaGlobalTrendBase, 2), squeeze(nanmean(areaGlobalTrendBase, 1)));
+fitGlobalRcp45 = fitlm(1:size(areaGlobalTrendRcp45, 2), squeeze(nanmean(areaGlobalTrendRcp45, 1)));
+fitGlobalRcp85 = fitlm(1:size(areaGlobalTrendRcp85, 2), squeeze(nanmean(areaGlobalTrendRcp85, 1)));
+fitGlobalShifted = fitlm(1:size(areaGlobalTrendShifted, 2), squeeze(nanmean(areaGlobalTrendShifted, 1)));
 
 figure('Color',[1,1,1]);
 hold on;
-p1 = plot(basePeriodYears, areaLandTrendBase, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
+%p1 = plot(basePeriodYears, areaLandTrendBase, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
+p1 = shadedErrorBar(basePeriodYears, squeeze(nanmean(areaLandTrendBase, 1)), std(areaLandTrendBase), 'o', 1);
+set(p1.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
+set(p1.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
+set(p1.edge, 'Color', 'k');
 plot(basePeriodYears, fitLandBase.Fitted, '--', 'Color', [96/255.0, 188/255.0, 100/255.0]);
 
 %p2 = plot(basePeriodYears, areaGlobalTrendBase, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
 %plot(basePeriodYears, fitGlobalBase.Fitted, '--', 'Color', [66/255.0, 134/255.0, 244/255.0]);
 
-p3 = plot(futurePeriodYears, areaLandTrendRcp45, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
+%p3 = plot(futurePeriodYears, areaLandTrendRcp45, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
+p3 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(areaLandTrendRcp45, 1)), std(areaLandTrendRcp45), 'o', 1);
+set(p3.mainLine, 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
+set(p3.patch, 'FaceColor', [66/255.0, 134/255.0, 244/255.0]);
+set(p3.edge, 'Color', 'k');
+
 plot(futurePeriodYears, fitLandRcp45.Fitted, '--', 'Color', [66/255.0, 134/255.0, 244/255.0]);
 
-p5 = plot(futurePeriodYears, areaLandTrendRcp85, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
+%p5 = plot(futurePeriodYears, areaLandTrendRcp85, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
+p5 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(areaLandTrendRcp85, 1)), std(areaLandTrendRcp85), 'o', 1);
+set(p5.mainLine, 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
+set(p5.patch, 'FaceColor', [255/255.0, 108/255.0, 71/255.0]);
+set(p5.edge, 'Color', 'k');
+
 plot(futurePeriodYears, fitLandRcp85.Fitted, '--', 'Color', [255/255.0, 108/255.0, 71/255.0]);
 
-p6 = plot(futurePeriodYears, areaLandTrendShifted2, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [244/255.0, 152/255.0, 66/255.0]);
-plot(futurePeriodYears, fitLandShifted2.Fitted, '--', 'Color', [244/255.0, 152/255.0, 66/255.0]);
+%p6 = plot(futurePeriodYears, areaLandTrendShifted2, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [244/255.0, 152/255.0, 66/255.0]);
+p6 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(areaLandTrendShifted, 1)), std(areaLandTrendShifted), 'o', 1);
+set(p6.mainLine, 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [244/255.0, 152/255.0, 66/255.0]);
+set(p6.patch, 'FaceColor', [244/255.0, 152/255.0, 66/255.0]);
+set(p6.edge, 'Color', 'k');
+
+plot(futurePeriodYears, fitLandShifted.Fitted, '--', 'Color', [244/255.0, 152/255.0, 66/255.0]);
 
 %p4 = plot(futurePeriodYears, areaGlobalTrendRcp45, 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
 %plot(futurePeriodYears, fitGlobalRcp45.Fitted, '--', 'Color', [66/255.0, 134/255.0, 244/255.0]);
@@ -294,7 +315,7 @@ plot(xTicks(1):xTicks(end), ones(length(xTicks(1):xTicks(end)), 1) .* (100-thres
 set(gca, 'XTick', xTicks);
 set(gca, 'XTickLabel', xTicks);
 set(gca, 'FontSize', 26);
-legend([p1, p3, p5, p6], 'historical', 'rcp45', 'rcp85', 'shifted by 2C');
+legend([p1.mainLine, p3.mainLine, p5.mainLine, p6.mainLine], 'historical', 'rcp45', 'rcp85', ['3' char(176) 'C shift by 2080']);
 ylabel('Percent coverage');
 
 fitLandStr = [sprintf('%.3f', roundn(fitLandBase.Coefficients.Estimate(2), -3)) char(176) '%/year ' char(177) sprintf('%.3f', roundn(fitLandBase.Coefficients.SE(2), -3))];
