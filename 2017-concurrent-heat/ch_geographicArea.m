@@ -1,5 +1,5 @@
 % should we load pre-computed files
-preload = false;
+preload = true;
 
 season = 'all';
 basePeriod = 'past';
@@ -65,7 +65,7 @@ load lat;
 load lon;
 
 % look at change above this base period temperature percentile
-thresh = 50;
+thresh = 99;
 
 % should we show the uniformly shifted temp distribution for comparison
 showShifted = false;

@@ -57,9 +57,6 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         baseDaily{3} = baseDaily{3} - 273.15;
     end
     
-    %[latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latBounds, lonBounds);
-    %baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange);
-
     ncepBaseData(:, :, :, y-basePeriodYears(1)+1) = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
                                                                       size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
     clear baseDaily;
