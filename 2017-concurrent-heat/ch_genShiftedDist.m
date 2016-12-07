@@ -25,7 +25,7 @@ futurePeriodYears = 2020:2080;
 
 % how much global mean temp will rise over the future period
 startTemp = 0.8;
-tempRise = 2;
+tempRise = 2.2;
 
 % temp rise for each future year
 annualTempDelta = linspace(startTemp, startTemp + tempRise, length(futurePeriodYears));
