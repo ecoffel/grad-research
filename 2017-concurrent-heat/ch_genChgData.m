@@ -9,24 +9,24 @@ basePeriod = 'past';
 baseDataset = 'cmip5';
 baseVar = 'tasmax';
 
-baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% baseModels = {'access1-0'};
+% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+ baseModels = {'access1-0'};
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
 futureDataset = 'cmip5';
 futureVar = 'tasmax';
 
-futureModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% futureModels = {'access1-0'};
+% futureModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+ futureModels = {'access1-0'};
 futureRcps = {'rcp85'};
 futureEnsemble = 'r1i1p1';
 
@@ -36,7 +36,7 @@ futureRegrid = true;
 region = 'world';
 basePeriodYears = 1981:2004;
 %basePeriodYears = 1980:1990;
-futurePeriodYears = 2020:2080;
+futurePeriodYears = 2060:2080;
 %futurePeriodYears = 2050:2060;
 
 baseDir = 'e:/data';
@@ -54,15 +54,15 @@ load lat;
 load lon;
 
 % look at change above this base period temperature percentile
-thresh = 50;
+thresh = [1 10:10:90 99];
 
 numDays = 372;
 
-baseData = zeros(size(lat, 1), size(lat, 2), numDays, length(basePeriodYears));
-baseData(baseData == 0) = NaN;
+baseData = [];
+futureData = [];
 
-futureData = zeros(size(lat, 1), size(lat, 2), numDays, length(futurePeriodYears));
-futureData(futureData == 0) = NaN;
+load waterGrid;
+waterGrid = logical(waterGrid);
 
 % mean temps (above thresh) in the base period
 baseThresh = [];
@@ -87,18 +87,39 @@ for m = 1:length(baseModels)
         baseDaily3d = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
                                              size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
 
-        baseData(1:size(baseDaily3d, 1), 1:size(baseDaily3d, 2), 1:size(baseDaily3d, 3), y-basePeriodYears(1)+1) = baseDaily3d;
+        for d = 1:size(baseDaily3d, 3)
+            curGrid = baseDaily3d(:, :, d);
+            curGrid(waterGrid) = NaN;
+            baseDaily3d(:, :, d) = curGrid;
+        end
+        
+        for t = 1:length(thresh)
+            for xlat = 1:size(baseDaily3d, 1)
+                for ylon = 1:size(baseDaily3d, 2)
+                    
+                    if isnan(baseDaily3d(xlat, ylon, 1))
+                        continue;
+                    end
+                        
+                    baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
+                end
+            end
+        end
+        
         clear baseDaily baseDaily3d;
     end
 
-    for x = 1:size(baseData, 1)
-        for y = 1:size(baseData, 2)
-            curGridCell = squeeze(reshape(baseData(x, y, :, :), [size(baseData, 3)*size(baseData, 4), 1]));
-            baseThresh(x, y, m) = prctile(curGridCell, thresh);
-        end
-    end
+%     for t = 1:length(thresh)
+%         curThresh = thresh(t);
+%         for x = 1:size(baseData, 1)
+%             for y = 1:size(baseData, 2)
+%                 curGridCell = squeeze(reshape(baseData(x, y, :, :), [size(baseData, 3)*size(baseData, 4), 1]));
+%                 baseThresh(x, y, m, t) = prctile(curGridCell, curThresh);
+%             end
+%         end
+%     end
     
-    clear baseData;
+%    clear baseData;
 end
 
 % ------------ load future data -------------    
@@ -120,25 +141,49 @@ for m = 1:length(futureModels)
 
         futureDaily3d = reshape(futureDaily{3}, [size(futureDaily{3}, 1), size(futureDaily{3}, 2), ...
                                                  size(futureDaily{3}, 3)*size(futureDaily{3}, 4)*size(futureDaily{3}, 5)]);
-        futureData(1:size(futureDaily3d, 1), 1:size(futureDaily3d, 2), 1:size(futureDaily3d, 3), y-futurePeriodYears(1)+1) = futureDaily3d;
+        
+        
+        for d = 1:size(futureDaily3d, 3)
+            curGrid = futureDaily3d(:, :, d);
+            curGrid(waterGrid) = NaN;
+            futureDaily3d(:, :, d) = curGrid;
+        end
+        
+        for t = 1:length(thresh)
+            for xlat = 1:size(futureDaily3d, 1)
+                for ylon = 1:size(futureDaily3d, 2)
+                    
+                    if isnan(futureDaily3d(xlat, ylon, 1))
+                        continue;
+                    end
+                    
+                    futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
+                end
+            end
+        end
 
         clear futureDaily futureDaily3d;
     end
     
-    for x = 1:size(futureData, 1)
-        for y = 1:size(futureData, 2)
-            for year = 1:size(futureData, 4)
-                curGridCell = squeeze(reshape(futureData(x, y, :, year), [size(futureData, 3), 1]));
-                futureThresh(x, y, year, m) = prctile(curGridCell, thresh);
-                chgData(x, y, year, m) = futureThresh(x, y, year, m) - baseThresh(x, y, m);
-            end
-        end
-    end
+%     for t = 1:length(thresh)
+%         curThresh = thresh(t);
+%         for x = 1:size(futureData, 1)
+%             for y = 1:size(futureData, 2)
+%                 for year = 1:size(futureData, 4)
+%                     curGridCell = squeeze(reshape(futureData(x, y, :, year), [size(futureData, 3), 1]));
+%                     futureThresh(x, y, year, m) = prctile(curGridCell, curThresh);
+%                     chgData(x, y, year, m, t) = futureThresh(x, y, year, m) - baseThresh(x, y, m, t);
+%                 end
+%             end
+%         end
+%     end
 
-    clear futureData;
+    %clear futureData;
 end
 
-save(['chgData-cmip5-' num2str(thresh) '-' futureRcps{1} '.mat'], 'chgData');
+
+
+% save(['chgData-cmip5-' futureRcps{1} '.mat'], 'chgData');
 
 
 

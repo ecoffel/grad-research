@@ -27,6 +27,16 @@ elseif strcmp(rcp, 'rcp85')
 end
 
 load waterGrid;
+load lat;
+load lon;
+waterGrid=logical(waterGrid);
+
+[latIndexRange, lonIndexRange] = latLonIndexRange({lat,lon,[]}, [-40 40], [0 360]);
+
+%b=sort(reshape(baseDataLandMid, [numel(baseDataLandMid),1]));
+%f=sort(reshape(futureDataLandMid, [numel(futureDataLandMid),1]));
+
+load waterGrid;
 waterGrid = logical(waterGrid);
 for y = size(chgData50, 3)
     for m = size(chgData50, 4)
@@ -44,9 +54,9 @@ for y = size(chgData50, 3)
     end
 end
 
-chgData50 = squeeze(nanmean(nanmean(chgData50, 2), 1));
-chgData90 = squeeze(nanmean(nanmean(chgData90, 2), 1));
-chgData99 = squeeze(nanmean(nanmean(chgData99, 2), 1));
+chgData50 = squeeze(nanmean(nanmean(chgData50(latIndexRange, lonIndexRange, :, :), 2), 1));
+chgData90 = squeeze(nanmean(nanmean(chgData90(latIndexRange, lonIndexRange, :, :), 2), 1));
+chgData99 = squeeze(nanmean(nanmean(chgData99(latIndexRange, lonIndexRange, :, :), 2), 1));
 
 ['done loading...']
 
