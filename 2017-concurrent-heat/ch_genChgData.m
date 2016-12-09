@@ -101,7 +101,7 @@ for m = 1:length(baseModels)
                         continue;
                     end
                         
-                    baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
+                    baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
                 end
             end
         end
@@ -157,7 +157,7 @@ for m = 1:length(futureModels)
                         continue;
                     end
                     
-                    futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
+                    futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
                 end
             end
         end
@@ -184,6 +184,10 @@ end
 
 
 % save(['chgData-cmip5-' futureRcps{1} '.mat'], 'chgData');
-
-
-
+for t = 1:size(chgData, 3)
+    for y = 1:size(chgData,4)
+    curGrid = chgData(:, :, t,y);
+    curGrid(waterGrid) = NaN;
+    chgData(:, :, t,y) = curGrid;
+    end
+end

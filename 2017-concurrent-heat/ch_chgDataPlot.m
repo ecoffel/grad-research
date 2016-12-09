@@ -3,27 +3,16 @@ preload = true;
 
 season = 'all';
 basePeriod = 'past';
-rcp = 'rcp85';
+rcp = 'rcp45';
 futurePeriodYears = 2020:2080;
 
+thresh = [1 10:10:90 99];
+threshInd = [find(thresh == 1), find(thresh == 10), find(thresh == 50), find(thresh == 90), find(thresh == 99)];
+
 if strcmp(rcp, 'rcp45')
-    load('chgData-cmip5-50-rcp45');
-    chgData50 = chgData;
-
-    load('chgData-cmip5-90-rcp45');
-    chgData90 = chgData;
-    
-    load('chgData-cmip5-99-rcp45');
-    chgData99 = chgData;
+    load('chgData-cmip5-thresh-rcp45');
 elseif strcmp(rcp, 'rcp85')
-    load('chgData-cmip5-50-rcp85');
-    chgData50 = chgData;
-
-    load('chgData-cmip5-90-rcp85');
-    chgData90 = chgData;
-    
-    load('chgData-cmip5-99-rcp85');
-    chgData99 = chgData;
+    load('chgData-cmip5-thresh-rcp85');
 end
 
 load waterGrid;
@@ -31,87 +20,87 @@ load lat;
 load lon;
 waterGrid=logical(waterGrid);
 
-[latIndexRange, lonIndexRange] = latLonIndexRange({lat,lon,[]}, [-40 40], [0 360]);
-
-%b=sort(reshape(baseDataLandMid, [numel(baseDataLandMid),1]));
-%f=sort(reshape(futureDataLandMid, [numel(futureDataLandMid),1]));
-
-load waterGrid;
-waterGrid = logical(waterGrid);
-for y = size(chgData50, 3)
-    for m = size(chgData50, 4)
-        curGrid = chgData50(:, :, y, m);
-        curGrid(waterGrid) = NaN;
-        chgData50(:, :, y, m) = curGrid;
-        
-        curGrid = chgData90(:, :, y, m);
-        curGrid(waterGrid) = NaN;
-        chgData90(:, :, y, m) = curGrid;
-        
-        curGrid = chgData99(:, :, y, m);
-        curGrid(waterGrid) = NaN;
-        chgData99(:, :, y, m) = curGrid;
-    end
-end
-
-chgData50 = squeeze(nanmean(nanmean(chgData50(latIndexRange, lonIndexRange, :, :), 2), 1));
-chgData90 = squeeze(nanmean(nanmean(chgData90(latIndexRange, lonIndexRange, :, :), 2), 1));
-chgData99 = squeeze(nanmean(nanmean(chgData99(latIndexRange, lonIndexRange, :, :), 2), 1));
+[latIndexRangeWorld, lonIndexRangeWorld] = latLonIndexRange({lat,lon,[]}, [-90 90], [0 360]);
+[latIndexRangeUsne, lonIndexRangeUsne] = latLonIndexRange({lat,lon,[]}, [30 55], [-100 -62] + 360);
+[latIndexRangeIndia, lonIndexRangeIndia] = latLonIndexRange({lat,lon,[]}, [8, 34], [67, 90]);
+[latIndexRangeTropics, lonIndexRangeTropics] = latLonIndexRange({lat,lon,[]}, [-20 20], [0 360]);
+[latIndexRangeChina, lonIndexRangeChina] = latLonIndexRange({lat,lon,[]}, [20, 55], [75, 135]);
 
 ['done loading...']
 
-% areaGlobalTrendRcp45 = areaGlobalTrendRcp45 ./ earthTotalSA .* 100;
-% areaLandTrendRcp45 = areaLandTrendRcp45  ./ earthLandSA .* 100;
-% 
-% areaGlobalTrendRcp85 = areaGlobalTrendRcp85 ./ earthTotalSA .* 100;
-% areaLandTrendRcp85 = areaLandTrendRcp85  ./ earthLandSA .* 100;
-% 
-% fitLandBase = fitlm(1:size(areaLandTrendBase, 2), squeeze(nanmean(areaLandTrendBase, 1)));
-% fitLandRcp45 = fitlm(1:size(areaLandTrendRcp45, 2), squeeze(nanmean(areaLandTrendRcp45, 1)));
-% fitLandRcp85 = fitlm(1:size(areaLandTrendRcp85, 2), squeeze(nanmean(areaLandTrendRcp85, 1)));
-% 
-% fitGlobalBase = fitlm(1:size(areaGlobalTrendBase, 2), squeeze(nanmean(areaGlobalTrendBase, 1)));
-% fitGlobalRcp45 = fitlm(1:size(areaGlobalTrendRcp45, 2), squeeze(nanmean(areaGlobalTrendRcp45, 1)));
-% fitGlobalRcp85 = fitlm(1:size(areaGlobalTrendRcp85, 2), squeeze(nanmean(areaGlobalTrendRcp85, 1)));
-
 figure('Color',[1,1,1]);
+
+subplot(1,2,1);
 hold on;
-p1 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(chgData50, 2)), std(chgData50, [], 2), 'o', 1);
-set(p1.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
-set(p1.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
-set(p1.edge, 'Color', 'k');
-%plot(basePeriodYears, fitLandBase.Fitted, '--', 'Color', [96/255.0, 188/255.0, 100/255.0]);
+lWorld_y = squeeze(nanmean(nanmean(nanmean(chgData(latIndexRangeWorld, lonIndexRangeWorld, :, :, end-20:end), 5), 2), 1));
+lUsne_y = squeeze(nanmean(nanmean(nanmean(chgData(latIndexRangeUsne, lonIndexRangeUsne, :, :, end-20:end), 5), 2), 1));
+lIndia_y = squeeze(nanmean(nanmean(nanmean(chgData(latIndexRangeIndia, lonIndexRangeIndia, :, :, end-20:end), 5), 2), 1));
+lTropics_y = squeeze(nanmean(nanmean(nanmean(chgData(latIndexRangeTropics, latIndexRangeTropics, :, :, end-20:end), 5), 2), 1));
+lChina_y = squeeze(nanmean(nanmean(nanmean(chgData(latIndexRangeChina, latIndexRangeChina, :, :, end-20:end), 5), 2), 1));
 
-p2 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(chgData90, 2)), std(chgData90, [], 2), 'o', 1);
-set(p2.mainLine, 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
-set(p2.patch, 'FaceColor', [66/255.0, 134/255.0, 244/255.0]);
-set(p2.edge, 'Color', 'k');
-%plot(futurePeriodYears, fitLandRcp45.Fitted, '--', 'Color', [66/255.0, 134/255.0, 244/255.0]);
+lWorld = plot(thresh, nanmean(lWorld_y), 'k', 'LineWidth', 2);
+lUsne = plot(thresh, nanmean(lUsne_y), 'Color', [96/255.0, 188/255.0, 100/255.0], 'LineWidth', 2);
+lIndia = plot(thresh, nanmean(lIndia_y), 'Color', [66/255.0, 134/255.0, 244/255.0], 'LineWidth', 2);
+lTropics = plot(thresh, nanmean(lTropics_y), 'Color', [255/255.0, 108/255.0, 71/255.0], 'LineWidth', 2);
+lChina = plot(thresh, nanmean(lChina_y), 'Color', [224/255.0, 79/255.0, 247/255.0], 'LineWidth', 2);
 
-p3 = shadedErrorBar(futurePeriodYears, squeeze(nanmean(chgData99, 2)), std(chgData99, [], 2), 'o', 1);
-set(p3.mainLine, 'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
-set(p3.patch, 'FaceColor', [255/255.0, 108/255.0, 71/255.0]);
-set(p3.edge, 'Color', 'k');
-%plot(futurePeriodYears, fitLandRcp45.Fitted, '--', 'Color', [66/255.0, 134/255.0, 244/255.0]);
+% lWorld = shadedErrorBar(thresh, nanmean(lWorld_y), std(lWorld_y), 'o', 1);
+% set(lWorld.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'k');
+% set(lWorld.patch, 'FaceColor', 'k');
+% set(lWorld.edge, 'Color', 'k');
+% 
+% lUsne = shadedErrorBar(thresh, nanmean(lUsne_y), std(lUsne_y), 'o', 1);
+% set(lUsne.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
+% set(lUsne.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
+% set(lUsne.edge, 'Color', 'k');
+% 
+% lIndia = shadedErrorBar(thresh, nanmean(lIndia_y), std(lIndia_y), 'o', 1);
+% set(lIndia.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
+% set(lIndia.patch, 'FaceColor', [66/255.0, 134/255.0, 244/255.0]);
+% set(lIndia.edge, 'Color', 'k');
+% 
+% lTropics = shadedErrorBar(thresh, nanmean(lTropics_y), std(lTropics_y), 'o', 1);
+% set(lTropics.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
+% set(lTropics.patch, 'FaceColor', [255/255.0, 108/255.0, 71/255.0]);
+% set(lTropics.edge, 'Color', 'k');
 
-if strcmp(rcp, 'rcp45')
-    title('Change in land temperature, RCP 4.5', 'FontSize', 32);
-elseif strcmp(rcp, 'rcp85')
-    title('Change in land temperature, RCP 8.5', 'FontSize', 32);
-end
+xlabel('Percentile', 'FontSize', 28);
+ylabel(['Temperature change (' char(176) 'C)'], 'FontSize', 28);
+set(gca, 'FontSize', 28);
+set(gca, 'XTick', [1 25 50 75 99]);
+ylim([0 6]);
+xlim([0 100]);
 
-xTicks = futurePeriodYears(1):10:futurePeriodYears(end)+1;
+legend([lWorld, lTropics, lUsne, lIndia, lChina], 'World', 'Tropics', 'U.S. Northeast', 'India', 'China');
 
-set(gca, 'XTick', xTicks);
-set(gca, 'XTickLabel', xTicks);
-set(gca, 'FontSize', 26);
+subplot(1,2,2);
+hold on;
+perc1_y = squeeze(nanmean(nanmean(chgData(latIndexRangeWorld, lonIndexRangeWorld, :, threshInd(1), :), 2), 1));
+perc50_y = squeeze(nanmean(nanmean(chgData(latIndexRangeWorld, lonIndexRangeWorld, :, threshInd(3), :), 2), 1));
+perc99_y = squeeze(nanmean(nanmean(chgData(latIndexRangeWorld, lonIndexRangeWorld, :, threshInd(5), :), 2), 1));
 
-legend([p1.mainLine, p2.mainLine, p3.mainLine], '50th percentile', '90th percentile', '99th percentile');
+perc1 = shadedErrorBar(futurePeriodYears, nanmean(perc1_y), std(perc1_y), 'o', 1);
+set(perc1.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
+set(perc1.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
+set(perc1.edge, 'Color', 'k');
 
-ylabel([char(176) 'C']);
+perc50 = shadedErrorBar(futurePeriodYears, nanmean(perc50_y), std(perc50_y), 'o', 1);
+set(perc50.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [66/255.0, 134/255.0, 244/255.0]);
+set(perc50.patch, 'FaceColor', [66/255.0, 134/255.0, 244/255.0]);
+set(perc50.edge, 'Color', 'k');
 
-xlim([xTicks(1) xTicks(end)]);
-ylim([0 4]);
+perc99 = shadedErrorBar(futurePeriodYears, nanmean(perc99_y), std(perc99_y), 'o', 1);
+set(perc99.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 108/255.0, 71/255.0]);
+set(perc99.patch, 'FaceColor', [255/255.0, 108/255.0, 71/255.0]);
+set(perc99.edge, 'Color', 'k');
+
+%plot(futurePeriodYears, squeeze(nanmean(nanmean(chgData(:,:,threshInd(1),:), 2), 1)), 'b');
+%plot(futurePeriodYears, squeeze(nanmean(nanmean(chgData(:,:,threshInd(3),:), 2), 1)), 'k');
+%plot(futurePeriodYears, squeeze(nanmean(nanmean(chgData(:,:,threshInd(5),:), 2), 1)), 'r');
+set(gca, 'FontSize', 28);
+ylim([0 6]);
+
+legend([perc1.mainLine, perc50.mainLine, perc99.mainLine], '1st percentile', '50th percentile', '99th percentile');
 
 
 
