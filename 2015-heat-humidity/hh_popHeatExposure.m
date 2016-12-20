@@ -23,7 +23,7 @@ popRegrid = true;
 
 region = 'world';
 rcp = 'all-rcp';
-exposureThreshold = 30;
+exposureThreshold = 33;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -218,7 +218,8 @@ constPopCount = [];
 % load projected change data
 decCount = 1;
 for t = testPeriodYears(1):10:testPeriodYears(end-1)
-    load(['chg-data-wb-' rcp '-multi-model-mean-' num2str(t) '-' num2str(t+10) '.mat']);
+    ['t = ' num2str(t)]
+    load(['chg-data/chg-data-wb-' rcp '-multi-model-mean-' num2str(t) '-' num2str(t+10) '.mat']);
     
     chgData(chgData > 10) = NaN;
     
@@ -277,7 +278,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
         selGrid = selGrid ./ size(baseData, 4);
         clear curFutureData;
         
-        save(['selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
         
         % loop over scenario 
         for ssp = ssps
@@ -478,7 +479,7 @@ if barChart
               
     plotlyData = {trace1, trace2, trace3, trace4};
     plotlyLayout = struct('barmode', 'group');
-    plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-' rcp '-all-ssp'], 'fileopt', 'overwrite'));
+    %   plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-' rcp '-all-ssp'], 'fileopt', 'overwrite'));
     
     figure('Color', [1, 1, 1]);
     hold on;
