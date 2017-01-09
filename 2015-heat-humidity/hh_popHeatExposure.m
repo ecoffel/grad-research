@@ -15,7 +15,7 @@ testVar = 'wb';
 baseRegrid = true;
 
 basePeriodYears = 1985:2010;
-testPeriodYears = 2020:2080;
+testPeriodYears = 2070:2080;
 
 baseBiasCorrect = false;
 
@@ -23,7 +23,7 @@ popRegrid = true;
 
 region = 'world';
 rcp = 'all-rcp';
-exposureThreshold = 33;
+exposureThreshold = 30;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -278,7 +278,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
         selGrid = selGrid ./ size(baseData, 4);
         clear curFutureData;
         
-        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        %save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
         
         % loop over scenario 
         for ssp = ssps

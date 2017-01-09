@@ -112,7 +112,8 @@ function [popCount] = countPop(selectionGrid, region, popYears, sspNum, regridde
                             continue;
                         end
                         if inpolygon(sspLat(xlativ(xlat), yloniv(ylon)), sspLon(xlativ(xlat), yloniv(ylon)), latBounds, lonBounds)
-                            popCount(end) = popCount(end) + selectionGrid{3}(i, j)*sspData(xlativ(xlat), yloniv(ylon));
+                            %popCount(end) = popCount(end) + selectionGrid{3}(i, j)*sspData(xlativ(xlat), yloniv(ylon));
+                            popCount(end) = popCount(end) + min(selectionGrid{3}(i, j), 1)*sspData(xlativ(xlat), yloniv(ylon));
                         end
                     end
                 end

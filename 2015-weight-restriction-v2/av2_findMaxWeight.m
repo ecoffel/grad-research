@@ -5,13 +5,14 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
         return;
     end
 
-    f0 = acSurfaces{1};
-    f2 = acSurfaces{2};
-    f4 = acSurfaces{3};
+    % acSurfaces{1} is the aircraft name
+    f0 = acSurfaces{2};
+    f2 = acSurfaces{3};
+    f4 = acSurfaces{4};
     
-    % minimum weight to start search (for 737-800)
-    startingWeight = 140;
-    maxTakeoffWeight = 174;
+    % minimum weight to start search 
+    startingWeight = acSurfaces{1}{2};
+    maxTakeoffWeight = acSurfaces{1}{3};
     
     % select correct surface for elevation
     surf = [];
