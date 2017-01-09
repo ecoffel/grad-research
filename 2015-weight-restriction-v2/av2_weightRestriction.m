@@ -17,12 +17,13 @@ for a = 1:length(airports)
     airportLons(a) = airportLon;
 end
 
-dataset = 'obs';
-baseDir = ['e:/data/' dataset '/output'];
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-%           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+dataset = 'cmip5';
+baseDir = ['d:/data/' dataset '/output'];
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 models = {'access1-0'};
 
 basePeriodYears = 1985:2004;
@@ -30,7 +31,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = '';
+rcp = 'rcp85';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -55,6 +56,10 @@ if strcmp(dataset, 'obs')
 
         wxData{1} = {};
 
+        for a = 1:length(airports)
+            wxData{1}{a} = {airports{a}, []};
+        end
+        
         % now load the obs at the end
         for a = 1:length(airports)
             obsStart(a) = timePeriods{a}(1);
@@ -67,12 +72,10 @@ if strcmp(dataset, 'obs')
 
             % and daily minimums
             curObsMin = loadDailyData(obsTasminDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', airports{a});
-            curObsMin = curObsMin(:, months, :);
+            curObsMin = curObsMin(:, :, :);
             curObsMin = reshape(curObsMin, [size(curObsMin, 1), size(curObsMin, 2)*size(curObsMin, 3)]);
 
             % now interpolate between max and min to generate hourly temps
-
-            wxData{1}{a} = [];
             for y = 1:size(curObsMax, 1)
                 for d = 1:size(curObsMax, 2)
                     % rising temps
@@ -80,7 +83,7 @@ if strcmp(dataset, 'obs')
                     % falling temps
                     down = linspace(curObsMax(y,d), curObsMin(y,d), 13);
                     % chop out the duplicate daily max and min temperatures
-                    wxData{1}{a}(y, d, :) = [up(2:end) down(2:end)];
+                    wxData{1}{a}{2}(y, d, :) = [up(2:end) down(2:end)];
                 end
             end
         end
@@ -114,6 +117,10 @@ else
                 timePeriod = futurePeriodYears;
             end
             
+            for a = 1:length(airports)
+                wxData{1}{a} = {airports{a}, []};
+            end
+            
             for y = timePeriod(1):timePeriod(end)
                 ['year ' num2str(y) '...']
 
@@ -123,37 +130,33 @@ else
                 if nanmean(nanmean(nanmean(nanmean(nanmean(dailyDataMax{3}, 5), 4), 3), 2), 1) > 100
                     dailyDataMax{3} = dailyDataMax{3} - 273.15;
                 end
-                
+
                 if nanmean(nanmean(nanmean(nanmean(nanmean(dailyDataMin{3}, 5), 4), 3), 2), 1) > 100
                     dailyDataMin{3} = dailyDataMin{3} - 273.15;
                 end
-                
-                % select months
-                dailyDataMax{3} = dailyDataMax{3}(:, :, :, months, :);
-                dailyDataMin{3} = dailyDataMin{3}(:, :, :, months, :);
-                
+
                 dailyDataMax{3} = reshape(dailyDataMax{3}, [size(dailyDataMax{3}, 1), size(dailyDataMax{3}, 2), ...
                                                             size(dailyDataMax{3}, 3)*size(dailyDataMax{3}, 4)*size(dailyDataMax{3}, 5)]);
                 dailyDataMin{3} = reshape(dailyDataMin{3}, [size(dailyDataMin{3}, 1), size(dailyDataMin{3}, 2), ...
                                                             size(dailyDataMin{3}, 3)*size(dailyDataMin{3}, 4)*size(dailyDataMin{3}, 5)]);
-                
-                % get gridcell for each airport
+
                 for a = 1:length(airports)    
+
                     [latIndexRange, lonIndexRange] = latLonIndexRange(dailyDataMax, [airportLats(a) airportLats(a)], [airportLons(a) airportLons(a)]);
-                    
+
                     for d = 1:size(dailyDataMax{3}, 3)
                         % rising temps
                         up = linspace(dailyDataMin{3}(latIndexRange, lonIndexRange, d), dailyDataMax{3}(latIndexRange, lonIndexRange, d), 13);
                         % falling temps
                         down = linspace(dailyDataMax{3}(latIndexRange, lonIndexRange, d), dailyDataMin{3}(latIndexRange, lonIndexRange, d), 13);
                         % chop out the duplicate daily max and min temperatures
-                        wxData{m}{a}(y-basePeriodYears(1)+1, d, :) = [up(2:end) down(2:end)];
+                        wxData{m}{a}{2}(y-timePeriod(1)+1, d, :) = [up(2:end) down(2:end)];
                     end
-                    
                 end
-                
+
                 clear dailyDataMax dailyDataMin;
             end
+            
         end
         save(['airport-wx-' dataset '-' rcp '.mat'], 'wxData');
     else
@@ -177,14 +180,18 @@ hours = 11:16;
 ['processing weight restriction...']
 for a = 1:length(airports)
     [airports{a} '...']
-    weightRestriction{a} = [];
-    totalRestriction{a} = [];
+    weightRestriction{a} = {};
+    totalRestriction{a} = {};
     for m = 1:length(models)
+        
+        weightRestriction{a}{m} = [];
+        totalRestriction{a}{m} = [];
+        
         for h = hours
             count = 1;
             for y = 1:size(wxData{m}{a}, 1)
                 for d = 1:size(wxData{m}{a}, 2)
-                    [weightRestriction{a}(h-hours(1)+1, count), totalRestriction{a}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
+                    [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}{2}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
                     count = count+1;
                 end
             end
