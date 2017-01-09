@@ -2,23 +2,22 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-obsAirports = {'PHX', 'LGA', 'DCA', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
+airports = {'PHX', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
 airportRunway = {11500, 7000, 7170, 16000};%, 13000, 12000, 12000, 13000};
 airportElevation = {1135, 23, 14, 5433};%, 680, 96, 127, 9};
 
 airportLats = [];
 airportLons = [];
 
-for a = 1:length(obsAirports)
+aircraft = '777-200';
+
+for a = 1:length(airports)
     [code, airportLat, airportLon] = searchAirportDb(airportDb, 'DCA');
     airportLats(a) = airportLat;
     airportLons(a) = airportLon;
 end
 
-% load observed airport station data or CMIP5
-obsWx = true;
-
-dataset = 'cmip5';
+dataset = 'obs';
 baseDir = ['e:/data/' dataset '/output'];
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 %           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
@@ -57,17 +56,17 @@ if strcmp(dataset, 'obs')
         wxData{1} = {};
 
         % now load the obs at the end
-        for a = 1:length(obsAirports)
+        for a = 1:length(airports)
             obsStart(a) = timePeriods{a}(1);
             obsEnd(a) = timePeriods{a}(end);
 
             % load daily maximum temps
-            curObsMax = loadDailyData(obsTasmaxDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', obsAirports{a});
+            curObsMax = loadDailyData(obsTasmaxDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', airports{a});
             curObsMax = curObsMax(:, months, :);
             curObsMax = reshape(curObsMax, [size(curObsMax, 1), size(curObsMax, 2)*size(curObsMax, 3)]);
 
             % and daily minimums
-            curObsMin = loadDailyData(obsTasminDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', obsAirports{a});
+            curObsMin = loadDailyData(obsTasminDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', airports{a});
             curObsMin = curObsMin(:, months, :);
             curObsMin = reshape(curObsMin, [size(curObsMin, 1), size(curObsMin, 2)*size(curObsMin, 3)]);
 
@@ -94,7 +93,7 @@ else
     
     needToLoad = false;
     
-    if ~exist(['airport-wx-' dataset '.mat'], 'file');
+    if ~exist(['airport-wx-' dataset '-' rcp '.mat'], 'file');
         needToLoad = true;
     end
     
@@ -139,7 +138,7 @@ else
                                                             size(dailyDataMin{3}, 3)*size(dailyDataMin{3}, 4)*size(dailyDataMin{3}, 5)]);
                 
                 % get gridcell for each airport
-                for a = 1:length(obsAirports)    
+                for a = 1:length(airports)    
                     [latIndexRange, lonIndexRange] = latLonIndexRange(dailyDataMax, [airportLats(a) airportLats(a)], [airportLons(a) airportLons(a)]);
                     
                     for d = 1:size(dailyDataMax{3}, 3)
@@ -156,9 +155,9 @@ else
                 clear dailyDataMax dailyDataMin;
             end
         end
-        save(['airport-wx-' dataset '.mat'], 'wxData');
+        save(['airport-wx-' dataset '-' rcp '.mat'], 'wxData');
     else
-        load(['airport-wx-' dataset '.mat']);
+        load(['airport-wx-' dataset '-' rcp '.mat']);
     end
     
 end
@@ -166,6 +165,7 @@ end
 ['loaded wx data...']
 
 weightRestriction = {};
+totalRestriction = {};
 acSurfaces = av2_loadSurfaces();
 
 %figure('Color', [1,1,1]);
@@ -175,15 +175,16 @@ acSurfaces = av2_loadSurfaces();
 hours = 11:16;
 
 ['processing weight restriction...']
-for a = 1:length(obsAirports)
-    [obsAirports{a} '...']
+for a = 1:length(airports)
+    [airports{a} '...']
     weightRestriction{a} = [];
+    totalRestriction{a} = [];
     for m = 1:length(models)
         for h = hours
             count = 1;
             for y = 1:size(wxData{m}{a}, 1)
                 for d = 1:size(wxData{m}{a}, 2)
-                    weightRestriction{a}(h-hours(1)+1, count) = av2_calcWeightRestriction(wxData{m}{a}(y,d,h), airportRunway{a}, airportElevation{a}, '737-800', acSurfaces);
+                    [weightRestriction{a}(h-hours(1)+1, count), totalRestriction{a}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
                     count = count+1;
                 end
             end
@@ -195,7 +196,8 @@ for a = 1:length(obsAirports)
     
 end
 
-save(['wr-' dataset '-' rcp '.mat'], 'weightRestriction');
+save(['wr-' aircraft '-' dataset '-' rcp '.mat'], 'weightRestriction');
+save(['tr-' aircraft '-' dataset '-' rcp '.mat'], 'totalRestriction');
 
 
 
