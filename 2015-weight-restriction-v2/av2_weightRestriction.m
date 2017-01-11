@@ -2,7 +2,8 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-airports = {'PHX', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
+selectedAirports = {'PHX', 'DEN'};
+airports = {'PHX', 'LGA', 'DCA', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
 airportRunway = {11500, 7000, 7170, 16000};%, 13000, 12000, 12000, 13000};
 airportElevation = {1135, 23, 14, 5433};%, 680, 96, 127, 9};
 
@@ -18,13 +19,13 @@ for a = 1:length(airports)
 end
 
 dataset = 'cmip5';
-baseDir = ['d:/data/' dataset '/output'];
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'access1-0'};
+baseDir = ['e:/data/' dataset '/output'];
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0'};
 
 basePeriodYears = 1985:2004;
 futurePeriodYears = 2020:2080;
@@ -39,7 +40,7 @@ tempMinVar = 'tasmin';
 % hourly temperature data, interpolated between observed daily max and min
 wxData = {};
 
-months = 6:9;
+months = 1:12;
 
 if strcmp(dataset, 'obs')
     timePeriods = {1981:2011, 1981:2011, 1981:2011, 1996:2011};
@@ -62,6 +63,7 @@ if strcmp(dataset, 'obs')
         
         % now load the obs at the end
         for a = 1:length(airports)
+            
             obsStart(a) = timePeriods{a}(1);
             obsEnd(a) = timePeriods{a}(end);
 
@@ -171,40 +173,49 @@ weightRestriction = {};
 totalRestriction = {};
 acSurfaces = av2_loadSurfaces();
 
-%figure('Color', [1,1,1]);
-%hold on;
-
-%colors = ['r', 'b', 'g', 'k'];
-hours = 11:16;
+hours = 10:14;
 
 ['processing weight restriction...']
-for a = 1:length(airports)
-    [airports{a} '...']
+for a = 1:length(selectedAirports)
+    
+    aInd = -1;
+    wxInd = -1;
+    for i = 1:length(airports)
+        if strcmp(selectedAirports{a}, airports{i})
+            aInd = i;
+        end
+        
+        if strcmp(wxData{1}{i}{1}, selectedAirports{a})
+            wxInd = i;
+        end
+    end
+    
+    ['processing ' airports{aInd} '...']
+    
     weightRestriction{a} = {};
     totalRestriction{a} = {};
     for m = 1:length(models)
         
-        weightRestriction{a}{m} = [];
-        totalRestriction{a}{m} = [];
+        ['processing ' models{m} '...']
+        
+        weightRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
+        totalRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
         
         for h = hours
             count = 1;
-            for y = 1:size(wxData{m}{a}, 1)
-                for d = 1:size(wxData{m}{a}, 2)
-                    if wxData{m}{a}{2}(y,d,h) < 15
-                        [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = [NaN, NaN];
+            for y = 1:size(wxData{m}{wxInd}{2}, 1)
+                for d = 1:size(wxData{m}{wxInd}{2}, 2)
+                    if wxData{m}{wxInd}{2}(y,d,h) < 30
+                        weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                        totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else
-                        [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}{2}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
+                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count), totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{wxInd}{2}(y,d,h), airportRunway{aInd}, airportElevation{aInd}, aircraft, acSurfaces);
                     end
                     count = count+1;
                 end
             end
         end
     end
-    
-    %s = smooth(weightRestriction{a}(12-hours(1), :), 15);
-    %plot(s, colors(a), 'LineWidth', 2);
-    
 end
 
 save(['wr-' aircraft '-' dataset '-' rcp '.mat'], 'weightRestriction');
