@@ -191,7 +191,11 @@ for a = 1:length(airports)
             count = 1;
             for y = 1:size(wxData{m}{a}, 1)
                 for d = 1:size(wxData{m}{a}, 2)
-                    [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}{2}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
+                    if wxData{m}{a}{2}(y,d,h) < 15
+                        [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = [NaN, NaN];
+                    else
+                        [weightRestriction{a}{m}(h-hours(1)+1, count), totalRestriction{a}{m}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{a}{2}(y,d,h), airportRunway{a}, airportElevation{a}, aircraft, acSurfaces);
+                    end
                     count = count+1;
                 end
             end
