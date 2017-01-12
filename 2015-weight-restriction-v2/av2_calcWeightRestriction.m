@@ -1,8 +1,8 @@
 function [payloadRestriction, totalRestriction] = calcWeightRestriction(temp, runway, elevation, aircraft, acSurfaces)
 
-    ind = 1;
+    ind = -1;
     for a = 1:length(acSurfaces)
-        if strcmp(acSurfaces{1}, aircraft)
+        if strcmp(acSurfaces{a}{1}{1}, aircraft)
             ind = a;
             break;
         end

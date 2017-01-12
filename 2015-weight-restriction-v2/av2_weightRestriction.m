@@ -2,10 +2,10 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'PHX', 'DEN'};
-airports = {'PHX', 'LGA', 'DCA', 'DEN'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
-airportRunway = {11500, 7000, 7170, 16000};%, 13000, 12000, 12000, 13000};
-airportElevation = {1135, 23, 14, 5433};%, 680, 96, 127, 9};
+selectedAirports = {'DXB'};
+airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
+airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147};%, 13000, 12000, 12000, 13000};
+airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
 
 airportLats = [];
 airportLons = [];
@@ -20,19 +20,19 @@ end
 
 dataset = 'cmip5';
 baseDir = ['e:/data/' dataset '/output'];
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% models = {'access1-0'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'gfdl-cm3'};
 
 basePeriodYears = 1985:2004;
 futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'rcp85';
+rcp = 'historical';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -120,7 +120,7 @@ else
             end
             
             for a = 1:length(airports)
-                wxData{1}{a} = {airports{a}, []};
+                wxData{m}{a} = {airports{a}, []};
             end
             
             for y = timePeriod(1):timePeriod(end)
