@@ -9,6 +9,7 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
     f0 = acSurfaces{2};
     f2 = acSurfaces{3};
     f4 = acSurfaces{4};
+    fCutoff = acSurfaces{end};
     
     % minimum weight to start search 
     startingWeight = acSurfaces{1}{2};
@@ -29,6 +30,14 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
     maxWeight = startingWeight;
     recRunway = surf(temp, maxWeight);
     while recRunway < runway && maxWeight <= maxTakeoffWeight
+        
+        if length(fCutoff) > 0
+            % if we are above the cutoff line
+            if recRunway >= fCutoff(maxWeight)
+                break;
+            end
+        end
+        
         maxWeight = maxWeight + 1;
         recRunway = surf(temp, maxWeight);
     end

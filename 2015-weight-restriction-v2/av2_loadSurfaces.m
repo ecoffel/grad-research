@@ -1,10 +1,22 @@
 function [acSurfaces] = loadAvSurfaces()
 
     % aircraft name, min weight, max take off weight
-    aircraft = {{'737-800', 140, 174}, {'777-200', 440, 545}, {'787', 420, 502}};
+    aircraft = {{'737-800', 140, 174}, {'777-200', 440, 545}, {'777-300', 480, 660}, {'787', 420, 502}};
 
     for a = 1:length(aircraft)
         data = csvread(['performance-data-' aircraft{a}{1} '.csv'], 1, 0);
+        
+        cutoffData = [];
+        
+        % if cutoff data is available
+        if size(data, 2) == 6
+            % select data that specifies cutoff line
+            cutoffData = data(:, 5:6);
+            % trim it (not as many rows as real data)
+            cutoffData(find(cutoffData(:, 1) == 0), :) = [];
+        end
+       
+        % select performance data
         data = data(:, 1:4);
 
         % elevation 0
@@ -20,18 +32,25 @@ function [acSurfaces] = loadAvSurfaces()
         f0 = fit([data(ind0, 1), data(ind0, 2)], data(ind0, 4), 'poly32', 'Normalize','on');
         
         if length(ind2) > 10
-            f2 = fit([data(ind2, 1), data(ind2, 2)], data(ind2, 4), 'poly32');
+            f2 = fit([data(ind2, 1), data(ind2, 2)], data(ind2, 4), 'poly32', 'Normalize','on');
         else
-            f2 = NaN;
+            f2 = [];
         end
         
         if length(ind4) > 10
-            f4 = fit([data(ind4, 1), data(ind4, 2)], data(ind4, 4), 'poly32');
+            f4 = fit([data(ind4, 1), data(ind4, 2)], data(ind4, 4), 'poly32', 'Normalize','on');
         else
-            f4 = NaN;
+            f4 = [];
         end
 
-        acSurfaces{a} = {aircraft{a}, f0, f2, f4};
+        % make cutoff line fit
+        if length(cutoffData) > 2
+            fCutoff = fit(cutoffData(:,1), cutoffData(:,2), 'poly1', 'Normalize','on');
+        else
+            fCutoff = [];
+        end
+        
+        acSurfaces{a} = {aircraft{a}, f0, f2, f4, fCutoff};
 
         % surfaces take in (temp, weight in thousands of pounds)
     end

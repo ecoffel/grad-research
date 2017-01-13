@@ -1,4 +1,4 @@
-aircraft = '737-800';
+aircraft = '787';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp85'};
 
@@ -14,11 +14,11 @@ wrModelRcp85 = weightRestriction;
 trModelRcp85 = totalRestriction;
 
 % load observations
-load(['wr-' aircraft '-obs-.mat']);
-wrObs = weightRestriction;
+% load(['wr-' aircraft '-obs-.mat']);
+% wrObs = weightRestriction;
 
-airports = {'PHX', 'LGA', 'DCA', 'DEN'};
-aInds = 1:4;
+airports = {'DXB'};
+aInds = 1:1;
 
 % for day change bar plot
 figBar = figure('Color', [1, 1, 1]);
@@ -43,16 +43,16 @@ for aInd = aInds
     for m = 1:length(wrModelHistorical{aInd})
         
         % take data for days with restriction > 0 for box plot
-        boxData = wrModelHistorical{aInd}{m}(2, :);
+        boxData = wrModelHistorical{aInd}{m}{3}(2, :);
         boxData = boxData(boxData > 0);
         
         boxPlotData = [boxPlotData boxData];
         boxPlotGroup = [boxPlotGroup ones(size(boxData))];
 
         % number of days in current model above freqThresh
-        freq(1, m) = length(find(wrModelHistorical{aInd}{m}(2, :) > freqThresh)) / 20.0;
+        freq(1, m) = length(find(wrModelHistorical{aInd}{m}{3}(2, :) > freqThresh)) / 20.0;
 
-        data{1}{m} = wrModelHistorical{aInd}{m}(2, :)';
+        data{1}{m} = wrModelHistorical{aInd}{m}{3}(2, :)';
     end
 
     % divide future up into 20 year segments
@@ -64,10 +64,10 @@ for aInd = aInds
 
         for m = 1:length(wrModelRcp85{aInd})
             % find number of days in this model's year ( there are 61 years total )
-            numDays = length(wrModelRcp85{aInd}{m}(2, :)) / 61;
+            numDays = length(wrModelRcp85{aInd}{m}{3}(2, :)) / 61;
 
             % WR data for each period
-            curData = wrModelRcp85{aInd}{m}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
+            curData = wrModelRcp85{aInd}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
 
             % number of days in current model above freqThresh
             freq(1+i, m) = length(find(curData > freqThresh)) / 20.0;
