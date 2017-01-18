@@ -2,7 +2,7 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'DXB'};
+selectedAirports = {'PHX',  'LGA', 'DCA', 'MDW'};
 airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
 airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147};%, 13000, 12000, 12000, 13000};
 airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
@@ -10,15 +10,15 @@ airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
 airportLats = [];
 airportLons = [];
 
-aircraft = '777-200';
+aircraft = '737-800';
 
 for a = 1:length(airports)
-    [code, airportLat, airportLon] = searchAirportDb(airportDb, 'DCA');
+    [code, airportLat, airportLon] = searchAirportDb(airportDb, airports{a});
     airportLats(a) = airportLat;
     airportLons(a) = airportLon;
 end
 
-dataset = 'cmip5';
+dataset = 'obs';
 baseDir = ['e:/data/' dataset '/output'];
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...

@@ -1,35 +1,85 @@
-aircraft = '787';
+aircraft = '737-800';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp85'};
 
 % load modeled data
-load(['wr-' aircraft '-' dataset '-historical.mat']);
-load(['tr-' aircraft '-' dataset '-historical.mat']);
-wrModelHistorical = weightRestriction;
-trModelHistorical = totalRestriction;
+if ismember('historical', rcps)
+    load(['wr-' aircraft '-' dataset '-historical.mat']);
+    load(['tr-' aircraft '-' dataset '-historical.mat']);
+    wrModelHistorical = weightRestriction;
+    trModelHistorical = totalRestriction;
+    
+    historicalAirports = {};
+    for a = 1:length(wrModelHistorical)
+        historicalAirports{end+1} = wrModelHistorical{a}{1}{1};
+    end
+end
 
-load(['wr-' aircraft '-' dataset '-rcp85.mat']);
-load(['tr-' aircraft '-' dataset '-rcp85.mat']);
-wrModelRcp85 = weightRestriction;
-trModelRcp85 = totalRestriction;
+if ismember('rcp85', rcps)
+    load(['wr-' aircraft '-' dataset '-rcp85.mat']);
+    load(['tr-' aircraft '-' dataset '-rcp85.mat']);
+    wrModelRcp85 = weightRestriction;
+    trModelRcp85 = totalRestriction;
+    
+    rcp85Airports = {};
+    for a = 1:length(wrModelRcp85)
+        rcp85Airports{end+1} = wrModelRcp85{a}{1}{1};
+    end
+end
+
+airports = {};
+for a = 1:length(historicalAirports)
+    if ismember(historicalAirports{a}, rcp85Airports)
+        airports{end+1} = historicalAirports{a};
+    end
+end
 
 % load observations
 % load(['wr-' aircraft '-obs-.mat']);
 % wrObs = weightRestriction;
 
-airports = {'DXB'};
-aInds = 1:1;
+% find which airports are in both the historical and future dataset
 
 % for day change bar plot
 figBar = figure('Color', [1, 1, 1]);
+axis square;
 
 % box plot showing WR stats
 figBox = figure('Color', [1, 1, 1]);
+axis square;
 
 % for frequency plot showing days above a WR threshold
 figFreq = figure('Color', [1, 1, 1]);
+axis square;
 
-for aInd = aInds
+if strcmp(aircraft, '777-300')
+    figBoxYLim = [0 200];
+    figFreqYLim = [-50 200];
+    freqThresh = 60;
+    
+    figBarBins = 0:10:100;
+    figBarXLim = [-5 105];
+    figBarYLim = [-75 75];
+elseif strcmp(aircraft, '737-800')
+    figBoxYLim = [0 50];
+    figFreqYLim = [-10 150];
+    freqThresh = 10;
+    
+    figBarBins = 0:3:24;
+    figBarXLim = [-5 25];
+    figBarYLim = [-50 50];
+elseif strcmp(aircraft, '787')
+    figBoxYLim = [0 80];
+    figFreqYLim = [-40 60];
+    freqThresh = 20;
+    
+    figBarBins = 0:5:60;
+    figBarXLim = [-5 65];
+    figBarYLim = [-60 60];
+end
+
+for aInd = 1:length(airports)
+    
     data = [];
 
     boxPlotData = [];
@@ -37,22 +87,35 @@ for aInd = aInds
 
     % number of days per year above restriction threshold
     freq = [];
-    freqThresh = 8;
-
+    
+    aIndHistorical = -1;
+    for a = 1:length(wrModelHistorical)
+        if strcmp(airports{aInd}, wrModelHistorical{a}{1}{1})
+            aIndHistorical = a;
+        end
+    end
+    
+    aIndRcp85 = -1;
+    for a = 1:length(wrModelRcp85)
+        if strcmp(airports{aInd}, wrModelRcp85{a}{1}{1})
+            aIndRcp85 = a;
+        end
+    end
+    
     % combine all models for current airport
-    for m = 1:length(wrModelHistorical{aInd})
+    for m = 1:length(wrModelHistorical{aIndHistorical})
         
         % take data for days with restriction > 0 for box plot
-        boxData = wrModelHistorical{aInd}{m}{3}(2, :);
+        boxData = wrModelHistorical{aIndHistorical}{m}{3}(2, :);
         boxData = boxData(boxData > 0);
         
         boxPlotData = [boxPlotData boxData];
         boxPlotGroup = [boxPlotGroup ones(size(boxData))];
 
         % number of days in current model above freqThresh
-        freq(1, m) = length(find(wrModelHistorical{aInd}{m}{3}(2, :) > freqThresh)) / 20.0;
+        freq(1, m) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(2, :) > freqThresh)) / 20.0;
 
-        data{1}{m} = wrModelHistorical{aInd}{m}{3}(2, :)';
+        data{1}{m} = wrModelHistorical{aIndHistorical}{m}{3}(2, :)';
     end
 
     % divide future up into 20 year segments
@@ -62,12 +125,12 @@ for aInd = aInds
         G_tmp = [];
         data{1+i} = {};
 
-        for m = 1:length(wrModelRcp85{aInd})
+        for m = 1:length(wrModelRcp85{aIndRcp85})
             % find number of days in this model's year ( there are 61 years total )
-            numDays = length(wrModelRcp85{aInd}{m}{3}(2, :)) / 61;
+            numDays = length(wrModelRcp85{aIndRcp85}{m}{3}(2, :)) / 61;
 
             % WR data for each period
-            curData = wrModelRcp85{aInd}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
+            curData = wrModelRcp85{aIndRcp85}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
 
             % number of days in current model above freqThresh
             freq(1+i, m) = length(find(curData > freqThresh)) / 20.0;
@@ -96,9 +159,15 @@ for aInd = aInds
     figure(figBox);
     subplot(2, 2, aInd);
     hold on;
-    boxplot(boxPlotData, boxPlotGroup, 'Labels', {'1985-2005', '2020-2040', '2040-2060', '2060-2080'});
+    b = boxplot(boxPlotData, boxPlotGroup, 'Labels', {'1985-2005', '2020-2040', '2040-2060', '2060-2080'});
     title(airports{aInd}, 'FontSize', 30);
-    ylim([0 30]);
+    set(findobj(gca, 'Type', 'text'), 'FontSize', 20, 'VerticalAlignment', 'middle');
+    set(gca, 'FontSize', 20);
+    ylabel('Payload restriction (1000s lbs)', 'FontSize', 20);
+    for ih = 1:length(b)
+        set(b(ih,:), 'LineWidth', 2); % Set the line width of the Box outlines here
+    end
+    ylim(figBoxYLim);
     
     % 
     % fig = figure('Color', [1,1,1]);
@@ -120,9 +189,10 @@ for aInd = aInds
     set(gca, 'XTick', [1, 2, 3, 4]);
     set(gca, 'XTickLabel', {'1985-2004', '2020-2040', '2040-2060', '2060-2080'});
     title(airports{aInd}, 'FontSize', 30);
-    ylim([0 100]);
+    ylim(figFreqYLim);
 
-    bins = [0 3 6 9 12 15 18 21 24];
+    %bins = [0 3 6 9 12 15 18 21 24];
+    bins = figBarBins;
 
     histData = [];
 
@@ -137,7 +207,6 @@ for aInd = aInds
         end
     end
 
-
     % plot the change in the number of days in each weight restriction bin
     y2 = squeeze(histData(4, :, :)) - squeeze(histData(1, :, :));
     err2 = nanstd(y2, [], 1);
@@ -147,14 +216,26 @@ for aInd = aInds
     [b2, be2] = barwitherr(err2, bins, squeeze(nanmean(y2, 1)));
     hold on;
     title(airports{aInd}, 'FontSize', 30);
+    set(gca, 'FontSize', 20);
     xlabel('Payload restriction (1000s lbs)', 'FontSize', 30);
     ylabel('Change in days per year', 'FontSize', 30);
-    set(gca, 'FontSize', 30);
-    ylim([-40 40]);
-    xlim([-2 26]);
+    ylim(figBarYLim);
+    xlim(figBarXLim);
     set(b2, 'FaceColor', [61/255.0, 155/255.0, 237/255.0], 'EdgeColor', 'k');
 end
 
+figure(figBar);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['wr-bar-' rcps{end} '-' aircraft '.png'], '-m3');
+
+figure(figFreq);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['wr-freq-' rcps{end} '-' aircraft '.png'], '-m3');
+
+figure(figBox);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['wr-box-' rcps{end} '-' aircraft '.png'], '-m3');
+close all;
 
 
 

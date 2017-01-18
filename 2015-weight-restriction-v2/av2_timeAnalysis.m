@@ -1,4 +1,4 @@
-aircraft = '787';
+aircraft = '777-300';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp85'};
 
@@ -8,10 +8,10 @@ load(['tr-' aircraft '-' dataset '-historical.mat']);
 wrModelHistorical = weightRestriction;
 trModelHistorical = totalRestriction;
 
-% load(['wr-' aircraft '-' dataset '-rcp85.mat']);
-% load(['tr-' aircraft '-' dataset '-rcp85.mat']);
-% wrModelRcp85 = weightRestriction;
-% trModelRcp85 = totalRestriction;
+load(['wr-' aircraft '-' dataset '-rcp85.mat']);
+load(['tr-' aircraft '-' dataset '-rcp85.mat']);
+wrModelRcp85 = weightRestriction;
+trModelRcp85 = totalRestriction;
 % 
 % % load observations
 % load(['wr-' aircraft '-obs-.mat']);
