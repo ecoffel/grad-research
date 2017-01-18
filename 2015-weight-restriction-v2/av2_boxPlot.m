@@ -1,4 +1,4 @@
-aircraft = '737-800';
+aircraft = '777-300';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp85'};
 
