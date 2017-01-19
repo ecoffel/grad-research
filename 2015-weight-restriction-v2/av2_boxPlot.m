@@ -2,6 +2,8 @@ aircraft = '777-300';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp85'};
 
+useSubplots = false;
+
 % load modeled data
 if ismember('historical', rcps)
     load(['wr-' aircraft '-' dataset '-historical.mat']);
@@ -40,17 +42,16 @@ end
 
 % find which airports are in both the historical and future dataset
 
-% for day change bar plot
-figBar = figure('Color', [1, 1, 1]);
-axis square;
+if useSubplots
+    % for day change bar plot
+    figBar = figure('Color', [1, 1, 1]);
 
-% box plot showing WR stats
-figBox = figure('Color', [1, 1, 1]);
-axis square;
+    % box plot showing WR stats
+    figBox = figure('Color', [1, 1, 1]);
 
-% for frequency plot showing days above a WR threshold
-figFreq = figure('Color', [1, 1, 1]);
-axis square;
+    % for frequency plot showing days above a WR threshold
+    figFreq = figure('Color', [1, 1, 1]);
+end
 
 if strcmp(aircraft, '777-300')
     figBoxYLim = [0 200];
@@ -70,8 +71,8 @@ elseif strcmp(aircraft, '737-800')
     figBarYLim = [-50 50];
 elseif strcmp(aircraft, '787')
     figBoxYLim = [0 80];
-    figFreqYLim = [-40 60];
-    freqThresh = 20;
+    figFreqYLim = [-40 100];
+    freqThresh = 40;
     
     figBarBins = 0:5:60;
     figBarXLim = [-5 65];
@@ -156,8 +157,14 @@ for aInd = 1:length(airports)
 
     % plot the mean boxplot for each 20 year period (across all models),
     % only showing data for days with a > 0 weight restriction
-    figure(figBox);
-    subplot(2, 2, aInd);
+    
+    
+    if useSubplots
+        figure(figBox);
+        subplot(2, 2, aInd);
+    else
+        figure('Color', [1,1,1]);
+    end
     hold on;
     b = boxplot(boxPlotData, boxPlotGroup, 'Labels', {'1985-2005', '2020-2040', '2040-2060', '2060-2080'});
     title(airports{aInd}, 'FontSize', 30);
@@ -168,6 +175,8 @@ for aInd = 1:length(airports)
         set(b(ih,:), 'LineWidth', 2); % Set the line width of the Box outlines here
     end
     ylim(figBoxYLim);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-box-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
     
     % 
     % fig = figure('Color', [1,1,1]);
@@ -178,8 +187,12 @@ for aInd = 1:length(airports)
     % % set(gca, 'XTick', [1, 2, 3, 4]);
     % % set(gca, 'XTickLabel', {'1985-2004', '2020-2040', '2040-2060', '2060-2080'});
     % 
-    figure(figFreq);
-    subplot(2, 2, aInd);
+    if useSubplots
+        figure(figFreq);
+        subplot(2, 2, aInd);
+    else
+        figure('Color', [1,1,1]);
+    end
     p1 = shadedErrorBar([1, 2, 3, 4], freq(:, 1)', std(freq, [], 2)', 'o', 1);
     set(p1.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
     set(p1.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
@@ -190,6 +203,8 @@ for aInd = 1:length(airports)
     set(gca, 'XTickLabel', {'1985-2004', '2020-2040', '2040-2060', '2060-2080'});
     title(airports{aInd}, 'FontSize', 30);
     ylim(figFreqYLim);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-freq-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
 
     %bins = [0 3 6 9 12 15 18 21 24];
     bins = figBarBins;
@@ -211,8 +226,12 @@ for aInd = 1:length(airports)
     y2 = squeeze(histData(4, :, :)) - squeeze(histData(1, :, :));
     err2 = nanstd(y2, [], 1);
 
-    figure(figBar);
-    subplot(2, 2, aInd);
+    if useSubplots
+        figure(figBar);
+        subplot(2, 2, aInd);
+    else
+        figure('Color', [1,1,1]);
+    end
     [b2, be2] = barwitherr(err2, bins, squeeze(nanmean(y2, 1)));
     hold on;
     title(airports{aInd}, 'FontSize', 30);
@@ -222,19 +241,25 @@ for aInd = 1:length(airports)
     ylim(figBarYLim);
     xlim(figBarXLim);
     set(b2, 'FaceColor', [61/255.0, 155/255.0, 237/255.0], 'EdgeColor', 'k');
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-bar-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
+    
+    close all;
 end
 
-figure(figBar);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['wr-bar-' rcps{end} '-' aircraft '.png'], '-m3');
+if useSubplots
+    figure(figBar);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-bar-' rcps{end} '-' aircraft '.png'], '-m3');
 
-figure(figFreq);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['wr-freq-' rcps{end} '-' aircraft '.png'], '-m3');
+    figure(figFreq);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-freq-' rcps{end} '-' aircraft '.png'], '-m3');
 
-figure(figBox);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['wr-box-' rcps{end} '-' aircraft '.png'], '-m3');
+    figure(figBox);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['wr-box-' rcps{end} '-' aircraft '.png'], '-m3');
+end
 close all;
 
 
