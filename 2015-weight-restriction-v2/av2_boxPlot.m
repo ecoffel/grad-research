@@ -338,20 +338,6 @@ for aInd = 1:length(airports)
     close all;
 end
 
-if useSubplots
-%     figure(figBar);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-bar-' rcps{end} '-' aircraft '.png'], '-m3');
-% 
-%     figure(figFreq);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-freq-' rcps{end} '-' aircraft '.png'], '-m3');
-% 
-%     figure(figBox);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-box-' rcps{end} '-' aircraft '.png'], '-m3');
-end
-close all;
 
 
 
