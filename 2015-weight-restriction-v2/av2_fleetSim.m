@@ -1,11 +1,11 @@
 % simulate a fleet of flights departing at different weight distributions
 % within the simulated WR period (daily max temp +/ 2 hours)
 
-aircraft = '737-800';
+aircraft = '777-300';
 dataset = 'cmip5';
-rcps = {'historical', 'rcp85'};
+rcps = {'historical', 'rcp45', 'rcp85'};
 
-selectedAirports = {'LGA', 'DCA', 'MDW'};
+selectedAirports = {'DEN', 'DXB'};
 
 trData = {};
 wrData = {};
@@ -69,7 +69,7 @@ N = 10000;
 
 % normal distibution parameters
 if strcmp(aircraft, '777-300')
-    mu = 600;
+    mu = 570;
     sigma = 100;
     maxWeight = 660;
 elseif strcmp(aircraft, '737-800')
