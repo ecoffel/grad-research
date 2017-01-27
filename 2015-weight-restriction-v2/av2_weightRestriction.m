@@ -2,7 +2,7 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'PHX',  'LGA', 'DCA', 'MDW'};
+selectedAirports = {'DXB'};
 airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
 airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147};%, 13000, 12000, 12000, 13000};
 airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
@@ -10,7 +10,9 @@ airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
 airportLats = [];
 airportLons = [];
 
-aircraft = '737-800';
+aircraft = '777-300';
+
+wxBaseDir = '2015-weight-restriction-v2\airport-wx\';
 
 for a = 1:length(airports)
     [code, airportLat, airportLon] = searchAirportDb(airportDb, airports{a});
@@ -18,7 +20,7 @@ for a = 1:length(airports)
     airportLons(a) = airportLon;
 end
 
-dataset = 'obs';
+dataset = 'cmip5';
 baseDir = ['e:/data/' dataset '/output'];
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -90,16 +92,21 @@ if strcmp(dataset, 'obs')
             end
         end
         save(['airport-wx-obs.mat'], 'wxData');
-    else
-        load(['airport-wx-obs.mat']);
+        
+        % split the large wx file into one per airport
+        av2_splitWx(['airport-wx-obs'], wxData);
     end
 % if obsWx is false, load model data    
 else
     
     needToLoad = false;
     
-    if ~exist(['airport-wx-' dataset '-' rcp '.mat'], 'file');
-        needToLoad = true;
+    % check if we have all th needed wx files for each selected airport
+    for a = 1:length(selectedAirports)
+        if ~exist([wxBaseDir 'airport-wx-' dataset '-' rcp '-' selectedAirports{a} '.mat'], 'file');
+            needToLoad = true;
+            ['weather at ' selectedAirports{a} ' missing']
+        end
     end
     
     if needToLoad
@@ -161,8 +168,9 @@ else
             
         end
         save(['airport-wx-' dataset '-' rcp '.mat'], 'wxData');
-    else
-        load(['airport-wx-' dataset '-' rcp '.mat']);
+        
+        % split the large wx file into one per airport
+        av2_splitWx(['airport-wx-cmip5-' rcp], wxData);
     end
     
 end
@@ -178,15 +186,13 @@ hours = 10:14;
 ['processing weight restriction...']
 for a = 1:length(selectedAirports)
     
+    % load weather for current airport - loaded as wxData
+    load([wxBaseDir 'airport-wx-cmip5-' rcp '-' selectedAirports{a}]);
+    
     aInd = -1;
-    wxInd = -1;
     for i = 1:length(airports)
         if strcmp(selectedAirports{a}, airports{i})
             aInd = i;
-        end
-        
-        if strcmp(wxData{1}{i}{1}, selectedAirports{a})
-            wxInd = i;
         end
     end
     
@@ -203,19 +209,21 @@ for a = 1:length(selectedAirports)
         
         for h = hours
             count = 1;
-            for y = 1:size(wxData{m}{wxInd}{2}, 1)
-                for d = 1:size(wxData{m}{wxInd}{2}, 2)
-                    if wxData{m}{wxInd}{2}(y,d,h) < 30
+            for y = 1:size(wxData{m}{2}, 1)
+                for d = 1:size(wxData{m}{2}, 2)
+                    if wxData{m}{2}(y,d,h) < 30
                         weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                         totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else
-                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count), totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{wxInd}{2}(y,d,h), airportRunway{aInd}, airportElevation{aInd}, aircraft, acSurfaces);
+                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count), totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{2}(y,d,h), airportRunway{aInd}, airportElevation{aInd}, aircraft, acSurfaces);
                     end
                     count = count+1;
                 end
             end
         end
     end
+    
+    clear wxData;
 end
 
 save(['wr-' aircraft '-' dataset '-' rcp '.mat'], 'weightRestriction');
