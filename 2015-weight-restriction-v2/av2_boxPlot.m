@@ -1,8 +1,11 @@
 aircraft = '777-300';
 dataset = 'cmip5';
-rcps = {'historical', 'rcp85'};
+rcps = {'historical', 'rcp45', 'rcp85'};
 
 useSubplots = true;
+
+trData = {};
+wrData = {};
 
 % load modeled data
 if ismember('historical', rcps)
@@ -11,9 +14,27 @@ if ismember('historical', rcps)
     wrModelHistorical = weightRestriction;
     trModelHistorical = totalRestriction;
     
+    trData{end+1} = trModelHistorical;
+    wrData{end+1} = wrModelHistorical;
+    
     historicalAirports = {};
     for a = 1:length(wrModelHistorical)
         historicalAirports{end+1} = wrModelHistorical{a}{1}{1};
+    end
+end
+
+if ismember('rcp45', rcps)
+    load(['wr-' aircraft '-' dataset '-rcp45.mat']);
+    load(['tr-' aircraft '-' dataset '-rcp45.mat']);
+    wrModelRcp45 = weightRestriction;
+    trModelRcp45 = totalRestriction;
+    
+    trData{end+1} = trModelRcp45;
+    wrData{end+1} = wrModelRcp45;
+    
+    rcp45Airports = {};
+    for a = 1:length(wrModelRcp45)
+        rcp45Airports{end+1} = wrModelRcp45{a}{1}{1};
     end
 end
 
@@ -22,6 +43,9 @@ if ismember('rcp85', rcps)
     load(['tr-' aircraft '-' dataset '-rcp85.mat']);
     wrModelRcp85 = weightRestriction;
     trModelRcp85 = totalRestriction;
+    
+    trData{end+1} = trModelRcp85;
+    wrData{end+1} = wrModelRcp85;
     
     rcp85Airports = {};
     for a = 1:length(wrModelRcp85)
@@ -55,7 +79,7 @@ end
 
 if strcmp(aircraft, '777-300')
     figBoxYLim = [0 200];
-    figFreqYLim = [-10 100];
+    figFreqYLim = [-10 250];
     freqThresh = 45;
     
     figBarBins = 0:10:100;
@@ -92,17 +116,13 @@ for aInd = 1:length(airports)
     % number of days per year above restriction threshold
     freq = [];
     
+    % get the historical data from the cell array
+    wrModelHistorical = wrData{1};
+    
     aIndHistorical = -1;
     for a = 1:length(wrModelHistorical)
         if strcmp(airports{aInd}, wrModelHistorical{a}{1}{1})
             aIndHistorical = a;
-        end
-    end
-    
-    aIndRcp85 = -1;
-    for a = 1:length(wrModelRcp85)
-        if strcmp(airports{aInd}, wrModelRcp85{a}{1}{1})
-            aIndRcp85 = a;
         end
     end
     
@@ -116,12 +136,14 @@ for aInd = 1:length(airports)
         boxPlotData = [boxPlotData boxData];
         boxPlotGroup = [boxPlotGroup ones(size(boxData))];
 
-        % number of days in current model above freqThresh
+        % number of days in current model above Thresh
         freq(1, m) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(2, :) > freqThresh)) / 20.0;
 
         data{1}{m} = wrModelHistorical{aIndHistorical}{m}{3}(2, :)';
     end
 
+    % loop over future datasets
+    
     % divide future up into 20 year segments
     for i = 1:3
 
@@ -129,23 +151,50 @@ for aInd = 1:length(airports)
         G_tmp = [];
         data{1+i} = {};
 
-        for m = 1:length(wrModelRcp85{aIndRcp85})
-            % find number of days in this model's year ( there are 61 years total )
-            numDays = length(wrModelRcp85{aIndRcp85}{m}{3}(2, :)) / 61;
+        % initialize list for each model
+        for m = 1:length(wrModelFuture{aIndFuture})
+            data{1+i}{m} = [];
+        end
+        
+        % loop over RCPs
+        for r = 2:length(wrData)
+        
+            wrModelFuture = wrData{r};
+            
+            aIndFuture = -1;
+            for a = 1:length(wrModelFuture)
+                if strcmp(airports{aInd}, wrModelFuture{a}{1}{1})
+                    aIndFuture = a;
+                end
+            end
+            
+            % loop over all models
+            for m = 1:length(wrModelFuture{aIndFuture})
+            
+                % find number of days in this model's year ( there are 61 years total )
+                numDays = length(wrModelFuture{aIndFuture}{m}{3}(2, :)) / 61;
 
-            % WR data for each period
-            curData = wrModelRcp85{aIndRcp85}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
+                % WR data for each period
+                curData = wrModelFuture{aIndFuture}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
 
-            % number of days in current model above freqThresh
-            freq(1+i, m) = length(find(curData > freqThresh)) / 20.0;
+                % number of days in current model above freqThresh
+                if r > 2
+                    % if we are on a second future scenario, average current
+                    % freq with existing
+                    freq(1+i, m) = nanmean([freq(1+i, m) length(find(curData > freqThresh)) / 20.0]);
+                else
+                    % if we are on first future scenario, just set freq
+                    freq(1+i, m) = length(find(curData > freqThresh)) / 20.0;
+                end
 
-            % add to grouped data matrix for boxplots
-            boxData = curData(curData > 0);
-            G_tmp = [G_tmp m .* ones(1, length(boxData))];
-            C_tmp = [C_tmp boxData];
+                % add to grouped data matrix for boxplots
+                boxData = curData(curData > 0);
+                G_tmp = [G_tmp m .* ones(1, length(boxData))];
+                C_tmp = [C_tmp boxData];
 
-            % add to normal matrix for hist
-            data{1+i}{m} = curData';
+                % add to normal matrix for hist
+                data{1+i}{m} = [data{1+i}{m}; curData'];
+            end
         end
 
         boxPlotGroup = [boxPlotGroup (i+1) .* ones(size(C_tmp))];
@@ -236,12 +285,14 @@ for aInd = 1:length(airports)
     histData = [];
 
     for m = 1:length(data{1})
+        % historical data
         h = hist(data{1}{m}, bins) ./ 20;
         histData(1, m, :) = h;
 
-        % rcp85
+        % future scenarios
         for i = 1:3
-            h = hist(data{i+1}{m}, bins) ./ 20;
+            % divide by the number of future scenarios * 20
+            h = hist(data{i+1}{m}, bins) ./ (20*(length(wrData)-1));
             histData(1+i, m, :) = h;
         end
     end
@@ -269,33 +320,24 @@ for aInd = 1:length(airports)
     
     set(gca, 'XTick', barXTick);
     
+    rcpStr = '';
+    for r = 2:length(rcps)
+        rcpStr = [rcpStr rcps{r} '-'];
+    end
+    
     if ~useSubplots
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['wr-bar-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
+        export_fig(['wr-bar-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m1');
     end
     
     if useSubplots
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['wr-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
+        export_fig(['wr-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m1');
     end
     
     close all;
 end
 
-if useSubplots
-%     figure(figBar);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-bar-' rcps{end} '-' aircraft '.png'], '-m3');
-% 
-%     figure(figFreq);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-freq-' rcps{end} '-' aircraft '.png'], '-m3');
-% 
-%     figure(figBox);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['wr-box-' rcps{end} '-' aircraft '.png'], '-m3');
-end
-close all;
 
 
 
