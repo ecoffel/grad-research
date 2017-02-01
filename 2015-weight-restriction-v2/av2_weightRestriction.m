@@ -2,10 +2,10 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'PHX',  'LGA', 'DCA', 'MDW'};
-airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB'};%, 'ORD', 'IAH', 'LAX', 'MIA'};
-airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147};%, 13000, 12000, 12000, 13000};
-airportElevation =  {1135,  23,     14,    5433,  650,  62};%, 680, 96, 127, 9};
+selectedAirports = {'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147,  14500, 11100, 12000, 13000, 13000, 12400, 12800};
+airportElevation =  {1135,  23,     14,    5433,  650,  62,     12,    120,   95,    7,     680,   1018,  83};
 
 airportLats = [];
 airportLons = [];
@@ -18,21 +18,21 @@ for a = 1:length(airports)
     airportLons(a) = airportLon;
 end
 
-dataset = 'obs';
+dataset = 'cmip5';
 baseDir = ['e:/data/' dataset '/output'];
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'access1-0', 'gfdl-cm3'};
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'gfdl-cm3'};
 
 basePeriodYears = 1985:2004;
 futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'historical';
+rcp = 'rcp85';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -218,8 +218,8 @@ for a = 1:length(selectedAirports)
     end
 end
 
-save(['wr-' aircraft '-' dataset '-' rcp '.mat'], 'weightRestriction');
-save(['tr-' aircraft '-' dataset '-' rcp '.mat'], 'totalRestriction');
+save(['wr-' aircraft '-' dataset '-' rcp '-new.mat'], 'weightRestriction');
+save(['tr-' aircraft '-' dataset '-' rcp '-new.mat'], 'totalRestriction');
 
 
 
