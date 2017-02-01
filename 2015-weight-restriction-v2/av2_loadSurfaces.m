@@ -1,7 +1,8 @@
 function [acSurfaces] = loadAvSurfaces()
 
     % aircraft name, min weight, max take off weight
-    aircraft = {{'737-800', 140, 174}, {'777-200', 440, 545}, {'777-300', 480, 660}, {'787', 420, 502}};
+    aircraft = {{'737-800', 140, 174}, {'777-200', 440, 545}, {'777-300', 480, 660}, {'787', 420, 502}, ...
+                {'a320', 100, 188}};
 
     for a = 1:length(aircraft)
         data = csvread(['performance-data-' aircraft{a}{1} '.csv'], 1, 0);

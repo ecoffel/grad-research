@@ -3,7 +3,7 @@ f = av2_loadSurfaces();
 figure('Color', [1,1,1]);
 %hold on;
 
-aircraft = '737-800';
+aircraft = 'a320';
 surface = [];
 
 if strcmp(aircraft, '787')
@@ -11,7 +11,7 @@ if strcmp(aircraft, '787')
     temp2 = 50;
     weight1 = 420;
     weight2 = 502;
-    surface = f{2}{2};
+    surface = f{4}{2};
 elseif strcmp(aircraft, '737-800')
     temp1 = 15;
     temp2 = 50;
@@ -24,6 +24,12 @@ elseif strcmp(aircraft, '777-300')
     weight1 = 460;
     weight2 = 660;
     surface = f{3}{2};
+elseif strcmp(aircraft, 'a320')
+    temp1 = 15;
+    temp2 = 54;
+    weight1 = 100;
+    weight2 = 188;
+    surface = f{5}{2};
 end
 x = linspace(temp1, temp2, 50);
 y = linspace(weight1, weight2, 50);
