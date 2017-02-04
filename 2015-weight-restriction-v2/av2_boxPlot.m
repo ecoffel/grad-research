@@ -80,7 +80,11 @@ end
 if strcmp(aircraft, '777-300')
     figBoxYLim = [0 200];
     figFreqYLim = [-10 250];
-    freqThresh = 45;
+    
+    % the weight threshold to consider for the frequency of exceedance
+    % plot. If -1, it will auto adjust to the level with the most frequency
+    % change
+    freqThresh = -1;
     
     figBarBins = 0:10:100;
     barXTick = 0:20:100;
@@ -152,7 +156,7 @@ for aInd = 1:length(airports)
         data{1+i} = {};
 
         % initialize list for each model
-        for m = 1:length(wrModelFuture{aIndFuture})
+        for m = 1:length(wrData{1}{1})
             data{1+i}{m} = [];
         end
         
@@ -200,11 +204,6 @@ for aInd = 1:length(airports)
         boxPlotGroup = [boxPlotGroup (i+1) .* ones(size(C_tmp))];
         boxPlotData = [boxPlotData C_tmp];
 
-    %     figure;
-    %     hold on;
-    %     boxplot(C_tmp,G_tmp);
-    %     ylim([0 25]);
-
     end
 
     % plot the mean boxplot for each 20 year period (across all models),
@@ -237,15 +236,6 @@ for aInd = 1:length(airports)
         export_fig(['wr-box-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
     end
     
-    % 
-    % fig = figure('Color', [1,1,1]);
-    % box on;
-    % % p = plot(freq, 'LineWidth', 2);
-    % % ylabel(['Number of days above ' num2str(freqThresh) 'k restriction'], 'FontSize', 30);
-    % % set(gca, 'FontSize', 30);
-    % % set(gca, 'XTick', [1, 2, 3, 4]);
-    % % set(gca, 'XTickLabel', {'1985-2004', '2020-2040', '2040-2060', '2060-2080'});
-    % 
     if useSubplots
         %figure(figFreq);
         subplot(2, 3, 2);
