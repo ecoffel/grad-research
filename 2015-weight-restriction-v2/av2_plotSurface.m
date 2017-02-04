@@ -28,7 +28,7 @@ elseif strcmp(aircraft, 'a320')
     temp1 = 15;
     temp2 = 54;
     weight1 = 100;
-    weight2 = 188;
+    weight2 = 174;
     surface = f{5}{2};
 end
 x = linspace(temp1, temp2, 50);

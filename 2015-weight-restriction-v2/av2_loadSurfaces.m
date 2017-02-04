@@ -1,8 +1,9 @@
 function [acSurfaces] = loadAvSurfaces()
 
     % aircraft name, min weight, max take off weight
-    aircraft = {{'737-800', 140, 174}, {'777-200', 440, 545}, {'777-300', 480, 660}, {'787', 420, 502}, ...
-                {'a320', 100, 188}};
+    aircraft = {{'737-800', 140, 174, 'poly32'}, {'777-200', 440, 545, 'poly32'}, ...
+                {'777-300', 480, 660, 'poly32'}, {'787', 420, 502, 'poly32'}, ...
+                {'a320', 100, 174, 'poly33'}};
 
     for a = 1:length(aircraft)
         data = csvread(['performance-data-' aircraft{a}{1} '.csv'], 1, 0);
@@ -30,16 +31,16 @@ function [acSurfaces] = loadAvSurfaces()
         ind4 = find(data(:, 3) == 4000);
 
         % make the surfaces
-        f0 = fit([data(ind0, 1), data(ind0, 2)], data(ind0, 4), 'poly32', 'Normalize','on');
+        f0 = fit([data(ind0, 1), data(ind0, 2)], data(ind0, 4), aircraft{a}{4}, 'Normalize','on');
         
         if length(ind2) > 10
-            f2 = fit([data(ind2, 1), data(ind2, 2)], data(ind2, 4), 'poly32', 'Normalize','on');
+            f2 = fit([data(ind2, 1), data(ind2, 2)], data(ind2, 4), aircraft{a}{4}, 'Normalize','on');
         else
             f2 = [];
         end
         
         if length(ind4) > 10
-            f4 = fit([data(ind4, 1), data(ind4, 2)], data(ind4, 4), 'poly32', 'Normalize','on');
+            f4 = fit([data(ind4, 1), data(ind4, 2)], data(ind4, 4), aircraft{a}{4}, 'Normalize','on');
         else
             f4 = [];
         end
