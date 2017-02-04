@@ -3,7 +3,7 @@ f = av2_loadSurfaces();
 figure('Color', [1,1,1]);
 %hold on;
 
-aircraft = 'a320';
+aircraft = 'a380';
 surface = [];
 
 if strcmp(aircraft, '787')
@@ -30,7 +30,14 @@ elseif strcmp(aircraft, 'a320')
     weight1 = 100;
     weight2 = 174;
     surface = f{5}{2};
+elseif strcmp(aircraft, 'a380')
+    temp1 = 15;
+    temp2 = 54;
+    weight1 = 840;
+    weight2 = 1260;
+    surface = f{6}{2};
 end
+
 x = linspace(temp1, temp2, 50);
 y = linspace(weight1, weight2, 50);
 [X, Y] = meshgrid(x,y);
