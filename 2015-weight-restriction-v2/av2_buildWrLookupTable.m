@@ -20,8 +20,8 @@ for s = 1:length(surfs)
     f4 = surf{4};
     
     % set up look up table for this aircraft - 
-    % ac string, min - max weight, temp/weight lookup, WR lookup
-    wrLookup{end+1} = {curAc, {elevationRange, tempRange, minWeight:maxWeight, runwayRange}, []};
+    % ac string, min - max weight, temp/weight lookup, WR lookup, TR lookup
+    wrLookup{end+1} = {curAc, {elevationRange, tempRange, runwayRange, maxWeight}, [], []};
     
     % loop over elevation
     for e = 1:length(elevationRange)
@@ -37,18 +37,13 @@ for s = 1:length(surfs)
         for t = 1:length(tempRange)
             temp = tempRange(t)
             
-            % loop over weight
-            for w = 1:length(weightRange)
-                weight = weightRange(w);
-                
-                % loop over runways
-                for r = 1:length(runwayRange)
-                    runway = runwayRange(r);
+            % loop over runways
+            for r = 1:length(runwayRange)
+                runway = runwayRange(r);
 
-                    % calculate WR for this combo
-                    wrLookup{end}{3}(e, t, w, r) = av2_calcWeightRestriction(temp, runway, elevation, curAc, surfs);
-                    
-                end
+                % calculate WR for this combo
+                [wrLookup{end}{3}(e, t, r), wrLookup{end}{4}(e, t, r)] = av2_calcWeightRestriction(temp, runway, elevation, curAc, surfs);
+
             end
         end
     end 
