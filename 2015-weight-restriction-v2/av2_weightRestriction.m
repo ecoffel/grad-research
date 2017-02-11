@@ -181,6 +181,18 @@ weightRestriction = {};
 totalRestriction = {};
 acSurfaces = av2_loadSurfaces();
 
+% load lookup table
+wrLookup = load('wrLookup.mat');
+
+% find index for current a/c
+acInd = -1;
+for ac = 1:length(wrLookup)
+    if strcmp(aircraft, wrLookup{ac}{1})
+        acInd = ac;
+        break;
+    end
+end
+
 hours = 10:14;
 
 ['processing weight restriction...']
@@ -200,6 +212,7 @@ for a = 1:length(selectedAirports)
     
     weightRestriction{a} = {};
     totalRestriction{a} = {};
+    
     for m = 1:length(models)
         
         ['processing ' models{m} '...']
@@ -211,11 +224,23 @@ for a = 1:length(selectedAirports)
             count = 1;
             for y = 1:size(wxData{m}{2}, 1)
                 for d = 1:size(wxData{m}{2}, 2)
-                    if wxData{m}{2}(y,d,h) < 20
+                    if wxData{m}{2}(y,d,h) < 10
                         weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                         totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else
-                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count), totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = av2_calcWeightRestriction(wxData{m}{2}(y,d,h), airportRunway{aInd}, airportElevation{aInd}, aircraft, acSurfaces);
+                        
+                        elevation = airportElevation{aInd};
+                        runway = airportRunway{aInd};
+                        temp = wxData{m}{2}(y, d, h);
+                        
+                        % find correct index for elevation, runway, temp in
+                        % lookup table
+                        elevInd = find(abs(round(elevation) - wrLookup{acInd}{2}{1}) == min(abs(round(elevation) - wrLookup{acInd}{2}{1})));
+                        tempInd = find(abs(round(temp) - wrLookup{acInd}{2}{2}) == min(abs(round(temp) - wrLookup{acInd}{2}{2})));
+                        runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{4}) == min(abs(round(runway) - wrLookup{acInd}{2}{4})));
+                        
+                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count)] = wrLookup{acInd}{3}(elevInd, tempInd, runwayInd);
+                        [totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = wrLookup{acInd}{4}(elevInd, tempInd, runwayInd);
                     end
                     count = count+1;
                 end
