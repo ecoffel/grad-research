@@ -2,7 +2,7 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+selectedAirports = {'LGA', 'DCA', 'MDW', 'DEN'};
 airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
 airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147,  14500, 11100, 12000, 13000, 13000, 12400, 12800};
 airportElevation =  {1135,  23,     14,    5433,  650,  62,     12,    120,   95,    7,     680,   1018,  83};
@@ -34,7 +34,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'rcp45';
+rcp = 'rcp85';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -211,7 +211,7 @@ for a = 1:length(selectedAirports)
             count = 1;
             for y = 1:size(wxData{m}{2}, 1)
                 for d = 1:size(wxData{m}{2}, 2)
-                    if wxData{m}{2}(y,d,h) < 15
+                    if wxData{m}{2}(y,d,h) < 20
                         weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                         totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else
