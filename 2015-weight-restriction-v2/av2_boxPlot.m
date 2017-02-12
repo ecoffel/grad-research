@@ -1,20 +1,22 @@
-aircraft = '777-300';
+aircraft = 'a320';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
 useSubplots = true;
+
+baseDir = '2015-weight-restriction-v2/wr-data/';
 
 trData = {};
 wrData = {};
 
 % load modeled data
 if ismember('historical', rcps)
-    load(['wr-' aircraft '-' dataset '-historical.mat']);
-    load(['tr-' aircraft '-' dataset '-historical.mat']);
+    load([baseDir 'wr-' aircraft '-' dataset '-historical.mat']);
+    %load([baseDir 'tr-' aircraft '-' dataset '-historical.mat']);
     wrModelHistorical = weightRestriction;
-    trModelHistorical = totalRestriction;
+    %trModelHistorical = totalRestriction;
     
-    trData{end+1} = trModelHistorical;
+    %trData{end+1} = trModelHistorical;
     wrData{end+1} = wrModelHistorical;
     
     historicalAirports = {};
@@ -24,12 +26,12 @@ if ismember('historical', rcps)
 end
 
 if ismember('rcp45', rcps)
-    load(['wr-' aircraft '-' dataset '-rcp45.mat']);
-    load(['tr-' aircraft '-' dataset '-rcp45.mat']);
+    load([baseDir 'wr-' aircraft '-' dataset '-rcp45.mat']);
+    %load([baseDir 'tr-' aircraft '-' dataset '-rcp45.mat']);
     wrModelRcp45 = weightRestriction;
-    trModelRcp45 = totalRestriction;
+    %trModelRcp45 = totalRestriction;
     
-    trData{end+1} = trModelRcp45;
+    %trData{end+1} = trModelRcp45;
     wrData{end+1} = wrModelRcp45;
     
     rcp45Airports = {};
@@ -39,12 +41,12 @@ if ismember('rcp45', rcps)
 end
 
 if ismember('rcp85', rcps)
-    load(['wr-' aircraft '-' dataset '-rcp85.mat']);
-    load(['tr-' aircraft '-' dataset '-rcp85.mat']);
+    load([baseDir 'wr-' aircraft '-' dataset '-rcp85.mat']);
+    %load([baseDir 'tr-' aircraft '-' dataset '-rcp85.mat']);
     wrModelRcp85 = weightRestriction;
-    trModelRcp85 = totalRestriction;
+    %trModelRcp85 = totalRestriction;
     
-    trData{end+1} = trModelRcp85;
+    %trData{end+1} = trModelRcp85;
     wrData{end+1} = wrModelRcp85;
     
     rcp85Airports = {};
@@ -55,7 +57,7 @@ end
 
 airports = {};
 for a = 1:length(historicalAirports)
-    if ismember(historicalAirports{a}, rcp85Airports)
+    if ismember(historicalAirports{a}, rcp45Airports)
         airports{end+1} = historicalAirports{a};
     end
 end
@@ -80,11 +82,7 @@ end
 if strcmp(aircraft, '777-300')
     figBoxYLim = [0 200];
     figFreqYLim = [-10 250];
-    
-    % the weight threshold to consider for the frequency of exceedance
-    % plot. If -1, it will auto adjust to the level with the most frequency
-    % change
-    freqThresh = -1;
+    freqThresh = 45;
     
     figBarBins = 0:10:100;
     barXTick = 0:20:100;
@@ -108,6 +106,24 @@ elseif strcmp(aircraft, '787')
     barXTick = 0:10:60;
     figBarXLim = [-5 65];
     figBarYLim = [-60 60];
+elseif strcmp(aircraft, 'a320')
+    figBoxYLim = [0 50];
+    figFreqYLim = [-10 150];
+    freqThresh = 10;
+    
+    figBarBins = 0:3:24;
+    barXTick = 0:3:24;
+    figBarXLim = [-5 25];
+    figBarYLim = [-50 50];
+elseif strcmp(aircraft, 'a380')
+    figBoxYLim = [0 500];
+    figFreqYLim = [-10 300];
+    freqThresh = 300;
+    
+    figBarBins = 200:20:400;
+    barXTick = 200:100:400;
+    figBarXLim = [195 505];
+    figBarYLim = [-100 100];
 end
 
 for aInd = 1:length(airports)

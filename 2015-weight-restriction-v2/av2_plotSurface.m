@@ -3,7 +3,7 @@ f = av2_loadSurfaces();
 figure('Color', [1,1,1]);
 %hold on;
 
-aircraft = 'a380';
+aircraft = 'a320';
 surface = [];
 
 if strcmp(aircraft, '787')
