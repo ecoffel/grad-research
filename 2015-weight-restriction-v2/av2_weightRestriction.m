@@ -2,7 +2,7 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'LGA', 'DCA', 'MDW', 'DEN'};
+selectedAirports = {'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
 airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
 airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147,  14500, 11100, 12000, 13000, 13000, 12400, 12800};
 airportElevation =  {1135,  23,     14,    5433,  650,  62,     12,    120,   95,    7,     680,   1018,  83};
@@ -10,7 +10,7 @@ airportElevation =  {1135,  23,     14,    5433,  650,  62,     12,    120,   95
 airportLats = [];
 airportLons = [];
 
-aircraft = 'a320';
+aircraft = '787';
 
 wxBaseDir = '2015-weight-restriction-v2\airport-wx\';
 
@@ -34,7 +34,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'rcp85';
+rcp = 'historical';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -183,6 +183,7 @@ acSurfaces = av2_loadSurfaces();
 
 % load lookup table
 wrLookup = load('wrLookup.mat');
+wrLookup = wrLookup.wrLookup;
 
 % find index for current a/c
 acInd = -1;
@@ -224,14 +225,16 @@ for a = 1:length(selectedAirports)
             count = 1;
             for y = 1:size(wxData{m}{2}, 1)
                 for d = 1:size(wxData{m}{2}, 2)
-                    if wxData{m}{2}(y,d,h) < 10
+                    
+                    temp = wxData{m}{2}(y, d, h);
+
+                    if temp < 10 || isnan(temp)
                         weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                         totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else
                         
                         elevation = airportElevation{aInd};
                         runway = airportRunway{aInd};
-                        temp = wxData{m}{2}(y, d, h);
                         
                         % find correct index for elevation, runway, temp in
                         % lookup table
@@ -239,8 +242,19 @@ for a = 1:length(selectedAirports)
                         tempInd = find(abs(round(temp) - wrLookup{acInd}{2}{2}) == min(abs(round(temp) - wrLookup{acInd}{2}{2})));
                         runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{4}) == min(abs(round(runway) - wrLookup{acInd}{2}{4})));
                         
-                        [weightRestriction{a}{m}{3}(h-hours(1)+1, count)] = wrLookup{acInd}{3}(elevInd, tempInd, runwayInd);
-                        [totalRestriction{a}{m}{3}(h-hours(1)+1, count)] = wrLookup{acInd}{4}(elevInd, tempInd, runwayInd);
+                        if elevInd > size(wrLookup{acInd}{3}, 1) || ...
+                           tempInd > size(wrLookup{acInd}{3}, 2) || ...
+                           runwayInd > size(wrLookup{acInd}{3}, 3)
+                            weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                            totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                        else
+                            % look up restriction in the wr lookup table
+                            curWr = wrLookup{acInd}{3}(elevInd, tempInd, runwayInd);
+                            curTr = wrLookup{acInd}{4}(elevInd, tempInd, runwayInd);
+
+                            weightRestriction{a}{m}{3}(h-hours(1)+1, count) = curWr;
+                            totalRestriction{a}{m}{3}(h-hours(1)+1, count) = curTr;
+                        end
                     end
                     count = count+1;
                 end
