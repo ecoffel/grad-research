@@ -1,4 +1,4 @@
-aircraft = 'a320';
+aircraft = '737-800';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
@@ -107,14 +107,14 @@ elseif strcmp(aircraft, '787')
     figBarXLim = [-5 65];
     figBarYLim = [-60 60];
 elseif strcmp(aircraft, 'a320')
-    figBoxYLim = [0 50];
-    figFreqYLim = [-10 150];
-    freqThresh = 10;
+    figBoxYLim = [0 70];
+    figFreqYLim = [-10 200];
+    freqThresh = 40;
     
-    figBarBins = 0:3:24;
-    barXTick = 0:3:24;
-    figBarXLim = [-5 25];
-    figBarYLim = [-50 50];
+    figBarBins = 0:5:60;
+    barXTick = 0:10:60;
+    figBarXLim = [-5 65];
+    figBarYLim = [-75 75];
 elseif strcmp(aircraft, 'a380')
     figBoxYLim = [0 500];
     figFreqYLim = [-10 300];
@@ -122,7 +122,7 @@ elseif strcmp(aircraft, 'a380')
     
     figBarBins = 200:20:400;
     barXTick = 200:100:400;
-    figBarXLim = [195 505];
+    figBarXLim = [195 405];
     figBarYLim = [-100 100];
 end
 
@@ -222,6 +222,10 @@ for aInd = 1:length(airports)
 
     end
 
+    if length(boxPlotData) == 0
+        continue;
+    end
+    
     % plot the mean boxplot for each 20 year period (across all models),
     % only showing data for days with a > 0 weight restriction
     

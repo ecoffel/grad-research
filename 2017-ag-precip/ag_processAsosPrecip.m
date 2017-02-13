@@ -1,32 +1,39 @@
+% this reads pre-processed state-station ASOS hourly wx files, processed by
+% ag_processAsosPrecip.py
 
-baseDir = 'e:/data/asos/';
+baseDir = 'e:/data/asos/wx-data/';
+%baseDir = '2017-ag-precip/wx-data/';
 
-states = {'ia'};
+states = {'ia', 'il', 'in', 'mo'};
 
 % this is for comma delimited ASOS data with the format:
 % station, time, lon, lat, tempC, relH, precipH
-fileFormatStr = '%s%s%s%s%s%s%s%*[^\n]';
-
-asosStations = {};
-asosData = {};
-
-% how many rows to read at a time
-N = 100000;
+fileFormatStr = '%n %n %n %n %n %n %n %n %n %*[^\n]';
 
 % process all files
 for s = 1:length(states)
     state = states{s};
     
-    fin = fopen([baseDir 'asos-' state '.txt']);
+    asosData = {};
     
-    % skip first 6 lines (headers)
-    textscan(fin, fileFormatStr, 6, 'Delimiter', ',');
+    curDir = [baseDir state];
+    txtFileNames = dir([curDir, '/*.txt']);
+    txtFileNames = {txtFileNames.name};
     
-    while ~feof(fin)
-        [data, pos] = textscan(fin, fileFormatStr, N, 'Delimiter', ',');
+    for f = 1:length(txtFileNames)
+        fileName = txtFileNames{f};
         
-        ['pos = ' num2str(pos)]
+        % split the file name at the . and take the first part to get the
+        % station code
+        fileNameParts = strsplit(fileName, '.');
+        code = fileNameParts{1};
         
+        ['processing ' state '/' code '...']
+        
+        fin = fopen([curDir '/' fileName]);
+    
+        [data, pos] = textscan(fin, fileFormatStr, 'Delimiter', ',');
+
         % columns:
         % 1 - station
         % 2 - date/time
@@ -36,42 +43,20 @@ for s = 1:length(states)
         % 6 - rel humidity (%)
         % 7 - precip (hourly, mm, M = none)
 
-        % remove double quotes and convert to number
-        stations = data{1};
-        dateTimes = data{2};
-        lons = data{3};
-        lats = data{4};
-        temps = data{5};
-        relHs = data{6};
-        precips = data{7};
+        years = data{1};
+        months = data{2};
+        days = data{3};
+        hours = data{4};
         
-        for sInd = 1:length(stations)
-            [lia, locb] = ismember(stations{sInd}, asosStations);
-            
-            dateTime = dateTimes{sInd};
-            lon = str2num(lons{sInd});
-            lat = str2num(lats{sInd});
-            temp = str2num(temps{sInd});
-            relH = str2num(relHs{sInd});
-            if strcmp(precips{sInd}, 'M')
-                precip = NaN;
-            else
-                precip = str2num(relHs{sInd});
-            end
-            
-            if lia == 0
-                asosData{end+1} = {stations{sInd}, lon, lat, temp, relH, precip};
-                asosStations{end+1} = stations{sInd};
-            else
-                asosData{locb}{4} = [asosData{locb}{4}; temp];
-                asosData{locb}{5} = [asosData{locb}{5}; relH];
-                asosData{locb}{6} = [asosData{locb}{6}; precip];
-            end
-        end
+        lons = data{5};
+        lats = data{6};
+        temps = data{7};
+        relHs = data{8};
+        precips = data{9};
+        precips(precips == -999) = NaN;
         
-        clear station dateTime lon lat temp relH precip;
+        asosData{end+1} = {code, lons(1), lats(1), years, months, days, hours, temps, relHs, precips};
     end
-      
+    
+    save(['asos-' state '.mat'], 'asosData');
 end
-
-%save('cropData.mat', 'cropData');
