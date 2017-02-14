@@ -34,7 +34,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'historical';
+rcp = 'rcp85';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
@@ -240,7 +240,7 @@ for a = 1:length(selectedAirports)
                         % lookup table
                         elevInd = find(abs(round(elevation) - wrLookup{acInd}{2}{1}) == min(abs(round(elevation) - wrLookup{acInd}{2}{1})));
                         tempInd = find(abs(round(temp) - wrLookup{acInd}{2}{2}) == min(abs(round(temp) - wrLookup{acInd}{2}{2})));
-                        runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{4}) == min(abs(round(runway) - wrLookup{acInd}{2}{4})));
+                        runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{3}) == min(abs(round(runway) - wrLookup{acInd}{2}{3})));
                         
                         if elevInd > size(wrLookup{acInd}{3}, 1) || ...
                            tempInd > size(wrLookup{acInd}{3}, 2) || ...
@@ -265,8 +265,8 @@ for a = 1:length(selectedAirports)
     clear wxData;
 end
 
-save(['wr-' aircraft '-' dataset '-' rcp '-new.mat'], 'weightRestriction');
-save(['tr-' aircraft '-' dataset '-' rcp '-new.mat'], 'totalRestriction');
+save(['wr-' aircraft '-' dataset '-' rcp '.mat'], 'weightRestriction');
+save(['tr-' aircraft '-' dataset '-' rcp '.mat'], 'totalRestriction');
 
 
 
