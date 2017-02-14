@@ -9,10 +9,12 @@ futurePeriodYears = 2020:2080;
 thresh = [1 10:10:90 99];
 threshInd = [find(thresh == 1), find(thresh == 10), find(thresh == 50), find(thresh == 90), find(thresh == 99)];
 
+chgDataBaseDir = 'chg-data/';
+
 if strcmp(rcp, 'rcp45')
-    load('chgData-cmip5-thresh-rcp45');
+    load([chgDataBaseDir 'chgData-cmip5-thresh-rcp45']);
 elseif strcmp(rcp, 'rcp85')
-    load('chgData-cmip5-thresh-rcp85');
+    load([chgDataBaseDir 'chgData-cmip5-thresh-rcp85']);
 end
 
 load waterGrid;

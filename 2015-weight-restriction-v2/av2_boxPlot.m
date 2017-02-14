@@ -9,6 +9,9 @@ baseDir = '2015-weight-restriction-v2/wr-data/';
 trData = {};
 wrData = {};
 
+% index of the hour to plot
+selectedHour = 3;
+
 % load modeled data
 if ismember('historical', rcps)
     load([baseDir 'wr-' aircraft '-' dataset '-historical.mat']);
@@ -90,7 +93,7 @@ if strcmp(aircraft, '777-300')
     figBarYLim = [-75 75];
 elseif strcmp(aircraft, '737-800')
     figBoxYLim = [0 50];
-    figFreqYLim = [-10 150];
+    figFreqYLim = [-10 100];
     freqThresh = 10;
     
     figBarBins = 0:3:24;
@@ -107,23 +110,23 @@ elseif strcmp(aircraft, '787')
     figBarXLim = [-5 65];
     figBarYLim = [-60 60];
 elseif strcmp(aircraft, 'a320')
-    figBoxYLim = [0 70];
-    figFreqYLim = [-10 200];
-    freqThresh = 40;
+    figBoxYLim = [0 20];
+    figFreqYLim = [-10 100];
+    freqThresh = 5;
     
-    figBarBins = 0:5:60;
-    barXTick = 0:10:60;
-    figBarXLim = [-5 65];
-    figBarYLim = [-75 75];
+    figBarBins = 0:3:21;
+    barXTick = 0:3:21;
+    figBarXLim = [-5 25];
+    figBarYLim = [-50 50];
 elseif strcmp(aircraft, 'a380')
-    figBoxYLim = [0 500];
-    figFreqYLim = [-10 300];
-    freqThresh = 300;
+    figBoxYLim = [0 150];
+    figFreqYLim = [-10 50];
+    freqThresh = 15;
     
-    figBarBins = 200:20:400;
-    barXTick = 200:100:400;
-    figBarXLim = [195 405];
-    figBarYLim = [-100 100];
+    figBarBins = 0:20:200;
+    barXTick = 0:50:200;
+    figBarXLim = [-5 205];
+    figBarYLim = [-50 50];
 end
 
 for aInd = 1:length(airports)
@@ -150,16 +153,20 @@ for aInd = 1:length(airports)
     for m = 1:length(wrModelHistorical{aIndHistorical})
         
         % take data for days with restriction > 0 for box plot
-        boxData = wrModelHistorical{aIndHistorical}{m}{3}(2, :);
+        boxData = wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :);
         boxData = boxData(boxData > 0);
+        
+        if length(boxData) == 0
+            boxData = 0;
+        end
         
         boxPlotData = [boxPlotData boxData];
         boxPlotGroup = [boxPlotGroup ones(size(boxData))];
 
         % number of days in current model above Thresh
-        freq(1, m) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(2, :) > freqThresh)) / 20.0;
+        freq(1, m) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :) > freqThresh)) / 20.0;
 
-        data{1}{m} = wrModelHistorical{aIndHistorical}{m}{3}(2, :)';
+        data{1}{m} = wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :)';
     end
 
     % loop over future datasets
@@ -192,10 +199,10 @@ for aInd = 1:length(airports)
             for m = 1:length(wrModelFuture{aIndFuture})
             
                 % find number of days in this model's year ( there are 61 years total )
-                numDays = length(wrModelFuture{aIndFuture}{m}{3}(2, :)) / 61;
+                numDays = length(wrModelFuture{aIndFuture}{m}{3}(selectedHour, :)) / 61;
 
                 % WR data for each period
-                curData = wrModelFuture{aIndFuture}{m}{3}(2, (numDays * (i*20-20) + 1) : (numDays * i*20));
+                curData = wrModelFuture{aIndFuture}{m}{3}(selectedHour, (numDays * (i*20-20) + 1) : (numDays * i*20));
 
                 % number of days in current model above freqThresh
                 if r > 2
@@ -217,12 +224,16 @@ for aInd = 1:length(airports)
             end
         end
 
+        if length(C_tmp) == 0
+            C_tmp = 0;
+        end
+        
         boxPlotGroup = [boxPlotGroup (i+1) .* ones(size(C_tmp))];
         boxPlotData = [boxPlotData C_tmp];
 
     end
 
-    if length(boxPlotData) == 0
+    if length(boxPlotData) == 0 
         continue;
     end
     
@@ -264,17 +275,19 @@ for aInd = 1:length(airports)
         figure('Color', [1,1,1]);
     end
     
+    freqMean = nanmean(freq, 2)';
+    
     % create the error matrix
     yErr = std(freq, [], 2)';
     % limit bottom frequency to zero
     yErr(2, :) = std(freq, [], 2)';
     for i = 1:size(yErr, 2)
         if freq(i) - yErr(2, i) < 0
-            yErr(2, i) = freq(i);
+            yErr(2, i) = freqMean(i);
         end
     end
     
-    p1 = shadedErrorBar([1, 2, 3, 4], freq(:, 1)', yErr, 'o', 1);
+    p1 = shadedErrorBar([1, 2, 3, 4], freqMean, yErr, 'o', 1);
     set(p1.mainLine,  'MarkerSize', 10, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [96/255.0, 188/255.0, 100/255.0]);
     set(p1.patch, 'FaceColor', [96/255.0, 188/255.0, 100/255.0]);
     set(p1.edge, 'Color', 'k');

@@ -1,5 +1,5 @@
-% generate mean annual changes for each model at a given temp percentile
-% for each gridbox
+% generate changes at a temperature percentile, annual-max, or daily-max
+% across models and decades.
 
 season = 'all';
 basePeriod = 'past';
@@ -14,7 +14,7 @@ baseVar = 'tasmax';
 %               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
 %               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
- baseModels = {'access1-0'};
+baseModels = {'access1-0'};
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
@@ -26,7 +26,7 @@ futureVar = 'tasmax';
 %               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
 %               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
- futureModels = {'access1-0'};
+futureModels = {'access1-0'};
 futureRcps = {'rcp85'};
 futureEnsemble = 'r1i1p1';
 
@@ -35,9 +35,13 @@ futureRegrid = true;
 
 region = 'world';
 basePeriodYears = 1981:2004;
-%basePeriodYears = 1980:1990;
-futurePeriodYears = 2060:2080;
-%futurePeriodYears = 2050:2060;
+
+futurePeriods = [2020:2030; ...
+                 2030:2040; ...
+                 2040:2050; ...
+                 2050:2060; ...
+                 2060:2070; ...
+                 2070:2080];
 
 baseDir = 'e:/data';
 yearStep = 1;
@@ -53,21 +57,22 @@ end
 load lat;
 load lon;
 
-% look at change above this base period temperature percentile
+% what change to look at:
+% ann-max = annual max temperature
+% daily-max = mean daily max temperature
+% thresh = changes above temperature thresholds specified in thresh
+changeMetric = 'ann-max';
+
+% if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = [1 10:10:90 99];
 
 numDays = 372;
 
-baseData = [];
-futureData = [];
-
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-% mean temps (above thresh) in the base period
-baseThresh = [];
-futureThresh = [];
-chgData = [];
+% temperature data (thresh, ann-max, or daily-max)
+baseData = [];
 
 ['loading base: ' baseDataset]
 for m = 1:length(baseModels)
@@ -80,114 +85,147 @@ for m = 1:length(baseModels)
 
         baseDaily = loadDailyData([baseDir '/' baseDataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
+        % if any kelvin values, convert to C
         if baseDaily{3}(1,1,1,1,1) > 100
             baseDaily{3} = baseDaily{3} - 273.15;
         end
 
+        % reshape to be 3D (x, y, day)
         baseDaily3d = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
                                              size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
 
+        % set water grid cells to NaN
         for d = 1:size(baseDaily3d, 3)
             curGrid = baseDaily3d(:, :, d);
             curGrid(waterGrid) = NaN;
             baseDaily3d(:, :, d) = curGrid;
         end
-        
-        for t = 1:length(thresh)
-            for xlat = 1:size(baseDaily3d, 1)
-                for ylon = 1:size(baseDaily3d, 2)
-                    
-                    if isnan(baseDaily3d(xlat, ylon, 1))
-                        continue;
+
+        if strcmp(changeMetric, 'thresh')
+            % calculate base period thresholds
+
+            % loop over all thresholds
+            for t = 1:length(thresh)
+                % over x coords
+                for xlat = 1:size(baseDaily3d, 1)
+                    % over y coords
+                    for ylon = 1:size(baseDaily3d, 2)
+
+                        % skip if NaN (water)
+                        if isnan(baseDaily3d(xlat, ylon, 1))
+                            continue;
+                        end
+
+                        % calculate threshold at current (x,y) and
+                        % percentile 
+                        baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
                     end
-                        
-                    baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
                 end
             end
+        elseif strcmp(changeMetric, 'ann-max')
+
+            % store annual max temperature at each gridbox for this year
+            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily3d), [], 3);
+
+        elseif strcmp(changeMetric, 'daily-max')
+
+            % store mean daily max temperature at each gridbox for this year
+            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily3d), 3);
+
         end
-        
+
         clear baseDaily baseDaily3d;
     end
+end
 
-%     for t = 1:length(thresh)
-%         curThresh = thresh(t);
-%         for x = 1:size(baseData, 1)
-%             for y = 1:size(baseData, 2)
-%                 curGridCell = squeeze(reshape(baseData(x, y, :, :), [size(baseData, 3)*size(baseData, 4), 1]));
-%                 baseThresh(x, y, m, t) = prctile(curGridCell, curThresh);
-%             end
-%         end
-%     end
-    
-%    clear baseData;
+
+if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
+    % if computing annual maximum or mean daily maximum, take the mean across all base period
+    % years (baseData now 3D: (x, y, model))
+    baseData = nanmean(baseData, 4);
 end
 
 % ------------ load future data -------------    
 
-['loading future: ' futureDataset]
-for m = 1:length(futureModels)
+for f = 1:size(futurePeriods, 1)
+    
+    futureData = [];
+    chgData = [];
+    
+    futurePeriodYears = futurePeriods(f, :);
+
+    ['loading future: ' futureDataset]
+    for m = 1:length(futureModels)
         curModel = futureModels{m};
 
-    ['loading future model ' curModel '...']
-    
-    for y = futurePeriodYears(1):yearStep:futurePeriodYears(end)
-        ['year ' num2str(y) '...']
+        ['loading future model ' curModel '...']
 
-        futureDaily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' futureVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        for y = futurePeriodYears(1):yearStep:futurePeriodYears(end)
+            ['year ' num2str(y) '...']
 
-        if futureDaily{3}(1,1,1,1,1) > 100
-            futureDaily{3} = futureDaily{3} - 273.15;
-        end
+            futureDaily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' futureVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
 
-        futureDaily3d = reshape(futureDaily{3}, [size(futureDaily{3}, 1), size(futureDaily{3}, 2), ...
-                                                 size(futureDaily{3}, 3)*size(futureDaily{3}, 4)*size(futureDaily{3}, 5)]);
-        
-        
-        for d = 1:size(futureDaily3d, 3)
-            curGrid = futureDaily3d(:, :, d);
-            curGrid(waterGrid) = NaN;
-            futureDaily3d(:, :, d) = curGrid;
-        end
-        
-        for t = 1:length(thresh)
-            for xlat = 1:size(futureDaily3d, 1)
-                for ylon = 1:size(futureDaily3d, 2)
-                    
-                    if isnan(futureDaily3d(xlat, ylon, 1))
-                        continue;
-                    end
-                    
-                    futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
-                end
+            % convert any kelvin values to C
+            if futureDaily{3}(1,1,1,1,1) > 100
+                futureDaily{3} = futureDaily{3} - 273.15;
             end
+
+            % reshape to 3D (x, y, day)
+            futureDaily3d = reshape(futureDaily{3}, [size(futureDaily{3}, 1), size(futureDaily{3}, 2), ...
+                                                     size(futureDaily{3}, 3)*size(futureDaily{3}, 4)*size(futureDaily{3}, 5)]);
+
+
+            % set water grid cells to NaN
+            for d = 1:size(futureDaily3d, 3)
+                curGrid = futureDaily3d(:, :, d);
+                curGrid(waterGrid) = NaN;
+                futureDaily3d(:, :, d) = curGrid;
+            end
+
+            if strcmp(changeMetric, 'thresh')
+                % loop over thresholds
+                for t = 1:length(thresh)
+                    % latitude
+                    for xlat = 1:size(futureDaily3d, 1)
+                        % longitude
+                        for ylon = 1:size(futureDaily3d, 2)
+
+                            if isnan(futureDaily3d(xlat, ylon, 1))
+                                continue;
+                            end
+
+                            % compute percentile threshold for this grid cell
+                            % and year
+                            futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
+                        end
+                    end
+                end
+
+            elseif strcmp(changeMetric, 'ann-max')
+
+                % store annual max temperature at each gridbox for this year
+                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily3d), [], 3);
+
+            elseif strcmp(changeMetric, 'daily-max')
+
+                % store annual max temperature at each gridbox for this year
+                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily3d), 3);
+
+            end
+
+            clear futureDaily futureDaily3d;
         end
-
-        clear futureDaily futureDaily3d;
     end
-    
-%     for t = 1:length(thresh)
-%         curThresh = thresh(t);
-%         for x = 1:size(futureData, 1)
-%             for y = 1:size(futureData, 2)
-%                 for year = 1:size(futureData, 4)
-%                     curGridCell = squeeze(reshape(futureData(x, y, :, year), [size(futureData, 3), 1]));
-%                     futureThresh(x, y, year, m) = prctile(curGridCell, curThresh);
-%                     chgData(x, y, year, m, t) = futureThresh(x, y, year, m) - baseThresh(x, y, m, t);
-%                 end
-%             end
-%         end
-%     end
 
-    %clear futureData;
-end
-
-
-
-% save(['chgData-cmip5-' futureRcps{1} '.mat'], 'chgData');
-for t = 1:size(chgData, 3)
-    for y = 1:size(chgData,4)
-    curGrid = chgData(:, :, t,y);
-    curGrid(waterGrid) = NaN;
-    chgData(:, :, t,y) = curGrid;
+    if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
+        % if computing annual maximum or mean daily maximum, take the mean across all base period
+        % years (futureData now 3D: (x, y, model))
+        futureData = nanmean(futureData, 4);
     end
+
+    % now baseData and futureData should have the same dimensions, so calculate
+    % change:
+    chgData = futureData - baseData;
+
+    save(['chgData-cmip5-' changeMetric '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
 end

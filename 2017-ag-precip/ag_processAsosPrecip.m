@@ -7,7 +7,8 @@ baseDir = 'e:/data/asos/wx-data/';
 states = {'ia', 'il', 'in', 'mo'};
 
 % this is for comma delimited ASOS data with the format:
-% station, time, lon, lat, tempC, relH, precipH
+% year, month, day, hour, lon, lat, tempC, relH, precipH
+% -999 indicates a missing value
 fileFormatStr = '%n %n %n %n %n %n %n %n %n %*[^\n]';
 
 % process all files
@@ -35,13 +36,15 @@ for s = 1:length(states)
         [data, pos] = textscan(fin, fileFormatStr, 'Delimiter', ',');
 
         % columns:
-        % 1 - station
-        % 2 - date/time
-        % 3 - lon
-        % 4 - lat
-        % 5 - temp (C)
-        % 6 - rel humidity (%)
-        % 7 - precip (hourly, mm, M = none)
+        % 1 - year
+        % 2 - month
+        % 3 - day
+        % 4 - hour
+        % 5 - lon
+        % 6 - lat
+        % 7 - temp (C, -999 = missing value)
+        % 8 - rel humidity (%, -999 = missing value)
+        % 9 - precip (hourly, mm, -999 = missing value)
 
         years = data{1};
         months = data{2};
