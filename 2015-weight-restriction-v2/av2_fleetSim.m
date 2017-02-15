@@ -1,19 +1,21 @@
 % simulate a fleet of flights departing at different weight distributions
 % within the simulated WR period (daily max temp +/ 2 hours)
 
-aircraft = '777-300';
+aircraft = '737-800';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
-selectedAirports = {'DEN', 'DXB'};
+selectedAirports = {'LGA', 'DCA', 'MDW'};
 
 trData = {};
 wrData = {};
 
+wrBaseDir = '2015-weight-restriction-v2/wr-data/';
+
 % load modeled data
 if ismember('historical', rcps)
-    load(['wr-' aircraft '-' dataset '-historical.mat']);
-    load(['tr-' aircraft '-' dataset '-historical.mat']);
+    load([wrBaseDir 'wr-' aircraft '-' dataset '-historical.mat']);
+    load([wrBaseDir 'tr-' aircraft '-' dataset '-historical.mat']);
     wrModelCur = weightRestriction;
     trModelHistorical = totalRestriction;
     
@@ -27,8 +29,8 @@ if ismember('historical', rcps)
 end
 
 if ismember('rcp45', rcps)
-    load(['wr-' aircraft '-' dataset '-rcp45.mat']);
-    load(['tr-' aircraft '-' dataset '-rcp45.mat']);
+    load([wrBaseDir 'wr-' aircraft '-' dataset '-rcp45.mat']);
+    load([wrBaseDir 'tr-' aircraft '-' dataset '-rcp45.mat']);
     wrModelRcp45 = weightRestriction;
     trModelRcp45 = totalRestriction;
     
@@ -42,8 +44,8 @@ if ismember('rcp45', rcps)
 end
 
 if ismember('rcp85', rcps)
-    load(['wr-' aircraft '-' dataset '-rcp85.mat']);
-    load(['tr-' aircraft '-' dataset '-rcp85.mat']);
+    load([wrBaseDir 'wr-' aircraft '-' dataset '-rcp85.mat']);
+    load([wrBaseDir 'tr-' aircraft '-' dataset '-rcp85.mat']);
     wrModelRcp85 = weightRestriction;
     trModelRcp85 = totalRestriction;
     

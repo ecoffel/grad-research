@@ -44,6 +44,9 @@ wxData = {};
 
 months = 1:12;
 
+% temperature must be in this range to compute WR
+tempRange = [20 55];
+
 if strcmp(dataset, 'obs')
     timePeriods = {1981:2011, 1981:2011, 1981:2011, 1996:2011};
 
@@ -228,7 +231,7 @@ for a = 1:length(selectedAirports)
                     
                     temp = wxData{m}{2}(y, d, h);
 
-                    if temp < 10 || isnan(temp)
+                    if temp < tempRange(1) || temp > tempRange(end) || isnan(temp)
                         weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                         totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
                     else

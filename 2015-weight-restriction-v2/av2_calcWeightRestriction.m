@@ -8,7 +8,6 @@ function [payloadRestriction, totalRestriction] = calcWeightRestriction(temp, ru
         end
     end
     
-
     maxWeight = av2_findMaxWeight(temp, runway, elevation, acSurfaces{ind});
     payloadRestriction = 0.83 * (acSurfaces{ind}{1}{3} - maxWeight);
     totalRestriction = acSurfaces{ind}{1}{3} - maxWeight;
