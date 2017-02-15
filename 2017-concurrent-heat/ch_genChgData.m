@@ -60,8 +60,10 @@ load lon;
 % what change to look at:
 % ann-max = annual max temperature
 % daily-max = mean daily max temperature
+% seasonal-monthly-max = monthly maximum temperature
+% seasonal-monthly-mean-max = mean daily maximum temperature for each month
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'ann-max';
+changeMetric = 'seasonal-monthly-max';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = [1 10:10:90 99];
@@ -84,22 +86,36 @@ for m = 1:length(baseModels)
         ['year ' num2str(y) '...']
 
         baseDaily = loadDailyData([baseDir '/' baseDataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' baseVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-
+        
+        % remove lat/lon data (we loaded this earlier)
+        baseDaily = baseDaily{3};
+        
         % if any kelvin values, convert to C
-        if baseDaily{3}(1,1,1,1,1) > 100
-            baseDaily{3} = baseDaily{3} - 273.15;
+        if baseDaily(1,1,1,1,1) > 100
+            baseDaily = baseDaily - 273.15;
         end
 
-        % reshape to be 3D (x, y, day)
-        baseDaily3d = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
-                                             size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
+        % if we are not using a seasonal metric
+        if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max')
+            % reshape to be 3D (x, y, day)
+            baseDaily = reshape(baseDaily, [size(baseDaily, 1), size(baseDaily, 2), ...
+                                                 size(baseDaily, 3)*size(baseDaily, 4)*size(baseDaily, 5)]);
+            
+        end
 
         % set water grid cells to NaN
-        for d = 1:size(baseDaily3d, 3)
-            curGrid = baseDaily3d(:, :, d);
-            curGrid(waterGrid) = NaN;
-            baseDaily3d(:, :, d) = curGrid;
+        % include loops for month and day (5D) in case we are using
+        % seasonal change metric
+        for i = 1:size(baseDaily, 3)
+            for j = 1:size(baseDaily, 4)
+                for k = 1:size(baseDaily, 5)
+                    curGrid = baseDaily(:, :, i, j, k);
+                    curGrid(waterGrid) = NaN;
+                    baseDaily(:, :, i, j, k) = curGrid;
+                end
+            end
         end
+        
 
         if strcmp(changeMetric, 'thresh')
             % calculate base period thresholds
@@ -107,30 +123,47 @@ for m = 1:length(baseModels)
             % loop over all thresholds
             for t = 1:length(thresh)
                 % over x coords
-                for xlat = 1:size(baseDaily3d, 1)
+                for xlat = 1:size(baseDaily, 1)
                     % over y coords
-                    for ylon = 1:size(baseDaily3d, 2)
+                    for ylon = 1:size(baseDaily, 2)
 
                         % skip if NaN (water)
-                        if isnan(baseDaily3d(xlat, ylon, 1))
+                        if isnan(baseDaily(xlat, ylon, 1))
                             continue;
                         end
 
                         % calculate threshold at current (x,y) and
                         % percentile 
-                        baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily3d(xlat, ylon, :)), thresh(t));
+                        baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily(xlat, ylon, :)), thresh(t));
                     end
                 end
             end
+            
+        elseif strcmp(changeMetric, 'seasonal-monthly-max')
+            % calculate the seasonal maximum for each month
+            
+            % loop over months
+            for month = 1:size(baseDaily, 4)
+                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmax(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
+            end
+            
+        elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
+            % calculate the seasonal mean daily maximum for each month
+            
+            % loop over months
+            for month = 1:size(baseDaily, 4)
+                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
+            end
+                
         elseif strcmp(changeMetric, 'ann-max')
 
             % store annual max temperature at each gridbox for this year
-            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily3d), [], 3);
+            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily), [], 3);
 
         elseif strcmp(changeMetric, 'daily-max')
 
             % store mean daily max temperature at each gridbox for this year
-            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily3d), 3);
+            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily), 3);
 
         end
 
@@ -143,6 +176,11 @@ if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
     % if computing annual maximum or mean daily maximum, take the mean across all base period
     % years (baseData now 3D: (x, y, model))
     baseData = nanmean(baseData, 4);
+elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
+    % if computing seasonal metrics, average over all the annual
+    % maximum or mean daily maximum, take the mean across all years
+    % (baseData now 4D: (x, y, model, month))
+    baseData = squeeze(nanmean(baseData, 4));
 end
 
 % ------------ load future data -------------    
@@ -164,52 +202,76 @@ for f = 1:size(futurePeriods, 1)
             ['year ' num2str(y) '...']
 
             futureDaily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' futureVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-
+            futureDaily = futureDaily{3};
+            
             % convert any kelvin values to C
-            if futureDaily{3}(1,1,1,1,1) > 100
-                futureDaily{3} = futureDaily{3} - 273.15;
+            if futureDaily(1,1,1,1,1) > 100
+                futureDaily = futureDaily - 273.15;
             end
 
-            % reshape to 3D (x, y, day)
-            futureDaily3d = reshape(futureDaily{3}, [size(futureDaily{3}, 1), size(futureDaily{3}, 2), ...
-                                                     size(futureDaily{3}, 3)*size(futureDaily{3}, 4)*size(futureDaily{3}, 5)]);
-
+            % if we are not using a seasonal metric
+            if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max')
+                % reshape to 3D (x, y, day)
+                futureDaily = reshape(futureDaily, [size(futureDaily, 1), size(futureDaily, 2), ...
+                                                         size(futureDaily, 3)*size(futureDaily, 4)*size(futureDaily, 5)]);
+            end
 
             % set water grid cells to NaN
-            for d = 1:size(futureDaily3d, 3)
-                curGrid = futureDaily3d(:, :, d);
-                curGrid(waterGrid) = NaN;
-                futureDaily3d(:, :, d) = curGrid;
+            % include loops for month and day (5D) in case we are using
+            % seasonal change metric
+            for i = 1:size(futureDaily, 3)
+                for j = 1:size(futureDaily, 4)
+                    for k = 1:size(futureDaily, 5)
+                        curGrid = futureDaily(:, :, i, j, k);
+                        curGrid(waterGrid) = NaN;
+                        futureDaily(:, :, i, j, k) = curGrid;
+                    end
+                end
             end
 
             if strcmp(changeMetric, 'thresh')
                 % loop over thresholds
                 for t = 1:length(thresh)
                     % latitude
-                    for xlat = 1:size(futureDaily3d, 1)
+                    for xlat = 1:size(futureDaily, 1)
                         % longitude
-                        for ylon = 1:size(futureDaily3d, 2)
+                        for ylon = 1:size(futureDaily, 2)
 
-                            if isnan(futureDaily3d(xlat, ylon, 1))
+                            if isnan(futureDaily(xlat, ylon, 1))
                                 continue;
                             end
 
                             % compute percentile threshold for this grid cell
                             % and year
-                            futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily3d(xlat, ylon, :)), thresh(t));
+                            futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily(xlat, ylon, :)), thresh(t));
                         end
                     end
+                end
+            elseif strcmp(changeMetric, 'seasonal-monthly-max')
+                % calculate the seasonal maximum for each month
+
+                % loop over months
+                for month = 1:size(futureDaily, 4)
+                    futureData(:, :, m, y-futurePeriodYears(1)+1, month) = nanmax(squeeze(futureDaily(:, :, 1, month, :)), [], 3);
+                end
+            
+            elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
+                % calculate the seasonal mean daily maximum for each month
+
+                % loop over months
+                for month = 1:size(futureDaily, 4)
+                    futureData(:, :, m, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futureDaily(:, :, 1, month, :)), 3);
                 end
 
             elseif strcmp(changeMetric, 'ann-max')
 
                 % store annual max temperature at each gridbox for this year
-                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily3d), [], 3);
+                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily), [], 3);
 
             elseif strcmp(changeMetric, 'daily-max')
 
                 % store annual max temperature at each gridbox for this year
-                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily3d), 3);
+                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily), 3);
 
             end
 
@@ -218,9 +280,15 @@ for f = 1:size(futurePeriods, 1)
     end
 
     if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
-        % if computing annual maximum or mean daily maximum, take the mean across all base period
+        % if computing annual maximum or mean daily maximum, take the mean across all
         % years (futureData now 3D: (x, y, model))
         futureData = nanmean(futureData, 4);
+        
+    elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
+        % if computing seasonal metrics, average over all the annual
+        % maximum or mean daily maximum, take the mean across all years
+        % (futureData now 4D: (x, y, model, month))
+        futureData = squeeze(nanmean(futureData, 4));
     end
 
     % now baseData and futureData should have the same dimensions, so calculate
