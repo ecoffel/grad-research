@@ -19,6 +19,8 @@ cropData = {};
 for f = 1:length(fileNames)
     fileName = fileNames{f};
     
+    ['processing ' fileName '...']
+    
     fin = fopen([baseAgDataDir fileName]);
     data = textscan(fin, fileFormatStr, 'Delimiter', ',');
 
@@ -69,13 +71,27 @@ for f = 1:length(fileNames)
     % loop over all entries in the crop data (states + counties)
     for i = 1:length(stateName)
 
+        ratio = i/length(stateName) * 100.0;
+        if mod(i, 1000) == 0
+            [num2str(round(ratio)) '% complete, len = ' num2str(length(cropData)) '...']
+        end
+        
+        % find state abriviation in lookup table
+        curStateAb = '';
+        for s = 1:length(stateDb{1})
+            if strcmp(lower(stateName{i}), lower(stateDb{1}{s}))
+                curStateAb = upper(stateDb{2}{s});
+                break;
+            end
+        end
+        
         % check if we've seen the state before
         repeatState = false;
         for j = 1:length(cropData)
 
             % names match - we've seen the state before, so use its
             % id rather than creating a new one
-            if strcmp(cropData{j}{1}, stateName{i})
+            if strcmp(cropData{j}{1}, curStateAb)
                 curStateInd = j;
 
                 % now check if we have seen this county before, or
@@ -107,17 +123,7 @@ for f = 1:length(fileNames)
 
         % create cell for the state if it doesn't exist
         if length(cropData) < curStateInd
-            
-            % find state abriviation in lookup table
-            stateAb = '';
-            for s = 1:length(stateDb)
-                if strcmp(lower(stateName{i}), lower(stateDb{1}{s}))
-                    stateAb = upper(stateDb{2}{s});
-                    break;
-                end
-            end
-            
-            cropData{curStateInd} = {stateAb, stateId(i), {}};
+            cropData{curStateInd} = {curStateAb, stateId(i), {}};
         end
 
         % create a new cell for the county if it doesn't exist
