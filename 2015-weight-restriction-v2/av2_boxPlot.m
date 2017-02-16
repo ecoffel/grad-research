@@ -1,4 +1,4 @@
-aircraft = '737-800';
+aircraft = '777-300';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
@@ -125,7 +125,7 @@ elseif strcmp(aircraft, 'a380')
     
     figBarBins = 0:20:200;
     barXTick = 0:50:200;
-    figBarXLim = [-5 205];
+    figBarXLim = [-15 205];
     figBarYLim = [-50 50];
 end
 

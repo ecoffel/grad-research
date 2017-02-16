@@ -1,4 +1,4 @@
-load asos-in;
+load asos-il;
 
 tempPrc = 99.9;
 precipPrc = 99.9;
@@ -46,6 +46,5 @@ for s = 1:length(asosData)
     
     tcnt = tcnt + length(tempGroup);
     pcnt = pcnt + length(precipGroup);
-    
     
 end

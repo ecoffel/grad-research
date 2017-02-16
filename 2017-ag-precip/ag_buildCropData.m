@@ -4,6 +4,12 @@ fileNames = {'corn-yield-al-ia-1970-2015.csv', ...
              'corn-yield-ks-ne-1970-2015.csv', ...
              'corn-yield-nj-wy-1970-2015.csv'}; 
 
+% load the census county database
+countyDb = ag_loadCountyDb();
+
+% load state abriviations
+stateDb = ag_loadStateDb();
+         
 % this is for NASS QuickStat yield data - read each column as a string
 fileFormatStr = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
 
@@ -60,6 +66,7 @@ for f = 1:length(fileNames)
     % sequential numbers for counties, reset for each state
     curCountyInd = 0;
 
+    % loop over all entries in the crop data (states + counties)
     for i = 1:length(stateName)
 
         % check if we've seen the state before
@@ -100,11 +107,47 @@ for f = 1:length(fileNames)
 
         % create cell for the state if it doesn't exist
         if length(cropData) < curStateInd
-            cropData{curStateInd} = {stateName{i}, stateId(i), {}};
+            
+            % find state abriviation in lookup table
+            stateAb = '';
+            for s = 1:length(stateDb)
+                if strcmp(lower(stateName{i}), lower(stateDb{1}{s}))
+                    stateAb = upper(stateDb{2}{s});
+                    break;
+                end
+            end
+            
+            cropData{curStateInd} = {stateAb, stateId(i), {}};
         end
 
+        % create a new cell for the county if it doesn't exist
         if length(cropData{curStateInd}{3}) < curCountyInd
-            cropData{curStateInd}{3}{curCountyInd} = {countyName{i}, countyId(i), []};
+            
+            % find lat/lon of this county in the county DB
+            countyLat = -1;
+            countyLon = -1;
+            
+            % first find correct state - loop over states
+            for s = 1:length(countyDb)
+                if strcmp(upper(countyDb{s}{1}), upper(cropData{curStateInd}{1}))
+                    
+                    % loop over counties
+                    for c = 1:length(countyDb{s})
+                        % we have found the DB county that matches the
+                        % current county
+                        if strcmp(lower(countyDb{s}{2}{c}{1}), lower(countyName{i}))
+                            % set its lat/lon
+                            countyLat = countyDb{s}{2}{c}{2};
+                            countyLon = countyDb{s}{2}{c}{3};
+                            break;
+                        end
+                    end
+                    
+                    break;
+                end
+            end
+            
+            cropData{curStateInd}{3}{curCountyInd} = {countyName{i}, countyId(i), countyLat, countyLon, []};
         end
 
         % store the data in the proper state & county
@@ -112,4 +155,4 @@ for f = 1:length(fileNames)
     end     
 end
 
-save('cropData.mat', 'cropData');
+save('ag-corn-yield-us.mat', 'cropData');
