@@ -138,7 +138,7 @@ for f = 1:length(fileNames)
                 if strcmp(upper(countyDb{s}{1}), upper(cropData{curStateInd}{1}))
                     
                     % loop over counties
-                    for c = 1:length(countyDb{s})
+                    for c = 1:length(countyDb{s}{2})
                         % we have found the DB county that matches the
                         % current county
                         if strcmp(lower(countyDb{s}{2}{c}{1}), lower(countyName{i}))
@@ -157,7 +157,7 @@ for f = 1:length(fileNames)
         end
 
         % store the data in the proper state & county
-        cropData{curStateInd}{3}{curCountyInd}{3}(years(i) - minYear + 1) = yield(i);
+        cropData{curStateInd}{3}{curCountyInd}{5}(years(i) - minYear + 1) = yield(i);
     end     
 end
 

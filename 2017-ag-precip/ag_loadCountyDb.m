@@ -22,7 +22,7 @@ function [countyDb] = loadCountyDb()
     % 11 - lat
     % 12 - long
     
-    states = countyDb{1};
+    states = cellfun(@(x) strtrim(x), countyDb{1}, 'UniformOutput', false);
     countyNames = cellfun(@(x) strtrim(strrep(x, 'County', '')), countyDb{4}, 'UniformOutput', false);
     lats = countyDb{11};
     longs = countyDb{12};
