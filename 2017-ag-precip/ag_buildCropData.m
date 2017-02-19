@@ -14,7 +14,7 @@ stateDb = ag_loadStateDb();
 fileFormatStr = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
 
 cropData = {};
-
+    
 % process all files
 for f = 1:length(fileNames)
     fileName = fileNames{f};

@@ -4,7 +4,7 @@
 baseDir = 'e:/data/asos/wx-data/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-states = {'ia', 'il', 'in', 'mo', 'ks', 'mn', 'ne', 'oh', 'sd', 'wi'};
+states = {'ia', 'il', 'in', 'mo', 'ks', 'mn', 'ne', 'oh', 'sd', 'wi', 'tx', 'ok', 'ar', 'tn', 'nc'};
 
 % this is for comma delimited ASOS data with the format:
 % year, month, day, hour, lon, lat, tempC, relH, precipH
@@ -65,5 +65,5 @@ for s = 1:length(states)
         asosData{end+1} = {code, lons(1), lats(1), years, months, days, hours, temps, relHs, precips};
     end
     
-    save([baseDir 'asos-' state '.mat'], 'asosData');
+    save([baseDir 'asos-' state '.mat'], 'asosData', '-v7.3');
 end

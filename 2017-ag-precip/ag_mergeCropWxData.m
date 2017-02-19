@@ -3,7 +3,8 @@
 load 2017-ag-precip\ag-data\ag-corn-yield-us.mat
 cornYield = cropData;
 
-asosBaseDir = 'e:/data/asos/wx-data/';
+asosBaseDir = 'e:/data/ag/wx-data/';
+cropBaseDir = 'e:/data/ag/crop/';
 
 % load the census database of counties
 countyDb = ag_loadCountyDb();
@@ -45,10 +46,6 @@ for s = 1:length(cropData)
             % find distance in KM between wx station and county center
             dist = distdim(distance(curWxLat, curWxLon, curCountyLat, curCountyLon), 'degrees', 'km', 'earth');
             
-            if strcmp(lower(cropData{s}{3}{c}{1}), 'russell')
-                
-            end
-            
             % if county close enough, add wx data to it
             if dist < distThresh
                 
@@ -65,13 +62,9 @@ for s = 1:length(cropData)
                     % replace existing wx data with new data
                     cropData{s}{3}{c}{6} = dist;
                     cropData{s}{3}{c}{7} = {asosData{stationInd}};
-                end
-                
-                
-            end
-            
+                end 
+            end 
         end
-        
     end
     
     ['percent matched: ' num2str(round(countiesMatched / totalCounties * 100.0)) '%...']
@@ -79,4 +72,4 @@ for s = 1:length(cropData)
 end
 
 cropWxData = cropData;
-save('2017-ag-precip/ag-data/cropWxData.mat', cropWxData);
+save([cropBaseDir 'cropWxData.mat'], 'cropWxData', '-v7.3');

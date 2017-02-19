@@ -3,7 +3,7 @@
 import os
 
 asosBase = 'e:/data/asos/'
-states = ['ia', 'il', 'mo', 'in', 'oh', 'ks', 'mn', 'ne', 'sd', 'wi']
+states = ['ia', 'il', 'mo', 'in', 'oh', 'ks', 'mn', 'ne', 'sd', 'wi', 'tx', 'tn', 'ar', 'nc', 'ok']
 
 # how many lines to read at a time
 N = 1000000
