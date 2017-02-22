@@ -1,7 +1,7 @@
 % this reads pre-processed state-station ASOS hourly wx files, processed by
 % ag_processAsosPrecip.py
 
-baseDir = 'e:/data/asos/wx-data/';
+baseDir = 'e:/data/ag/wx-data/';
 %baseDir = '2017-ag-precip/wx-data/';
 
 states = {'ia', 'il', 'in', 'mo', 'ks', 'mn', 'ne', 'oh', 'sd', 'wi', 'tx', 'ok', 'ar', 'tn', 'nc'};
@@ -37,8 +37,12 @@ for s = 1:length(states)
         
         fin = fopen([curDir '/' fileName]);
     
+        % read weather file
         [data, pos] = textscan(fin, fileFormatStr, 'Delimiter', ',');
 
+        % close current file
+        fclose(fin);
+        
         % columns:
         % 1 - year
         % 2 - month

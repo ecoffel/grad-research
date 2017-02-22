@@ -17,8 +17,8 @@ plotHist = false;
 % used
 restrictionData = {};
 
-for a = 1:length(aircraftList)
-    aircraft = aircraftList{a};
+for ac = 1:length(aircraftList)
+    aircraft = aircraftList{ac};
     
     ['processing ' aircraft '...']
 
@@ -147,6 +147,8 @@ for a = 1:length(aircraftList)
         end
     end
 
+    restrictionData{ac} = {{randWeights, bins, minWeight, maxWeight}};
+    
     for r = 1:length(rcps)
 
         ['processing ' rcps{r} '...']
@@ -217,7 +219,7 @@ for a = 1:length(aircraftList)
         % distribution parameters, # restricted flights, total weight
         % removed, total # flights, total TOW for all flights, total MTOW
         % for all flights
-        restrictionData{a} = {{randWeights, bins, minWeight, maxWeight}, restrictedCount, restrictedWeight, totalCount, totalTow, totalMtow};
+        restrictionData{ac}{end+1}  = {restrictedCount, restrictedWeight, totalCount, totalTow, totalMtow};
         
         [rcps{r} ':']
         ['restricted fraction: ' num2str(restrictedCount/totalCount*100) '%']

@@ -1,11 +1,7 @@
 % load cropWxData (produced by ag_mergeCropWxData.m) and select the parts
 % of the wx data that match the samples here
 
-if ~exist('cropWxData', 'var')
-    ['loading crop data...']
-    cropWxData = load('e:/data/ag/crop/cropWxData.mat');
-    cropWxData = cropWxData.cropWxData;
-end
+cropDataBaseDir = 'E:/data/ag/crop/';
 
 tempPrc = 99.9;
 precipPrc = 99.9;
@@ -17,23 +13,35 @@ tcnt = 0;
 % or just groups and seasonal summaries
 full = false;
 
+% find names of all state crop data files
+txtFileNames = dir([cropDataBaseDir, '/*.mat']);
+txtFileNames = {txtFileNames.name};
+
 % loop over states
-for s = 1:length(cropWxData)
+for s = 1:length(txtFileNames)
+    
+    curFileParts = strsplit(txtFileNames{s}, '.');
+    
+    ['loading ' txtFileNames{s} '...']
+    cropWxData = load([cropDataBaseDir txtFileNames{s}]);
+    cropWxData = cropWxData.cropWxData;
+    
     % loop over counties
-    for c = 1:length(cropWxData{s}{3})
+    for c = 1:length(cropWxData{3})
         
         % if county doesn't have matched wx data, skip it
-        if length(cropWxData{s}{3}{c}) == 5
+        if length(cropWxData{3}{c}) == 5
+            cropWxData{3}{c}{5} = {};
             continue;
         end
         
-        ['processing ' cropWxData{s}{1} '/' cropWxData{s}{3}{c}{1} '...']
+        ['processing ' cropWxData{1} '/' cropWxData{3}{c}{1} '...']
         
-        temp = cropWxData{s}{3}{c}{7}{1}{end-2};
-        precip = cropWxData{s}{3}{c}{7}{1}{end};
+        temp = cropWxData{3}{c}{7}{1}{end-2};
+        precip = cropWxData{3}{c}{7}{1}{end};
 
-        years = cropWxData{s}{3}{c}{7}{1}{4};
-        months = cropWxData{s}{3}{c}{7}{1}{5};
+        years = cropWxData{3}{c}{7}{1}{4};
+        months = cropWxData{3}{c}{7}{1}{5};
 
         % select only growing season from april - sept
         growingSeasonInd = find(months>= 4 & months <= 9);
@@ -48,8 +56,8 @@ for s = 1:length(cropWxData)
         months = months(growingSeasonInd);
 
         % calculate seasonal means
-        tempMean = nanmean(temp);
-        precipSum = nansum(precip)
+        tempMean = [];
+        precipSum = [];
         
         tempThresh = prctile(temp, tempPrc);
         precipThresh = prctile(precip, tempPrc);
@@ -81,6 +89,12 @@ for s = 1:length(cropWxData)
                 
                 tempYear = temp(lastYearStartInd:lastYearEndInd);
                 precipYear = precip(lastYearStartInd:lastYearEndInd);
+                
+                % take the seasonal mean temperature
+                tempMean(end+1) = nanmean(tempYear);
+                
+                % and sum of seasonal precip
+                precipSum(end+1) = nansum(precipYear);
                 
                 % if there were any temps that exceeded the threshold,
                 % stick this into the temp category
@@ -139,19 +153,19 @@ for s = 1:length(cropWxData)
         
         if full
             % keep the full weather dataset
-            cropWxData{s}{3}{c}{7}{2} = {tempGroupings, precipGroupings, tempMean, precipSum};
+            cropWxData{3}{c}{7}{2} = {tempGroupings, precipGroupings, yearInd(:, 2), tempMean, precipSum};
         else
             % just include the grouped wx data and seasonal means
-            cropWxData{s}{3}{c}{7}{1} = {tempGroupings, precipGroupings, tempMean, precipSum};
+            cropWxData{3}{c}{7}{1} = {tempGroupings, precipGroupings, yearInd(:, 2), tempMean, precipSum};
         end
-        
-        
+    end
+    
+    ['saving grouped data...']
+    if full
+        save(['2017-ag-precip/ag-data/' curFileParts{1} '-grouped-full'], 'cropWxData', '-v7.3');
+    else
+        save(['2017-ag-precip/ag-data/' curFileParts{1} '-grouped-small'], 'cropWxData', '-v7.3');
     end
 end
 
-['saving grouped data...']
-if full
-    save('2017-ag-precip/ag-data/cropWxDataGroupedFull', 'cropWxData', '-v7.3');
-else
-    save('2017-ag-precip/ag-data/cropWxDataGroupedSmall', 'cropWxData', '-v7.3');
-end
+

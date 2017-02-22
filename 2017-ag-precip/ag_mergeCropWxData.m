@@ -17,9 +17,12 @@ distThresh = 30;
 
 % loop over each state
 for s = 1:length(cropData)
+    
+    curCropData = cropData{s};
+    
     ['processing ' cropData{s}{1} '...']
     
-    wxFileName = [asosBaseDir 'asos-' lower(cropData{s}{1}) '.mat'];
+    wxFileName = [asosBaseDir 'asos-' lower(curCropData{1}) '.mat'];
     if ~exist(wxFileName, 'file')
         continue;
     end
@@ -28,7 +31,7 @@ for s = 1:length(cropData)
     load(wxFileName);
 
     % total counties in state
-    totalCounties = length(cropData{s}{3});
+    totalCounties = length(curCropData{3});
     % total counties matched with wx station
     countiesMatched = 0;
     
@@ -39,9 +42,9 @@ for s = 1:length(cropData)
         
         % now find counties within 30 km
         % loop over counties for this state
-        for c = 1:length(cropData{s}{3})
-            curCountyLat = cropData{s}{3}{c}{3};
-            curCountyLon = cropData{s}{3}{c}{4};
+        for c = 1:length(curCropData{3})
+            curCountyLat = curCropData{3}{c}{3};
+            curCountyLon = curCropData{3}{c}{4};
             
             % find distance in KM between wx station and county center
             dist = distdim(distance(curWxLat, curWxLon, curCountyLat, curCountyLon), 'degrees', 'km', 'earth');
@@ -51,25 +54,26 @@ for s = 1:length(cropData)
                 
                 % if we haven't already added wx data OR if we have and the
                 % new wx station is closer
-                if length(cropData{s}{3}{c}) == 5 || ...
-                   (length(cropData{s}{3}{c}) == 7 && dist < cropData{s}{3}{c}{6})
+                if length(curCropData{3}{c}) == 5 || ...
+                   (length(curCropData{3}{c}) == 7 && dist < curCropData{3}{c}{6})
                
                     % if we haven't matched this county before, count it
-                    if length(cropData{s}{3}{c}) == 5
+                    if length(curCropData{3}{c}) == 5
                         countiesMatched = countiesMatched + 1;
                     end
                     
                     % replace existing wx data with new data
-                    cropData{s}{3}{c}{6} = dist;
-                    cropData{s}{3}{c}{7} = {asosData{stationInd}};
+                    curCropData{3}{c}{6} = dist;
+                    curCropData{3}{c}{7} = {asosData{stationInd}};
                 end 
             end 
         end
     end
     
     ['percent matched: ' num2str(round(countiesMatched / totalCounties * 100.0)) '%...']
-
+    
+    cropWxData = curCropData;
+    save([cropBaseDir 'cropWxData-' curCropData{1} '.mat'], 'cropWxData', '-v7.3');
+    
 end
 
-cropWxData = cropData;
-save([cropBaseDir 'cropWxData.mat'], 'cropWxData', '-v7.3');

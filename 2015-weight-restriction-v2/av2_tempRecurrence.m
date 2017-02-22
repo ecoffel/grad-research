@@ -1,17 +1,4 @@
-if ~exist('wxDataHistorical')
-    load airport-wx-cmip5-historical;
-    wxDataHistorical = wxData;
-end
-
-if ~exist('wxDataRcp85')
-    load airport-wx-cmip5-rcp85;
-    wxDataRcp85 = wxData;
-end
-
-if ~exist('wxDataRcp45')
-    load airport-wx-cmip5-rcp45;
-    wxDataRcp45 = wxData;
-end
+airportWxBaseDir = '2015-weight-restriction-v2/airport-wx/';
 
 % mean daily max or annual max
 annMax = true;
@@ -22,38 +9,48 @@ figure('Color', [1, 1, 1]);
 
 ind = 1;
 % loop over airports
-for a = 1:length(wxData{1})
+for a = 1:length(airports)
     
-    if ~ismember(wxData{1}{a}{1}, airports)
-        continue;
+    if ~exist('wxDataHistorical')
+        load([airportWxBaseDir 'airport-wx-cmip5-historical-' airports{a} '.mat']);
+        wxDataHistorical = wxData;
     end
-    
+
+    if ~exist('wxDataRcp85')
+        load([airportWxBaseDir, 'airport-wx-cmip5-rcp85-' airports{a} '.mat']);
+        wxDataRcp85 = wxData;
+    end
+
+    if ~exist('wxDataRcp45')
+        load([airportWxBaseDir, 'airport-wx-cmip5-rcp45-' airports{a} '.mat']);
+        wxDataRcp45 = wxData;
+    end
+
     tasmaxHistorical = [];
     tasmaxRcp85 = [];
     tasmaxRcp45 = [];
     
-    ['processing ' wxData{1}{a}{1} '...']
-    
+    ['processing ' airports{a} '...']
     
     % loop over models
     for m = 1:length(wxDataRcp85)
         
         % process historical data
         % years
-        for y = 1:size(wxDataHistorical{m}{a}{2}, 1)
+        for y = 1:size(wxDataHistorical{m}{2}, 1)
             % days
-            for d = 1:size(wxDataHistorical{m}{a}{2}, 2)
-                tasmaxHistorical(m, y, d) = nanmax(wxDataHistorical{m}{a}{2}(y, d, :));
+            for d = 1:size(wxDataHistorical{m}{2}, 2)
+                tasmaxHistorical(m, y, d) = nanmax(wxDataHistorical{m}{2}(y, d, :));
             end
         end
         
         % loop over years
-        for y = 1:size(wxDataRcp85{m}{a}{2}, 1)
+        for y = 1:size(wxDataRcp85{m}{2}, 1)
             % loop over days
-            for d = 1:size(wxDataRcp85{m}{a}{2}, 2)
+            for d = 1:size(wxDataRcp85{m}{2}, 2)
                 % max of 24 hour temps
-                tasmaxRcp85(m, y, d) = nanmax(wxDataRcp85{m}{a}{2}(y, d, :));
-                tasmaxRcp45(m, y, d) = nanmax(wxDataRcp45{m}{a}{2}(y, d, :));
+                tasmaxRcp85(m, y, d) = nanmax(wxDataRcp85{m}{2}(y, d, :));
+                tasmaxRcp45(m, y, d) = nanmax(wxDataRcp45{m}{2}(y, d, :));
             end
         end
     end
@@ -129,7 +126,7 @@ for a = 1:length(wxData{1})
     set(h, 'FontSize', 30);
     
     ylabel('Multiple', 'FontSize', 30);
-    title(wxDataRcp85{1}{a}{1}, 'FontSize', 30);
+    title(airports{a}, 'FontSize', 30);
     legend([p1.mainLine, p2.mainLine], 'RCP 8.5', 'RCP 4.5');
     
     ind = ind + 1;

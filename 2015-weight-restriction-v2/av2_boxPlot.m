@@ -1,4 +1,4 @@
-aircraft = '777-300';
+aircraft = '737-800';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
@@ -83,50 +83,51 @@ if useSubplots
 end
 
 if strcmp(aircraft, '777-300')
+    noPlotThresh = 10;
     figBoxYLim = [0 200];
     figFreqYLim = [-10 250];
-    freqThresh = 45;
     
     figBarBins = 0:10:100;
     barXTick = 0:20:100;
     figBarXLim = [-5 105];
     figBarYLim = [-75 75];
 elseif strcmp(aircraft, '737-800')
+    noPlotThresh = 5;
     figBoxYLim = [0 50];
     figFreqYLim = [-10 100];
-    freqThresh = 10;
     
     figBarBins = 0:3:24;
     barXTick = 0:3:24;
     figBarXLim = [-5 25];
     figBarYLim = [-50 50];
 elseif strcmp(aircraft, '787')
+    noPlotThresh = 10;
     figBoxYLim = [0 80];
     figFreqYLim = [-10 100];
-    freqThresh = 30;
     
     figBarBins = 0:5:60;
     barXTick = 0:10:60;
     figBarXLim = [-5 65];
     figBarYLim = [-60 60];
 elseif strcmp(aircraft, 'a320')
+    noPlotThresh = 5;
     figBoxYLim = [0 20];
     figFreqYLim = [-10 100];
-    freqThresh = 5;
     
     figBarBins = 0:3:21;
     barXTick = 0:3:21;
     figBarXLim = [-5 25];
     figBarYLim = [-50 50];
 elseif strcmp(aircraft, 'a380')
-    figBoxYLim = [0 150];
-    figFreqYLim = [-10 50];
-    freqThresh = 15;
+    noPlotThresh = 30;
+    figBoxYLim = [0 300];
+    figFreqYLim = [-10 150];
     
     figBarBins = 0:20:200;
     barXTick = 0:50:200;
     figBarXLim = [-15 205];
-    figBarYLim = [-50 50];
+    figBarYLim = [-75 75];
+    
 end
 
 for aInd = 1:length(airports)
@@ -163,8 +164,11 @@ for aInd = 1:length(airports)
         boxPlotData = [boxPlotData boxData];
         boxPlotGroup = [boxPlotGroup ones(size(boxData))];
 
-        % number of days in current model above Thresh
-        freq(1, m) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :) > freqThresh)) / 20.0;
+        % loop over all WR thresholds considered in the bar plot and record
+        % their exceedance frequency
+        for b = 1:length(figBarBins)
+            freq(1, m, b) = length(find(wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :) > figBarBins(b))) / 20.0;
+        end
 
         data{1}{m} = wrModelHistorical{aIndHistorical}{m}{3}(selectedHour, :)';
     end
@@ -207,11 +211,16 @@ for aInd = 1:length(airports)
                 % number of days in current model above freqThresh
                 if r > 2
                     % if we are on a second future scenario, average current
-                    % freq with existing
-                    freq(1+i, m) = nanmean([freq(1+i, m) length(find(curData > freqThresh)) / 20.0]);
+                    % freq with existing (for each WR threshold)
+                    for b = 1:length(figBarBins)
+                        freq(1+i, m, b) = nanmean([freq(1+i, m) length(find(curData > figBarBins(b))) / 20.0]);
+                    end
                 else
                     % if we are on first future scenario, just set freq
-                    freq(1+i, m) = length(find(curData > freqThresh)) / 20.0;
+                    % (for each WR threshold)
+                    for b = 1:length(figBarBins)
+                        freq(1+i, m) = length(find(curData > figBarBins(b))) / 20.0;
+                    end
                 end
 
                 % add to grouped data matrix for boxplots
@@ -233,7 +242,8 @@ for aInd = 1:length(airports)
 
     end
 
-    if length(boxPlotData) == 0 
+    % if there is no data or no WR, don't plot
+    if length(boxPlotData) == 0 || max(boxPlotData) < noPlotThresh
         continue;
     end
     
@@ -251,6 +261,7 @@ for aInd = 1:length(airports)
     else
         figure('Color', [1,1,1]);
     end
+    
     hold on;
     b = boxplot(boxPlotData, boxPlotGroup, 'Labels', {'1995', '2030', '2050', '2070'});
     %title(airports{aInd}, 'FontSize', 30);
@@ -275,6 +286,19 @@ for aInd = 1:length(airports)
         figure('Color', [1,1,1]);
     end
     
+    % find the threshold with the maximum frequency change, if there is
+    % some frequency change at all
+    if max(max(max(freq))) > 0
+        freqDiff = squeeze(nanmean(freq, 2));
+        freqDiff = freqDiff(end, :) - freqDiff(1, :);
+        freqDiffInd = find(freqDiff == max(freqDiff));
+    else
+        freqDiffInd = 1;
+    end
+    
+    % select the WR threshold with the maximum frequency change
+    freq = freq(:, :, freqDiffInd);
+    
     freqMean = nanmean(freq, 2)';
     
     % create the error matrix
@@ -297,6 +321,13 @@ for aInd = 1:length(airports)
     set(gca, 'XTickLabel', {'1995', '2030', '2050', '2070'});
     %title(airports{aInd}, 'FontSize', 30);
     ylim(figFreqYLim);
+    
+    % add text with the chosen freq threshold
+    textY = figFreqYLim(end) - (figFreqYLim(end) - figFreqYLim(1))*0.1;
+    text(1.2, textY, ['Threshold: ' num2str(figBarBins(freqDiffInd)) ' lbs'], 'HorizontalAlignment', 'left', 'FontSize', 24);
+    
+    xlim([0.9 4]);
+    
     if ~useSubplots
         set(gcf, 'Position', get(0,'Screensize'));
         export_fig(['wr-freq-' aircraft '-' rcps{end} '-' airports{aInd} '.png'], '-m3');
