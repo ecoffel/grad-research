@@ -2,15 +2,13 @@ if ~exist('airportDb', 'var')
     airportDb = loadAirportDb('e:\data\flight\airports.dat');
 end
 
-selectedAirports = {'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
-airports =          {'PHX', 'LGA', 'DCA', 'DEN', 'MDW', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
-airportRunway =     {11500, 7000,   7170,  16000, 6500, 13147,  14500, 11100, 12000, 13000, 13000, 12400, 12800};
-airportElevation =  {1135,  23,     14,    5433,  650,  62,     12,    120,   95,    7,     680,   1018,  83};
+[airports, airportRunway, airportElevation] = av2_loadAirportInfo();
+selectedAirports = airports;%{'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
 
 airportLats = [];
 airportLons = [];
 
-aircraft = '787';
+aircraft = '737-800';
 
 wxBaseDir = '2015-weight-restriction-v2\airport-wx\';
 
@@ -34,7 +32,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'rcp85';
+rcp = 'historical';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';

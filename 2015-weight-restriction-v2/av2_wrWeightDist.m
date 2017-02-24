@@ -4,19 +4,25 @@ aircraftList = {'737-800', 'a320', '787', '777-300', 'a380'};
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
-trData = {};
-wrData = {};
+
 
 wrBaseDir = '2015-weight-restriction-v2/wr-data/';
 
 % should we plot a histogram of the fleet weight distribution
 plotHist = false;
 
+basePeriodYears = 1985:2004;
+futurePeriodYears = 2021:2080;
+
 % restriction statistics for each aircraft, along with the TOW distribution
 % used
 restrictionData = {};
 
 for ac = 1:length(aircraftList)
+    
+    trData = {};
+    wrData = {};
+    
     aircraft = aircraftList{ac};
     
     ['processing ' aircraft '...']
@@ -106,6 +112,30 @@ for ac = 1:length(aircraftList)
 
         ['processing ' rcps{r} '...']
 
+        % make new cell for current RCP - 1st sub-cell will contain RCP
+        % summary data
+        restrictionData{ac}{1+r} = {{} };
+        
+        numModels = length(wrModelCur{1});
+        
+        % how many years in current RCP
+        if r == 1
+            numYears = length(basePeriodYears);
+        else
+            numYears = length(futurePeriodYears);
+        end
+        
+        % summary variables for the entire RCP
+        
+        % total number of flights
+        rcpTotalCount = zeros(numModels, numYears, length(weightDist));
+        % # of flights with some restriction at each weight level
+        rcpRestrictedCount = zeros(numModels, numYears, length(weightDist));
+        % total weight reduced at each weight level
+        rcpRestrictedWeight = zeros(numModels, numYears, length(weightDist));
+        % total weight requested (TOW for each flight) at each weight level
+        rcpTotalTow = zeros(numModels, numYears, length(weightDist));
+        
         % loop through all selected airports
         for aInd = 1:length(airports)
 
@@ -118,77 +148,70 @@ for ac = 1:length(aircraftList)
                 end
             end
             
-            % total number of flights
-            totalCount = 0;
+            % summary variables for this RCP & airport
+            airportTotalCount = zeros(numModels, numYears, length(weightDist));
+            airportRestrictedCount = zeros(numModels, numYears, length(weightDist));
+            airportRestrictedWeight = zeros(numModels, numYears, length(weightDist));
+            airportTotalTow = zeros(numModels, numYears, length(weightDist));
             
-            % # of flights with some restriction at each weight level
-            restrictedCount = zeros(length(weightDist), 1);
-            
-            % total weight reduced at each weight level
-            restrictedWeight = zeros(length(weightDist), 1);
-            
-            % total MTOW weight (if every flight took off at MTOW)
-            totalMtow = 0;
-
-            % total weight requested (TOW for each flight) at each weight level
-            totalTow = zeros(length(weightDist), 1);
-            
-            restrictionData{ac}{end+1} = {{airports{aInd}}};
+            % add new cell to current RCP for airport data
+            restrictionData{ac}{r+1}{end+1} = {{airports{aInd}}};
 
             % all models
             for m = 1:length(wrModelCur{aIndCur})
 
-                % all days
-                for d = 1:size(wrModelCur{aIndCur}{m}{3}, 2)
-                    % restrictions for all hours of current day (+- 2 hours around
-                    % daily max temperature)
-                    curDayRestrictions = squeeze(wrModelCur{aIndCur}{m}{3}(:, d))';
-
-                    % loop over hourly restrictions for current day
-                    for restriction = curDayRestrictions
-
-                        % if there is some restriction at current hour
-                        if ~isnan(restriction) && restriction > 0
-                            
-                            % loop over weight distribution
-                            for w = 1:length(weightDist)
-                                
-                                % current weight
-                                tow = weightDist(w);
-                                
-                                if maxWeight - restriction < tow
-                                    % count flights with some restriction
-                                    restrictedCount(w) = restrictedCount(w) + 1;
-                                    % count how much payload has to be reduced off of
-                                    % the attempted TOW
-                                    restrictedWeight(w) = restrictedWeight(w) + (tow - (maxWeight-restriction));
-                                end
-
-                                totalTow(w) = totalTow(w) + tow;
-                            end
-                            
-                            % count total number of days simulated
-                            totalCount = totalCount + 1;
-                            % and total MTOW
-                            totalMtow = totalMtow + maxWeight;
-                            
-                        end
-                    end     
+                daysPerYear = round(size(wrModelCur{aIndCur}{m}{3}, 2)/numYears);
+                
+                for y = 1:numYears
+                    for w = 1:length(weightDist)
+                        tow = weightDist(w);
+                        
+                        % indicies for current year
+                        ind1 = (y-1) * daysPerYear + 1;
+                        ind2 = y * daysPerYear;
+                        
+                        % number of restricted days
+                        numRestricted = length(find((maxWeight - wrModelCur{aIndCur}{m}{3}(:, ind1:ind2) < tow)));
+                        % sum of restricted weight
+                        restrictedWeight = (tow - (maxWeight - wrModelCur{aIndCur}{m}{3}(:, ind1:ind2)));
+                        restrictedWeight(restrictedWeight < 0) = 0;
+                        restrictedWeight = nansum(nansum(restrictedWeight));
+                        
+                        airportRestrictedCount(m, y, w) = numRestricted;
+                        airportTotalCount(m, y, w) = numel(wrModelCur{aIndCur}{m}{3}(:, ind1:ind2));
+                        rcpRestrictedCount(m, y, w) = rcpRestrictedCount(m, y, w) + numRestricted;
+                        rcpTotalCount(m, y, w) = rcpTotalCount(m, y, w) + numel(wrModelCur{aIndCur}{m}{3}(:, ind1:ind2));
+                        
+                        airportRestrictedWeight(m, y, w) = restrictedWeight;
+                        airportTotalTow(m, y, w) = airportTotalCount(m, y, w) * tow;
+                        rcpRestrictedWeight(m, y, w) = rcpRestrictedWeight(m, y, w) + restrictedWeight;
+                        rcpTotalTow(m, y, w) = rcpTotalTow(m, y, w) + airportTotalCount(m, y, w) * tow;
+                    end
                 end
             end
+                
+                                
+                           
             
-            % add data to cell:
-            % distribution parameters, # restricted flights, total weight
-            % removed, total # flights, total TOW for all flights, total MTOW
-            % for all flights
-            restrictionData{ac}{end}{end+1}  = {restrictedCount, restrictedWeight, totalCount, totalTow, totalMtow};
-
-            [airports{aInd} ' - ' rcps{r} ':']
-            ['restricted percent: ']
-            restrictedCount / totalCount * 100
-            ['restricted TOW weight percent: ']
-             restrictedWeight ./ totalTow .* 100
-            
-        end        
+            % add summary data for current airport
+            restrictionData{ac}{r+1}{end}{2} = {airportRestrictedCount, airportRestrictedWeight, airportTotalCount, airportTotalTow};
+% 
+%             [airports{aInd} ' - ' rcps{r} ':']
+%             ['restricted percent: ']
+%             [squeeze(nanmean(nanmean(airportRestrictedCount(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(airportTotalCount(:, end-19:end, :)))) .* 100]'
+%             ['restricted TOW weight percent: ']
+%             [squeeze(nanmean(nanmean(airportRestrictedWeight(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(airportTotalTow(:, end-19:end, :)))) .* 100]'
+%             
+        end
+        
+        % add summary data for current RCP
+        restrictionData{ac}{r+1}{1}{2}  = {rcpRestrictedCount, rcpRestrictedWeight, rcpTotalCount, rcpTotalTow};
+        
+        [rcps{r} ' summary data...']
+        [squeeze(nanmean(nanmean(rcpRestrictedCount(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(rcpTotalCount(:, end-19:end, :)))) .* 100]'
+        [squeeze(nanmean(nanmean(rcpRestrictedWeight(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(rcpTotalTow(:, end-19:end, :)))) .* 100]'
+        
     end
+    
+    clear trData wrData;
 end
