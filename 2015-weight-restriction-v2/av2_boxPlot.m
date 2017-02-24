@@ -1,4 +1,4 @@
-aircraft = '737-800';
+aircraft = 'a380';
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
@@ -103,7 +103,7 @@ elseif strcmp(aircraft, '737-800')
 elseif strcmp(aircraft, '787')
     noPlotThresh = 10;
     figBoxYLim = [0 80];
-    figFreqYLim = [-10 100];
+    figFreqYLim = [-10 150];
     
     figBarBins = 0:5:60;
     barXTick = 0:10:60;
@@ -123,10 +123,10 @@ elseif strcmp(aircraft, 'a380')
     figBoxYLim = [0 300];
     figFreqYLim = [-10 150];
     
-    figBarBins = 0:20:200;
-    barXTick = 0:50:200;
-    figBarXLim = [-15 205];
-    figBarYLim = [-75 75];
+    figBarBins = 0:20:250;
+    barXTick = 0:50:250;
+    figBarXLim = [-15 255];
+    figBarYLim = [-100 100];
     
 end
 
@@ -324,7 +324,7 @@ for aInd = 1:length(airports)
     
     % add text with the chosen freq threshold
     textY = figFreqYLim(end) - (figFreqYLim(end) - figFreqYLim(1))*0.1;
-    text(1.2, textY, ['Threshold: ' num2str(figBarBins(freqDiffInd)) ' lbs'], 'HorizontalAlignment', 'left', 'FontSize', 24);
+    text(1.2, textY, ['Threshold: ' num2str(figBarBins(freqDiffInd)) 'k lbs'], 'HorizontalAlignment', 'left', 'FontSize', 24);
     
     xlim([0.9 4]);
     
