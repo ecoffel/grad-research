@@ -242,6 +242,11 @@ for aInd = 1:length(airports)
 
     end
 
+    % SYD got messed up somehow
+    if strcmp(airports{aInd}, 'SYD')
+        continue;
+    end
+    
     % if there is no data or no WR, don't plot
     if length(boxPlotData) == 0 || max(boxPlotData) < noPlotThresh
         continue;
@@ -297,7 +302,7 @@ for aInd = 1:length(airports)
     end
     
     % select the WR threshold with the maximum frequency change
-    freq = freq(:, :, freqDiffInd);
+    freq = freq(:, :, freqDiffInd(1));
     
     freqMean = nanmean(freq, 2)';
     

@@ -4,8 +4,6 @@ aircraftList = {'737-800', 'a320', '787', '777-300', 'a380'};
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
-
-
 wrBaseDir = '2015-weight-restriction-v2/wr-data/';
 
 % should we plot a histogram of the fleet weight distribution
@@ -74,23 +72,23 @@ for ac = 1:length(aircraftList)
     end
 
     if strcmp(aircraft, '777-300')
-        selectedAirports = {'PHX','DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+        excludeAirports = {'DCA', 'LGA', 'MDW', 'SYD'};
         maxWeight = 660;
         minWeight = 450;
     elseif strcmp(aircraft, '787')
-        selectedAirports = {'PHX','DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+        excludeAirports = {'DCA', 'LGA', 'MDW', 'SYD'};
         maxWeight = 502;
         minWeight = 380;
     elseif strcmp(aircraft, 'a320')
-        selectedAirports = {'LGA', 'DCA', 'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+        excludeAirports = {'SYD'};
         maxWeight = 174;
         minWeight = 100;
     elseif strcmp(aircraft, 'a380')
-        selectedAirports = {'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+        excludeAirports = {'DCA', 'LGA', 'MDW', 'SYD'};
         maxWeight = 1260;
         minWeight = 800;
     elseif strcmp(aircraft, '737-800')
-        selectedAirports = {'LGA', 'DCA', 'MDW', 'PHX','DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+        excludeAirports = {'SYD'};
         maxWeight = 174;
         minWeight = 100;       
     end
@@ -101,7 +99,7 @@ for ac = 1:length(aircraftList)
     airports = {};
     for a = 1:length(historicalAirports)
         if ismember(historicalAirports{a}, rcp85Airports) && ...
-           ismember(historicalAirports{a}, selectedAirports)
+           ~ismember(historicalAirports{a}, excludeAirports)
             airports{end+1} = historicalAirports{a};
         end
     end
@@ -114,7 +112,7 @@ for ac = 1:length(aircraftList)
 
         % make new cell for current RCP - 1st sub-cell will contain RCP
         % summary data
-        restrictionData{ac}{1+r} = {{} };
+        restrictionData{ac}{1+r} = {rcps{r} };
         
         numModels = length(wrModelCur{1});
         
@@ -155,7 +153,7 @@ for ac = 1:length(aircraftList)
             airportTotalTow = zeros(numModels, numYears, length(weightDist));
             
             % add new cell to current RCP for airport data
-            restrictionData{ac}{r+1}{end+1} = {{airports{aInd}}};
+            restrictionData{ac}{r+1}{end+1} = {airports{aInd}};
 
             % all models
             for m = 1:length(wrModelCur{aIndCur})
@@ -190,28 +188,16 @@ for ac = 1:length(aircraftList)
                 end
             end
                 
-                                
-                           
-            
             % add summary data for current airport
-            restrictionData{ac}{r+1}{end}{2} = {airportRestrictedCount, airportRestrictedWeight, airportTotalCount, airportTotalTow};
-% 
-%             [airports{aInd} ' - ' rcps{r} ':']
-%             ['restricted percent: ']
-%             [squeeze(nanmean(nanmean(airportRestrictedCount(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(airportTotalCount(:, end-19:end, :)))) .* 100]'
-%             ['restricted TOW weight percent: ']
-%             [squeeze(nanmean(nanmean(airportRestrictedWeight(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(airportTotalTow(:, end-19:end, :)))) .* 100]'
-%             
+            restrictionData{ac}{r+1}{end}{end+1} = {airportRestrictedCount, airportRestrictedWeight, airportTotalCount, airportTotalTow};
         end
         
         % add summary data for current RCP
-        restrictionData{ac}{r+1}{1}{2}  = {rcpRestrictedCount, rcpRestrictedWeight, rcpTotalCount, rcpTotalTow};
-        
-        [rcps{r} ' summary data...']
-        [squeeze(nanmean(nanmean(rcpRestrictedCount(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(rcpTotalCount(:, end-19:end, :)))) .* 100]'
-        [squeeze(nanmean(nanmean(rcpRestrictedWeight(:, end-19:end, :), 2), 1)) ./ squeeze(nanmean(nanmean(rcpTotalTow(:, end-19:end, :)))) .* 100]'
-        
+        restrictionData{ac}{r+1}{end}{end+1}  = {rcpRestrictedCount, rcpRestrictedWeight, rcpTotalCount, rcpTotalTow};
     end
     
     clear trData wrData;
 end
+
+save('restrictionData', 'restrictionData');
+
