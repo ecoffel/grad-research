@@ -12,6 +12,10 @@ plotHist = false;
 basePeriodYears = 1985:2004;
 futurePeriodYears = 2021:2080;
 
+
+% should we use payload restriction or total restriction
+payload = false;
+
 % restriction statistics for each aircraft, along with the TOW distribution
 % used
 restrictionData = {};
@@ -29,15 +33,15 @@ for ac = 1:length(aircraftList)
     if ismember('historical', rcps)
         load([wrBaseDir 'wr-' aircraft '-' dataset '-historical.mat']);
         load([wrBaseDir 'tr-' aircraft '-' dataset '-historical.mat']);
-        wrModelCur = weightRestriction;
+        curWeightData = weightRestriction;
         trModelHistorical = totalRestriction;
 
         trData{end+1} = trModelHistorical;
-        wrData{end+1} = wrModelCur;
+        wrData{end+1} = curWeightData;
 
         historicalAirports = {};
-        for a = 1:length(wrModelCur)
-            historicalAirports{end+1} = wrModelCur{a}{1}{1};
+        for a = 1:length(curWeightData)
+            historicalAirports{end+1} = curWeightData{a}{1}{1};
         end
     end
 
@@ -114,7 +118,7 @@ for ac = 1:length(aircraftList)
         % summary data
         restrictionData{ac}{1+r} = {rcps{r} };
         
-        numModels = length(wrModelCur{1});
+        numModels = length(curWeightData{1});
         
         % how many years in current RCP
         if r == 1
@@ -138,10 +142,15 @@ for ac = 1:length(aircraftList)
         for aInd = 1:length(airports)
 
             % find index of current airport
-            wrModelCur = wrData{r};
+            if payload
+                curWeightData = wrData{r};
+            else
+                curWeightData = trData{r};
+            end
+            
             aIndCur = -1;
-            for a = 1:length(wrModelCur)
-                if strcmp(airports{aInd}, wrModelCur{a}{1}{1})
+            for a = 1:length(curWeightData)
+                if strcmp(airports{aInd}, curWeightData{a}{1}{1})
                     aIndCur = a;
                 end
             end
@@ -156,9 +165,9 @@ for ac = 1:length(aircraftList)
             restrictionData{ac}{r+1}{end+1} = {airports{aInd}};
 
             % all models
-            for m = 1:length(wrModelCur{aIndCur})
+            for m = 1:length(curWeightData{aIndCur})
 
-                daysPerYear = round(size(wrModelCur{aIndCur}{m}{3}, 2)/numYears);
+                daysPerYear = round(size(curWeightData{aIndCur}{m}{3}, 2)/numYears);
                 
                 for y = 1:numYears
                     for w = 1:length(weightDist)
@@ -169,16 +178,16 @@ for ac = 1:length(aircraftList)
                         ind2 = y * daysPerYear;
                         
                         % number of restricted days
-                        numRestricted = length(find((maxWeight - wrModelCur{aIndCur}{m}{3}(:, ind1:ind2) < tow)));
+                        numRestricted = length(find((maxWeight - curWeightData{aIndCur}{m}{3}(:, ind1:ind2) < tow)));
                         % sum of restricted weight
-                        restrictedWeight = (tow - (maxWeight - wrModelCur{aIndCur}{m}{3}(:, ind1:ind2)));
+                        restrictedWeight = (tow - (maxWeight - curWeightData{aIndCur}{m}{3}(:, ind1:ind2)));
                         restrictedWeight(restrictedWeight < 0) = 0;
                         restrictedWeight = nansum(nansum(restrictedWeight));
                         
                         airportRestrictedCount(m, y, w) = numRestricted;
-                        airportTotalCount(m, y, w) = numel(wrModelCur{aIndCur}{m}{3}(:, ind1:ind2));
+                        airportTotalCount(m, y, w) = numel(curWeightData{aIndCur}{m}{3}(:, ind1:ind2));
                         rcpRestrictedCount(m, y, w) = rcpRestrictedCount(m, y, w) + numRestricted;
-                        rcpTotalCount(m, y, w) = rcpTotalCount(m, y, w) + numel(wrModelCur{aIndCur}{m}{3}(:, ind1:ind2));
+                        rcpTotalCount(m, y, w) = rcpTotalCount(m, y, w) + numel(curWeightData{aIndCur}{m}{3}(:, ind1:ind2));
                         
                         airportRestrictedWeight(m, y, w) = restrictedWeight;
                         airportTotalTow(m, y, w) = airportTotalCount(m, y, w) * tow;
@@ -199,5 +208,9 @@ for ac = 1:length(aircraftList)
     clear trData wrData;
 end
 
-save('restrictionData', 'restrictionData');
+if payload
+    save('restrictionData-wr', 'restrictionData');
+else
+    save('restrictionData-tr', 'restrictionData');
+end
 
