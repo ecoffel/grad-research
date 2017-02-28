@@ -3,7 +3,7 @@
 
 wxBaseDir = 'G:\data\flight\airport-wx\';
 
-airports = {'LAX', 'LHR'};
+airports = {'IAH', 'DEN'};
 
 % subplot dimensions
 subplotRow = 2;
@@ -124,22 +124,40 @@ for a = 1:length(airports)
         end
     end
     
+    fitRcp45 = fitlm(1:size(annualMaxRcp45, 2), nanmean(annualMaxRcp45, 1));
+    fitRcp45Y = fitRcp45.Fitted;
+    fitRcp45Slope = fitRcp45.Coefficients.Estimate(2);
+    fitRcp45SE = fitRcp45.Coefficients.SE(2);
+    
+    fitRcp85 = fitlm(1:size(annualMaxRcp85, 2), nanmean(annualMaxRcp85, 1));
+    fitRcp85Y = fitRcp85.Fitted;
+    fitRcp85Slope = fitRcp85.Coefficients.Estimate(2);
+    fitRcp85SE = fitRcp85.Coefficients.SE(2);
+    
     % -------------------------- plot the temp change --------------------
     h = subplot(subplotRow, subplotCol, ind);
     hold on;
+    box on;
+    grid on;
     
     if annMax
         p1 = shadedErrorBar(1:size(annualMaxRcp85, 2), nanmean(annualMaxRcp85, 1), annualMaxErrRcp85, '-', 1);
         set(p1.mainLine,  'LineWidth', 2, 'Color', [237/255.0, 104/255.0, 104/255.0]);
         set(p1.patch, 'FaceColor', [237/255.0, 104/255.0, 104/255.0]);
         set(p1.edge, 'Color', 'k');
-        
 
         p2 = shadedErrorBar(1:size(annualMaxRcp45, 2), nanmean(annualMaxRcp45, 1), annualMaxErrRcp45, '-', 1);
         set(p2.mainLine,  'LineWidth', 2, 'Color', [104/255.0, 186/255.0, 237/255.0]);
         set(p2.patch, 'FaceColor', [104/255.0, 186/255.0, 237/255.0]);
         set(p2.edge, 'Color', 'k');
+        
+        % plot the historical annual maximum
         plot(linspace(1, size(annualMaxRcp85, 2), 50), ones(50, 1) .* annualMaxHistorical, '--k', 'LineWidth', 2);
+        
+        % plot the rcp 45 and 8.5 trends
+        plot(1:size(annualMaxRcp45, 2), fitRcp45Y, '--', 'Color', [90/255.0, 90/255.0, 90/255.0], 'LineWidth', 2);
+        plot(1:size(annualMaxRcp85, 2), fitRcp85Y, '--', 'Color', [90/255.0, 90/255.0, 90/255.0], 'LineWidth', 2);
+        
     else
         p1 = shadedErrorBar(1:size(annualMeanRcp85, 2), nanmean(annualMeanRcp85, 1), annualMeanErrRcp85, '-', 1);
         set(p1.mainLine,  'LineWidth', 2, 'Color', [237/255.0, 104/255.0, 104/255.0]);
@@ -152,13 +170,15 @@ for a = 1:length(airports)
         set(p2.edge, 'Color', 'k');
     end
     
-    set(h, 'XTick', [1 21 41 61]);
-    set(h, 'XTickLabel', [2020 2040 2060 2080]);
-    set(h, 'FontSize', 30);
+    set(h, 'XTick', [6 16 26 36 46 56]);
+    set(h, 'XTickLabel', [2025 2035 2045 2055 2065 2075]);
+    set(h, 'FontSize', 26);
     ylabel(['Temperature (' char(176) 'C)'], 'FontSize', 30);
     xlim([1 61]);
     title(airport, 'FontSize', 30);
-    legend([p1.mainLine, p2.mainLine], 'RCP 8.5', 'RCP 4.5', 'Location', 'northwest');
+    legend([p1.mainLine, p2.mainLine], ['RCP 8.5, ' num2str(roundn(fitRcp85Slope*10, -2)) char(176) 'C/decade'], ...
+                                       ['RCP 4.5, ' num2str(roundn(fitRcp45Slope*10, -2)) char(176) 'C/decade'], ...
+                                       'Location', 'northwest');
     
     ind = ind + 1;
     
@@ -166,6 +186,8 @@ for a = 1:length(airports)
     % -------------------------- plot the frequency change ---------------
     h = subplot(subplotRow, subplotCol, ind);
     hold on;
+    box on;
+    grid on;
 
     p1 = shadedErrorBar(1:size(recRcp85Decadal, 2), nanmean(recRcp85Decadal, 1), nanstd(recRcp85Decadal, [], 1), '-', 1);
     set(p1.mainLine,  'LineWidth', 2, 'Color', [237/255.0, 104/255.0, 104/255.0]);
@@ -182,7 +204,7 @@ for a = 1:length(airports)
     
     set(h, 'XTick', [1 2 3 4 5 6]);
     set(h, 'XTickLabel', [2025 2035 2045 2055 2065 2075]);
-    set(h, 'FontSize', 30);
+    set(h, 'FontSize', 26);
     
     ylabel('Multiple', 'FontSize', 30);
     title(airport, 'FontSize', 30);

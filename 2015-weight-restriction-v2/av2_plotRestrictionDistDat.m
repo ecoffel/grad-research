@@ -2,8 +2,6 @@ load restrictionData-tr;
 
 % restrictionData{aircraft}{rcp}{airport}{data-item}
 
-% acInd = 5;
-%airportInd = 10;
 rcpInd = 4;
 
 subplotInd = 1;
@@ -19,9 +17,6 @@ for acInd = 1:length(restrictionData)
     weightBinsInd = 6:length(weightBins);
 
     aircraft = restrictionData{acInd}{1}{1};
-    if strcmp(aircraft, 'a380')
-        continue;
-    end
     
     airportCount = 1;
     for airportInd = 2:length(restrictionData{acInd}{2})
@@ -58,6 +53,8 @@ for acInd = 1:length(restrictionData)
     prcRestFuture(end+1, :) = squeeze(nanmean(prcRestFuture, 1));
     meanTowRestFuture(end+1, :) = squeeze(nanmean(meanTowRestFuture, 1));
     
+    % plot left panel -----------------------------------------------------
+    
     figure('Color', [1,1,1]);
     subplot(1, 2, 1);
     hold on;
@@ -83,6 +80,8 @@ for acInd = 1:length(restrictionData)
     set(gca, 'FontSize', 24);
     xlim([weightBins(weightBinsInd(1))-10, weightBins(end)+10]);
     ylim([-1 max(max(prcRestFuture)) + 1]);
+    
+    % plot right panel ----------------------------------------------------
     
     subplot(1, 2, 2);
     hold on;
