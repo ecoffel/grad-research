@@ -100,7 +100,7 @@ if strcmp(dataset, 'obs')
 % if obsWx is false, load model data    
 else
     
-    needToLoad = false;
+    needToLoad = true;
     
     % check if we have all th needed wx files for each selected airport
     for a = 1:length(selectedAirports)
@@ -118,7 +118,7 @@ else
                 curModel = [models{m} '/'];
             end
 
-            wxData{m} = {};
+            wxData{m} = {models{m}, {}};
             
             ['loading ' curModel ' base']
             
@@ -128,14 +128,14 @@ else
             end
             
             for a = 1:length(airports)
-                wxData{m}{a} = {airports{a}, []};
+                wxData{m}{2}{a} = {airports{a}, []};
             end
             
             for y = timePeriod(1):timePeriod(end)
                 ['year ' num2str(y) '...']
 
-                dailyDataMax = loadDailyData([baseDir '/' curModel '/' ensemble '/' rcp '/' tempMaxVar '/regrid/world-bc'], 'yearStart', y, 'yearEnd', (y+1)-1);
-                dailyDataMin = loadDailyData([baseDir '/' curModel '/' ensemble '/' rcp '/' tempMinVar '/regrid/world-bc'], 'yearStart', y, 'yearEnd', (y+1)-1);
+                dailyDataMax = loadDailyData([baseDir '/' curModel '/' ensemble '/' rcp '/' tempMaxVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+1)-1);
+                dailyDataMin = loadDailyData([baseDir '/' curModel '/' ensemble '/' rcp '/' tempMinVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+1)-1);
 
                 if nanmean(nanmean(nanmean(nanmean(nanmean(dailyDataMax{3}, 5), 4), 3), 2), 1) > 100
                     dailyDataMax{3} = dailyDataMax{3} - 273.15;
@@ -160,7 +160,7 @@ else
                         % falling temps
                         down = linspace(dailyDataMax{3}(latIndexRange, lonIndexRange, d), dailyDataMin{3}(latIndexRange, lonIndexRange, d), 13);
                         % chop out the duplicate daily max and min temperatures
-                        wxData{m}{a}{2}(y-timePeriod(1)+1, d, :) = [up(2:end) down(2:end)];
+                        wxData{m}{2}{a}{2}(y-timePeriod(1)+1, d, :) = [up(2:end) down(2:end)];
                     end
                 end
 

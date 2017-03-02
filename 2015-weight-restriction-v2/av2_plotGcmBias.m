@@ -3,11 +3,21 @@ baseDirAsos = '2015-weight-restriction-v2/airport-wx/processed/';
 
 airports = {'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD'};
 
-figure('Color', [1,1,1]);
-hold on;
+% difference between model and obs at each temp percentile
+errors = {};
+
+shouldPlot = false;
+
+if shouldPlot
+    figure('Color', [1,1,1]);
+    hold on;
+    axis off;
+end
 
 for a = 1:length(airports)
     airport = airports{a};
+    
+    errors{a} = {airport, {}};
     
     % load CMIP5 temps
     load([baseDirGcm 'airport-wx-cmip5-historical-' airport '.mat']);
@@ -34,6 +44,7 @@ for a = 1:length(airports)
     
     % loop over models
     for m = 1:length(tempsGcm)
+        errors{a}{2} = {tempsGcm{m}{1}, []};
         gcmMax(:, :, m) = nanmax(tempsGcm{m}{2}(:, 1:372, :), [], 3);
         gcmMin(:, :, m) = nanmin(tempsGcm{m}{2}(:, 1:372, :), [], 3);
     end
@@ -50,16 +61,28 @@ for a = 1:length(airports)
         
         for m = 1:size(gcmMax, 3)
             gcmDist(p, m) = prctile(reshape(gcmMax(:, :, m), [size(gcmMax(:, :, m), 1)*size(gcmMax(:, :, m), 2), 1]), prcThresh(p));
+            
+            errors{a}{2}{m}{2}(p) = gcmDist(p, m) - obsDist(p);
         end
     end
     
-    subplot(3, 3, a);
-    hold on;
-    axis square;
-    box on;
-    grid on;
-    plot(gcmDist);
-    plot(obsDist,'k','LineWidth',4);
-    xlim([-1 12]);
-    title(airport,'FontSize',24);
+    if shouldPlot
+        subplot_tight(3, 3, a, [0.1 0.01]);
+        hold on;
+        axis square;
+        box on;
+        grid on;
+        plot(gcmDist, 'Color', [90/255.0, 90/255.0, 90/255.0]);
+        plot(obsDist,'k','LineWidth',4);
+        %xlabel('Percentile', 'FontSize', 24);
+        ylabel([char(176) 'C'], 'FontSize', 20);
+        set(gca, 'FontSize', 20);
+        set(gca, 'XTick', 1:11)
+        set(gca, 'XTickLabel', {'Min', '', '', '', '', '', '', '', '', '', 'Max'});
+        xlim([-1 12]);
+
+        title(airport,'FontSize',24);
+    end
 end
+
+save('gcm-bias.mat', 'errors');
