@@ -1,7 +1,7 @@
 % this reads pre-processed state-station ASOS hourly wx files, processed by
 % ag_processAsosPrecip.py
 
-baseDir = 'e:/data/flight/wx/raw/asos/wx-data/';
+baseDir = '2015-weight-restriction-v2/airport-wx/processed/';
 %baseDir = '2017-ag-precip/wx-data/';
 
 states = {'il', 'ny', 'co', 'ca', 'tx', 'fl', 'va'};
@@ -60,34 +60,32 @@ for s = 1:length(states)
         temps(temps == -999) = NaN;
         
         % find the daily max/min temps from the hourly data
-        dailyYears = [];
-        dailyMonths = [];
-        dailyDays = [];
-        dailyMax = [];
-        dailyMin = [];
+        dailyMax = zeros(years(end)-years(1), 12, 31);
+        dailyMin = zeros(years(end)-years(1), 12, 31);
         
-        lastInd = -1;
+        % set all inital values to nan
+        dailyMax(dailyMax == 0) = NaN;
+        dailyMin(dailyMin == 0) = NaN;
+        
+        lastHourInd = -1;
         for i = 1:length(hours)
-            % found hour 0
+            % found a new day...
             if hours(i) == 0
-                
                 % if we're not on the first reading
-                if lastInd ~= -1
+                if lastHourInd ~= -1
                     % take temp data for current day
-                    tempsDay = temps(lastInd:i-1);
-                    dailyYears(end+1) = years(i-1);
-                    dailyMonths(end+1) = months(i-1);
-                    dailyDays(end+1) = days(i-1);
-                    dailyMax(end+1) = nanmax(tempsDay);
-                    dailyMin(end+1) = nanmin(tempsDay);
+                    tempsDay = temps(lastHourInd:i-1);
+                    dailyMax(years(i-1) - years(1) + 1, months(i-1), days(i-1)) = nanmax(tempsDay);
+                    dailyMin(years(i-1) - years(1) + 1, months(i-1), days(i-1)) = nanmin(tempsDay);
                 end
                 
-                lastInd = i;
+                lastHourInd = i;
             end
         end
         
-        asosData{end+1} = {code, dailyYears, dailyMonths, dailyDays, dailyMax, dailyMin};
+        asosData = {code, years(1), months(1), days(1), dailyMax, dailyMin};
+        save([baseDir 'airport-wx-obs-' code '.mat'], 'asosData', '-v7.3');
     end
     
-    save([baseDir 'asos-' state '.mat'], 'asosData', '-v7.3');
+    
 end
