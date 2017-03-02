@@ -1,4 +1,4 @@
-regridVars = {'tos'};%, 'huss', 'psl'};
+regridVars = {'ta'};%, 'huss', 'psl'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -23,8 +23,8 @@ models = {'gfdl-cm3'};
 
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
 ensembles = {'r1i1p1'};
-rcps = {'historical', 'rcp85'};
-plevs = {};
+rcps = {'historical', 'rcp45', 'rcp85'};
+plevs = {1,2,3,4,5};
 
 region = 'world';
 skipexisting = false;
