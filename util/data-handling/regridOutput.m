@@ -124,7 +124,11 @@ for d = 1:length(dirNames)
                 [latIndexM, lonIndexM] = latLonIndexRange({lat, lon, curMonthlyData}, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
                 lat = lat(latIndexM, lonIndexM);
                 lon = lon(latIndexM, lonIndexM);
-                curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :);
+                if length(size(curMonthlyData)) == 3
+                    curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :);
+                elseif length(size(curMonthlyData)) == 4
+                    curMonthlyData = curMonthlyData(latIndexM, lonIndexM, :, :);
+                end
 
                 [latIndexB, lonIndexB] = latLonIndexRange(baseGrid, latLonBounds(1, 1:end), latLonBounds(2, 1:end));
                 baseGrid{1} = baseGrid{1}(latIndexB, lonIndexB);
@@ -165,7 +169,7 @@ for d = 1:length(dirNames)
             
             for d=1:size(curMonthlyData, 4)
                 curData = squeeze(curMonthlyData(:,:,plev,d));
-                regridCurData = regridGriddata({lat, lon, curData}, baseGrid);
+                regridCurData = regridGriddata({lat, lon, curData}, baseGrid, gridCor);
                 
                 if length(regridLat) == 0 | length(regridLon) == 0
                     regridLat = regridCurData{1};

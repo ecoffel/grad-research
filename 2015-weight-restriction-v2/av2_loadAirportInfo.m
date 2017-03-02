@@ -3,7 +3,7 @@ function [airports, airportRunway, airportElevation] = av2_loadAirportInfo()
     fin = fopen('airport-data.csv', 'r');
 
     data = textscan(fin, '%*[^\n]', 1);
-    data = textscan(fin, '%s %d %d%*[^\n]', 'Delimiter', ',');
+    data = textscan(fin, '%s %f %f%*[^\n]', 'Delimiter', ',');
 
     fclose(fin);
     
