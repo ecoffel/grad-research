@@ -7,15 +7,16 @@ function wxAirports = splitWx(fileName, wxData)
     wxAirports = {};
 
     % loop over airports
-    for a = 1:length(wxDataOld{1})
-        ['processing ' wxDataOld{1}{a}{1}]
-        wxAirports{a} = wxDataOld{1}{a}{1};
+    for a = 1:length(wxDataOld{1}{2})
+        ['processing ' wxDataOld{1}{2}{a}{1}]
+        wxAirports{a} = wxDataOld{1}{2}{a}{1};
 
         airportData = {};
 
         % loop over models
         for m = 1:length(wxDataOld)
-            airportData{m} = wxDataOld{m}{a};
+            % add the name and the dat to the new cell
+            airportData{m} = {wxDataOld{m}{1}, wxDataOld{m}{2}{a}};
         end
 
         wxData = airportData;
