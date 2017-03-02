@@ -19,7 +19,7 @@ for a = 1:length(airports)
 end
 
 dataset = 'cmip5';
-baseDir = ['e:/data/' dataset '/output'];
+baseDir = ['d:/data/' dataset '/output'];
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -32,7 +32,7 @@ futurePeriodYears = 2020:2080;
 
 ensemble = 'r1i1p1';
 
-rcp = 'historical';
+rcp = 'rcp45';
 
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
