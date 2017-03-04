@@ -1,15 +1,20 @@
 baseDirGcm = 'E:/data/flight/airport-wx/';
 baseDirAsos = '2015-weight-restriction-v2/airport-wx/processed/';
 
-airports = {'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD'};
+airports = {'BKK', 'CDG', 'DXB', 'HKG', 'MAD', 'LHR', 'PEK', 'SHA', 'TLV'};
+
+subplotRows = 3;
+subplotCols = 3;
 
 % difference between model and obs at each temp percentile
 errors = {};
 
 % load bias corrected models or not?
-bc = true;
+bc = false;
 
 shouldPlot = true;
+
+rcp = 'historical';
 
 if shouldPlot
     figure('Color', [1,1,1]);
@@ -24,19 +29,19 @@ for a = 1:length(airports)
     
     % load CMIP5 temps
     if bc
-        load([baseDirGcm 'airport-wx-cmip5-historical-bc-' airport '.mat']);
+        load([baseDirGcm 'airport-wx-cmip5-' rcp '-bc-' airport '.mat']);
     else
-        load([baseDirGcm 'airport-wx-cmip5-historical-' airport '.mat']);
+        load([baseDirGcm 'airport-wx-cmip5-' rcp '-' airport '.mat']);
     end
     tempsGcm = wxData;
     
     % load observed temps
     load([baseDirAsos 'airport-wx-obs-' airport '.mat']);
-    tempsObs = asosData;
+    tempsObs = obsData;
     
     % find start and end year in obs data - GCMs from 1985 - 2004
     obsYearStartInd = max(1985 - tempsObs{2} + 1, 1);
-    obsYearEndInd = max(2004 - tempsObs{2} + 1, 1);
+    obsYearEndInd = min(max(2004 - tempsObs{2} + 1, 1), size(tempsObs{5}, 1));
     
     % select range of years that corresponds to GCMs
     obsMax = tempsObs{5}(obsYearStartInd:obsYearEndInd, :, :);
@@ -82,7 +87,7 @@ for a = 1:length(airports)
     end
     
     if shouldPlot
-        subplot_tight(3, 3, a, [0.1 0.01]);
+        subplot_tight(subplotRows, subplotCols, a, [0.1 0.01]);
         hold on;
         axis square;
         box on;

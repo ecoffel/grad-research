@@ -6,6 +6,8 @@ airports = {'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD'};
 % load pre-computed biases
 load gcm-bias.mat;
 
+rcp = 'rcp45';
+
 for a = 1:length(airports)
     airport = airports{a};
     ['processing ' airport '...']
@@ -20,7 +22,7 @@ for a = 1:length(airports)
     end
     
     % load CMIP5 temps
-    load([baseDirGcm 'airport-wx-cmip5-rcp85-' airport '.mat']);
+    load([baseDirGcm 'airport-wx-cmip5-' rcp '-' airport '.mat']);
     tempsGcm = wxData;
     
     gcmMax = [];
@@ -106,6 +108,6 @@ for a = 1:length(airports)
 
     % save corrected GCM data
     wxData = tempsGcm;
-    save([baseDirGcm 'airport-wx-cmip5-historical-bc-' airport '.mat'], 'wxData');
+    save([baseDirGcm 'airport-wx-cmip5-' rcp '-bc-' airport '.mat'], 'wxData');
     
 end

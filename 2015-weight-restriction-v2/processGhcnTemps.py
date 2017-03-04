@@ -118,13 +118,14 @@ fin.close()
           
 for station in stationData.keys():
     print('writing ' + station + '...')
+    
     outputDir = ghcnBaseDir + 'processed/' + station + '/'
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     else:
         pass
 
-    fout = open(outputDir + station + '.txt', 'w')
+    fout = open(outputDir + station.upper() + '.txt', 'w')
     
     for date in sorted(stationData[station].keys()):        
         fout.write(','.join([str(date[0]), str(date[1]), str(date[2])]) + ',' + str(stationData[station][date]['tmax']) + ',' + str(stationData[station][date]['tmin']) + '\n')
