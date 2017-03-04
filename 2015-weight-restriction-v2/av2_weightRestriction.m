@@ -3,14 +3,14 @@ if ~exist('airportDb', 'var')
 end
 
 [airports, airportRunway, airportElevation] = av2_loadAirportInfo();
-selectedAirports = airports;%{'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
+selectedAirports = {'ATL', 'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD', 'PHX'};%airports;%{'PHX', 'DEN', 'DXB', 'JFK', 'LAX', 'IAH', 'MIA', 'ORD', 'ATL', 'LHR'};
 
 airportLats = [];
 airportLons = [];
 
 aircraft = '737-800';
 
-wxBaseDir = '2015-weight-restriction-v2\airport-wx\';
+wxBaseDir = 'E:/data/flight/airport-wx/';
 
 for a = 1:length(airports)
     [code, airportLat, airportLon] = searchAirportDb(airportDb, airports{a});
@@ -18,8 +18,8 @@ for a = 1:length(airports)
     airportLons(a) = airportLon;
 end
 
-dataset = 'cmip5';
-baseDir = ['d:/data/' dataset '/output'];
+dataset = 'obs';
+baseDir = ['e:/data/' dataset '/output'];
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -34,6 +34,10 @@ ensemble = 'r1i1p1';
 
 rcp = 'rcp45';
 
+if strcmp(dataset, 'obs')
+    rcp = 'na';
+end
+
 tempMaxVar = 'tasmax';
 tempMinVar = 'tasmin';
 
@@ -45,61 +49,8 @@ months = 1:12;
 % temperature must be in this range to compute WR
 tempRange = [20 55];
 
-if strcmp(dataset, 'obs')
-    timePeriods = {1981:2011, 1981:2011, 1981:2011, 1996:2011};
-
-    needToLoad = false;
-    
-    if ~exist(['airport-wx-obs.mat'], 'file');
-        needToLoad = true;
-    end
-    
-    if needToLoad
-        obsTasmaxDir = 'e:/data/flight/wx/output/daily/tasmax';
-        obsTasminDir = 'e:/data/flight/wx/output/daily/tasmin';
-
-        wxData{1} = {};
-
-        for a = 1:length(airports)
-            wxData{1}{a} = {airports{a}, []};
-        end
-        
-        % now load the obs at the end
-        for a = 1:length(airports)
-            
-            obsStart(a) = timePeriods{a}(1);
-            obsEnd(a) = timePeriods{a}(end);
-
-            % load daily maximum temps
-            curObsMax = loadDailyData(obsTasmaxDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', airports{a});
-            curObsMax = curObsMax(:, months, :);
-            curObsMax = reshape(curObsMax, [size(curObsMax, 1), size(curObsMax, 2)*size(curObsMax, 3)]);
-
-            % and daily minimums
-            curObsMin = loadDailyData(obsTasminDir, 'yearStart', obsStart(a), 'yearEnd', obsEnd(a), 'obs', 'daily', 'obsAirport', airports{a});
-            curObsMin = curObsMin(:, :, :);
-            curObsMin = reshape(curObsMin, [size(curObsMin, 1), size(curObsMin, 2)*size(curObsMin, 3)]);
-
-            % now interpolate between max and min to generate hourly temps
-            for y = 1:size(curObsMax, 1)
-                for d = 1:size(curObsMax, 2)
-                    % rising temps
-                    up = linspace(curObsMin(y,d), curObsMax(y,d), 13);
-                    % falling temps
-                    down = linspace(curObsMax(y,d), curObsMin(y,d), 13);
-                    % chop out the duplicate daily max and min temperatures
-                    wxData{1}{a}{2}(y, d, :) = [up(2:end) down(2:end)];
-                end
-            end
-        end
-        save(['airport-wx-obs.mat'], 'wxData');
-        
-        % split the large wx file into one per airport
-        av2_splitWx(['airport-wx-obs'], wxData);
-    end
 % if obsWx is false, load model data    
-else
-    
+if ~strcmp(dataset, 'obs')
     needToLoad = true;
     
     % check if we have all th needed wx files for each selected airport
@@ -110,6 +61,7 @@ else
         end
     end
     
+    % if the required data isn't there, load it and save it
     if needToLoad
         for m = 1:length(models)
             if strcmp(models{m}, '')
@@ -195,14 +147,21 @@ for ac = 1:length(wrLookup)
     end
 end
 
-hours = 10:14;
+hours = 1:24;
 
 ['processing weight restriction...']
 for a = 1:length(selectedAirports)
     
     % load weather for current airport - loaded as wxData
-    load([wxBaseDir 'airport-wx-cmip5-' rcp '-' selectedAirports{a}]);
+    if strcmp(dataset, 'obs')
+        load([wxBaseDir 'airport-wx-obs-' selectedAirports{a} '.mat']);
+        wxData = asosData;
+    elseif strcmp(dataset, 'cmip5')
+        load([wxBaseDir 'airport-wx-cmip5-' rcp '-' selectedAirports{a}]);
+    end
     
+    % find position of current airport in airport database (w/ runway
+    % length & elevation)
     aInd = -1;
     for i = 1:length(airports)
         if strcmp(selectedAirports{a}, airports{i})
@@ -215,49 +174,107 @@ for a = 1:length(selectedAirports)
     weightRestriction{a} = {};
     totalRestriction{a} = {};
     
-    for m = 1:length(models)
+    if strcmp(dataset, 'obs')
+        weightRestriction{a}{1} = {selectedAirports{a}, 'obs', []};
+        totalRestriction{a}{1} = {selectedAirports{a}, 'obs', []};
         
-        ['processing ' models{m} '...']
-        
-        weightRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
-        totalRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
-        
-        for h = hours
-            count = 1;
-            for y = 1:size(wxData{m}{2}, 1)
-                for d = 1:size(wxData{m}{2}, 2)
-                    
-                    temp = wxData{m}{2}(y, d, h);
+        for y = 1:size(wxData{5}, 1)
 
+            % extract data for current year
+            curMax = squeeze(wxData{5}(y, :, :));
+            curMin = squeeze(wxData{6}(y, :, :));
+
+            % reshape it to 1D
+            curMax = reshape(curMax, [size(curMax, 1)*size(curMax, 2), 1]);
+            curMin = reshape(curMin, [size(curMin, 1)*size(curMin, 2), 1]);
+
+            % loop over each day in the year
+            for d = 1:length(curMax)-1
+
+                % compute evenly spaced intervals from current day minimum
+                % to next day's minimum
+                hourlyTemps = linspace(curMin(d), curMax(d), 13);
+                hourlyTemps = [hourlyTemps(1:end-1) linspace(curMax(d), curMin(d+1), 13)];
+                hourlyTemps = hourlyTemps(1:end-1);
+
+                for h = 1:length(hourlyTemps)
+                    temp = hourlyTemps(h);
+                    
                     if temp < tempRange(1) || temp > tempRange(end) || isnan(temp)
-                        weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
-                        totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                        weightRestriction{a}{1}{3}(h, y, d) = NaN;
+                        totalRestriction{a}{1}{3}(h, y, d) = NaN;
                     else
-                        
-                        elevation = airportElevation{aInd};
-                        runway = airportRunway{aInd};
-                        
+                        elevation = airportElevation(aInd);
+                        runway = airportRunway(aInd);
+
                         % find correct index for elevation, runway, temp in
                         % lookup table
                         elevInd = find(abs(round(elevation) - wrLookup{acInd}{2}{1}) == min(abs(round(elevation) - wrLookup{acInd}{2}{1})));
                         tempInd = find(abs(round(temp) - wrLookup{acInd}{2}{2}) == min(abs(round(temp) - wrLookup{acInd}{2}{2})));
                         runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{3}) == min(abs(round(runway) - wrLookup{acInd}{2}{3})));
-                        
+
                         if elevInd > size(wrLookup{acInd}{3}, 1) || ...
                            tempInd > size(wrLookup{acInd}{3}, 2) || ...
                            runwayInd > size(wrLookup{acInd}{3}, 3)
-                            weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
-                            totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                            weightRestriction{a}{1}{3}(h, y, d) = NaN;
+                            totalRestriction{a}{1}{3}(h, y, d) = NaN;
                         else
                             % look up restriction in the wr lookup table
                             curWr = wrLookup{acInd}{3}(elevInd, tempInd, runwayInd);
                             curTr = wrLookup{acInd}{4}(elevInd, tempInd, runwayInd);
 
-                            weightRestriction{a}{m}{3}(h-hours(1)+1, count) = curWr;
-                            totalRestriction{a}{m}{3}(h-hours(1)+1, count) = curTr;
+                            weightRestriction{a}{1}{3}(h, y, d) = curWr;
+                            totalRestriction{a}{1}{3}(h, y, d) = curTr;
                         end
                     end
-                    count = count+1;
+                end
+            end
+        end
+    elseif strcmp(dataset, 'cmip5')
+        for m = 1:length(models)
+
+            ['processing ' models{m} '...']
+
+            weightRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
+            totalRestriction{a}{m} = {selectedAirports{a}, models{m}, []};
+
+            for h = hours
+                count = 1;
+                for y = 1:size(wxData{m}{2}, 1)
+                    for d = 1:size(wxData{m}{2}, 2)
+
+                        temp = wxData{m}{2}(y, d, h);
+
+                        if temp < tempRange(1) || temp > tempRange(end) || isnan(temp)
+                            weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                            totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                        else
+
+                            elevation = airportElevation{aInd};
+                            runway = airportRunway{aInd};
+
+                            % find correct index for elevation, runway, temp in
+                            % lookup table
+                            elevInd = find(abs(round(elevation) - wrLookup{acInd}{2}{1}) == min(abs(round(elevation) - wrLookup{acInd}{2}{1})));
+                            tempInd = find(abs(round(temp) - wrLookup{acInd}{2}{2}) == min(abs(round(temp) - wrLookup{acInd}{2}{2})));
+                            runwayInd = find(abs(round(runway) - wrLookup{acInd}{2}{3}) == min(abs(round(runway) - wrLookup{acInd}{2}{3})));
+
+                            if elevInd > size(wrLookup{acInd}{3}, 1) || ...
+                               tempInd > size(wrLookup{acInd}{3}, 2) || ...
+                               runwayInd > size(wrLookup{acInd}{3}, 3)
+                                weightRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                                totalRestriction{a}{m}{3}(h-hours(1)+1, count) = NaN;
+                            else
+                                % look up restriction in the wr lookup table
+                                curWr = wrLookup{acInd}{3}(elevInd, tempInd, runwayInd);
+                                curTr = wrLookup{acInd}{4}(elevInd, tempInd, runwayInd);
+
+                                weightRestriction{a}{m}{3}(h-hours(1)+1, count) = curWr;
+                                totalRestriction{a}{m}{3}(h-hours(1)+1, count) = curTr;
+                            end
+                        end
+                        count = count+1;
+                    end
                 end
             end
         end

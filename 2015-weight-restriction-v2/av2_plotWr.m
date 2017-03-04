@@ -1,4 +1,4 @@
-aircraft = {'737-800', 'a320', '787', '777-300', 'a380'};
+aircraft = {'737-800'};%, 'a320', '787', '777-300', 'a380'};
 wrBaseDir = '2015-weight-restriction-v2/wr-data/';
 
 surfs = av2_loadSurfaces();
@@ -30,7 +30,7 @@ for a = 1:length(aircraft)
         end
     end
 
-    subplot_tight(2, 3, a, [0.14, 0.04]);
+    subplot_tight(1,1, a, [0.14, 0.04]);
     hold on;
     grid on;
     box on;
@@ -43,7 +43,7 @@ for a = 1:length(aircraft)
         if length(ind) == 1
             lines(end+1) = plot(tempRange(:), wr(:, ind), 'LineWidth', 2, 'Color', plotColors(r, :));
         else
-            lines(end+1) = plot(NaN, NaN, 'LineWidth', 2, 'Color', plotColors(r, :));
+            %lines(end+1) = plot(NaN, NaN, 'LineWidth', 2, 'Color', plotColors(r, :));
         end
 
         if length(legendStr) > 0

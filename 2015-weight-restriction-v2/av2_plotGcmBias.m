@@ -6,7 +6,10 @@ airports = {'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD'};
 % difference between model and obs at each temp percentile
 errors = {};
 
-shouldPlot = false;
+% load bias corrected models or not?
+bc = true;
+
+shouldPlot = true;
 
 if shouldPlot
     figure('Color', [1,1,1]);
@@ -20,7 +23,11 @@ for a = 1:length(airports)
     errors{a} = {airport, {}};
     
     % load CMIP5 temps
-    load([baseDirGcm 'airport-wx-cmip5-historical-' airport '.mat']);
+    if bc
+        load([baseDirGcm 'airport-wx-cmip5-historical-bc-' airport '.mat']);
+    else
+        load([baseDirGcm 'airport-wx-cmip5-historical-' airport '.mat']);
+    end
     tempsGcm = wxData;
     
     % load observed temps
@@ -44,25 +51,33 @@ for a = 1:length(airports)
     
     % loop over models
     for m = 1:length(tempsGcm)
-        errors{a}{2} = {tempsGcm{m}{1}, []};
-        gcmMax(:, :, m) = nanmax(tempsGcm{m}{2}(:, 1:372, :), [], 3);
-        gcmMin(:, :, m) = nanmin(tempsGcm{m}{2}(:, 1:372, :), [], 3);
+        errors{a}{2}{m} = {tempsGcm{m}{1}, [], []};
+        gcmMax(:, :, m) = nanmax(tempsGcm{m}{2}{2}(:, 1:372, :), [], 3);
+        gcmMin(:, :, m) = nanmin(tempsGcm{m}{2}{2}(:, 1:372, :), [], 3);
     end
     
     % temperature distributions for model & observations
-    obsDist = [];
-    gcmDist = [];
+    obsDistMax = [];
+    obsDistMin = [];
+    gcmDistMax = [];
+    gcmDistMin = [];
     
     % percentiles to calculate
     prcThresh = 0:10:100;
     
     for p = 1:length(prcThresh)
-        obsDist(p) = prctile(reshape(obsMax, [size(obsMax, 1)*size(obsMax, 2), 1]), prcThresh(p));
+        obsDistMax(p) = prctile(reshape(obsMax, [size(obsMax, 1)*size(obsMax, 2), 1]), prcThresh(p));
+        obsDistMin(p) = prctile(reshape(obsMin, [size(obsMin, 1)*size(obsMin, 2), 1]), prcThresh(p));
         
+        % loop over all models
         for m = 1:size(gcmMax, 3)
-            gcmDist(p, m) = prctile(reshape(gcmMax(:, :, m), [size(gcmMax(:, :, m), 1)*size(gcmMax(:, :, m), 2), 1]), prcThresh(p));
+            % calculate percentile cutoffs for current GCM
+            gcmDistMax(p, m) = prctile(reshape(gcmMax(:, :, m), [size(gcmMax(:, :, m), 1)*size(gcmMax(:, :, m), 2), 1]), prcThresh(p));
+            gcmDistMin(p, m) = prctile(reshape(gcmMin(:, :, m), [size(gcmMin(:, :, m), 1)*size(gcmMin(:, :, m), 2), 1]), prcThresh(p));
             
-            errors{a}{2}{m}{2}(p) = gcmDist(p, m) - obsDist(p);
+            % find difference in cutoffs between GCM and obs
+            errors{a}{2}{m}{2}(p) = gcmDistMax(p, m) - obsDistMax(p);
+            errors{a}{2}{m}{3}(p) = gcmDistMin(p, m) - obsDistMin(p);
         end
     end
     
@@ -72,10 +87,11 @@ for a = 1:length(airports)
         axis square;
         box on;
         grid on;
-        plot(gcmDist, 'Color', [90/255.0, 90/255.0, 90/255.0]);
-        plot(obsDist,'k','LineWidth',4);
+        plot(gcmDistMax, 'Color', [90/255.0, 90/255.0, 90/255.0]);
+        plot(obsDistMax,'k','LineWidth',4);
         %xlabel('Percentile', 'FontSize', 24);
         ylabel([char(176) 'C'], 'FontSize', 20);
+        ylim([-50 50]);
         set(gca, 'FontSize', 20);
         set(gca, 'XTick', 1:11)
         set(gca, 'XTickLabel', {'Min', '', '', '', '', '', '', '', '', '', 'Max'});
@@ -85,4 +101,8 @@ for a = 1:length(airports)
     end
 end
 
-save('gcm-bias.mat', 'errors');
+if bc
+    save('gcm-bias-bc.mat', 'errors');
+else
+    save('gcm-bias.mat', 'errors');
+end
