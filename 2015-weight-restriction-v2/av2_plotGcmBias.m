@@ -1,7 +1,8 @@
-baseDirGcm = 'E:/data/flight/airport-wx/';
+%baseDirGcm = 'E:/data/flight/airport-wx/';
+baseDirGcm = '2015-weight-restriction-v2/airport-wx/';
 baseDirAsos = '2015-weight-restriction-v2/airport-wx/processed/';
 
-airports = {'BKK', 'CDG', 'DXB', 'HKG', 'MAD', 'LHR', 'PEK', 'SHA', 'TLV'};
+airports = {'ATL', 'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MDW', 'MIA', 'ORD', 'PHX', 'BKK', 'CDG', 'DXB', 'HKG', 'MAD', 'LHR', 'PEK', 'SHA', 'TLV'};
 
 subplotRows = 3;
 subplotCols = 3;
@@ -12,7 +13,7 @@ errors = {};
 % load bias corrected models or not?
 bc = false;
 
-shouldPlot = true;
+shouldPlot = false;
 
 rcp = 'historical';
 
