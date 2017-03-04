@@ -20,7 +20,7 @@ function wxAirports = splitWx(fileName, wxData)
         end
 
         wxData = airportData;
-        save([baseDir fileName '-' wxData{1}{1} '.mat'], 'wxData');
+        save([baseDir fileName '-' wxDataOld{1}{2}{a}{1} '.mat'], 'wxData');
     end
 end
 
