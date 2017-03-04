@@ -4,10 +4,10 @@
 baseDir = '2015-weight-restriction-v2/airport-wx/processed/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-states = {'il', 'ny', 'co', 'ca', 'tx', 'fl', 'va'};
+states = {'il', 'ny', 'co', 'ca', 'tx', 'fl', 'va', 'az', 'ga'};
 
 % this is for comma delimited ASOS data with the format:
-% year, month, day, hour, lon, lat, tempC, relH, precipH
+% year, month, day, hour, temp
 % -999 indicates a missing value
 fileFormatStr = '%n %n %n %n %n %*[^\n]';
 
@@ -15,7 +15,7 @@ fileFormatStr = '%n %n %n %n %n %*[^\n]';
 for s = 1:length(states)
     state = states{s};
     
-    asosData = {};
+    obsData = {};
     
     curDir = [baseDir state];
     txtFileNames = dir([curDir, '/*.txt']);
@@ -83,8 +83,8 @@ for s = 1:length(states)
             end
         end
         
-        asosData = {code, years(1), months(1), days(1), dailyMax, dailyMin};
-        save([baseDir 'airport-wx-obs-' code '.mat'], 'asosData', '-v7.3');
+        obsData = {code, years(1), months(1), days(1), dailyMax, dailyMin};
+        save([baseDir 'airport-wx-obs-' code '.mat'], 'obsData', '-v7.3');
     end
     
     

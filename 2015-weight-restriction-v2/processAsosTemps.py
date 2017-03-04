@@ -2,8 +2,8 @@
 
 import os
 
-asosBase = 'e:/data/flight/wx/raw/asos/'
-states = ['ny', 'il', 'ca', 'co', 'fl', 'tx', 'va']
+asosBase = 'C:/git-ecoffel/grad-research/2015-weight-restriction-v2/airport-wx/'#'e:/data/flight/wx/raw/asos/'
+states = ['ny', 'il', 'ca', 'co', 'fl', 'tx', 'va', 'az', 'ga']
 
 # how many lines to read at a time
 N = 1000000
@@ -21,7 +21,7 @@ def writeOutput(stationData, outputDir):
         fout.close();
 
 for state in states:
-    outputDir = asosBase + 'wx-data/' + state + '/'
+    outputDir = asosBase + 'processed/' + state + '/'
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     else:
