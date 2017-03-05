@@ -1,7 +1,7 @@
 baseDirGcm = 'E:/data/flight/airport-wx/';
 baseDirAsos = '2015-weight-restriction-v2/airport-wx/processed/';
 
-airports = {'DCA', 'DEN', 'IAH', 'JFK', 'LAX', 'LGA', 'MIA', 'ORD'};
+airports = {'JFK'};
 
 % load pre-computed biases
 load gcm-bias.mat;
