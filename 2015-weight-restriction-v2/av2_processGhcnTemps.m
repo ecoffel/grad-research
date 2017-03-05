@@ -4,7 +4,7 @@
 baseDir = '2015-weight-restriction-v2/airport-wx/processed/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-stations = {'BKK', 'CDG', 'DXB', 'HKG', 'LHR', 'MAD', 'PEK', 'SHA', 'TLV'};
+stations = {'LHR'};
 
 % this is for comma delimited ASOS data with the format:
 % year, month, day, tmax, tmin

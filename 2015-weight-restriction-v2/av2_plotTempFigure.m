@@ -1,7 +1,7 @@
-wxObsBaseDir = '2015-weight-restriction-v2/airport-wx/';
+wxObsBaseDir = '2015-weight-restriction-v2/airport-wx/processed/';
 wxGcmBaseDir = 'e:\data\flight\airport-wx\';
 
-airports = {'IAH', 'DEN'};
+airports = {'JFK', 'LGA'};
 
 % subplot dimensions
 subplotRow = 2;
@@ -27,13 +27,16 @@ for a = 1:length(airports)
     end
     
     % load wx data (and just crash out if it doesn't exist)
-    load([wxGcmBaseDir 'airport-wx-cmip5-historical-' airport '.mat']);
+    load([wxObsBaseDir 'airport-wx-obs-' airport '.mat']);
+    wxDataObs = obsData;
+    
+    load([wxGcmBaseDir 'airport-wx-cmip5-historical-bc-' airport '.mat']);
     wxDataHistorical = wxData;
     
-    load([wxGcmBaseDir 'airport-wx-cmip5-rcp45-' airport '.mat']);
+    load([wxGcmBaseDir 'airport-wx-cmip5-rcp45-bc-' airport '.mat']);
     wxDataRcp45 = wxData;
 
-    load([wxGcmBaseDir 'airport-wx-cmip5-rcp85-' airport '.mat'])
+    load([wxGcmBaseDir 'airport-wx-cmip5-rcp85-bc-' airport '.mat'])
     wxDataRcp85 = wxData;
 
     tasmaxRcp85 = [];
@@ -65,6 +68,11 @@ for a = 1:length(airports)
             end
         end
     end
+    
+    % observed max/min data
+    wxObsStartYear = wxDataObs{2};
+    annualMaxObs = reshape(wxDataObs{5}, [size(wxDataObs{5}, 1), size(wxDataObs{5}, 2)*size(wxDataObs{5}, 3)]); 
+    annualMaxObs = nanmax(annualMaxObs, [], 2);
     
     % calculate historical mean annual max
     annualMaxHistorical = squeeze(nanmax(tasmaxHistorical, [], 3));
@@ -217,6 +225,15 @@ for a = 1:length(airports)
     set(p3.mainLine,  'LineWidth', 2, 'Color', [121/255.0, 211/255.0, 80/255.0]);
     set(p3.patch, 'FaceColor', [121/255.0, 211/255.0, 80/255.0]);
     set(p3.edge, 'Color', 'k');
+    
+    yDataObs = zeros(size(xRange));
+    yDataObs(yDataObs == 0) = NaN;
+    yDataObsStart = max(wxObsStartYear-1985+1, 1);
+    annualMaxObsStart = max(1985-wxObsStartYear+1, 1);
+    yDataObs(yDataObsStart:yDataObsStart+(length(annualMaxObs)-annualMaxObsStart)) = annualMaxObs(annualMaxObsStart:end);
+
+    % plot obs
+    plot(xRange, yDataObs, 'k', 'LineWidth', 2);
 
     % plot the historical annual maximum
     plot(xRange, ones(size(xRange)) .* annualMaxMeanHistorical, '--k', 'LineWidth', 2);
@@ -235,16 +252,16 @@ for a = 1:length(airports)
 
     set(h, 'XTick', [1 21 41 61 81 96]);
     set(h, 'XTickLabel', [1985 2005 2025 2045 2065 2080]);
-    set(h, 'FontSize', 26);
+    set(h, 'FontSize', 24);
     ylabel(['Temperature (' char(176) 'C)'], 'FontSize', 30);
     xlim([xRange(1) xRange(end)]);
     title(airport, 'FontSize', 30);
-    legend([p1.mainLine, p2.mainLine, p3.mainLine], ...
+    leg = legend([p1.mainLine, p2.mainLine, p3.mainLine], ...
                                        ['RCP 8.5, ' num2str(roundn(fitRcp85Slope*10, -2)) char(176) 'C/decade'], ...
                                        ['RCP 4.5, ' num2str(roundn(fitRcp45Slope*10, -2)) char(176) 'C/decade'], ...
                                        ['Historical'], ...
                                        'Location', 'northwest');
-    
+    set(leg, 'FontSize', 16);
     ind = ind + 1;
     
     
@@ -289,12 +306,12 @@ for a = 1:length(airports)
     
     set(h, 'XTick', recXRange);
     set(h, 'XTickLabel', 2025:10:2075);
-    set(h, 'FontSize', 26);
+    set(h, 'FontSize', 24);
     
     ylabel('Multiple', 'FontSize', 30);
     title(airport, 'FontSize', 30);
-    legend([p1.mainLine, p2.mainLine], 'RCP 8.5', 'RCP 4.5', 'Location', 'northwest');
-    
+    leg = legend([p1.mainLine, p2.mainLine], 'RCP 8.5', 'RCP 4.5', 'Location', 'northwest');
+    set(leg, 'FontSize', 16);
     ind = ind + 1;
 end
 
