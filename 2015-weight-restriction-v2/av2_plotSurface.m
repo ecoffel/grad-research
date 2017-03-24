@@ -3,7 +3,7 @@ f = av2_loadSurfaces();
 figure('Color', [1,1,1]);
 %hold on;
 
-aircraft = '737-800';
+aircraft = 'a380';
 surface = [];
 
 if strcmp(aircraft, '787')
@@ -45,6 +45,8 @@ y = linspace(weight1, weight2, 50);
 Z = surface(X, Y);
 
 surf(X, Y, Z, 'EdgeColor', 'none');
+xlim([temp1 temp2]);
+ylim([weight1 weight2]);
 xlabel(['Temperature (' char(176) 'C)'], 'FontSize', 30);
 ylabel('Weight (1000 lbs)', 'FontSize', 30);
 zlabel('Runway length (ft)', 'FontSize', 30);

@@ -11,7 +11,7 @@ subplotCols = 4;
 errors = {};
 
 % load bias corrected models or not?
-bc = false;
+bc = true;
 
 plotAirportTemps = false;
 plotBias = true;
@@ -135,8 +135,8 @@ if plotBias
     grid on;
     axis square;
     plot(1:size(biasMax, 2), biasMax', 'Color', [90/255.0, 90/255.0, 90/255.0], 'LineWidth', 1);
-    plot(1:size(biasMax, 2), nanmean(biasMax, 1), 'Color', 'k', 'LineWidth', 3);
-    plot(1:size(biasMax, 2), zeros(size(biasMax, 2), 1), '--k', 'LineWidth', 3);
+    plot(1:size(biasMax, 2), nanmean(biasMax, 1), 'Color', 'k', 'LineWidth', 4);
+    plot(1:size(biasMax, 2), zeros(size(biasMax, 2), 1), '--k', 'LineWidth', 2);
     xlabel('Percentile', 'FontSize', 24);
     ylabel(['Bias (' char(176) 'C)'], 'FontSize', 24);
     title('Daily maximum', 'FontSize', 30);
@@ -152,8 +152,8 @@ if plotBias
     grid on;
     axis square;
     plot(1:size(biasMin, 2), biasMin', 'Color', [90/255.0, 90/255.0, 90/255.0], 'LineWidth', 1);
-    plot(1:size(biasMin, 2), nanmean(biasMin, 1), 'Color', 'k', 'LineWidth', 3);
-    plot(1:size(biasMin, 2), zeros(size(biasMin, 2), 1), '--k', 'LineWidth', 3);
+    plot(1:size(biasMin, 2), nanmean(biasMin, 1), 'Color', 'k', 'LineWidth', 4);
+    plot(1:size(biasMin, 2), zeros(size(biasMin, 2), 1), '--k', 'LineWidth', 2);
     xlabel('Percentile', 'FontSize', 24);
     ylabel(['Bias (' char(176) 'C)'], 'FontSize', 24);
     title('Daily minimum', 'FontSize', 30);

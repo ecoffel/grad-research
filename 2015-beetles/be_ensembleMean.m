@@ -1,7 +1,7 @@
-baseDir = 'C:\git-ecoffel\grad-research';
-ensembles = 1:10;
-kvals = {'mean'};
-thresholds = [90];
+baseDir = 'C:\git-ecoffel\grad-research\';
+ensembles = 1;
+kvals = {'077', 'mean', '221'};
+thresholds = [100];
 
 lat = [];
 lon = [];
