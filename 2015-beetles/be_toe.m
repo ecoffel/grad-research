@@ -8,28 +8,30 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-baseModels = {'csiro-mk3-6-0'};
-testModels = {'csiro-mk3-6-0'};
-% baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%       
-% testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
-%               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+%baseModels = {'csiro-mk3-6-0'};
+%testModels = {'csiro-mk3-6-0'};
+baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+      
+testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 baseVar = 'bt';
 testVar = 'bt';
 
 region = 'usne';
 
-ensembles = 1:10;
+ensembles = 1;
 %rcps = {'rcp45'};
-futureRcp = 'rcp45';
+futureRcp = 'rcp85';
+kStr = '-mean';
+tempThreshold = -10;         % new bark temp (12/08/15)
 
 baseRegrid = true;
 modelRegrid = true;
@@ -140,7 +142,7 @@ for e = ensembles
     futureExt = {};
     percentiles = [];
 
-    kStr = '-077';
+    
     bcStr = '';
     if biasCorrect
         bcStr = ['-bc' kStr];
@@ -218,17 +220,17 @@ for e = ensembles
 
     plotRange = [2005 2090];
 
-    probabilityThreshold = true;
+    probabilityThreshold = false;
 
     %tempThreshold = -11;         % bark temp
-    tempThreshold = -10;         % new bark temp (12/08/15)
+    
     %tempThreshold = -16;        % air temp
 
     if probabilityThreshold
         cutoff = [100];
         futureWindow = 10;
     else
-        cutoff = [-6 -7 -8 -10 -1] - 4;
+        cutoff = tempThreshold;
     end
 
     for t = cutoff
@@ -263,7 +265,7 @@ for e = ensembles
                             
                             % if we exceed the threshold (more than x
                             % occurances in the following futureWindow)
-                            if eventCount(xlat, ylon) >= 0.01*t*futureWindow
+                            if eventCount(xlat, ylon) >= 0.01*t*(futureWindow-y)
                                 lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
                                 
                             % if the value has not been set yet, set it
@@ -277,21 +279,23 @@ for e = ensembles
                 end
             end
         else
+            % loop over models
             for m = 1:length(futureExt)
+                % loop over years
                 for y = 1:length(futureExt{m})
+                    % cur model/year data
                     curTest(:,:) = futureExt{m}{y}{3};
+                    
+                    % loop over x/y grid
                     for xlat = 1:size(curTest, 1)
                         for ylon = 1:size(curTest, 2)
 
-                            if t == -1
-                                if curTest(xlat, ylon) < baseAvg(xlat, ylon, m) || lastYear(xlat, ylon, m) == 0
-                                    lastYear(xlat, ylon, m) = y + testPeriodYears(1);
-                                end
-                            else
-                                if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
-                                    lastYear(xlat, ylon, m) = y + testPeriodYears(1);
-                                end
+                            % if current temp below threshold, or no
+                            % last year set
+                            if curTest(xlat, ylon) < t || lastYear(xlat, ylon, m) == 0
+                                lastYear(xlat, ylon, m) = y + testPeriodYears(1);
                             end
+                                
                         end
                     end
                 end
