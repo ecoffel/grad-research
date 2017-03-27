@@ -47,6 +47,12 @@ function [fg, cb] = plotFromDataFile(saveData)
         blockWater = false;
     end
     
+    if isfield(saveData, 'magnify')
+        magnify = saveData.magnify;
+    else
+        magnify = false;
+    end
+    
     [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
     set(gca, 'Color', 'none');
@@ -108,7 +114,11 @@ function [fg, cb] = plotFromDataFile(saveData)
         geoshow('landareas.shp','DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
     
-    eval(['export_fig ' saveData.fileTitle ';']);
+    if magnify
+        eval(['export_fig ' saveData.fileTitle ' -m' magnify ';']);
+    else
+        eval(['export_fig ' saveData.fileTitle ';']);
+    end
     fileNameParts = strsplit(saveData.fileTitle, '.');
     save([fileNameParts{1} '.mat'], 'saveData');
     close all;

@@ -1,7 +1,7 @@
 wxObsBaseDir = '2015-weight-restriction-v2/airport-wx/processed/';
 wxGcmBaseDir = 'e:\data\flight\airport-wx\';
 
-airports = {'JFK', 'LGA'};
+airports = {'SHA', 'TLV'};
 
 % subplot dimensions
 subplotRow = 2;

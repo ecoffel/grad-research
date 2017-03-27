@@ -6,7 +6,7 @@ airports = {'JFK'};
 % load pre-computed biases
 load gcm-bias.mat;
 
-rcp = 'rcp45';
+rcp = 'rcp85';
 
 for a = 1:length(airports)
     airport = airports{a};

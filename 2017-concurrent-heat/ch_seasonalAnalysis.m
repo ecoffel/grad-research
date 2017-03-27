@@ -74,16 +74,23 @@ end
 
 figure('Color',[1,1,1]);
 hold on;
+grid on;
+box on;
+axis square;
 p1 = plot(1:12, usDataSeaMax, 'LineWidth', 3, 'Color', 'k');
-plot(1:12, ones(1,12) .* usDataAnnMax, '--k', 'LineWidth', 1);
+plot(1:12, ones(1,12) .* usDataAnnMax, '--k', 'LineWidth', 2);
 
 p2 = plot(1:12, europeDataSeaMax, 'LineWidth', 3, 'Color', 'b');
-plot(1:12, ones(1,12) .* europeDataAnnMax, '--b', 'LineWidth', 1);
+plot(1:12, ones(1,12) .* europeDataAnnMax, '--b', 'LineWidth', 2);
 
-p3 = plot(1:12, amazonDataSeaMax, 'LineWidth', 3, 'Color', 'g');
-plot(1:12, ones(1,12) .* amazonDataAnnMax, '--g', 'LineWidth', 1);
+p3 = plot(1:12, amazonDataSeaMax, 'LineWidth', 3, 'Color', 'm');
+plot(1:12, ones(1,12) .* amazonDataAnnMax, '--m', 'LineWidth', 2);
 
 p4 = plot(1:12, indiaDataSeaMax, 'LineWidth', 3, 'Color', 'r');
-plot(1:12, ones(1,12) .* indiaDataAnnMax, '--r', 'LineWidth', 1);
+plot(1:12, ones(1,12) .* indiaDataAnnMax, '--r', 'LineWidth', 2);
+
+xlabel('Month', 'FontSize', 24);
+ylabel(['Maximum temperature change (' char(176) 'C)'], 'FontSize', 24);
+set(gca, 'FontSize', 24);
 
 legend([p1, p2, p3, p4], 'us', 'europe', 'amazon', 'india');

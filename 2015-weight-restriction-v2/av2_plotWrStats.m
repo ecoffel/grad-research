@@ -19,6 +19,17 @@ if ismember('historical', rcps)
     wrModelHistorical = weightRestriction;
     %trModelHistorical = totalRestriction;
     
+    % remove any blank airports
+    a = 1;
+    while a < length(wrModelHistorical)
+        if length(wrModelHistorical{a}) == 0
+            wrModelHistorical(a) = [];
+            continue;
+        end
+        a = a + 1;
+    end
+    clear a;
+    
     %trData{end+1} = trModelHistorical;
     wrData{end+1} = wrModelHistorical;
     
@@ -34,6 +45,17 @@ if ismember('rcp45', rcps)
     wrModelRcp45 = weightRestriction;
     %trModelRcp45 = totalRestriction;
     
+    % remove any blank airports
+    a = 1;
+    while a < length(wrModelRcp45)
+        if length(wrModelRcp45{a}) == 0
+            wrModelRcp45(a) = [];
+            continue;
+        end
+        a = a + 1;
+    end
+    clear a;
+    
     %trData{end+1} = trModelRcp45;
     wrData{end+1} = wrModelRcp45;
     
@@ -48,6 +70,17 @@ if ismember('rcp85', rcps)
     %load([baseDir 'tr-' aircraft '-' dataset '-rcp85.mat']);
     wrModelRcp85 = weightRestriction;
     %trModelRcp85 = totalRestriction;
+    
+    % remove any blank airports
+    a = 1;
+    while a < length(wrModelRcp85)
+        if length(wrModelRcp85{a}) == 0
+            wrModelRcp85(a) = [];
+            continue;
+        end
+        a = a + 1;
+    end
+    clear a;
     
     %trData{end+1} = trModelRcp85;
     wrData{end+1} = wrModelRcp85;
@@ -386,12 +419,12 @@ for aInd = 1:length(airports)
     
     if ~useSubplots
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['wr-bar-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m1');
+        export_fig(['wr-bar-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m3');
     end
     
     if useSubplots
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['wr-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m1');
+        export_fig(['wr-' aircraft '-' rcpStr '-' airports{aInd} '.png'], '-m3');
     end
     
     close all;

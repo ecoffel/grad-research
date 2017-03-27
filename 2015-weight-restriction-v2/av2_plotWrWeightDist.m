@@ -12,7 +12,6 @@ plotHist = false;
 basePeriodYears = 1985:2004;
 futurePeriodYears = 2021:2080;
 
-
 % should we use payload restriction or total restriction
 payload = false;
 
@@ -36,6 +35,26 @@ for ac = 1:length(aircraftList)
         curWeightData = weightRestriction;
         trModelHistorical = totalRestriction;
 
+        % remove any blank airports
+        a = 1;
+        while a < length(curWeightData)
+            if length(curWeightData{a}) == 0
+                curWeightData(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+            
+        a = 1;
+        while a < length(trModelHistorical)
+            if length(trModelHistorical{a}) == 0
+                trModelHistorical(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+        clear a;
+        
         trData{end+1} = trModelHistorical;
         wrData{end+1} = curWeightData;
 
@@ -51,9 +70,29 @@ for ac = 1:length(aircraftList)
         wrModelRcp45 = weightRestriction;
         trModelRcp45 = totalRestriction;
 
+        % remove any blank airports
+        a = 1;
+        while a < length(wrModelRcp45)
+            if length(wrModelRcp45{a}) == 0
+                wrModelRcp45(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+            
+        a = 1;
+        while a < length(trModelRcp45)
+            if length(trModelRcp45{a}) == 0
+                trModelRcp45(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+        clear a;
+        
         trData{end+1} = trModelRcp45;
         wrData{end+1} = wrModelRcp45;
-
+        
         rcp45Airports = {};
         for a = 1:length(wrModelRcp45)
             rcp45Airports{end+1} = wrModelRcp45{a}{1}{1};
@@ -66,6 +105,26 @@ for ac = 1:length(aircraftList)
         wrModelRcp85 = weightRestriction;
         trModelRcp85 = totalRestriction;
 
+        % remove any blank airports
+        a = 1;
+        while a < length(wrModelRcp85)
+            if length(wrModelRcp85{a}) == 0
+                wrModelRcp85(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+            
+        a = 1;
+        while a < length(trModelRcp85)
+            if length(trModelRcp85{a}) == 0
+                trModelRcp85(a) = [];
+                continue;
+            end
+            a = a + 1;
+        end
+        clear a;
+        
         trData{end+1} = trModelRcp85;
         wrData{end+1} = wrModelRcp85;
 

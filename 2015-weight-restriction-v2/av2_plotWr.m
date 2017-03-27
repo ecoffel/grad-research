@@ -1,4 +1,4 @@
-aircraft = {'737-800'};%, 'a320', '787', '777-300', 'a380'};
+aircraft = {'a380'};%, 'a320', '787', '777-300', 'a380'};
 wrBaseDir = '2015-weight-restriction-v2/wr-data/';
 
 surfs = av2_loadSurfaces();
