@@ -7,7 +7,7 @@ surfs = av2_loadSurfaces();
 plotColors = distinguishable_colors(length(6000:1000:15000));
 fullRunwayRange = 6000:1000:15000;
 
-tempRange = 20:55;
+tempRange = 25:55;
 figure('Color', [1,1,1]);
 for a = 1:length(aircraft)
     if strcmp(aircraft{a}, '737-800')
