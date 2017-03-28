@@ -2,7 +2,7 @@ baseDir = 'C:\git-ecoffel\grad-research\2015-beetles\bt-output';
 
 state = 'multi-model';
 
-ciPlot = true;
+ciPlot = false;
 modelRangePlot = true;
 
 plotAllModels = false;
