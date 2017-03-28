@@ -1,4 +1,4 @@
-load restrictionData-tr;
+load restrictionData-tr-12;
 
 % restrictionData{aircraft}{rcp}{airport}{data-item}
 
