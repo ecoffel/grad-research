@@ -12,8 +12,8 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
     fCutoff = acSurfaces{end};
     
     % minimum weight to start search 
-    startingWeight = acSurfaces{1}{2};
-    maxTakeoffWeight = acSurfaces{1}{3};
+    startingWeight = acSurfaces{1}{3};
+    maxTakeoffWeight = acSurfaces{1}{4};
     
     % select correct surface for elevation
     surf = [];

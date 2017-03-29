@@ -1,6 +1,3 @@
-% computes the difference in the yearly mean of maximum summertime
-% temperatures between NARCCAP models and NARR reanalysis.
-
 season = 'all';
 basePeriod = 'past';
 baseDataset = 'ncep';

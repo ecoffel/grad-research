@@ -47,7 +47,7 @@ wxData = {};
 months = 1:12;
 
 % temperature must be in this range to compute WR
-tempRange = [20 55];
+tempRange = [25 55];
 
 % if obsWx is false, load model data    
 if ~strcmp(dataset, 'obs')
@@ -136,7 +136,6 @@ end
 
 weightRestriction = {};
 totalRestriction = {};
-acSurfaces = av2_loadSurfaces();
 
 % load lookup table
 wrLookup = load('wrLookup.mat');

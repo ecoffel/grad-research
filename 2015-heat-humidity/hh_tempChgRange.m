@@ -1,14 +1,15 @@
 type = 'multi-model';
 years = [2070, 2080];
-percentiles = [10 50 90];
+%percentiles = [10 50 90];
+percentiles = [];
 
 plotRegion = 'world';
-plotRange = [0 10];
+plotRange = [0 8];
 plotXUnits = 'Degrees C';
 
-meanStr = 'mean';   
+meanStr = 'extreme';   
 rcpStr = 'rcp85';
-var = 'tasmax';
+var = 'wb';
 
 varTitle = 'Temperature';
 if strcmp(var, 'wb')
@@ -16,12 +17,13 @@ if strcmp(var, 'wb')
 end
 
 % load lat/lon grid
-load('e:\data\cmip5\output\access1-0\r1i1p1\historical\tasmax\regrid\world\19750101-19991231\tasmax_1975_01_01');
-lat = tasmax_1975_01_01{1};
-lon = tasmax_1975_01_01{2};
-clear tasmax_1975_01_01;
+load lat;
+load lon;
 
-load(['chg-data-' var '-' rcpStr '-' type '-' meanStr '-' num2str(years(1)) '-' num2str(years(2)) '.mat']);
+load(['chg-data/chg-data-' var '-' rcpStr '-' type '-' meanStr '-' num2str(years(1)) '-' num2str(years(2)) '.mat']);
+
+% remove bad grid cells
+chgData(chgData > 10 | chgData < -5) = NaN;
 
 % eliminate nonsense gridboxes (usually near poles)
 %chgData(chgData > 10) = NaN;
@@ -70,6 +72,7 @@ saveData = struct('data', {result}, ...
                   'plotXUnits', plotXUnits, ...
                   'plotCountries', false, ...
                   'plotStates', false, ...
-                  'blockWater', false);
+                  'blockWater', true, ...
+                  'magnify', '2');
 plotFromDataFile(saveData);
 

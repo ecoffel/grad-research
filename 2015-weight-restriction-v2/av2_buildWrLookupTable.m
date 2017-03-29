@@ -11,8 +11,8 @@ for s = 1:length(surfs)
     surf = surfs{s};
     
     curAc = surf{1}{1};
-    minWeight = surf{1}{2};
-    maxWeight = surf{1}{3};
+    minWeight = surf{1}{3};
+    maxWeight = surf{1}{4};
     weightRange = minWeight:maxWeight;
     
     f0 = surf{2};
