@@ -1,5 +1,5 @@
 if ~exist('airportDb', 'var')
-    airportDb = loadAirportDb('e:\data\flight\airports.dat');
+    airportDb = loadAirportDb('airports.dat');
 end
 
 [airports, airportRunway, airportElevation] = av2_loadAirportInfo();
@@ -8,7 +8,7 @@ selectedAirports = airports;
 airportLats = [];
 airportLons = [];
 
-aircraft = '737-800';
+aircraft = 'a320';
 
 wxBaseDir = '2015-weight-restriction-v2/airport-wx/';
 
