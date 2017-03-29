@@ -4,7 +4,7 @@ aircraftList = {'737-800', 'a320', '787', '777-300', 'a380'};
 dataset = 'cmip5';
 rcps = {'historical', 'rcp45', 'rcp85'};
 
-wrBaseDir = '';%'2015-weight-restriction-v2/wr-data/';
+wrBaseDir = '2015-weight-restriction-v2/wr-data/';
 
 % should we plot a histogram of the fleet weight distribution
 plotHist = false;
@@ -233,32 +233,41 @@ for selectedHours = selectedHoursList
                 % all models
                 for m = 1:length(curWeightData{aIndCur})
 
+                    % get number days per year for current model
                     daysPerYear = round(size(curWeightData{aIndCur}{m}{3}, 2)/numYears);
-
+                    
+                    % evenly divide year into months
+                    daysPerMonth = daysPerYear / 12.0;
+                    
                     for y = 1:numYears
                         for w = 1:length(weightDist)
                             tow = weightDist(w);
 
-                            % indicies for current year
-                            ind1 = (y-1) * daysPerYear + 1;
-                            ind2 = y * daysPerYear;
+                            % loop over all months - compute weight
+                            % restriction separately for each month
+                            for month = 1:12
+                                % indicies for start of current year/month
+                                ind1 = (y-1) * daysPerYear + (daysPerMonth*(month-1)) + 1;
+                                % next month
+                                ind2 = (y-1) * daysPerYear + (daysPerMonth*(month));
 
-                            % number of restricted days
-                            numRestricted = length(find((maxWeight - curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2) < tow)));
-                            % sum of restricted weight
-                            restrictedWeight = (tow - (maxWeight - curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2)));
-                            restrictedWeight(restrictedWeight < 0) = 0;
-                            restrictedWeight = nansum(nansum(restrictedWeight));
+                                % number of restricted days
+                                numRestricted = length(find((maxWeight - curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2) < tow)));
+                                % sum of restricted weight
+                                restrictedWeight = (tow - (maxWeight - curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2)));
+                                restrictedWeight(restrictedWeight < 0) = 0;
+                                restrictedWeight = nansum(nansum(restrictedWeight));
 
-                            airportRestrictedCount(m, y, w) = numRestricted;
-                            airportTotalCount(m, y, w) = numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
-                            rcpRestrictedCount(m, y, w) = rcpRestrictedCount(m, y, w) + numRestricted;
-                            rcpTotalCount(m, y, w) = rcpTotalCount(m, y, w) + numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
+                                airportRestrictedCount(m, y, month, w) = numRestricted;
+                                airportTotalCount(m, y, month, w) = numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
+                                rcpRestrictedCount(m, y, month, w) = rcpRestrictedCount(m, y, w) + numRestricted;
+                                rcpTotalCount(m, y, month, w) = rcpTotalCount(m, y, w) + numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
 
-                            airportRestrictedWeight(m, y, w) = restrictedWeight;
-                            airportTotalTow(m, y, w) = airportTotalCount(m, y, w) * tow;
-                            rcpRestrictedWeight(m, y, w) = rcpRestrictedWeight(m, y, w) + restrictedWeight;
-                            rcpTotalTow(m, y, w) = rcpTotalTow(m, y, w) + airportTotalCount(m, y, w) * tow;
+                                airportRestrictedWeight(m, y, month, w) = restrictedWeight;
+                                airportTotalTow(m, y, month, w) = airportTotalCount(m, y, w) * tow;
+                                rcpRestrictedWeight(m, y, month, w) = rcpRestrictedWeight(m, y, w) + restrictedWeight;
+                                rcpTotalTow(m, y, month, w) = rcpTotalTow(m, y, w) + airportTotalCount(m, y, w) * tow;
+                            end
                         end
                     end
                 end
