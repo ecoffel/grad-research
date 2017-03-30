@@ -16,7 +16,7 @@ futurePeriodYears = 2021:2080;
 payload = false;
 
 % which hours of the day should we analyze (12 = tmax, 1:24 = all)
-selectedHoursList = 1:24;
+selectedHoursList = 12;
 
 for selectedHours = selectedHoursList
     
@@ -237,7 +237,7 @@ for selectedHours = selectedHoursList
                     daysPerYear = round(size(curWeightData{aIndCur}{m}{3}, 2)/numYears);
                     
                     % evenly divide year into months
-                    daysPerMonth = daysPerYear / 12.0;
+                    daysPerMonth = round(daysPerYear / 12.0);
                     
                     for y = 1:numYears
                         for w = 1:length(weightDist)
