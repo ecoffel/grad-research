@@ -1,6 +1,6 @@
 
 % hours to analyze
-selectedHours = 10:14;
+selectedHours = 12;
 
 % take the mean over all hours or compute each separately
 hourlyMean = false;
@@ -62,30 +62,33 @@ for curHour = selectedHours
         for airportInd = 2:length(restrictionData{acInd}{2})
             airport = restrictionData{acInd}{2}{airportInd}{1};
 
+            % divide by # days in month
+            divCoef = 31;
+            
             % calculate stats for the past (rcp = historical)
             % percentage of flights restricted
-            prcRestPast(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{2}{airportInd}{2}{1}, 2)) ./ ...
-                                       squeeze(nanmean(restrictionData{acInd}{2}{airportInd}{2}{3}, 2)) .* 100;
+            prcRestPast(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{2}{airportInd}{2}{1}, 3), 2)) ...
+                                       ./ squeeze(nanmean(nanmean(restrictionData{acInd}{2}{airportInd}{2}{3}, 3), 2)) .* 100;
 
             % percentage of TOW restricted
-            meanTowRestPast(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{2}{airportInd}{2}{2}, 2)) ./ ...
-                                squeeze(nanmean(restrictionData{acInd}{2}{airportInd}{2}{4}, 2)) .* 100;
+            meanTowRestPast(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{2}{airportInd}{2}{2}, 3), 2)) ...
+                                ./ squeeze(nanmean(nanmean(restrictionData{acInd}{2}{airportInd}{2}{4}, 3), 2)) .* 100;
 
-            prcPayloadFuelRestPast(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{2}{airportInd}{2}{2}, 2)) .* 0.83 ./ 365 ./ ...
-                                payloadAndFuel .* 100;
+            prcPayloadFuelRestPast(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{2}{airportInd}{2}{2}, 3), 2)) .* 0.83 ./ divCoef ...
+                                ./ payloadAndFuel .* 100;
 
 
             % stats for the future (rcp = rcpInd)
             % percentage of flights restricted
-            prcRestFuture(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{1}, 2)) ./ ...
-                                       squeeze(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{3}, 2)) .* 100;
+            prcRestFuture(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{1}, 3), 2)) ...
+                                       ./ squeeze(nanmean(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{3}, 3), 2)) .* 100;
 
             % percentage of TOW restricted
-            meanTowRestFuture(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{2}, 2)) ./ ...
-                                squeeze(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{4}, 2)) .* 100;
+            meanTowRestFuture(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{2}, 3), 2)) ...
+                                ./ squeeze(nanmean(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{4}, 3), 2)) .* 100;
 
-            prcPayloadFuelRestFuture(:, :, airportCount) = squeeze(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{2}, 2)) .* 0.83 ./ 365 ./ ...
-                                payloadAndFuel .* 100;
+            prcPayloadFuelRestFuture(:, :, airportCount) = squeeze(nanmean(nanmean(restrictionData{acInd}{rcpInd}{airportInd}{2}{2}, 3), 2)) .* 0.83 ./ divCoef ...
+                                ./ payloadAndFuel .* 100;
 
             airportCount = airportCount + 1;
         end
@@ -133,7 +136,7 @@ for curHour = selectedHours
         grid(gca, 'on');
         set(gca, 'FontSize', 24);
         xlim([weightBins(weightBinsInd(1))-10, weightBins(end)+10]);
-        ylim([-1 70]);
+        ylim([-1 50]);
         %ylim([-1 max(max(prcRestFuture)) + 1]);
 
         % plot right panel ----------------------------------------------------
@@ -154,14 +157,14 @@ for curHour = selectedHours
         set(p2.edge, 'Color', 'k');
 
         xlabel('TOW (1000s lbs)', 'FontSize', 24);
-        ylabel('Percent TOW restricted', 'FontSize', 24);
+        ylabel('Percent fuel + payload capacity', 'FontSize', 24);
 
         legend([p1.mainLine, p2.mainLine], 'Historical', 'RCP 8.5');
 
         grid(gca, 'on');
         set(gca, 'FontSize', 24);
         xlim([weightBins(weightBinsInd(1))-5, weightBins(end)+5]);
-        ylim([-0.1 12]);
+        ylim([-0.1 6]);
         %ylim([-0.1 max(max(prcPayloadFuelRestFuture)) + 0.1]);
 
         t = suptitle(['All airports - ' aircraft]);

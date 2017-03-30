@@ -196,13 +196,13 @@ for selectedHours = selectedHoursList
             % summary variables for the entire RCP
 
             % total number of flights
-            rcpTotalCount = zeros(numModels, numYears, length(weightDist));
+            rcpTotalCount = zeros(numModels, numYears, 12, length(weightDist));
             % # of flights with some restriction at each weight level
-            rcpRestrictedCount = zeros(numModels, numYears, length(weightDist));
+            rcpRestrictedCount = zeros(numModels, numYears, 12, length(weightDist));
             % total weight reduced at each weight level
-            rcpRestrictedWeight = zeros(numModels, numYears, length(weightDist));
+            rcpRestrictedWeight = zeros(numModels, numYears, 12, length(weightDist));
             % total weight requested (TOW for each flight) at each weight level
-            rcpTotalTow = zeros(numModels, numYears, length(weightDist));
+            rcpTotalTow = zeros(numModels, numYears, 12, length(weightDist));
 
             % loop through all selected airports
             for aInd = 1:length(airports)
@@ -222,10 +222,10 @@ for selectedHours = selectedHoursList
                 end
 
                 % summary variables for this RCP & airport
-                airportTotalCount = zeros(numModels, numYears, length(weightDist));
-                airportRestrictedCount = zeros(numModels, numYears, length(weightDist));
-                airportRestrictedWeight = zeros(numModels, numYears, length(weightDist));
-                airportTotalTow = zeros(numModels, numYears, length(weightDist));
+                airportTotalCount = zeros(numModels, numYears, 12, length(weightDist));
+                airportRestrictedCount = zeros(numModels, numYears, 12, length(weightDist));
+                airportRestrictedWeight = zeros(numModels, numYears, 12, length(weightDist));
+                airportTotalTow = zeros(numModels, numYears, 12, length(weightDist));
 
                 % add new cell to current RCP for airport data
                 restrictionData{ac}{r+1}{end+1} = {airports{aInd}};
@@ -260,13 +260,13 @@ for selectedHours = selectedHoursList
 
                                 airportRestrictedCount(m, y, month, w) = numRestricted;
                                 airportTotalCount(m, y, month, w) = numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
-                                rcpRestrictedCount(m, y, month, w) = rcpRestrictedCount(m, y, w) + numRestricted;
-                                rcpTotalCount(m, y, month, w) = rcpTotalCount(m, y, w) + numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
+                                rcpRestrictedCount(m, y, month, w) = rcpRestrictedCount(m, y, month, w) + numRestricted;
+                                rcpTotalCount(m, y, month, w) = rcpTotalCount(m, y, month, w) + numel(curWeightData{aIndCur}{m}{3}(selectedHours, ind1:ind2));
 
                                 airportRestrictedWeight(m, y, month, w) = restrictedWeight;
-                                airportTotalTow(m, y, month, w) = airportTotalCount(m, y, w) * tow;
-                                rcpRestrictedWeight(m, y, month, w) = rcpRestrictedWeight(m, y, w) + restrictedWeight;
-                                rcpTotalTow(m, y, month, w) = rcpTotalTow(m, y, w) + airportTotalCount(m, y, w) * tow;
+                                airportTotalTow(m, y, month, w) = airportTotalCount(m, y, month, w) * tow;
+                                rcpRestrictedWeight(m, y, month, w) = rcpRestrictedWeight(m, y, month, w) + restrictedWeight;
+                                rcpTotalTow(m, y, month, w) = rcpTotalTow(m, y, month, w) + airportTotalCount(m, y, month, w) * tow;
                             end
                         end
                     end
