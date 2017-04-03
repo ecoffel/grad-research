@@ -21,6 +21,9 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 baseVar = 'tasmax';
 testVar = 'tasmax';
 
+baseRcp = 'historical';
+testRcp = 'rcp45';
+
 baseRegrid = true;
 modelRegrid = true;
 
@@ -88,18 +91,14 @@ end
 
 if strcmp(basePeriod, 'past')
     basePeriod = basePeriodYears;
-    baseRcp = 'historical'
 elseif strcmp(basePeriod, 'future')
     basePeriod = testPeriodYears;
-    baseRcp = 'rcp85';
 end
 
 if strcmp(testPeriod, 'past')
     testPeriod = basePeriodYears;
-    testRcp = 'historical'
 elseif strcmp(testPeriod, 'future')
     testPeriod = testPeriodYears;
-    testRcp = 'rcp85';
 end
 
 if ~strcmp(testVar, '')
@@ -132,7 +131,6 @@ if strcmp(baseDatasetStr, 'cmip5')
     end
     
     baseDataDir = 'cmip5/output';
-    baseRcp = 'historical/';
     ensemble = 'r1i1p1/';
 elseif strcmp(baseDatasetStr, 'ncep')
     baseDatasetStr = ['ncep'];
@@ -165,7 +163,7 @@ for m = 1:length(baseModels)
     for y = basePeriod(1):yearStep:basePeriod(end)
         ['year ' num2str(y) '...']
         
-        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp '/' baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         if nanmean(nanmean(nanmean(nanmean(nanmean(baseDaily{3}, 5), 4), 3), 2), 1) > 100
             baseDaily{3} = baseDaily{3} - 273.15;
@@ -207,7 +205,7 @@ if ~strcmp(testVar, '')
         for y = testPeriod(1):yearStep:testPeriod(end)
             ['year ' num2str(y) '...']
             % load daily data
-            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            testDaily = loadDailyData([baseDir testDataDir '/' curModel ensemble testRcp '/' testVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             
             if nanmean(nanmean(nanmean(nanmean(nanmean(testDaily{3}, 5), 4), 3), 2), 1) > 100
                 testDaily{3} = testDaily{3} - 273.15;
@@ -275,38 +273,38 @@ saveData = struct('data', {result}, ...
 plotFromDataFile(saveData);
 
 
-% lower bound
-result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, lBound};
-
-fileTitle = ['recurrance-low-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
-plotTitle = ['Temperature recurrence (10th percentile)'];
-
-
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater);
-
-plotFromDataFile(saveData);
-
-
-% upper bound
-result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, uBound};
-
-fileTitle = ['recurrance-high-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
-plotTitle = ['Temperature recurrence (90th percentile)'];
-
-
-saveData = struct('data', {result}, ...
-                  'plotRegion', plotRegion, ...
-                  'plotRange', plotRange, ...
-                  'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle, ...
-                  'plotXUnits', plotXUnits, ...
-                  'blockWater', blockWater);
-
-plotFromDataFile(saveData);
+% % lower bound
+% result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, lBound};
+% 
+% fileTitle = ['recurrance-low-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
+% plotTitle = ['Temperature recurrence (10th percentile)'];
+% 
+% 
+% saveData = struct('data', {result}, ...
+%                   'plotRegion', plotRegion, ...
+%                   'plotRange', plotRange, ...
+%                   'plotTitle', plotTitle, ...
+%                   'fileTitle', fileTitle, ...
+%                   'plotXUnits', plotXUnits, ...
+%                   'blockWater', blockWater);
+% 
+% plotFromDataFile(saveData);
+% 
+% 
+% % upper bound
+% result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, uBound};
+% 
+% fileTitle = ['recurrance-high-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
+% plotTitle = ['Temperature recurrence (90th percentile)'];
+% 
+% 
+% saveData = struct('data', {result}, ...
+%                   'plotRegion', plotRegion, ...
+%                   'plotRange', plotRange, ...
+%                   'plotTitle', plotTitle, ...
+%                   'fileTitle', fileTitle, ...
+%                   'plotXUnits', plotXUnits, ...
+%                   'blockWater', blockWater);
+% 
+% plotFromDataFile(saveData);
 
