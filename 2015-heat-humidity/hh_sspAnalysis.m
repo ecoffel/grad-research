@@ -14,7 +14,8 @@ colors = colors ./ 255.0;
 figure('Color', [1,1,1]);
 hold on;
 box on;
-
+axis square;
+grid on;
 for ssp = ssps
     for d = 1:length(decades)
         decade = decades(d);

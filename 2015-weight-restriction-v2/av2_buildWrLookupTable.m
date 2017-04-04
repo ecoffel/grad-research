@@ -1,4 +1,4 @@
-tempRange = 20:55;
+tempRange = linspace(25, 55, 100);
 runwayRange = 4000:500:16000
 elevationRange = [0 2000 4000];
 
