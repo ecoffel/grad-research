@@ -23,7 +23,7 @@ popRegrid = true;
 
 region = 'world';
 rcp = 'rcp85';
-exposureThreshold = 33;
+exposureThreshold = 32;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -432,7 +432,8 @@ saveData = struct('futureDecX', futureDecX, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle);
+                  'fileTitle', fileTitle, ...
+                  'exportFormat', exportformat);
 
 sendToPlotly = false;
               
@@ -521,6 +522,6 @@ set(l, 'FontSize', 24, 'Location', 'best');
 
 ylim([0, inf]);
     
-eval(['export_fig ' saveData.fileTitle '.' exportformat ' -m2;']);
+eval(['export_fig ' saveData.fileTitle '.' saveData.exportFormat ' -m2;']);
 save([saveData.fileTitle '.mat'], 'saveData');
 close all;

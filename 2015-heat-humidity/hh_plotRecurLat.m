@@ -1,4 +1,4 @@
-var = 'tasmax';
+var = 'wb';
 
 load(['2015-heat-humidity\recur-dat\recur-exceedence-' var '-rcp45.mat']);
 recur45 = testExceedences;
