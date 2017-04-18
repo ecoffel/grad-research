@@ -24,19 +24,20 @@ function plotPopExposureFromMat(saveData)
     set(E(4), 'Color', [0.1, 0.1, 0.1]);
     set(E(4), 'LineWidth', 2);
 
-    %title(saveData.plotTitle, 'FontSize', 24);
+    title(saveData.plotTitle, 'FontSize', 30);
     xlabel(saveData.Xlabel, 'FontSize', 24);
     ylabel(saveData.Ylabel, 'FontSize', 24);
     set(gca, 'FontSize', 24);
     set(gcf, 'Position', get(0,'Screensize'));
 
     l = legend(B, 'Population effect', 'Climate effect', 'Interaction effect', 'Total exposure');
-    set(l, 'FontSize', 24, 'Location', 'best');
+    set(l, 'FontSize', 24, 'Location', 'northwest');
 
-    ylim([0, inf]);
+    yl = ylim;
+    ylim([0, yl(2)*1.05]);
 
-    %eval(['export_fig ' saveData.fileTitle '.' saveData.exportFormat ' -m2;']);
-    %save([saveData.fileTitle '.mat'], 'saveData');
-    %close all;
+    eval(['export_fig ' saveData.fileTitle '.' saveData.exportFormat ' -m2;']);
+    save([saveData.fileTitle '.mat'], 'saveData');
+    close all;
 
 end
