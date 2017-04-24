@@ -29,6 +29,7 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
     % search for highest allowable weight
     maxWeight = startingWeight;
     recRunway = surf(temp, maxWeight);
+    weightIncrement = 0.1;
     while recRunway < runway && maxWeight <= maxTakeoffWeight
         
         if length(fCutoff) > 0
@@ -38,11 +39,11 @@ function [maxWeight] = findMaxWeight(temp, runway, elevation, acSurfaces)
             end
         end
         
-        maxWeight = maxWeight + 1;
+        maxWeight = maxWeight + weightIncrement;
         recRunway = surf(temp, maxWeight);
     end
     
     % take the last allowable weight
-    maxWeight = maxWeight - 1;
+    maxWeight = maxWeight - weightIncrement;
     
 end

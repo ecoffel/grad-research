@@ -1,5 +1,5 @@
 %load('C:\Users\Ethan\Dropbox\School\Graduate School\Projects\2015-beetles\2015-beetles-paper\figures\tcrit-diff\toe-multi-run-mean--16-diff-model-range.mat');
-load('toe-multi-run-mean--10-model-range');
+load('toe-multi-run-mean--16-model-range');
 
 spbLat = saveData.data{1};
 spbLon = saveData.data{2};

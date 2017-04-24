@@ -15,15 +15,15 @@ testVar = 'wb';
 baseRegrid = true;
 
 basePeriodYears = 1985:2010;
-testPeriodYears = 2070:2080;
+testPeriodYears = 2020:2080;
 
 baseBiasCorrect = false;
 
 popRegrid = true;
 
 region = 'world';
-rcp = 'all-rcp';
-exposureThreshold = 30;
+rcp = 'rcp85';
+exposureThreshold = 32;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -393,6 +393,10 @@ intE = [interactionEffectSorted(:, round((prcRange(1)/100.0)*size(interactionEff
 futPopE= [futurePopCountSorted(:, round((prcRange(1)/100.0)*size(futurePopCountSorted, 2))), ...
              futurePopCountSorted(:, round((prcRange(2)/100.0)*size(futurePopCountSorted, 2)))];
 
+% save population data
+popResult = {{futurePopCountSorted, futPopE}, {climPopEffectSorted, climE}, {popPopEffectSorted, popE}, {interactionEffectSorted, intE}};
+save('population-exposure-rcp85-35', 'popResult');
+         
 mmClimatePopEffect = nanmean(climPopEffectSorted, 2);
 mmPopPopEffect = nanmean(popPopEffectSorted, 2);
 mmInteractionEffect = nanmean(interactionEffectSorted, 2);
@@ -419,7 +423,7 @@ for d = 1:size(mmClimatePopEffect, 1)
     futureDecYerr(d, 4, :) = [futPopE(d, 1)-futureDecY(d, 4) futPopE(d, 2)-futureDecY(d, 4)];
 end
 
-plotTitle = ['Exposure to ' num2str(exposureThreshold) 'C wet bulb, global'];
+plotTitle = ['Exposure to ' num2str(exposureThreshold) char(176) 'C wet bulb, global'];
 fileTitle = ['heatExposure-' baseDataset '-' baseVar '-' num2str(exposureThreshold) '-' rcp '-ssp' num2str(ssp) '-' region];
 
 saveData = struct('futureDecX', futureDecX, ...
@@ -428,11 +432,12 @@ saveData = struct('futureDecX', futureDecX, ...
                   'Xlabel', 'Year', ...
                   'Ylabel', 'Number exposed', ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', fileTitle);
+                  'fileTitle', fileTitle, ...
+                  'exportFormat', exportformat);
 
-barChart = true;
+sendToPlotly = false;
               
-if barChart
+if sendToPlotly
 
     trace1 = struct('x', { saveData.futureDecX }, ...
                   'y', saveData.futureDecY(:,1), ...
@@ -480,43 +485,43 @@ if barChart
     plotlyData = {trace1, trace2, trace3, trace4};
     plotlyLayout = struct('barmode', 'group');
     %   plotlyResponse = plotly(plotlyData, struct('layout', plotlyLayout, 'filename', ['heat-' num2str(exposureThreshold) 'c-' rcp '-all-ssp'], 'fileopt', 'overwrite'));
-    
-    figure('Color', [1, 1, 1]);
-    hold on;
-
-    B = barwitherr(saveData.futureDecYerr, saveData.futureDecX, saveData.futureDecY);
-%     B = barwitherr([squeeze(saveData.futureDecYerr(:,1,:)), squeeze(saveData.futureDecYerr(:,2,:)), squeeze(saveData.futureDecYerr(:,3,:)), squeeze(saveData.futureDecYerr(:,4,:))], ...
-%                    saveData.futureDecX, ...
-%                    [saveData.futureDecY(:,1), saveData.futureDecY(:,2), saveData.futureDecY(:,3), saveData.futureDecY(:,4)]);
-    
-    set(B(1), 'FaceColor', [181,82,124] ./ 255.0);
-    set(B(2), 'FaceColor', [107,169,61] ./ 255.0);
-    set(B(3), 'FaceColor', [104,126,171] ./ 255.0);
-    set(B(3), 'FaceColor', [170,126,51] ./ 255.0);
-    
-    title(saveData.plotTitle, 'FontSize', 24);
-    xlabel(saveData.Xlabel, 'FontSize', 24);
-    ylabel(saveData.Ylabel, 'FontSize', 24);
-    set(gca, 'FontSize', 24);
-    set(gcf, 'Position', get(0,'Screensize'));
-    
-    l = legend(B, 'population effect', 'climate effect', 'interaction effect', 'total change');
-    set(l, 'FontSize', 24, 'Location', 'best');
-    
-else
-    figure('Color', [1, 1, 1]);
-    hold on;
-    plot(saveData.dataX1, saveData.dataY1, 'b', 'LineWidth', 2);
-    plot(saveData.dataX2, saveData.dataY2, 'r', 'LineWidth', 2);
-    plot(saveData.dataX2, saveData.dataY3, '--r', 'LineWidth', 2);
-    title(saveData.plotTitle, 'FontSize', 24);
-    xlabel(saveData.Xlabel, 'FontSize', 24);
-    ylabel(saveData.Ylabel, 'FontSize', 24);
-    set(gcf, 'Position', get(0,'Screensize'));
-    l = legend('Past', 'Future', 'Constant population');
-    set(l, 'FontSize', 24, 'Location', 'best');
 end
 
-eval(['export_fig ' saveData.fileTitle '.' exportformat ';']);
+figure('Color', [1, 1, 1]);
+hold on;
+grid on;
+axis square;
+box on;
+
+[B, E] = barwitherr(saveData.futureDecYerr, saveData.futureDecX, saveData.futureDecY, 'LineWidth', 1, 'BarWidth', 1);
+
+set(B(1), 'FaceColor', [0.122, 0.467, 0.706]);
+set(E(1), 'Color', [0.1, 0.1, 0.1]);
+set(E(1), 'LineWidth', 2);
+
+set(B(2), 'FaceColor', [1, 0.5, 0.055]);
+set(E(2), 'Color', [0.1, 0.1, 0.1]);
+set(E(2), 'LineWidth', 2);
+
+set(B(3), 'FaceColor', [0.173, 0.627, 0.173]);
+set(E(3), 'Color', [0.1, 0.1, 0.1]);
+set(E(3), 'LineWidth', 2);
+
+set(B(4), 'FaceColor', [0.839, 0.153, 0.157]);
+set(E(4), 'Color', [0.1, 0.1, 0.1]);
+set(E(4), 'LineWidth', 2);
+
+title(saveData.plotTitle, 'FontSize', 24);
+xlabel(saveData.Xlabel, 'FontSize', 24);
+ylabel(saveData.Ylabel, 'FontSize', 24);
+set(gca, 'FontSize', 24);
+set(gcf, 'Position', get(0,'Screensize'));
+
+l = legend(B, 'population effect', 'climate effect', 'interaction effect', 'total change');
+set(l, 'FontSize', 24, 'Location', 'best');
+
+ylim([0, inf]);
+    
+eval(['export_fig ' saveData.fileTitle '.' saveData.exportFormat ' -m2;']);
 save([saveData.fileTitle '.mat'], 'saveData');
 close all;

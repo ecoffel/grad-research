@@ -25,9 +25,22 @@ for xlat = 1:size(amp, 1)
     end
 end
 
-ampCount(ampCount < 10) = NaN;
+% convert to percentage of mondels
+ampCount = ampCount ./ size(amp, 3) .* 100;
 
-plotModelData({lat, lon, ampCount}, 'world', 'caxis', [10, 27]);
+% don't display below 2/3 agreement
+ampCount(ampCount < 66) = NaN;
 
-plotModelData({lat, lon, nanmean(amp, 3)}, 'world', 'caxis', [-4 4]);
+result = {lat, lon, ampCount};
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [0 100], ...
+                  'plotTitle', 'Amplification model agreement', ...
+                  'fileTitle', ['ampAgreement-rcp85-27-cmip5-' num2str(ampThresh) 'C.png'], ...
+                  'plotXUnits', 'Percentage of models', ...
+                  'blockWater', true, ...
+                  'magnify', '2');
+plotFromDataFile(saveData);
+%plotModelData({lat, lon, nanmean(amp, 3)}, 'world', 'caxis', [-4 4]);
 
