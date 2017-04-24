@@ -8,8 +8,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-%baseModels = {'csiro-mk3-6-0'};
-%testModels = {'csiro-mk3-6-0'};
+% baseModels = {'csiro-mk3-6-0'};
+% testModels = {'csiro-mk3-6-0'};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -29,9 +29,9 @@ region = 'usne';
 
 ensembles = 1;
 %rcps = {'rcp45'};
-futureRcp = 'rcp45';
-kStr = '-mean';
-tempThreshold = -16;         % new bark temp (12/08/15)
+futureRcp = 'rcp85';
+kStr = '-221';
+tempThreshold = -16;
 
 baseRegrid = true;
 modelRegrid = true;
@@ -46,7 +46,7 @@ exportformat = 'pdf';
 biasCorrect = true;
 blockWater = true;
 
-baseDir = 'g:/data/';
+baseDir = 'e:/data/';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -234,7 +234,7 @@ for e = ensembles
     end
 
     for t = cutoff
-        lastYear = zeros(size(futureExt{m}{y}{3}, 1), size(futureExt{m}{y}{3}, 2), length(futureExt));
+        lastYear = zeros(size(futureExt{m}{1}{3}, 1), size(futureExt{m}{1}{3}, 2), length(futureExt));
 
         if probabilityThreshold
             for m = 1:length(futureExt)
@@ -265,7 +265,7 @@ for e = ensembles
                             
                             % if we exceed the threshold (more than x
                             % occurances in the following futureWindow)
-                            if eventCount(xlat, ylon) >= 0.01*t*(futureWindow-y)
+                            if eventCount(xlat, ylon) >= 0.01*t*futureWindow;
                                 lastYear(xlat, ylon, m) = testPeriodYears(1) + y;
                                 
                             % if the value has not been set yet, set it
