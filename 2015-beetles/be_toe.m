@@ -29,9 +29,9 @@ region = 'usne';
 
 ensembles = 1;
 %rcps = {'rcp45'};
-futureRcp = 'rcp85';
+futureRcp = 'rcp45';
 kStr = '-mean';
-tempThreshold = -10;         % new bark temp (12/08/15)
+tempThreshold = -16;         % new bark temp (12/08/15)
 
 baseRegrid = true;
 modelRegrid = true;
@@ -46,7 +46,7 @@ exportformat = 'pdf';
 biasCorrect = true;
 blockWater = true;
 
-baseDir = 'e:/data/';
+baseDir = 'g:/data/';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -220,7 +220,7 @@ for e = ensembles
 
     plotRange = [2005 2090];
 
-    probabilityThreshold = false;
+    probabilityThreshold = true;
 
     %tempThreshold = -11;         % bark temp
     

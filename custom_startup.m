@@ -11,6 +11,7 @@ addpath('C:\git-ecoffel\grad-research\2016-stock-prices');
 addpath('C:\git-ecoffel\grad-research\2016-heat-humid-mortality');
 addpath('C:\git-ecoffel\grad-research\2017-concurrent-heat');
 addpath('C:\git-ecoffel\grad-research\2017-ag-precip');
+addpath('C:\git-ecoffel\grad-research\2017-my-future-climate');
 userpath('C:\git-ecoffel\grad-research');
 
 plotlysetup('ecoffel', 'zo5qjdmelk')

@@ -10,8 +10,8 @@ ncFileNames = {ncFileNames.name};
 fileCount = 0;
 yearStep = 20;
 
-skipExistingFolders = false;
-skipExistingFiles = false;
+skipExistingFolders = true;
+skipExistingFiles = true;
 
 for k = 1:length(ncFileNames)
     if fileCount >= maxNum & maxNum ~= -1
@@ -300,7 +300,7 @@ for k = 1:length(ncFileNames)
             fileName = [varName, '_', datestr(timestep(curIndex), 'yyyy_mm_dd')];
             
             if skipExistingFiles
-                if exist(fileName, 'file')
+                if exist([folDataTarget, '/', fileName, '.mat'], 'file')
                     continue;
                 end
             end
