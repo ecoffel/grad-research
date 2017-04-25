@@ -82,6 +82,8 @@ lowInd = round(0.25 * size(usDataSeaMax, 2));
 highInd = round(0.75 * size(usDataSeaMax, 2));
 
 figure('Color',[1,1,1]);
+
+subplot(2, 2, 1);
 hold on;
 grid on;
 box on;
@@ -91,28 +93,66 @@ set(p1.mainLine, 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
 set(p1.patch, 'FaceColor', [0.6 0.6 0.6]);
 set(p1.edge, 'Color', 'w');
 plot(1:12, ones(1,12) .* nanmean(usDataAnnMax), '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 2);
+xlabel('Month', 'FontSize', 24);
+ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+set(gca, 'FontSize', 24);
+ylim([0 8]);
+xlim([1 12]);
+legend('Eastern U.S.');
 
+subplot(2, 2, 2);
+hold on;
+grid on;
+box on;
+axis square;
 p2 = shadedErrorBar(1:12, nanmean(europeDataSeaMax, 2), range(europeDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
 set(p2.mainLine, 'Color', [70/255.0, 159/255.0, 242/255.0], 'LineWidth', 3);
 set(p2.patch, 'FaceColor', [70/255.0, 159/255.0, 242/255.0]);
 set(p2.edge, 'Color', 'w');
 plot(1:12, ones(1,12) .* nanmean(europeDataAnnMax), '--', 'Color', [70/255.0, 159/255.0, 242/255.0], 'LineWidth', 2);
+xlabel('Month', 'FontSize', 24);
+ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+set(gca, 'FontSize', 24);
+ylim([0 8]);
+xlim([1 12]);
+legend('Western Europe');
 
+subplot(2, 2, 3);
+hold on;
+grid on;
+box on;
+axis square;
 p3 = shadedErrorBar(1:12, nanmean(amazonDataSeaMax, 2), range(amazonDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
 set(p3.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
 set(p3.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
 set(p3.edge, 'Color', 'w');
 plot(1:12, ones(1,12) .* nanmean(amazonDataAnnMax), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+xlabel('Month', 'FontSize', 24);
+ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+set(gca, 'FontSize', 24);
+ylim([0 8]);
+xlim([1 12]);
+legend('Amazon');
 
+subplot(2, 2, 4);
+hold on;
+grid on;
+box on;
+axis square;
 p4 = shadedErrorBar(1:12, nanmean(indiaDataSeaMax, 2), range(indiaDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
 set(p4.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
 set(p4.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p4.edge, 'Color', 'w');
 plot(1:12, ones(1,12) .* nanmean(indiaDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
-
 xlabel('Month', 'FontSize', 24);
-ylabel(['Maximum temperature change (' char(176) 'C)'], 'FontSize', 24);
+ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
 set(gca, 'FontSize', 24);
 ylim([0 8]);
+xlim([1 12]);
+legend('India');
 
-legend([p1.mainLine, p2.mainLine, p3.mainLine, p4.mainLine], 'Eastern U.S.', 'Western Europe', 'Amazon', 'India');
+% xlabel('Month', 'FontSize', 24);
+% ylabel(['Maximum temperature change (' char(176) 'C)'], 'FontSize', 24);
+% set(gca, 'FontSize', 24);
+% ylim([0 8]);
+% legend([p1.mainLine, p2.mainLine, p3.mainLine, p4.mainLine], 'Eastern U.S.', 'Western Europe', 'Amazon', 'India');
