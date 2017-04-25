@@ -33,7 +33,7 @@ for d = 1:length(hfssDirNames)
         continue;
     end
     
-    hfssCurDir = [dataDir '/' hfssVar '/' regridStr hfssDirNames{d}];
+    hfssCurDir = [dataDir '/' hfssVar '/regrid/world/'  hfssDirNames{d}];
     
     if ~isdir(hfssCurDir)
         continue;
@@ -53,7 +53,7 @@ for d = 1:length(hflsDirNames)
         continue;
     end
     
-    hflsCurDir = [dataDir  '/' hflsVar '/' regridStr hflsDirNames{d}];
+    hflsCurDir = [dataDir  '/' hflsVar '/regrid/world/' hflsDirNames{d}];
     
     if ~isdir(hflsCurDir)
         continue;
