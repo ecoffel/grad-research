@@ -22,7 +22,7 @@ baseVar = 'tasmax';
 testVar = 'tasmax';
 
 baseRcp = 'historical';
-testRcp = 'rcp45';
+testRcp = 'rcp85';
 
 baseRegrid = true;
 modelRegrid = true;
@@ -111,7 +111,6 @@ if ~strcmp(testVar, '')
         end
         
         testDataDir = 'cmip5/output';
-        testRcp = 'rcp45/';
         ensemble = 'r1i1p1/';
     elseif strcmp(testDatasetStr, 'ncep')
         testDatasetStr = ['ncep'];
@@ -236,7 +235,7 @@ if ~strcmp(testVar, '')
         end
     end
 end
-save('recur-exceedence.mat', 'testExceedences');
+save(['recur-exceedence-' testVar '-' testRcp '.mat'], 'testExceedences');
 meanTestExceedences = nanmean(nanmean(testExceedences, 4), 3);
 
 % rank number of exceedences for each grid box
@@ -258,7 +257,7 @@ uBound = testExceedencesDist(:, :, uBoundInd);
 
 result = {baseExt{1}{1}{1}, baseExt{1}{1}{2}, meanTestExceedences};
 
-fileTitle = ['recurrance-' baseVar '-' fileTimeStr '-' plotRegion '.' exportformat];
+fileTitle = ['recurrance-' baseVar '-' fileTimeStr '-' plotRegion '-' testRcp '.' exportformat];
 plotTitle = ['Temperature recurrence'];
 
 
