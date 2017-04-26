@@ -1,4 +1,47 @@
+% plot monthly max temperature change alongside mean monthly bowen ratio changes
 
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3'};
+
+bowenBaseDir = '2017-concurrent-heat\bowen\';
+bowenModels = {};
+
+% dimensions: x, y, month, model
+bowenChg = [];
+% how many models have historical and rcp85 bowen data
+bowenModelCnt = 1;
+
+for m = 1:length(models)
+    % load historical bowen ratio for this model if it exists
+    if exist([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat'], 'file')
+        load([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat']);
+        curBowenHistorical = monthlyMeans;
+    end
+    
+    % load rcp85 bowen ratio for this model if it exists
+    if exist([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat'], 'file')
+        load([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat']);
+        curBowenRcp85 = monthlyMeans;
+    end
+    
+    % if both historical and rcp85 data exist and were loaded for this
+    % model, add them to the change data
+    if exist('curBowenHistorical') && exist('curBowenRcp85')
+        bowenModels{end+1} = models{m};
+        
+        % take difference between rcp85 and historical
+        % dimensions: x, y, month, model
+        bowenChg(:, :, bowenModelCnt, :) = curBowenRcp85 - curBowenHistorical;
+        
+        % increment number of models loaded
+        bowenModelCnt = bowenModelCnt + 1;
+    end
+    
+end
+          
 load waterGrid;
 load lat;
 load lon;
@@ -19,6 +62,8 @@ seaMeanMax = chgData;
 
 load chg-data\chgData-cmip5-ann-max-rcp85-2070-2080.mat
 annMax = chgData;
+
+
 
 maps = false;
 
@@ -55,11 +100,13 @@ if maps
     tightfig;
 end
 
+% mean monthly maximum temperatures for each region (2D)
 usDataSeaMax = [];
 europeDataSeaMax = [];
 amazonDataSeaMax = [];
 indiaDataSeaMax = [];
 
+% mean annual maximum temperatures for each region (1D)
 usDataAnnMax = squeeze(nanmean(nanmean(annMax(latIndexRangeUsne, lonIndexRangeUsne, :), 2), 1));
 europeDataAnnMax = squeeze(nanmean(nanmean(annMax(latIndexRangeEurope, lonIndexRangeEurope, :), 2), 1));
 amazonDataAnnMax = squeeze(nanmean(nanmean(annMax(latIndexRangeAmazon, lonIndexRangeAmazon, :), 2), 1));
@@ -72,12 +119,26 @@ for m = 1:12
     indiaDataSeaMax(m, :) = squeeze(nanmean(nanmean(seaMax(latIndexRangeIndia, lonIndexRangeIndia, :, m), 2), 1));
 end
 
+% sort models by their monthly maximum temperature
 usDataSeaMax = sort(usDataSeaMax, 2);
 europeDataSeaMax = sort(europeDataSeaMax, 2);
 amazonDataSeaMax = sort(amazonDataSeaMax, 2);
 indiaDataSeaMax = sort(indiaDataSeaMax, 2);
 
-% show 25th - 75th percentile range
+% sort bowen change data by model
+bowenChg = sort(bowenChg, 3);
+
+% average bowen change over region
+bowenChgUsne = squeeze(nanmean(nanmean(bowenChg(latIndexRangeUsne, lonIndexRangeUsne, :, :), 2), 1));
+bowenChgEurope = squeeze(nanmean(nanmean(bowenChg(latIndexRangeEurope, lonIndexRangeEurope, :, :), 2), 1));
+bowenChgAmazon = squeeze(nanmean(nanmean(bowenChg(latIndexRangeAmazon, lonIndexRangeAmazon, :, :), 2), 1));
+bowenChgIndia = squeeze(nanmean(nanmean(bowenChg(latIndexRangeIndia, lonIndexRangeIndia, :, :), 2), 1));
+
+% calculate indices for 25th/75th percentile bowen across models
+lowIndBowen = round(0.25 * size(bowenChg, 3));
+highIndBowen = round(0.75 * size(bowenChg, 3));
+
+% show 25th - 75th percentile range for temperature
 lowInd = round(0.25 * size(usDataSeaMax, 2));
 highInd = round(0.75 * size(usDataSeaMax, 2));
 
@@ -89,9 +150,16 @@ grid on;
 box on;
 axis square;
 p1 = shadedErrorBar(1:12, nanmean(usDataSeaMax, 2), range(usDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p1.mainLine, 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
-set(p1.patch, 'FaceColor', [0.6 0.6 0.6]);
+set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p1.edge, 'Color', 'w');
+
+p1Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgUsne, 1)), ...
+                               squeeze(range(bowenChgUsne(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
+set(p1Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p1Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p1Bowen.edge, 'Color', 'w');
+
 plot(1:12, ones(1,12) .* nanmean(usDataAnnMax), '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 2);
 xlabel('Month', 'FontSize', 24);
 ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
@@ -106,9 +174,16 @@ grid on;
 box on;
 axis square;
 p2 = shadedErrorBar(1:12, nanmean(europeDataSeaMax, 2), range(europeDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p2.mainLine, 'Color', [70/255.0, 159/255.0, 242/255.0], 'LineWidth', 3);
-set(p2.patch, 'FaceColor', [70/255.0, 159/255.0, 242/255.0]);
+set(p2.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p2.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p2.edge, 'Color', 'w');
+
+p2Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgEurope, 1)), ...
+                               squeeze(range(bowenChgEurope(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
+set(p2Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p2Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p2Bowen.edge, 'Color', 'w');
+
 plot(1:12, ones(1,12) .* nanmean(europeDataAnnMax), '--', 'Color', [70/255.0, 159/255.0, 242/255.0], 'LineWidth', 2);
 xlabel('Month', 'FontSize', 24);
 ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
@@ -123,9 +198,16 @@ grid on;
 box on;
 axis square;
 p3 = shadedErrorBar(1:12, nanmean(amazonDataSeaMax, 2), range(amazonDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p3.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-set(p3.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p3.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p3.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p3.edge, 'Color', 'w');
+
+p3Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgAmazon, 1)), ...
+                               squeeze(range(bowenChgAmazon(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
+set(p3Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p3Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p3Bowen.edge, 'Color', 'w');
+
 plot(1:12, ones(1,12) .* nanmean(amazonDataAnnMax), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 xlabel('Month', 'FontSize', 24);
 ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
@@ -143,6 +225,13 @@ p4 = shadedErrorBar(1:12, nanmean(indiaDataSeaMax, 2), range(indiaDataSeaMax(:, 
 set(p4.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
 set(p4.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p4.edge, 'Color', 'w');
+
+p4Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgIndia, 1)), ...
+                               squeeze(range(bowenChgIndia(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
+set(p4Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p4Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p4Bowen.edge, 'Color', 'w');
+
 plot(1:12, ones(1,12) .* nanmean(indiaDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
 xlabel('Month', 'FontSize', 24);
 ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
