@@ -9,7 +9,7 @@ basePeriod = 'past';
 baseDataset = 'cmip5';
 baseVar = 'tasmax';
 
-baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
@@ -21,11 +21,6 @@ baseEnsemble = 'r1i1p1';
 futureDataset = 'cmip5';
 futureVar = 'tasmax';
 
-futureModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 % futureModels = {'access1-0'};
 futureRcps = {'rcp85'};
 futureEnsemble = 'r1i1p1';
@@ -36,14 +31,16 @@ futureRegrid = true;
 region = 'world';
 basePeriodYears = 1981:2004;
 
-futurePeriods = [2020:2030; ...
-                 2030:2040; ...
-                 2040:2050; ...
-                 2050:2060; ...
-                 2060:2070; ...
-                 2070:2080];
+% futurePeriods = [2020:2030; ...
+%                  2030:2040; ...
+%                  2040:2050; ...
+%                  2050:2060; ...
+%                  2060:2070; ...
+%                  2070:2080];
 
-baseDir = 'd:/data';
+futurePeriods = [2070:2080];
+
+baseDir = 'f:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -77,8 +74,8 @@ waterGrid = logical(waterGrid);
 baseData = [];
 
 ['loading base: ' baseDataset]
-for m = 1:length(baseModels)
-    curModel = baseModels{m};
+for m = 1:length(models)
+    curModel = models{m};
 
     ['loading base model ' curModel '...']
 
@@ -187,14 +184,14 @@ end
 
 for f = 1:size(futurePeriods, 1)
     
-    futureData = [];
-    chgData = [];
-    
     futurePeriodYears = futurePeriods(f, :);
 
     ['loading future: ' futureDataset]
-    for m = 1:length(futureModels)
-        curModel = futureModels{m};
+    for m = 1:length(models)
+        curModel = models{m};
+        
+        futureData = [];
+        chgData = [];
 
         ['loading future model ' curModel '...']
 
@@ -243,7 +240,7 @@ for f = 1:size(futurePeriods, 1)
 
                             % compute percentile threshold for this grid cell
                             % and year
-                            futureData(xlat, ylon, m, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily(xlat, ylon, :)), thresh(t));
+                            futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily(xlat, ylon, :)), thresh(t));
                         end
                     end
                 end
@@ -252,7 +249,7 @@ for f = 1:size(futurePeriods, 1)
 
                 % loop over months
                 for month = 1:size(futureDaily, 4)
-                    futureData(:, :, m, y-futurePeriodYears(1)+1, month) = nanmax(squeeze(futureDaily(:, :, 1, month, :)), [], 3);
+                    futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmax(squeeze(futureDaily(:, :, 1, month, :)), [], 3);
                 end
             
             elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
@@ -260,40 +257,45 @@ for f = 1:size(futurePeriods, 1)
 
                 % loop over months
                 for month = 1:size(futureDaily, 4)
-                    futureData(:, :, m, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futureDaily(:, :, 1, month, :)), 3);
+                    futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futureDaily(:, :, 1, month, :)), 3);
                 end
 
             elseif strcmp(changeMetric, 'ann-max')
 
                 % store annual max temperature at each gridbox for this year
-                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily), [], 3);
+                futureData(:, :, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily), [], 3);
 
             elseif strcmp(changeMetric, 'daily-max')
 
                 % store annual max temperature at each gridbox for this year
-                futureData(:, :, m, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily), 3);
+                futureData(:, :, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily), 3);
 
             end
 
             clear futureDaily futureDaily3d;
         end
-    end
-
-    if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
-        % if computing annual maximum or mean daily maximum, take the mean across all
-        % years (futureData now 3D: (x, y, model))
-        futureData = nanmean(futureData, 4);
         
-    elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
-        % if computing seasonal metrics, average over all the annual
-        % maximum or mean daily maximum, take the mean across all years
-        % (futureData now 4D: (x, y, model, month))
-        futureData = squeeze(nanmean(futureData, 4));
+        if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
+            % if computing annual maximum or mean daily maximum, take the mean across all
+            % years (futureData now 3D: (x, y))
+            futureData = nanmean(futureData, 3);
+            
+            % calculate change for the current base period model:
+            chgData = futureData - baseData(:, :, m);
+
+        elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
+            % if computing seasonal metrics, average over all the annual
+            % maximum or mean daily maximum, take the mean across all years
+            % (futureData now 4D: (x, y, month))
+            futureData = squeeze(nanmean(futureData, 3));
+            
+            % calculate change for the current base period model:
+            chgData = futureData - baseData(:, :, m, :);
+        end
+
+        
+
+        save(['2017-concurrent-heat/tasmax/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+
     end
-
-    % now baseData and futureData should have the same dimensions, so calculate
-    % change:
-    chgData = futureData - baseData;
-
-    save(['chgData-cmip5-' changeMetric '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
 end

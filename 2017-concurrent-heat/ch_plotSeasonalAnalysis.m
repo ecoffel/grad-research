@@ -63,8 +63,6 @@ seaMeanMax = chgData;
 load chg-data\chgData-cmip5-ann-max-rcp85-2070-2080.mat
 annMax = chgData;
 
-
-
 maps = false;
 
 if maps
@@ -142,103 +140,241 @@ highIndBowen = round(0.75 * size(bowenChg, 3));
 lowInd = round(0.25 * size(usDataSeaMax, 2));
 highInd = round(0.75 * size(usDataSeaMax, 2));
 
-figure('Color',[1,1,1]);
-
-subplot(2, 2, 1);
+% plot ----------------------------------------------------
+f = figure('Color',[1,1,1]);
 hold on;
 grid on;
 box on;
-axis square;
-p1 = shadedErrorBar(1:12, nanmean(usDataSeaMax, 2), range(usDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
+
+[ax, p1, p2] = shadedErrorBaryy(1:12, nanmean(usDataSeaMax, 2), range(usDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, 'r', ...
+                                1:12, squeeze(nanmean(bowenChgUsne, 1)), squeeze(range(bowenChgUsne(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, 'g');
+hold(ax(1));
+hold(ax(2));
+box(ax(1), 'on');
 set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
 set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
 set(p1.edge, 'Color', 'w');
-
-p1Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgUsne, 1)), ...
-                               squeeze(range(bowenChgUsne(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
-set(p1Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-set(p1Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-set(p1Bowen.edge, 'Color', 'w');
-
-plot(1:12, ones(1,12) .* nanmean(usDataAnnMax), '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 2);
-xlabel('Month', 'FontSize', 24);
-ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
-set(gca, 'FontSize', 24);
-ylim([0 8]);
-xlim([1 12]);
-legend('Eastern U.S.');
-
-subplot(2, 2, 2);
-hold on;
-grid on;
-box on;
-axis square;
-p2 = shadedErrorBar(1:12, nanmean(europeDataSeaMax, 2), range(europeDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p2.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
-set(p2.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+set(p2.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p2.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
 set(p2.edge, 'Color', 'w');
+axis(ax(1), 'square');
+axis(ax(2), 'square');
 
-p2Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgEurope, 1)), ...
-                               squeeze(range(bowenChgEurope(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
-set(p2Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-set(p2Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-set(p2Bowen.edge, 'Color', 'w');
+%plot(1:12, ones(1,12) .* nanmean(usDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
 
-plot(1:12, ones(1,12) .* nanmean(europeDataAnnMax), '--', 'Color', [70/255.0, 159/255.0, 242/255.0], 'LineWidth', 2);
+% plot bowen zero line 
+plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+
 xlabel('Month', 'FontSize', 24);
-ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
-set(gca, 'FontSize', 24);
-ylim([0 8]);
-xlim([1 12]);
-legend('Western Europe');
+set(ax(1), 'XTick', 1:12);
+set(ax(2), 'XTick', []);
+set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
+set(ax(2), 'YLim', [-2 5], 'YTick', -2:5);
+set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
+set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
+ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+title('Eastern U.S.', 'FontSize', 24);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig seasonal-analysis-us.png -m2;
 
-subplot(2, 2, 3);
+
+
+figure('Color', [1,1,1]);
 hold on;
 grid on;
 box on;
-axis square;
-p3 = shadedErrorBar(1:12, nanmean(amazonDataSeaMax, 2), range(amazonDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p3.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
-set(p3.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
-set(p3.edge, 'Color', 'w');
 
-p3Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgAmazon, 1)), ...
-                               squeeze(range(bowenChgAmazon(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
-set(p3Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-set(p3Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-set(p3Bowen.edge, 'Color', 'w');
+[ax, p1, p2] = shadedErrorBaryy(1:12, nanmean(europeDataSeaMax, 2), range(europeDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, 'r', ...
+                                1:12, squeeze(nanmean(bowenChgEurope, 1)), squeeze(range(bowenChgEurope(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, 'g');
 
-plot(1:12, ones(1,12) .* nanmean(amazonDataAnnMax), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+hold(ax(1));
+hold(ax(2));
+box(ax(1), 'on');
+set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+set(p1.edge, 'Color', 'w');
+set(p2.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p2.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p2.edge, 'Color', 'w');
+axis(ax(1), 'square');
+axis(ax(2), 'square');
+
+%plot(1:12, ones(1,12) .* nanmean(europeDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+
+% plot bowen zero line 
+plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+
 xlabel('Month', 'FontSize', 24);
-ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
-set(gca, 'FontSize', 24);
-ylim([0 8]);
-xlim([1 12]);
-legend('Amazon');
+set(ax(1), 'XTick', 1:12);
+set(ax(2), 'XTick', []);
+set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
+set(ax(2), 'YLim', [-2 5], 'YTick', -2:5);
+set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
+set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
+ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+title('Europe', 'FontSize', 24);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig seasonal-analysis-europe.png -m2;
 
-subplot(2, 2, 4);
+
+
+figure('Color', [1,1,1]);
 hold on;
 grid on;
 box on;
-axis square;
-p4 = shadedErrorBar(1:12, nanmean(indiaDataSeaMax, 2), range(indiaDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
-set(p4.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
-set(p4.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
-set(p4.edge, 'Color', 'w');
 
-p4Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgIndia, 1)), ...
-                               squeeze(range(bowenChgIndia(lowInd:highInd, :), 1)) ./ 2.0, '-', 1);
-set(p4Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-set(p4Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-set(p4Bowen.edge, 'Color', 'w');
+[ax, p1, p2] = shadedErrorBaryy(1:12, nanmean(amazonDataSeaMax, 2), range(amazonDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, 'r', ...
+                                1:12, squeeze(nanmean(bowenChgAmazon, 1)), squeeze(range(bowenChgAmazon(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, 'g');
+hold(ax(1));
+hold(ax(2));
+box(ax(1), 'on');
+set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+set(p1.edge, 'Color', 'w');
+set(p2.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p2.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p2.edge, 'Color', 'w');
+axis(ax(1), 'square');
+axis(ax(2), 'square');
 
-plot(1:12, ones(1,12) .* nanmean(indiaDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+%plot(1:12, ones(1,12) .* nanmean(amazonDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+
+% plot bowen zero line 
+plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+
 xlabel('Month', 'FontSize', 24);
-ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
-set(gca, 'FontSize', 24);
-ylim([0 8]);
-xlim([1 12]);
-legend('India');
+set(ax(1), 'XTick', 1:12);
+set(ax(2), 'XTick', []);
+set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
+set(ax(2), 'YLim', [-2 5], 'YTick', -2:5);
+set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
+set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
+ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+title('Amazon', 'FontSize', 24);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig seasonal-analysis-amazon.png -m2;
+
+
+figure('Color', [1,1,1]);
+hold on;
+grid on;
+box on;
+
+[ax, p1, p2] = shadedErrorBaryy(1:12, nanmean(indiaDataSeaMax, 2), range(indiaDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, 'r', ...
+                                1:12, squeeze(nanmean(bowenChgIndia, 1)), squeeze(range(bowenChgIndia(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, 'g');
+hold(ax(1));
+hold(ax(2));
+box(ax(1), 'on');
+set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+set(p1.edge, 'Color', 'w');
+set(p2.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+set(p2.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p2.edge, 'Color', 'w');
+axis(ax(1), 'square');
+axis(ax(2), 'square');
+
+% plot ann max temp change
+%plot(1:12, ones(1,12) .* nanmean(indiaDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+
+% plot bowen zero line 
+plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+
+xlabel('Month', 'FontSize', 24);
+set(ax(1), 'XTick', 1:12);
+set(ax(2), 'XTick', []);
+set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
+set(ax(2), 'YLim', [-2 5], 'YTick', -2:5);
+set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
+set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
+ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+title('India', 'FontSize', 24);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig seasonal-analysis-india.png -m2;
+
+% p1Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgUsne, 1)), ...
+%                                squeeze(range(bowenChgUsne(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, '-', 1);
+% set(p1Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+% set(p1Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+% set(p1Bowen.edge, 'Color', 'w');
+
+
+% ---------------------- old code, no double y axis -----------------------
+% subplot(2, 2, 2);
+% hold on;
+% grid on;
+% box on;
+% axis square;
+% p2 = shadedErrorBar(1:12, nanmean(europeDataSeaMax, 2), range(europeDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
+% set(p2.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+% set(p2.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+% set(p2.edge, 'Color', 'w');
+% plot(1:12, ones(1,12) .* nanmean(europeDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+% xlabel('Month', 'FontSize', 24);
+% ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+% set(gca, 'FontSize', 24);
+% ylim([0 8]);
+% xlim([1 12]);
+% title('Western Europe', 'FontSize', 24);
+% 
+% p2Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgEurope, 1)), ...
+%                                squeeze(range(bowenChgEurope(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, '-', 1);
+% set(p2Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+% set(p2Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+% set(p2Bowen.edge, 'Color', 'w');
+% 
+% 
+% 
+% subplot(2, 2, 3);
+% hold on;
+% grid on;
+% box on;
+% axis square;
+% p3 = shadedErrorBar(1:12, nanmean(amazonDataSeaMax, 2), range(amazonDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
+% set(p3.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+% set(p3.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+% set(p3.edge, 'Color', 'w');
+% plot(1:12, ones(1,12) .* nanmean(amazonDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+% xlabel('Month', 'FontSize', 24);
+% ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+% set(gca, 'FontSize', 24);
+% ylim([0 8]);
+% xlim([1 12]);
+% title('Amazon', 'FontSize', 24);
+% 
+% p3Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgAmazon, 1)), ...
+%                                squeeze(range(bowenChgAmazon(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, '-', 1);
+% set(p3Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+% set(p3Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+% set(p3Bowen.edge, 'Color', 'w');
+% 
+% 
+% subplot(2, 2, 4);
+% hold on;
+% grid on;
+% box on;
+% axis square;
+% p4 = shadedErrorBar(1:12, nanmean(indiaDataSeaMax, 2), range(indiaDataSeaMax(:, lowInd:highInd), 2) ./ 2.0, '-', 1);
+% set(p4.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+% set(p4.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+% set(p4.edge, 'Color', 'w');
+% plot(1:12, ones(1,12) .* nanmean(indiaDataAnnMax), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+% xlabel('Month', 'FontSize', 24);
+% ylabel(['Tx change (' char(176) 'C)'], 'FontSize', 24);
+% set(gca, 'FontSize', 24);
+% ylim([0 8]);
+% xlim([1 12]);
+% title('India', 'FontSize', 24);
+% 
+% p4Bowen = shadedErrorBar(1:12, squeeze(nanmean(bowenChgIndia, 1)), ...
+%                                squeeze(range(bowenChgIndia(lowIndBowen:highIndBowen, :), 1)) ./ 2.0, '-', 1);
+% set(p4Bowen.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+% set(p4Bowen.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+% set(p4Bowen.edge, 'Color', 'w');
 
 % xlabel('Month', 'FontSize', 24);
 % ylabel(['Maximum temperature change (' char(176) 'C)'], 'FontSize', 24);
