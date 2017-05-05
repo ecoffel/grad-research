@@ -1,9 +1,26 @@
-var = 'wb';
+var = 'tasmax';
 
 load(['2015-heat-humidity\recur-dat\recur-exceedence-' var '-rcp45.mat']);
 recur45 = testExceedences;
 load(['2015-heat-humidity\recur-dat\recur-exceedence-' var '-rcp85.mat']);
 recur85 = testExceedences;
+
+load waterGrid;
+waterGrid = logical(waterGrid);
+
+for m = 1:size(recur45, 3)
+    for y = 1:size(recur45, 4)
+        % set RCP 45 water tiles to NaN
+        curGrid = recur45(:, :, m, y);
+        curGrid(waterGrid) = NaN;
+        recur45(:, :, m, y) = curGrid;
+        
+        % and for RCP 85
+        curGrid = recur85(:, :, m, y);
+        curGrid(waterGrid) = NaN;
+        recur85(:, :, m, y) = curGrid;
+    end
+end
 
 figure('Color',[1,1,1]);
 hold on; box on; grid on; axis square;

@@ -29,7 +29,7 @@ end
 ampCount = ampCount ./ size(amp, 3) .* 100;
 
 % don't display below 2/3 agreement
-ampCount(ampCount < 66) = NaN;
+%ampCount(ampCount < 66) = NaN;
 
 result = {lat, lon, ampCount};
 
