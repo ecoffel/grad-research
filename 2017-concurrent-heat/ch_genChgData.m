@@ -293,8 +293,6 @@ for f = 1:size(futurePeriods, 1)
             chgData = futureData - baseData(:, :, m, :);
         end
 
-        
-
         save(['2017-concurrent-heat/tasmax/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
 
     end
