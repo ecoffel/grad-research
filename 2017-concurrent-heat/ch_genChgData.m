@@ -31,14 +31,14 @@ futureRegrid = true;
 region = 'world';
 basePeriodYears = 1981:2004;
 
-% futurePeriods = [2020:2030; ...
-%                  2030:2040; ...
-%                  2040:2050; ...
-%                  2050:2060; ...
-%                  2060:2070; ...
-%                  2070:2080];
+futurePeriods = [2020:2030; ...
+                 2030:2040; ...
+                 2040:2050; ...
+                 2050:2060; ...
+                 2060:2070; ...
+                 2070:2080];
 
-futurePeriods = [2070:2080];
+% futurePeriods = [2070:2080];
 
 baseDir = 'f:/data';
 yearStep = 1;
@@ -290,10 +290,8 @@ for f = 1:size(futurePeriods, 1)
             futureData = squeeze(nanmean(futureData, 3));
             
             % calculate change for the current base period model:
-            chgData = futureData - baseData(:, :, m, :);
+            chgData = futureData - squeeze(baseData(:, :, m, :));
         end
-
-        
 
         save(['2017-concurrent-heat/tasmax/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
 

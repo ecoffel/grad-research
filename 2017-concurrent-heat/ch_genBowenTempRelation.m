@@ -2,30 +2,31 @@
 % increment
 
 season = 'all';
-basePeriod = 'past';
-
 dataset = 'cmip5';
 bowenVar = 'bowen';
 tempVar = 'tasmax';
 
-models = {'access1-0'};%, 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              %'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              %'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              %'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              %'mpi-esm-mr', 'mri-cgcm3'};
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3'};
 
-baseRcps = {'historical'};
-baseEnsemble = 'r1i1p1';
-
-futureRcps = {'rcp85'};
-futureEnsemble = 'r1i1p1';
+ensemble = 'r1i1p1';
+rcp = 'rcp85';
 
 baseRegrid = true;
 futureRegrid = true;
 
 region = 'world';
 basePeriodYears = 1981:2004;
-futurePeriods = 2020:2080;
+futurePeriodYears = 2060:2080;
+
+if strcmp(rcp, 'historical')
+    timePeriod = basePeriodYears;
+elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
+    timePeriod = futurePeriodYears;
+end
 
 baseDir = 'e:/data';
 yearStep = 1;
@@ -42,28 +43,28 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-tempBins = -50:5:60;
-
-% bowen ratios for 1-deg C temperature increments
-% dimensions: (model, x, y, bin) = sum(bowen ratios at this temp bin)
-bowenRelationship = zeros(length(models), size(lat, 1), size(lat, 2), length(tempBins));
-bowenRelationship(bowenRelationship == 0) = NaN;
-
-% same dimensions as above, but value = numel(bowen ratios at this temp
-% bin) - allows for averaging
-bowenRelationshipCnt = ones(length(models), size(lat, 1), size(lat, 2), length(tempBins)); 
+tempBins = 0:5:50;
 
 ['loading base: ' dataset]
 for m = 1:length(models)
     curModel = models{m};
 
+    % bowen ratios for 1-deg C temperature increments
+    % dimensions: (x, y, bin) = sum(bowen ratios at this temp bin)
+    bowenRelationship = zeros(size(lat, 1), size(lat, 2), length(tempBins));
+    bowenRelationship(bowenRelationship == 0) = NaN;
+
+    % same dimensions as above, but value = numel(bowen ratios at this temp
+    % bin) - allows for averaging
+    bowenRelationshipCnt = ones(size(lat, 1), size(lat, 2), length(tempBins)); 
+    
     ['loading base model ' curModel '...']
 
-    for y = basePeriodYears(1):yearStep:basePeriodYears(end)
+    for y = timePeriod(1):yearStep:timePeriod(end)
         ['year ' num2str(y) '...']
 
-        baseDailyTemp = loadDailyData([baseDir '/' dataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' tempVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-        baseDailyBowen = loadDailyData([baseDir '/' dataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' bowenVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDailyTemp = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' tempVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDailyBowen = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' bowenVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         % remove lat/lon data (we loaded this earlier)
         baseDailyTemp = baseDailyTemp{3};
@@ -81,8 +82,6 @@ for m = 1:length(models)
         % map temps onto bowen ratios
         % loop over lat
         for xlat = 1:size(baseDailyTemp, 1)
-            
-            ['xlat = ' num2str(xlat)]
             
             % loop over lon
             for ylon = 1:size(baseDailyTemp, 2)
@@ -108,20 +107,25 @@ for m = 1:length(models)
                     
                     % if this gridcell is nan, then set it to the current
                     % bowen ratio
-                    if isnan(bowenRelationship(m, xlat, ylon, binInd))
-                        bowenRelationship(m, xlat, ylon, binInd) = curBowen(t);
+                    if isnan(bowenRelationship(xlat, ylon, binInd))
+                        bowenRelationship(xlat, ylon, binInd) = curBowen(t);
                     else
                         % add current bowen ratio to sum
-                        bowenRelationship(m, xlat, ylon, binInd) = bowenRelationship(m, xlat, ylon, binInd) + curBowen(t);
+                        bowenRelationship(xlat, ylon, binInd) = bowenRelationship(xlat, ylon, binInd) + curBowen(t);
                     end
                     
                     % increment count for this grid cell/bin
-                    bowenRelationshipCnt(m, xlat, ylon, binInd) = bowenRelationshipCnt(m, xlat, ylon, binInd) + 1;
+                    bowenRelationshipCnt(xlat, ylon, binInd) = bowenRelationshipCnt(xlat, ylon, binInd) + 1;
                 end
             end
         end        
         clear baseDailyTemp baseDailyBowen;
     end
+    
+    bowenTemp = {bowenRelationship, bowenRelationshipCnt};
+    
+    save(['2017-concurrent-heat/bowen-temp/bowenTemp-' curModel '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'bowenTemp');
+    
 end
 
 

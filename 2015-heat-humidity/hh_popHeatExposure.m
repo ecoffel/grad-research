@@ -178,6 +178,8 @@ for m = 1:length(baseModels)
         
         meanBaseSelGrid(:, :, m, y-basePeriodYears(1)+1) = selGrid;
         
+        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        
         for ssp = ssps
             basePopCount(m, ssp, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
         end
@@ -278,7 +280,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
         selGrid = selGrid ./ size(baseData, 4);
         clear curFutureData;
         
-        %save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
         
         % loop over scenario 
         for ssp = ssps
