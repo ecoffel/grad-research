@@ -2,6 +2,17 @@
 
 modelSubset = 'all';
 tempMetric = 'monthly-max';
+showMaps = false;
+showMonthlyMaps = false;
+
+% show the percentage change in bowen ratio or the absolute change
+% ----------- TODO -------------
+showPercentChange = false;
+
+load waterGrid;
+load lat;
+load lon;
+waterGrid = logical(waterGrid);
 
 if strcmp(modelSubset, 'all')
     % all models
@@ -30,8 +41,41 @@ tasmaxBaseDir = '2017-concurrent-heat\tasmax\';
 availModels = {};
 
 % dimensions: x, y, month, model
+bowenHistorical = [];
 bowenChg = [];
 tasmaxChg = [];
+
+regionNames = {'World', ...
+                'Eastern U.S.', ...
+                'Western Europe', ...
+                'Amazon', ...
+                'India', ...
+                'China', ...
+                'Tropics'};
+regionAb = {'world', ...
+            'us', ...
+            'europe', ...
+            'amazon', ...
+            'india', ...
+            'china', ...
+            'tropics'};
+            
+regions = [[[-90 90], [0 360]]; ...             % world
+           [[30 55], [-100 -62] + 360]; ...     % USNE
+           [[35, 60], [-10+360, 20]]; ...       % Europe
+           [[-10, 10], [-70, -40]+360]; ...     % Amazon
+           [[8, 28], [67, 90]]; ...             % India
+           [[20, 40], [100, 125]]; ...          % China
+           [[-20 20], [0 360]]];                % Tropics
+           
+regionLatLonInd = {};
+
+% loop over all regions to find lat/lon indicies
+for i = 1:size(regions, 1)
+    [latIndexRange, lonIndexRange] = latLonIndexRange({lat, lon, []}, regions(i, 1:2), regions(i, 3:4));
+    regionLatLonInd{i} = {latIndexRange, lonIndexRange};
+end
+
 
 for m = 1:length(models)
     % load historical bowen ratio for this model if it exists
@@ -57,9 +101,30 @@ for m = 1:length(models)
     if exist('curBowenHistorical') && exist('curBowenRcp85') && exist('curTasmaxRcp85')
         availModels{end+1} = models{m};
         
+        % NaN-out all water gridcells
+        for month = 1:size(curBowenHistorical, 3)
+            % bowen historical
+            curGrid = curBowenHistorical(:, :, month);
+            curGrid(waterGrid) = NaN;
+            curBowenHistorical(:, :, month) = curGrid;
+
+            % bowen future
+            curGrid = curBowenRcp85(:, :, month);
+            curGrid(waterGrid) = NaN;
+            curBowenRcp85(:, :, month) = curGrid;
+
+            % tasmax change
+            curGrid = curTasmaxRcp85(:, :, month);
+            curGrid(waterGrid) = NaN;
+            curTasmaxRcp85(:, :, month) = curGrid;
+        end
+        
+        % record historical bowen
+        bowenHistorical(:, :, length(availModels), :) = curBowenHistorical;
+        
         % take difference between rcp85 and historical
         % dimensions: x, y, month, model
-        bowenChg(:, :, length(availModels), :) = curBowenRcp85 - curBowenHistorical;
+        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical) ./ curBowenHistorical .* 100;
         
         tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
     end
@@ -67,67 +132,75 @@ for m = 1:length(models)
     clear curBowenHistorical curBowenRcp85 curTasmaxRcp85;
     
 end
-          
-load waterGrid;
-load lat;
-load lon;
-waterGrid = logical(waterGrid);
-
-regionNames = {'World', ...
-                'Eastern U.S.', ...
-                'Europe', ...
-                'Amazon', ...
-                'India', ...
-                'Tropics'};
-regionAb = {'world', ...
-            'us', ...
-            'europe', ...
-            'amazon', ...
-            'india', ...
-            'tropics'};
-            
-regions = [[[-90 90], [0 360]]; ...             % world
-           [[30 55], [-100 -62] + 360]; ...     % USNE
-           [[35, 60], [-10+360, 40]]; ...       % Europe
-           [[-20, 10], [-70, -40]+360]; ...     % Amazon
-           [[8, 34], [67, 90]]; ...             % India
-           [[-20 20], [0 360]]];                % Tropics
-           
-regionLatLonInd = {};
-
-% loop over all regions to find lat/lon indicies
-for i = 1:size(regions, 1)
-    [latIndexRange, lonIndexRange] = latLonIndexRange({lat, lon, []}, regions(i, 1:2), regions(i, 3:4));
-    regionLatLonInd{i} = {latIndexRange, lonIndexRange};
-end
 
 % sort change data by model
 bowenChg = sort(bowenChg, 3);
 tasmaxChg = sort(tasmaxChg, 3);
 
-% NaN-out all water gridcells
-for model = 1:size(bowenChg, 3)
-    for month = 1:size(bowenChg, 4)
-        % bowen
-        curGrid = bowenChg(:, :, model, month);
-        curGrid(waterGrid) = NaN;
-        bowenChg(:, :, model, month) = curGrid;
-        
-        % tasmax
-        curGrid = tasmaxChg(:, :, model, month);
-        curGrid(waterGrid) = NaN;
-        tasmaxChg(:, :, model, month) = curGrid;
-    end
-end
-
 % average bowen and temperature change over each region
 bowenRegionsChange = {};
-tasmaxRegionsChange = {}
+tasmaxRegionsChange = {};
 
 % loop over regions and extract bowen & tasmax change data
 for i = 1:length(regionNames)
     bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
     tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
+end
+
+% plot maps of change in each region
+if showMaps
+    for i = 1:length(regionNames)
+        curLat = lat(regionLatLonInd{i}{1}, regionLatLonInd{i}{2});
+        curLon = lon(regionLatLonInd{i}{1}, regionLatLonInd{i}{2});
+        
+        % take spatial average over region
+        curTasmax = nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 4), 3);
+        
+        [fg,cb] = plotModelData({curLat, curLon, curTasmax}, 'world', 'caxis', [0 8]);
+        set(gca, 'Color', 'none');
+        title(regionNames{i}, 'FontSize', 24);
+        set(gca, 'FontSize', 24);
+        xlabel(cb, ['Temperature change (' char(176) 'C)'], 'FontSize', 24);
+    end
+end
+
+% show maps for each month of bowen ratio change
+if showMonthlyMaps
+    % historical bowen
+    figure('Color', [1,1,1]);
+    for month = 1:12
+        subplot(3, 4, month);
+        hold on;
+        plotModelData({lat,lon,nanmean(bowenHistorical(:,:,:,month), 3)}, 'world', 'caxis', [0 5], 'nonewfig', true);
+        title(['month ' num2str(month)]);
+    end
+    % reduce spacing between subplots
+    spaceplots(1,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
+    cb = colorbar('Location', 'southoutside');
+    
+    % bowen change
+    figure('Color', [1,1,1]);
+    for month = 1:12
+        subplot(3, 4, month);
+        hold on;
+        plotModelData({lat,lon,nanmean(bowenChg(:,:,:,month), 3)}, 'world', 'caxis', [-50 250], 'nonewfig', true);
+        title(['month ' num2str(month)]);
+    end
+    % reduce spacing between subplots
+    spaceplots(2,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
+    cb = colorbar('Location', 'southoutside');
+    
+    % temp change
+    figure('Color', [1,1,1]);
+    for month = 1:12
+        subplot(3, 4, month);
+        hold on;
+        plotModelData({lat,lon,nanmean(tasmaxChg(:,:,:,month), 3)}, 'world', 'caxis', [0 8], 'nonewfig', true);
+        title(['month ' num2str(month)]);
+    end
+    % reduce spacing between subplots
+    spaceplots(3,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
+    cb = colorbar('Location', 'southoutside');
 end
 
 % calculate indices for 25th/75th percentile bowen across models
@@ -164,12 +237,12 @@ for i = 1:length(regionNames)
     xlabel('Month', 'FontSize', 24);
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
-    set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
-    set(ax(2), 'YLim', [-2 5], 'YTick', -2:5);
+    set(ax(1), 'YLim', [0 7], 'YTick', 0:7);
+    set(ax(2), 'YLim', [-50 250], 'YTick', [-50 0 50 100 150 200 250]);
     set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
-    ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+    ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
     title(regionNames{i}, 'FontSize', 24);
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '.png -m2;']);
