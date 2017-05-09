@@ -1,13 +1,12 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
 modelSubset = 'all';
-tempMetric = 'monthly-max';
+tempMetric = 'monthly-mean-max';
 showMaps = false;
 showMonthlyMaps = false;
 
 % show the percentage change in bowen ratio or the absolute change
-% ----------- TODO -------------
-showPercentChange = false;
+showPercentChange = true;
 
 load waterGrid;
 load lat;
@@ -124,7 +123,13 @@ for m = 1:length(models)
         
         % take difference between rcp85 and historical
         % dimensions: x, y, month, model
-        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical) ./ curBowenHistorical .* 100;
+        if showPercentChange
+            % calculate percentage change
+            bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical) ./ curBowenHistorical .* 100;
+        else
+            % just numerical change
+            bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
+        end
         
         tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
     end
@@ -238,13 +243,23 @@ for i = 1:length(regionNames)
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
     set(ax(1), 'YLim', [0 7], 'YTick', 0:7);
-    set(ax(2), 'YLim', [-50 250], 'YTick', [-50 0 50 100 150 200 250]);
+    if showPercentChange
+        set(ax(2), 'YLim', [-50 250], 'YTick', [-50 0 50 100 150 200 250]);
+        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+    else
+        set(ax(2), 'YLim', [-2 3], 'YTick', [-2 -1 0 1 2 3]);
+        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+    end
     set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
-    ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+    
     title(regionNames{i}, 'FontSize', 24);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '.png -m2;']);
+    if showPercentChange
+        export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '-percent.png -m2;']);
+    else
+        export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '-absolute.png -m2;']);
+    end
     close all;
 end

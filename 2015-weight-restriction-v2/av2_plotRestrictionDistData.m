@@ -1,6 +1,7 @@
 
-% hours to analyze
-selectedHours = 1:24;
+% hours to analyze (to do time-mean across whole day, set this to 1:24 and
+% set hourlyMean = true)
+selectedHours = 12;
 
 % take the mean over all hours or compute each separately
 hourlyMean = true;
@@ -32,6 +33,9 @@ prcRestFuture = [];
 meanTowRestFuture = [];
 prcPayloadFuelRestFuture = [];
 
+weightBins = {};
+weightBinsInd = {};
+
 for curHour = selectedHours
     load([restrictionDataBaseDir 'restrictionData-tr-' num2str(curHour)]);
 
@@ -41,8 +45,8 @@ for curHour = selectedHours
 
     for acInd = 1:length(restrictionData)
         
-        weightBins = restrictionData{acInd}{1}{2};
-        weightBinsInd = 6:length(weightBins);
+        weightBins{acInd} = restrictionData{acInd}{1}{2};
+        weightBinsInd{acInd} = 6:length(weightBins{acInd});
 
         aircraft = restrictionData{acInd}{1}{1};
         
@@ -156,17 +160,17 @@ prcPayloadFuelRestFuture(:, end+1, :, :) = squeeze(nanmean(prcPayloadFuelRestFut
 
 % if taking hourly mean, average over last dimension (curHour)
 if hourlyMean
-    prcRestPast = squeeze(nanmean(prcRestPast, 4));
-    meanTowRestPast = squeeze(nanmean(meanTowRestPast, 4));
-    prcRestFuture = squeeze(nanmean(prcRestFuture, 4));
-    meanTowRestFuture = squeeze(nanmean(meanTowRestFuture, 4));
-    prcPayloadFuelRestPast = squeeze(nanmean(prcPayloadFuelRestPast, 4));
-    prcPayloadFuelRestFuture = squeeze(nanmean(prcPayloadFuelRestFuture, 4));
+    prcRestPast = squeeze(nanmean(prcRestPast(:, :, :, selectedHours), 4));
+    meanTowRestPast = squeeze(nanmean(meanTowRestPast(:, :, :, selectedHours), 4));
+    prcRestFuture = squeeze(nanmean(prcRestFuture(:, :, :, selectedHours), 4));
+    meanTowRestFuture = squeeze(nanmean(meanTowRestFuture(:, :, :, selectedHours), 4));
+    prcPayloadFuelRestPast = squeeze(nanmean(prcPayloadFuelRestPast(:, :, :, selectedHours), 4));
+    prcPayloadFuelRestFuture = squeeze(nanmean(prcPayloadFuelRestFuture(:, :, :, selectedHours), 4));
 end
 
 
 for acInd = 1:size(prcRestPast, 1)
-    for curHour = 1:size(prcRestPast, 4)
+    for curHour = size(prcRestPast, 4)
         % plot left panel -----------------------------------------------------
         figure('Color', [1,1,1]);
         subplot(1, 2, 1);
@@ -174,12 +178,12 @@ for acInd = 1:size(prcRestPast, 1)
         box on;
         axis square;
 
-        p1 = shadedErrorBar(weightBins(weightBinsInd), squeeze(prcRestPast(acInd, end, weightBinsInd, curHour)), squeeze(range(prcRestPast(acInd, 1:end-1, weightBinsInd, curHour), 2))/2.0, 'o', 1);
+        p1 = shadedErrorBar(weightBins{acInd}(weightBinsInd{acInd}), squeeze(prcRestPast(acInd, end, weightBinsInd{acInd}, curHour)), squeeze(range(prcRestPast(acInd, 1:end-1, weightBinsInd{acInd}, curHour), 2))/2.0, 'o', 1);
         set(p1.mainLine,  'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [0/255.0, 135/255.0, 255/255.0], 'LineWidth', 3);
         set(p1.patch, 'FaceColor', [66/255.0, 176/255.0, 244/255.0]);
         set(p1.edge, 'Color', 'k');
 
-        p2 = shadedErrorBar(weightBins(weightBinsInd), squeeze(prcRestFuture(acInd, end, weightBinsInd, curHour)), squeeze(range(prcRestFuture(acInd, 1:end-1, weightBinsInd, curHour), 2))/2.0, 'o', 1);
+        p2 = shadedErrorBar(weightBins{acInd}(weightBinsInd{acInd}), squeeze(prcRestFuture(acInd, end, weightBinsInd{acInd}, curHour)), squeeze(range(prcRestFuture(acInd, 1:end-1, weightBinsInd{acInd}, curHour), 2))/2.0, 'o', 1);
         set(p2.mainLine,  'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 33/255.0, 33/255.0], 'LineWidth', 3);
         set(p2.patch, 'FaceColor', [249/255.0, 94/255.0, 94/255.0]);
         set(p2.edge, 'Color', 'k');
@@ -191,7 +195,7 @@ for acInd = 1:size(prcRestPast, 1)
 
         grid(gca, 'on');
         set(gca, 'FontSize', 24);
-        xlim([weightBins(weightBinsInd(1))-10, weightBins(end)+10]);
+        xlim([weightBins{acInd}(weightBinsInd{acInd}(1))-10, weightBins{acInd}(end)+10]);
         if hourlyMean
             ylim([-1 30]);
         else
@@ -205,12 +209,12 @@ for acInd = 1:size(prcRestPast, 1)
         box on;
         axis square;
 
-        p1 = shadedErrorBar(weightBins(weightBinsInd), squeeze(prcPayloadFuelRestPast(acInd, end, weightBinsInd, curHour)), squeeze(range(prcPayloadFuelRestPast(acInd, 1:end-1, weightBinsInd, curHour), 2))/2.0, 'o', 1);
+        p1 = shadedErrorBar(weightBins{acInd}(weightBinsInd{acInd}), squeeze(prcPayloadFuelRestPast(acInd, end, weightBinsInd{acInd}, curHour)), squeeze(range(prcPayloadFuelRestPast(acInd, 1:end-1, weightBinsInd{acInd}, curHour), 2))/2.0, 'o', 1);
         set(p1.mainLine,  'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [0/255.0, 135/255.0, 255/255.0], 'LineWidth', 3);
         set(p1.patch, 'FaceColor', [66/255.0, 176/255.0, 244/255.0]);
         set(p1.edge, 'Color', 'k');
 
-        p2 = shadedErrorBar(weightBins(weightBinsInd), squeeze(prcPayloadFuelRestFuture(acInd, end, weightBinsInd, curHour)), squeeze(range(prcPayloadFuelRestFuture(acInd, 1:end-1, weightBinsInd, curHour), 2))/2.0, 'o', 1);
+        p2 = shadedErrorBar(weightBins{acInd}(weightBinsInd{acInd}), squeeze(prcPayloadFuelRestFuture(acInd, end, weightBinsInd{acInd}, curHour)), squeeze(range(prcPayloadFuelRestFuture(acInd, 1:end-1, weightBinsInd{acInd}, curHour), 2))/2.0, 'o', 1);
         set(p2.mainLine,  'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [255/255.0, 33/255.0, 33/255.0], 'LineWidth', 3);
         set(p2.patch, 'FaceColor', [249/255.0, 94/255.0, 94/255.0]);
         set(p2.edge, 'Color', 'k');
@@ -222,7 +226,7 @@ for acInd = 1:size(prcRestPast, 1)
 
         grid(gca, 'on');
         set(gca, 'FontSize', 24);
-        xlim([weightBins(weightBinsInd(1))-5, weightBins(end)+5]);
+        xlim([weightBins{acInd}(weightBinsInd{acInd}(1))-5, weightBins{acInd}(end)+5]);
         if hourlyMean
             ylim([-0.1 3]);
         else

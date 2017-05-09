@@ -80,18 +80,20 @@ for i = 1:size(regions, 1)
     regionLatLonInd{i} = {latIndexRange, lonIndexRange};
 end
 
-% bin indices above 20C
-indHistorical = find(binsHistorical > 0 & binsHistorical <= 60);
+% select bin indices
+indHistorical = find(binsHistorical > 0 & binsHistorical <= 50);
 indRcp85 = find(binsRcp85 > 0 & binsRcp85 <= 50);
 
 % select region
-regionInd = 4;
+regionInd = 3;
 
 curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
 
 historicalRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
+historicalRelCnt = squeeze(nanmean(nanmean(nanmean(bowenTempCntHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
 futureRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelRcp85(curLat, curLon, indRcp85, :), 4), 2), 1));
+futureRelCnt = squeeze(nanmean(nanmean(nanmean(bowenTempCntRcp85(curLat, curLon, indRcp85, :), 4), 2), 1));
 
 changeRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelRcp85(curLat, curLon, indRcp85, :) - ...
                                             bowenTempRelHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
