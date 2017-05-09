@@ -14,11 +14,11 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
                   'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3'};
           
-rcp = 'historical';
+rcp = 'rcp85';
 ensemble = 'r1i1p1';
 
 region = 'world';
-timePeriod = 1981:2004;
+timePeriod = 2060:2080;
 
 baseDir = 'f:/data';
 yearStep = 1;
@@ -36,9 +36,6 @@ load lon;
 
 load waterGrid;
 waterGrid = logical(waterGrid);
-
-% temperature data (thresh, ann-max, or daily-max)
-
 
 ['loading base: ' dataset]
 for m = 1:length(models)
@@ -89,39 +86,49 @@ for m = 1:length(models)
         end
         
         % loop over full dataset for current year
-        for xlat = 1:size(baseDailyTemp, 1)
-            for ylon = 1:size(baseDailyTemp, 2)
+        for year = 1:size(baseDailyTemp, 3)
+            for month = 1:size(baseDailyTemp, 4)
+                for xlat = 1:size(baseDailyTemp, 1)
+                    for ylon = 1:size(baseDailyTemp, 2)
                 
-                % skip water tiles
-                if waterGrid(xlat, ylon)
-                    continue;
-                end
-                
-                for year = 1:size(baseDailyTemp, 3)
-                    for month = 1:size(baseDailyTemp, 4)
-                        
+                        % skip water tiles
+                        if waterGrid(xlat, ylon)
+                            continue;
+                        end
+
                         % add empty list for this month if it doesn't exist
                         % already
                         if length(tempData) < month
-                            tempData{month} = [];
-                            bowenData{month} = [];
+                            tempData{month} = {};
+                            bowenData{month} = {};
                         end
                         
+                        % create cell array for current x row for the month
+                        if length(tempData{month}) < xlat
+                            tempData{month}{xlat} = {};
+                            bowenData{month}{xlat} = {};
+                        end
+                        
+                        % and for the y column
+                        if length(tempData{month}{xlat}) < ylon
+                            tempData{month}{xlat}{ylon} = [];
+                            bowenData{month}{xlat}{ylon} = [];
+                        end
+                
                         for day = 1:size(baseDailyTemp, 5)
                             
                             % if both temp/bowen are non-nan, add current
                             % temp/bowen pair
                             if ~isnan(baseDailyTemp(xlat, ylon, year, month, day)) && ...
                                ~isnan(baseDailyBowen(xlat, ylon, year, month, day))
-                                tempData{month}(end+1) = baseDailyTemp(xlat, ylon, year, month, day);
-                                bowenData{month}(end+1) = baseDailyBowen(xlat, ylon, year, month, day);
+                                tempData{month}{xlat}{ylon}(end+1) = baseDailyTemp(xlat, ylon, year, month, day);
+                                bowenData{month}{xlat}{ylon}(end+1) = baseDailyBowen(xlat, ylon, year, month, day);
                             end
                         end
                     end
                 end
             end
         end
-        
         
         clear baseDaily baseDaily3d;
     end
