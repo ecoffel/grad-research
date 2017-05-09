@@ -42,7 +42,7 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-tempBins = -50:5:60;
+tempBins = 0:5:60;
 
 % bowen ratios for 1-deg C temperature increments
 % dimensions: (model, x, y, bin) = sum(bowen ratios at this temp bin)
@@ -105,6 +105,12 @@ for m = 1:length(models)
                     
                     % find the index for the correct temperature bin
                     binInd = find(roundedTemp < tempBins, 1, 'first');
+                    
+                    % if temperature above largest bin, no indicies found -
+                    % set to index of largest bin
+                    if length(binInd) == 0
+                        binInd = length(tempBins);
+                    end
                     
                     % if this gridcell is nan, then set it to the current
                     % bowen ratio

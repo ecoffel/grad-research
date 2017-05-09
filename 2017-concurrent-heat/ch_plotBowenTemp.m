@@ -81,11 +81,11 @@ for i = 1:size(regions, 1)
 end
 
 % bin indices above 20C
-indHistorical = find(binsHistorical > 0 & binsHistorical <= 50);
+indHistorical = find(binsHistorical > 0 & binsHistorical <= 60);
 indRcp85 = find(binsRcp85 > 0 & binsRcp85 <= 50);
 
 % select region
-regionInd = 6;
+regionInd = 4;
 
 curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
@@ -99,8 +99,6 @@ changeRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelRcp85(curLat, curLon, in
 changeRelPercent = squeeze(nanmean(nanmean(nanmean((bowenTempRelRcp85(curLat, curLon, indRcp85, :) - ...
                                                     bowenTempRelHistorical(curLat, curLon, indHistorical, :)) ./ ...
                                                     bowenTempRelHistorical(curLat, curLon, indHistorical, :) .* 100, 4), 2), 1));
-
-%plotModelData({lat(curLat, curLon),lon(curLat, curLon),nanmean(meanBowen(curLat, curLon, ind), 3)},'world');
 
 figure('Color', [1,1,1]);
 hold on;
