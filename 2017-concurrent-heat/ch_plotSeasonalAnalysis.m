@@ -6,8 +6,7 @@ showMaps = false;
 showMonthlyMaps = false;
 
 % show the percentage change in bowen ratio or the absolute change
-% ----------- TODO -------------
-showPercentChange = false;
+showPercentChange = true;
 
 load waterGrid;
 load lat;
@@ -51,6 +50,7 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'India', ...
                 'China', ...
+                'Central Africa', ...
                 'Tropics'};
 regionAb = {'world', ...
             'us', ...
@@ -58,14 +58,16 @@ regionAb = {'world', ...
             'amazon', ...
             'india', ...
             'china', ...
+            'africa', ...
             'tropics'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[30 55], [-100 -62] + 360]; ...     % USNE
+           [[30 48], [-97 -62] + 360]; ...     % USNE
            [[35, 60], [-10+360, 20]]; ...       % Europe
            [[-10, 10], [-70, -40]+360]; ...     % Amazon
            [[8, 28], [67, 90]]; ...             % India
            [[20, 40], [100, 125]]; ...          % China
+           [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
            
 regionLatLonInd = {};
@@ -124,7 +126,7 @@ for m = 1:length(models)
         
         % take difference between rcp85 and historical
         % dimensions: x, y, month, model
-        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical) ./ curBowenHistorical .* 100;
+        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
         
         tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
     end
@@ -133,17 +135,23 @@ for m = 1:length(models)
     
 end
 
-% sort change data by model
-bowenChg = sort(bowenChg, 3);
-tasmaxChg = sort(tasmaxChg, 3);
-
-% average bowen and temperature change over each region
+% average bowen (absolute) and temperature change over each region
+bowenRegionsHistorical = {};
 bowenRegionsChange = {};
 tasmaxRegionsChange = {};
 
 % loop over regions and extract bowen & tasmax change data
 for i = 1:length(regionNames)
-    bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
+    
+    if showPercentChange
+        % calculate spatial mean historical bowen
+        bowenRegionsHistorical{i} = squeeze(nanmean(nanmean(bowenHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        % and spatial mean change
+        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+    else
+        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+    end
+    
     tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
 end
 
@@ -167,23 +175,35 @@ end
 % show maps for each month of bowen ratio change
 if showMonthlyMaps
     % historical bowen
+%     figure('Color', [1,1,1]);
+%     for month = 1:12
+%         subplot(3, 4, month);
+%         hold on;
+%         plotModelData({lat,lon,nanmean(bowenHistorical(:,:,:,month), 3)}, 'world', 'caxis', [0 5], 'nonewfig', true);
+%         title(['month ' num2str(month)]);
+%     end
+%     % reduce spacing between subplots
+%     spaceplots(1,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
+%     cb = colorbar('Location', 'southoutside');
+    
+    % bowen change absolute
     figure('Color', [1,1,1]);
     for month = 1:12
         subplot(3, 4, month);
         hold on;
-        plotModelData({lat,lon,nanmean(bowenHistorical(:,:,:,month), 3)}, 'world', 'caxis', [0 5], 'nonewfig', true);
+        plotModelData({lat,lon,nanmean(bowenChg(:,:,:,month), 3)}, 'world', 'caxis', [-2 5], 'nonewfig', true);
         title(['month ' num2str(month)]);
     end
     % reduce spacing between subplots
     spaceplots(1,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
     cb = colorbar('Location', 'southoutside');
     
-    % bowen change
+    % bowen change percentage
     figure('Color', [1,1,1]);
     for month = 1:12
         subplot(3, 4, month);
         hold on;
-        plotModelData({lat,lon,nanmean(bowenChg(:,:,:,month), 3)}, 'world', 'caxis', [-50 250], 'nonewfig', true);
+        plotModelData({lat,lon,nanmean((bowenChg(:,:,:,month)-bowenHistorical(:,:,:,month)) ./ bowenHistorical(:,:,:,month) .* 100, 3)}, 'world', 'caxis', [-100 100], 'nonewfig', true);
         title(['month ' num2str(month)]);
     end
     % reduce spacing between subplots
@@ -191,34 +211,71 @@ if showMonthlyMaps
     cb = colorbar('Location', 'southoutside');
     
     % temp change
-    figure('Color', [1,1,1]);
-    for month = 1:12
-        subplot(3, 4, month);
-        hold on;
-        plotModelData({lat,lon,nanmean(tasmaxChg(:,:,:,month), 3)}, 'world', 'caxis', [0 8], 'nonewfig', true);
-        title(['month ' num2str(month)]);
-    end
-    % reduce spacing between subplots
-    spaceplots(3,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
-    cb = colorbar('Location', 'southoutside');
+%     figure('Color', [1,1,1]);
+%     for month = 1:12
+%         subplot(3, 4, month);
+%         hold on;
+%         plotModelData({lat,lon,nanmean(tasmaxChg(:,:,:,month), 3)}, 'world', 'caxis', [0 8], 'nonewfig', true);
+%         title(['month ' num2str(month)]);
+%     end
+%     % reduce spacing between subplots
+%     spaceplots(3,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
+%     cb = colorbar('Location', 'southoutside');
 end
 
 % calculate indices for 25th/75th percentile bowen across models
-lowInd = round(0.25 * length(availModels));
-highInd = round(0.75 * length(availModels));
+lowInd = max(round(0.25 * length(availModels)), 1);
+highInd = min(round(0.75 * length(availModels)), length(models));
 
 % plot ----------------------------------------------------
 
 % loop over all regions for plotting
 for i = 1:length(regionNames)
-
+    
+    % mean temperature change across models
+    tempY = squeeze(nanmean(tasmaxRegionsChange{i}, 1));
+    
+    % sort models by temperature change to calculate error range
+    tasmaxRegionsChange{i} = sort(tasmaxRegionsChange{i}, 1);
+    
+    % error is range across 25-75% models 
+    tempErr = squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    
+    % if only one model, err will be 0 so generate an array of zeros
+    if tempErr == 0
+        tempErr = zeros(12, 1);
+    end
+    
+    if showPercentChange
+        % average over models and then calculate total prc change
+        bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1)) ./ squeeze(nanmean(bowenRegionsHistorical{i}, 1)) .* 100;
+        
+        % first calculate % change for each model/month
+        bowenErr = bowenRegionsChange{i} ./ bowenRegionsHistorical{i} .* 100;
+        % now sort by model
+        bowenErr = sort(bowenErr, 1);
+        % now find range across 25-75% models
+        bowenErr = squeeze(range(bowenErr(lowInd:highInd, :), 1) / 2.0);
+    else
+        % calculate mean change across models
+        bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1));
+        % sort, and take range across 25-75%
+        bowenRegionsChange{i} = sort(bowenRegionsChange{i}, 1);
+        bowenErr = squeeze(range(bowenRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    end
+    
+    % if only one model, err will be 0 so generate an array of zeros
+    if bowenErr == 0
+        bowenErr = zeros(12, 1);
+    end
+    
     f = figure('Color',[1,1,1]);
     hold on;
     grid on;
     box on;
 
-    [ax, p1, p2] = shadedErrorBaryy(1:12, squeeze(nanmean(tasmaxRegionsChange{i}, 1)), squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0, 'r', ...
-                                    1:12, squeeze(nanmean(bowenRegionsChange{i}, 1)), squeeze(range(bowenRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0, 'g');
+    [ax, p1, p2] = shadedErrorBaryy(1:12, tempY, tempErr, 'r', ...
+                                    1:12, bowenY, bowenErr, 'g');
     hold(ax(1));
     hold(ax(2));
     box(ax(1), 'on');
@@ -238,13 +295,23 @@ for i = 1:length(regionNames)
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
     set(ax(1), 'YLim', [0 7], 'YTick', 0:7);
-    set(ax(2), 'YLim', [-50 250], 'YTick', [-50 0 50 100 150 200 250]);
+    if showPercentChange
+        set(ax(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
+        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+    else
+        set(ax(2), 'YLim', [-2 3], 'YTick', [-2 -1 0 1 2 3]);
+        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+    end
     set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
-    ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+    
     title(regionNames{i}, 'FontSize', 24);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '.png -m2;']);
+    if showPercentChange
+        export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '-percent.png -m2;']);
+    else
+        export_fig(['seasonal-analysis-' regionAb{i} '-' modelSubset '-' tempMetric '-absolute.png -m2;']);
+    end
     close all;
 end
