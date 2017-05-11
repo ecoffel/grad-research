@@ -53,11 +53,18 @@ function [fg, cb] = plotFromDataFile(saveData)
         magnify = false;
     end
     
+    if isfield(saveData, 'cbXTicks')
+        xticks = saveData.cbYTicks;
+    else
+        xticks = false;
+    end
+    
     [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
     set(gca, 'Color', 'none');
     set(gca, 'FontSize', 24);
     xlabel(cb, saveData.plotXUnits, 'FontSize', 24);
+    set(cb, 'XTick', xticks);
     cbPos = get(cb, 'Position');
     title(saveData.plotTitle, 'FontSize', 30);
     
