@@ -20,7 +20,7 @@ ensemble = 'r1i1p1';
 region = 'world';
 timePeriod = 2060:2080;
 
-baseDir = 'f:/data';
+baseDir = 'e:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -40,6 +40,10 @@ waterGrid = logical(waterGrid);
 ['loading base: ' dataset]
 for m = 1:length(models)
     curModel = models{m};
+    
+    if exist(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'file')
+        continue;
+    end
     
     % current model temperature / bowen data - stores all daily temp/bowen
     % combinations
@@ -92,9 +96,9 @@ for m = 1:length(models)
                     for ylon = 1:size(baseDailyTemp, 2)
                 
                         % skip water tiles
-                        if waterGrid(xlat, ylon)
-                            continue;
-                        end
+                        %if waterGrid(xlat, ylon)
+                        %    continue;
+                        %end
 
                         % add empty list for this month if it doesn't exist
                         % already
@@ -115,14 +119,21 @@ for m = 1:length(models)
                             bowenData{month}{xlat}{ylon} = [];
                         end
                 
-                        for day = 1:size(baseDailyTemp, 5)
-                            
-                            % if both temp/bowen are non-nan, add current
-                            % temp/bowen pair
-                            if ~isnan(baseDailyTemp(xlat, ylon, year, month, day)) && ...
-                               ~isnan(baseDailyBowen(xlat, ylon, year, month, day))
-                                tempData{month}{xlat}{ylon}(end+1) = baseDailyTemp(xlat, ylon, year, month, day);
-                                bowenData{month}{xlat}{ylon}(end+1) = baseDailyBowen(xlat, ylon, year, month, day);
+                        % if cell is water, just leave it as an empty list
+                        if ~waterGrid(xlat, ylon)
+                            for day = 1:size(baseDailyTemp, 5)
+
+                                % if both temp/bowen are non-nan, add current
+                                % temp/bowen pair
+                                if ~isnan(baseDailyTemp(xlat, ylon, year, month, day)) && ...
+                                   ~isnan(baseDailyBowen(xlat, ylon, year, month, day))
+                                    tempData{month}{xlat}{ylon}(end+1) = baseDailyTemp(xlat, ylon, year, month, day);
+                                    bowenData{month}{xlat}{ylon}(end+1) = baseDailyBowen(xlat, ylon, year, month, day);
+                                else
+                                    % otherwise, set to NaN
+                                    tempData{month}{xlat}{ylon}(end+1) = NaN;
+                                    bowenData{month}{xlat}{ylon}(end+1) = NaN;
+                                end
                             end
                         end
                     end
