@@ -4,21 +4,27 @@
 % across models and decades.
 
 season = 'all';
-dataset = 'cmip5';
-tempVar = 'tasmax';
+dataset = 'ncep-reanalysis';
+tempVar = 'tmax';
 bowenVar = 'bowen';
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
-          
-rcp = 'rcp85';
-ensemble = 'r1i1p1';
+if strcmp(dataset, 'cmip5')
+    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                      'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                      'mpi-esm-mr', 'mri-cgcm3'};
+
+    rcp = 'rcp85';
+    ensemble = 'r1i1p1';
+elseif strcmp(dataset, 'ncep-reanalysis')
+    models = {''};
+    rcp = '';
+    ensemble = '';
+end
 
 region = 'world';
-timePeriod = 2060:2080;
+timePeriod = 1985:2004;
 
 baseDir = 'e:/data';
 yearStep = 1;
@@ -41,7 +47,7 @@ waterGrid = logical(waterGrid);
 for m = 1:length(models)
     curModel = models{m};
     
-    if exist(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'file')
+    if exist(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'file')
         continue;
     end
     
@@ -70,7 +76,6 @@ for m = 1:length(models)
 
         % eliminate bad bowen values
         baseDailyBowen(baseDailyBowen > 100) = NaN;
-        baseDailyBowen(baseDailyBowen < 0.01) = NaN;
         
         % set water grid cells to NaN
         % include loops for month and day (5D) in case we are using

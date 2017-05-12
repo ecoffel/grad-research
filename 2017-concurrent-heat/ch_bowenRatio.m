@@ -1,7 +1,14 @@
 function ch_bowenRatio(dataDir)
 
-hfssVar = 'hfss';
-hflsVar = 'hfls';
+% ncep reanalysis
+if length(strfind(dataDir, 'ncep')) > 0
+    hfssVar = 'shtfl';
+    hflsVar = 'lhtfl';
+else
+    % or cmip5
+    hfssVar = 'hfss';
+    hflsVar = 'hfls';
+end
 
 hfssDirNames = dir([dataDir '/' hfssVar '/regrid/world']);
 hfssDirIndices = [hfssDirNames(:).isdir];
