@@ -54,7 +54,7 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     
     if isfield(saveData, 'cbXTicks')
-        xticks = saveData.cbYTicks;
+        xticks = saveData.cbXTicks;
     else
         xticks = false;
     end

@@ -1,8 +1,8 @@
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
+models = {'access1-0'};%, 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  %'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  %'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  %'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                  %'mpi-esm-mr', 'mri-cgcm3'};
               
 load waterGrid;
 load lat;
@@ -10,6 +10,42 @@ load lon;
 waterGrid = logical(waterGrid);
 
 baseDir = 'f:/data/daily-bowen-temp';
+
+regionNames = {'World', ...
+                'Eastern U.S.', ...
+                'Western Europe', ...
+                'Amazon', ...
+                'India', ...
+                'China', ...
+                'Central Africa', ...
+                'Tropics'};
+regionAb = {'world', ...
+            'us', ...
+            'europe', ...
+            'amazon', ...
+            'india', ...
+            'china', ...
+            'africa', ...
+            'tropics'};
+            
+regions = [[[-90 90], [0 360]]; ...             % world
+           [[30 48], [-97 -62] + 360]; ...     % USNE
+           [[35, 60], [-10+360, 20]]; ...       % Europe
+           [[-10, 10], [-70, -40]+360]; ...     % Amazon
+           [[8, 28], [67, 90]]; ...             % India
+           [[20, 40], [100, 125]]; ...          % China
+           [[-10 10], [15, 30]]; ...            % central Africa
+           [[-20 20], [0 360]]];                % Tropics
+           
+regionLatLonInd = {};
+
+% loop over all regions to find lat/lon indicies
+for i = 1:size(regions, 1)
+    [latIndexRange, lonIndexRange] = latLonIndexRange({lat, lon, []}, regions(i, 1:2), regions(i, 3:4));
+    regionLatLonInd{i} = {latIndexRange, lonIndexRange};
+end
+
+regionId = 3;
 
 for m = 1:length(models)
     ['processing ' models{m} '...']
@@ -28,9 +64,8 @@ for m = 1:length(models)
     fitDataHistorical = {};
     fitDataRcp85 = {};
     
-    
     % loop over months
-    for month = 1:length(bowenHistorical{1})
+    for month = 8%1:length(bowenHistorical{1})
         
         ['processing month ' num2str(month) '...']
         
@@ -42,7 +77,7 @@ for m = 1:length(models)
         
         % all x coords
         for xlat = 1:length(bowenHistorical{1}{month})
-            
+
             % expand fit cell array if needed
             if length(fitDataHistorical{month}) < xlat
                 fitDataHistorical{month}{xlat} = {};
@@ -51,9 +86,9 @@ for m = 1:length(models)
             
             % all y coords
             for ylon = 1:length(bowenHistorical{1}{month}{xlat})
-                
+               
                 % expand fit cell array if needed
-                if length(fitDataHistorical{month}) < xlat
+                if length(fitDataHistorical{month}{xlat}) < ylon
                     fitDataHistorical{month}{xlat}{ylon} = {};
                     fitDataRcp85{month}{xlat}{ylon} = {};
                 end
@@ -103,8 +138,8 @@ for m = 1:length(models)
     
     clear bowenHistorical bowenRcp85;
     
-    bowenTempFit = {fitDataHistorical, fitDataRcp85};
-    save(['2017-concurrent-heat/bowen-temp-fit/bowenTempFit-' models{m} '.mat'], 'bowenTempFit');
+    save(['2017-concurrent-heat/bowen-temp-fit/bowenTempFitHistorical-' models{m} '.mat'], 'fitDataHistorical');
+    save(['2017-concurrent-heat/bowen-temp-fit/bowenTempFitRcp85-' models{m} '.mat'], 'fitDataRcp85');
     clear bowenTempFit;
     
 end

@@ -187,7 +187,10 @@ for k = 1:length(ncFileNames)
         folDataTarget = [outputDir, '/', varName, '/weekly/', year];
     elseif x4
         folDataTarget = [outputDir, '/', varName, '/x4/', year];
+    else
+        folDataTarget = [outputDir, '/', varName, '/', year];
     end
+    
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
