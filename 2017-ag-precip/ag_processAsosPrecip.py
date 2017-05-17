@@ -2,9 +2,9 @@
 
 import os
 
-asosBase = 'f:/data/asos/'
-states = ['al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', \
-          'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', \
+asosBase = 'f:/data/ag/'
+states = ['al', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', \
+          'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', \
           'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', \
           'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', \
           'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy']
@@ -17,9 +17,15 @@ def writeOutput(stationData, outputDir):
     # loop over all stations
     for code in stationData.keys():
         print('writing', code, '...')
-        fout = open(outputDir + code + '.txt', 'a')
+        if code == 'PRN' or code == 'CON':
+            fout = open(outputDir + code + '-valid' + '.txt', 'a')    
+        else:
+            fout = open(outputDir + code + '.txt', 'a')
 
         for lineParts in stationData[code]:
+            # if rel hum exists, delete it
+            if len(lineParts) == 9:
+                del lineParts[7]
             fout.write(','.join(lineParts) + '\n')
         
         fout.close();
@@ -82,7 +88,7 @@ for state in states:
             datetime = [str(year), str(month), str(day), str(hour)]
 
             # replace 'M' with '-1' in cols 2, 3, 4, 5, 6
-            for i in range(2, 7):
+            for i in range(2, len(lineParts)):
                 lineParts[i] = lineParts[i].replace('M', '-999')
 
             # add data to station

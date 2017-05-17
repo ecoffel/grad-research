@@ -1,7 +1,7 @@
 % load cropWxData (produced by ag_mergeCropWxData.m) and select the parts
 % of the wx data that match the samples here
 
-cropDataBaseDir = 'E:/data/ag/crop/';
+cropDataBaseDir = 'f:/data/ag/crop/';
 
 tempPrc = 99.9;
 precipPrc = 99.9;

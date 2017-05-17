@@ -2,18 +2,25 @@
 % increment
 
 season = 'all';
-dataset = 'cmip5';
+dataset = 'ncep-reanalysis';
 bowenVar = 'bowen';
-tempVar = 'tasmax';
+tempVar = 'tmax';
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
+if strcmp(dataset, 'cmip5')
+    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                  'mpi-esm-mr', 'mri-cgcm3'};
 
-ensemble = 'r1i1p1';
-rcp = 'rcp85';
+    ensemble = 'r1i1p1';
+    rcp = 'rcp85';
+elseif strcmp(dataset, 'ncep-reanalysis')
+    models = {''};
+
+    ensemble = '';
+    rcp = '';
+end
 
 baseRegrid = true;
 futureRegrid = true;
@@ -22,13 +29,13 @@ region = 'world';
 basePeriodYears = 1981:2004;
 futurePeriodYears = 2060:2080;
 
-if strcmp(rcp, 'historical')
+if strcmp(rcp, 'historical') || strcmp(dataset, 'ncep-reanalysis')
     timePeriod = basePeriodYears;
 elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
     timePeriod = futurePeriodYears;
 end
 
-baseDir = 'e:/data';
+baseDir = 'f:/data';
 yearStep = 1;
 
 load lat;
@@ -43,7 +50,7 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-tempBins = 0:5:60;
+tempBins = 0:5:50;
 
 % bowen ratios for 1-deg C temperature increments
 % dimensions: (model, x, y, bin) = sum(bowen ratios at this temp bin)

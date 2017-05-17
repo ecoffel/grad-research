@@ -3,8 +3,8 @@
 load 2017-ag-precip\ag-data\ag-corn-yield-us.mat
 cornYield = cropData;
 
-asosBaseDir = 'e:/data/ag/wx-data/';
-cropBaseDir = 'e:/data/ag/crop/';
+asosBaseDir = 'f:/data/ag/wx-data/';
+cropBaseDir = 'f:/data/ag/crop/';
 
 % load the census database of counties
 countyDb = ag_loadCountyDb();

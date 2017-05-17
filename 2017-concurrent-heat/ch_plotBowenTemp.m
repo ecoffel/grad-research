@@ -20,6 +20,7 @@ load lon;
               
 % loop over all models and load bowen-temp relationship files
 for model = 1:length(models)
+    ['loading ' models{model} '...']
     load(['2017-concurrent-heat\bowen-temp\bowenTemp-' models{model} '-historical-1985-2004.mat']);
     
     % calculate mean at each bin and store current model
@@ -55,6 +56,7 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'India', ...
                 'China', ...
+                'Central Africa', ...
                 'Tropics'};
 regionAb = {'world', ...
             'us', ...
@@ -62,14 +64,16 @@ regionAb = {'world', ...
             'amazon', ...
             'india', ...
             'china', ...
+            'africa', ...
             'tropics'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[30 55], [-100 -62] + 360]; ...     % USNE
+           [[30 48], [-97 -62] + 360]; ...      % USNE
            [[35, 60], [-10+360, 20]]; ...       % Europe
            [[-10, 10], [-70, -40]+360]; ...     % Amazon
            [[8, 28], [67, 90]]; ...             % India
            [[20, 40], [100, 125]]; ...          % China
+           [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
            
 regionLatLonInd = {};
@@ -92,8 +96,11 @@ curLon = regionLatLonInd{regionInd}{2};
 
 historicalRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
 historicalRelCnt = squeeze(nanmean(nanmean(nanmean(bowenTempCntHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
+indHistoricalCnt = find(historicalRelCnt < 20);
+
 futureRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelRcp85(curLat, curLon, indRcp85, :), 4), 2), 1));
 futureRelCnt = squeeze(nanmean(nanmean(nanmean(bowenTempCntRcp85(curLat, curLon, indRcp85, :), 4), 2), 1));
+indFutureCnt = find(futureRelCnt < 20);
 
 changeRel = squeeze(nanmean(nanmean(nanmean(bowenTempRelRcp85(curLat, curLon, indRcp85, :) - ...
                                             bowenTempRelHistorical(curLat, curLon, indHistorical, :), 4), 2), 1));
@@ -102,6 +109,10 @@ changeRelPercent = squeeze(nanmean(nanmean(nanmean((bowenTempRelRcp85(curLat, cu
                                                     bowenTempRelHistorical(curLat, curLon, indHistorical, :)) ./ ...
                                                     bowenTempRelHistorical(curLat, curLon, indHistorical, :) .* 100, 4), 2), 1));
 
+changeRel(union(indHistoricalCnt, indFutureCnt)) = NaN;
+changeRelPercent(union(indHistoricalCnt, indFutureCnt)) = NaN;
+
+                                                
 figure('Color', [1,1,1]);
 hold on;
 grid on;

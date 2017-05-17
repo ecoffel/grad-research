@@ -85,6 +85,8 @@ for f = 1:length(fileNames)
             end
         end
         
+        
+        
         % check if we've seen the state before
         repeatState = false;
         for j = 1:length(cropData)
@@ -133,15 +135,25 @@ for f = 1:length(fileNames)
             countyLat = -1;
             countyLon = -1;
             
+            
+            
             % first find correct state - loop over states
             for s = 1:length(countyDb)
                 if strcmp(upper(countyDb{s}{1}), upper(cropData{curStateInd}{1}))
                     
                     % loop over counties
                     for c = 1:length(countyDb{s}{2})
+                        
+                        dbCounty = lower(countyDb{s}{2}{c}{1});
+                        
+                        % if on LA, remove "Parish" from county name
+                        if strcmp(curStateAb, 'LA')
+                            dbCounty = strrep(dbCounty, ' parish', '');
+                        end
+                        
                         % we have found the DB county that matches the
                         % current county
-                        if strcmp(lower(countyDb{s}{2}{c}{1}), lower(countyName{i}))
+                        if strcmp(dbCounty, lower(countyName{i}))
                             % set its lat/lon
                             countyLat = countyDb{s}{2}{c}{2};
                             countyLon = countyDb{s}{2}{c}{3};
@@ -161,4 +173,4 @@ for f = 1:length(fileNames)
     end     
 end
 
-save('ag-corn-yield-us.mat', 'cropData');
+save('2017-ag-precip/ag-data/ag-corn-yield-us.mat', 'cropData');

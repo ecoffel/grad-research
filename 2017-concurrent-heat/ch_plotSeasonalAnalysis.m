@@ -1,7 +1,7 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
 modelSubset = 'all';
-tempMetric = 'monthly-max';
+tempMetric = 'monthly-mean-max';
 showMaps = false;
 showMonthlyMaps = false;
 
@@ -15,10 +15,10 @@ waterGrid = logical(waterGrid);
 
 if strcmp(modelSubset, 'all')
     % all models
-    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3'};
 
 elseif strcmp(modelSubset, 'esm-only')
@@ -29,8 +29,8 @@ elseif strcmp(modelSubset, 'esm-only')
                   'mpi-esm-mr'};
 elseif strcmp(modelSubset, 'no-esm')
     % no ESMs
-    models = {'bcc-csm1-1-m', 'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', 'inmcm4', 'ipsl-cm5a-mr', 'mri-cgcm3'};
+    models = {'cmcc-cm', 'cmcc-cms', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'hadgem2-cc', 'ipsl-cm5a-mr', 'mri-cgcm3'};
 end
 
 bowenBaseDir = '2017-concurrent-heat\bowen\';

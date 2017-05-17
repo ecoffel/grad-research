@@ -1,7 +1,7 @@
 
 % should we look at changes in monthly temperature or changes in the annual
 % maximum vs. the mean daily maximum
-monthly = true;
+monthly = false;
 
 load lat;
 load lon;
@@ -19,7 +19,7 @@ if monthly
 
 
     % monthly-mean-max or monthly-max
-    tempMetric = 'monthly-max';
+    tempMetric = 'monthly-mean-max';
 
     tasmaxBaseDir = '2017-concurrent-heat\tasmax\';
     tasmaxChg = [];
@@ -65,6 +65,12 @@ ampThresh = -1;
 % percentage of models that must agree on amplification
 ampAgreement = 66;
 
+% levels of amplification to search for model agreement on
+ampLevels = 0:5;
+if ~monthly
+    ampLevels = 0:0.25:2;
+end
+
 % how many models agree on change greater than threshold
 ampLevel = zeros(size(lat, 1), size(lat, 2));
 ampLevel(ampLevel == 0) = NaN;
@@ -79,7 +85,7 @@ for xlat = 1:size(amp, 1)
             ampLevel(xlat, ylon) = length(data(data > ampThresh));
         else
             % loop over all possible amplification levels
-            for curAmpLevel = 0:1:5
+            for curAmpLevel = ampLevels
                 % find number of models exceeding this amp level
                 numModels = length(find(data(data > curAmpLevel)));
                 
@@ -101,14 +107,20 @@ end
 % don't display below 2/3 agreement
 %ampCount(ampCount < 66) = NaN;
 
+
+monthlyStr = 'annual-max';
+if monthly
+    monthlyStr = tempMetric;
+end
+
 result = {lat, lon, ampLevel};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [0 5], ...
-                  'cbXTicks', [0:5], ...
+                  'plotRange', [ampLevels(1) ampLevels(end)], ...
+                  'cbXTicks', ampLevels, ...
                   'plotTitle', ['Amplification, ' num2str(ampAgreement) '% model agreement'], ...
-                  'fileTitle', ['ampAgreement-rcp85-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '.png'], ...
+                  'fileTitle', ['ampAgreement-rcp85-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' monthlyStr '.png'], ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'magnify', '2');

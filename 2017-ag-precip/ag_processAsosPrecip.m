@@ -1,10 +1,14 @@
 % this reads pre-processed state-station ASOS hourly wx files, processed by
 % ag_processAsosPrecip.py
 
-baseDir = 'e:/data/ag/wx-data/';
+baseDir = 'f:/data/ag/wx-data/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-states = {'ia', 'il', 'in', 'mo', 'ks', 'mn', 'ne', 'oh', 'sd', 'wi', 'tx', 'ok', 'ar', 'tn', 'nc'};
+states = {'al', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', ...
+          'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', ...
+          'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', ...
+          'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', ...
+          'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'};
 
 % this is for comma delimited ASOS data with the format:
 % year, month, day, hour, lon, lat, tempC, relH, precipH

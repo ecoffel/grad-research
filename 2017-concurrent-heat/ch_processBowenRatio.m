@@ -20,9 +20,9 @@ for m = 1:length(models)
     for r = 1:length(rcps)
         for e = ensembles
             if strcmp(dataset, 'ncep')
-                ch_bowenRatio(['e:/data/ncep-reanalysis/output']);
+                ch_bowenRatio(['f:/data/ncep-reanalysis/output']);
             else
-                ch_bowenRatio(['e:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}]);
+                ch_bowenRatio(['f:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}]);
             end
         end
     end

@@ -26,7 +26,7 @@ end
 region = 'world';
 timePeriod = 1985:2004;
 
-baseDir = 'e:/data';
+baseDir = 'f:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -151,7 +151,7 @@ for m = 1:length(models)
     
     % save current model's data
     dailyBowenTemp = {tempData, bowenData};
-    save(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dailyBowenTemp');
+    save(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dailyBowenTemp');
 
 end
 

@@ -3,18 +3,24 @@
 
 season = 'all';
 
-dataset = 'cmip5';
+dataset = 'ncep-reanalysis';
 bowenVar = 'bowen';
 tempVar = 'tasmax';
 
-models = {'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
-              'hadgem2-es', 'inmcm4', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
+if strcmp(dataset, 'cmip5')
+    models = {'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'cmcc-cm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
+                  'hadgem2-es', 'inmcm4', 'miroc-esm', ...
+                  'mpi-esm-mr', 'mri-cgcm3'};
 
-rcp = 'rcp85';
-ensemble = 'r1i1p1';
+    rcp = 'rcp85';
+    ensemble = 'r1i1p1';
+elseif strcmp(dataset, 'ncep-reanalysis')
+    models = {''};
+    rcp = '';
+    ensemble = '';
+end
 
 baseRegrid = true;
 futureRegrid = true;
@@ -23,7 +29,7 @@ region = 'world';
 basePeriodYears = 1981:2004;
 futurePeriodYears = 2070:2080;
 
-if strcmp(rcp, 'historical')
+if strcmp(rcp, 'historical') || strcmp(dataset, 'ncep-reanalysis')
     timePeriod = basePeriodYears;
 elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
     timePeriod = futurePeriodYears;
@@ -61,7 +67,7 @@ for m = 1:length(models)
         
         % set overly large ratios to NaN
         baseDailyBowen(baseDailyBowen > 100) = NaN;
-        baseDailyBowen(baseDailyBowen < 0.01) = NaN;
+        baseDailyBowen(baseDailyBowen < 0) = NaN;
         
         % map temps onto bowen ratios
         % loop over lat
@@ -93,7 +99,7 @@ for m = 1:length(models)
         clear baseDailyBowen;
     end
     
-    save(['2017-concurrent-heat/bowen/monthly-mean-' rcp '-' curModel '.mat'], 'monthlyMeans');
+    save(['2017-concurrent-heat/bowen/monthly-mean-' dataset '-' rcp '-' curModel '.mat'], 'monthlyMeans');
 end
 
 
