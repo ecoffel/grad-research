@@ -50,29 +50,19 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-tempBins = 0:5:50;
-
-% bowen ratios for 1-deg C temperature increments
-% dimensions: (model, x, y, bin) = sum(bowen ratios at this temp bin)
-bowenRelationship = zeros(length(models), size(lat, 1), size(lat, 2), length(tempBins));
-bowenRelationship(bowenRelationship == 0) = NaN;
-
-% same dimensions as above, but value = numel(bowen ratios at this temp
-% bin) - allows for averaging
-bowenRelationshipCnt = ones(length(models), size(lat, 1), size(lat, 2), length(tempBins)); 
+decileBins = 0:10:90;
 
 ['loading base: ' dataset]
 for m = 1:length(models)
     curModel = models{m};
 
     % bowen ratios for 1-deg C temperature increments
-    % dimensions: (x, y, bin) = sum(bowen ratios at this temp bin)
-    bowenRelationship = zeros(size(lat, 1), size(lat, 2), length(tempBins));
-    bowenRelationship(bowenRelationship == 0) = NaN;
+    % dimensions: (x, y, bin) = [bowen values at each bin]
+    bowenRelationship = {};
 
-    % same dimensions as above, but value = numel(bowen ratios at this temp
-    % bin) - allows for averaging
-    bowenRelationshipCnt = ones(size(lat, 1), size(lat, 2), length(tempBins)); 
+    % same dimensions as above, but value = temp cutoff for each decile bin
+    % at each grid cell
+    tempThresholds = ones(size(lat, 1), size(lat, 2), length(decileBins)); 
     
     ['loading base model ' curModel '...']
 
@@ -93,14 +83,23 @@ for m = 1:length(models)
         
         % set overly large ratios to NaN
         baseDailyBowen(baseDailyBowen > 100) = NaN;
-        baseDailyBowen(baseDailyBowen < 0.01) = NaN;
         
         % map temps onto bowen ratios
         % loop over lat
         for xlat = 1:size(baseDailyTemp, 1)
             
+            % make new row for this x value
+            if length(bowenRelationship) < xlat
+                bowenRelationship{xlat} = {};
+            end
+            
             % loop over lon
             for ylon = 1:size(baseDailyTemp, 2)
+                
+                % make new cell for this x/y cell
+                if length(bowenRelationship{xlat}) < ylon
+                    bowenRelationship{xlat}{ylon} = {};
+                end
                 
                 % skip water tiles
                 if waterGrid(xlat, ylon)
@@ -111,40 +110,43 @@ for m = 1:length(models)
                 curTemp = reshape(baseDailyTemp(xlat, ylon, :, :, :), [size(baseDailyTemp, 3)*size(baseDailyTemp, 4)*size(baseDailyTemp, 5), 1]);
                 curBowen = reshape(baseDailyBowen(xlat, ylon, :, :, :), [size(baseDailyBowen, 3)*size(baseDailyBowen, 4)*size(baseDailyBowen, 5), 1]);
                 
+                % calculate temp cutoffs for each decile bin
+                for thresh = 1:length(decileBins)
+                    tempThresholds(xlat, ylon, thresh) = prctile(curTemp, decileBins(thresh));
+                    
+                    % make new cell for this decile bin
+                    if length(bowenRelationship{xlat}{ylon}) < thresh
+                        bowenRelationship{xlat}{ylon}{thresh} = [];
+                    end
+                end
+                
                 % loop over all temps
                 for t = 1:length(curTemp)
-                    if isnan(curBowen(t))
+                    
+                    % skip any nan temps/bowens
+                    if isnan(curBowen(t)) || isnan(curTemp(t))
                         continue;
                     end
-                    roundedTemp = round(curTemp(t));
                     
-                    % find the index for the correct temperature bin
-                    binInd = find(roundedTemp < tempBins, 1, 'first');
+                    % find decile bin that current temp fits into
+                    binInd = find(curTemp(t) > tempThresholds(xlat, ylon, :), 1, 'last');
                     
                     % if temperature above largest bin, no indicies found -
                     % set to index of largest bin
                     if length(binInd) == 0
-                        binInd = length(tempBins);
+                        binInd = length(decileBins);
                     end
                     
-                    % if this gridcell is nan, then set it to the current
-                    % bowen ratio
-                    if isnan(bowenRelationship(xlat, ylon, binInd))
-                        bowenRelationship(xlat, ylon, binInd) = curBowen(t);
-                    else
-                        % add current bowen ratio to sum
-                        bowenRelationship(xlat, ylon, binInd) = bowenRelationship(xlat, ylon, binInd) + curBowen(t);
-                    end
-                    
-                    % increment count for this grid cell/bin
-                    bowenRelationshipCnt(xlat, ylon, binInd) = bowenRelationshipCnt(xlat, ylon, binInd) + 1;
+                    % add current bowen ratio to appropriate decile bin for
+                    % this grid cell
+                    bowenRelationship{xlat}{ylon}{binInd}(end+1) = curBowen(t);
                 end
             end
         end        
         clear baseDailyTemp baseDailyBowen;
     end
     
-    bowenTemp = {bowenRelationship, bowenRelationshipCnt};
+    bowenTemp = {bowenRelationship, tempThresholds};
     
     save(['2017-concurrent-heat/bowen-temp/bowenTemp-' curModel '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'bowenTemp');
     
