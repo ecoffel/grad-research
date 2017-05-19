@@ -2,9 +2,9 @@
 % increment
 
 season = 'all';
-dataset = 'ncep-reanalysis';
+dataset = 'cmip5';
 bowenVar = 'bowen';
-tempVar = 'tmax';
+tempVar = 'tasmax';
 
 if strcmp(dataset, 'cmip5')
     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -35,17 +35,11 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
     timePeriod = futurePeriodYears;
 end
 
-baseDir = 'f:/data';
+baseDir = 'e:/data';
 yearStep = 1;
 
 load lat;
 load lon;
-
-latBounds = [-60 60];
-lonBounds = [0 360];
-[latInd, lonInd] = latLonIndexRange({lat, lon, []}, latBounds, lonBounds);
-
-numDays = 372;
 
 load waterGrid;
 waterGrid = logical(waterGrid);
