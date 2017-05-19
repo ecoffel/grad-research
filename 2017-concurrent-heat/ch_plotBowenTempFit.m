@@ -25,7 +25,7 @@ end
 load lat;
 load lon;
 
-regionInd = 7;
+regionInd = 2;
 months = 1:12;
 
 if regionInd == 4
@@ -102,20 +102,22 @@ end
 curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
 
-regionalAnalysis = true;
+regionalAnalysis = false;
 
 if regionalAnalysis
     % temp/bowen pairs for this region, by months
     linModels = {};
     meanTemp = [];
     meanBowen = [];
-    r2 = [];
+    r2TB = [];
+    r2BT = [];
     
     if change
         linModelsFuture = {};
         meanTempFuture = [];
         meanBowenFuture = [];
-        r2Future = [];
+        r2FutureTB = [];
+        r2FutureBT = [];
         
         % are the monthly/model changes in bowen statistically significant
         changePower = [];
@@ -180,15 +182,19 @@ if regionalAnalysis
                 end
             end
             
-            linModels{model}{month} = fitlm(temp, bowen, fitType);
-            r2(model, month) = linModels{model}{month}.Rsquared.Ordinary;
+            modelTB = fitlm(temp, bowen, fitType);
+            modelBT = fitlm(bowen, temp, fitType);
+            r2TB(model, month) = modelTB.Rsquared.Ordinary;
+            r2BT(model, month) = modelBT.Rsquared.Ordinary;
             meanTemp(model, month) = nanmean(temp);
             meanBowen(model, month) = nanmean(bowen);
             
             % fit model for future data if looking at change
             if change
-                linModelsFuture{model}{month} = fitlm(tempFuture, bowenFuture, fitType);
-                r2Future(model, month) = linModelsFuture{model}{month}.Rsquared.Ordinary;
+                modelFutureTB = fitlm(tempFuture, bowenFuture, fitType);
+                modelFutureBT = fitlm(bowenFuture, tempFuture, fitType);
+                r2FutureTB(model, month) = modelFutureTB.Rsquared.Ordinary;
+                r2FutureBT(model, month) = modelFutureBT.Rsquared.Ordinary;
                 meanTempFuture(model, month) = nanmean(tempFuture);
                 meanBowenFuture(model, month) = nanmean(bowenFuture);
                 
@@ -261,11 +267,11 @@ if regionalAnalysis
             grid on;
             box on;
             if change
-                plot(1:12, r2Future(model,:) - r2(model,:), 'Color', [0.4 0.4 0.4]);
+                plot(1:12, r2FutureTB(model,:) - r2TB(model,:), 'Color', [0.4 0.4 0.4]);
                 ylim([-0.5 0.5]);
             else
-                plot(1:12, r2(model,:), 'Color', [0.4 0.4 0.4]);
-                plot(1:12, nanmean(r2(model,:), 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+                plot(1:12, r2TB(model,:), 'Color', [0.4 0.4 0.4]);
+                plot(1:12, nanmean(r2TB(model,:), 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
                 ylim([0 1]);
             end
             xlabel('month');
@@ -351,12 +357,16 @@ if regionalAnalysis
         grid on;
         box on;
         if change
-            plot(1:12, r2Future - r2, 'Color', [0.4 0.4 0.4]);
-            plot(1:12, nanmean(r2Future - r2, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            %plot(1:12, r2FutureTB - r2TB, 'Color', [0.4 0.4 0.4]);
+            %plot(1:12, nanmean(r2FutureTB - r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            plot(1:12, r2FutureBT - r2BT, 'Color', [0.4 0.4 0.4]);
+            plot(1:12, nanmean(r2FutureBT - r2BT, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
             ylim([-0.5 0.5]);
         else
-            plot(1:12, r2, 'Color', [0.4 0.4 0.4]);
-            plot(1:12, nanmean(r2, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            %plot(1:12, r2TB, 'Color', [0.4 0.4 0.4]);
+            %plot(1:12, nanmean(r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            plot(1:12, nanmean(r2BT, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            plot(1:12, r2BT, 'Color', [0.4 0.4 0.4], 'LineWidth', 1);
             ylim([0 1]);
         end
         xlim([0.5 12.5]);
@@ -371,7 +381,8 @@ if regionalAnalysis
     
 else
     
-    r2 = [];
+    r2TB = [];
+    r2BT = [];
     rmse = [];
     
     for model = 1:length(models)
@@ -387,10 +398,14 @@ else
                     ind = find(~isnan(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}));
                     if length(ind) > 100
                         lm = fitlm(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}(ind)', bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}(ind)', fitType);
-                        r2(xlat, ylon, model, month) = lm.Rsquared.Ordinary;
+                        r2TB(xlat, ylon, model, month) = lm.Rsquared.Ordinary;
                         rmse(xlat, ylon, model, month) = lm.RMSE;
+                        
+                        lm = fitlm(bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}(ind)', bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}(ind)', fitType);
+                        r2BT(xlat, ylon, model, month) = lm.Rsquared.Ordinary;
                     else
-                        r2(xlat, ylon, model, month) = NaN;
+                        r2TB(xlat, ylon, model, month) = NaN;
+                        r2BT(xlat, ylon, model, month) = NaN;
                         rmse(xlat, ylon, model, month) = NaN;
                     end
                 end
@@ -401,7 +416,7 @@ else
     end
     
     for month = months
-        result = {lat(curLat,curLon), lon(curLat,curLon), squeeze(nanmean(r2(:,:,:,month), 3))};
+        result = {lat(curLat,curLon), lon(curLat,curLon), squeeze(nanmean(r2BT(:,:,:,month), 3))};
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
                           'plotRange', [0 1], ...

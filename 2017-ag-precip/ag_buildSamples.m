@@ -83,7 +83,7 @@ for s = 1:length(txtFileNames)
             
             % if we are on a new year, use collected indicies to select
             % temp/precip data for this year
-            if years(y) ~= lastYear && y <= length(temp) && y <= length(precip)
+            if (years(y) ~= lastYear && y <= length(temp) && y <= length(precip)) || y == length(years)
                 lastYear = years(y);
                 lastYearEndInd = y-1;
                 
@@ -113,7 +113,7 @@ for s = 1:length(txtFileNames)
                 lastYearStartInd = y;
             end
         end
-
+        
         % count how many temp/precip years we have
         tcnt = tcnt + length(tempGroup);
         pcnt = pcnt + length(precipGroup);
@@ -156,7 +156,7 @@ for s = 1:length(txtFileNames)
             cropWxData{3}{c}{7}{2} = {tempGroupings, precipGroupings, yearInd(:, 2), tempMean, precipSum};
         else
             % just include the grouped wx data and seasonal means
-            cropWxData{3}{c}{7}{1} = {tempGroupings, precipGroupings, yearInd(:, 2), tempMean, precipSum};
+            cropWxData{3}{c}{7}{1} = {tempGroupings, precipGroupings, yearInd(1:end-1, 2), tempMean, precipSum};
         end
     end
     
