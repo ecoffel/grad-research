@@ -15,6 +15,12 @@ plotScatter = false;
 % use CMIP5 or ncep
 useNcep = false;
 
+% use bowen lag months behind temperature as predictor
+lag = 0;
+
+% show monthly temp and bowen variability
+showVar = true;
+
 % type of model to fit to data
 fitType = 'poly2';
 
@@ -35,7 +41,7 @@ load lon;
 regionInd = 7;
 months = 1:12;
 
-baseDir = 'e:/data';
+baseDir = 'f:/data';
 
 rcpStr = 'historical';
 if change
@@ -138,10 +144,22 @@ curLon = regionLatLonInd{regionInd}{2};
 regionalAnalysis = true;
 
 if regionalAnalysis
+    
+    % create lagged months list to index monthly bowen
+    laggedMonths = [];
+    for i = 1:12
+        laggedMonths(i) = i+lag;
+        if laggedMonths(i) > 12
+            laggedMonths(i) = laggedMonths(i) - 12;
+        end
+    end
+    
     % temp/bowen pairs for this region, by months
     linModels = {};
     meanTemp = [];
+    meanTempStd = [];
     meanBowen = [];
+    meanBowenStd = [];
     r2TB = [];
     r2BT = [];
     
@@ -181,9 +199,22 @@ if regionalAnalysis
         end
         
         for month = months
-            ['month = ' num2str(month) '...']
+            
+            % look at temps in current month
+            tempMonth = month;
+            % look at bowens in lagged month
+            bowenMonth = month - lag;
+            % limit bowen month and roll over (0 -> dec, -1 -> nov, etc)
+            if bowenMonth <= 0
+                bowenMonth = 12 + bowenMonth;
+            end
+            
+            ['temp month = ' num2str(tempMonth) ', bowen month = ' num2str(bowenMonth) '...']
+            
             temp = [];
+            tempStd = [];
             bowen = [];
+            bowenStd = [];
             
             if change
                 tempFuture = [];
@@ -195,17 +226,21 @@ if regionalAnalysis
                     % get all temp/bowen daily points for current region
                     % into one list (combines gridboxes & years for current model)
                     if monthlyMean
-                        nextTemp = nanmean(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                        nextBowen = nanmean(abs(bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                        nextTemp = nanmean(bowenTemp{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
+                        nextTempStd = nanstd(bowenTemp{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
+                        nextBowen = nanmean(abs(bowenTemp{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
+                        nextBowenStd = nanstd(abs(bowenTemp{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
                         
                         % only add full pairs
                         if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
                             temp = [temp; nextTemp];
                             bowen = [bowen; nextBowen];
+                            tempStd = [tempStd; nextTempStd];
+                            bowenStd = [bowenStd; nextBowenStd];
                         end
                     else
-                        nextTemp = nanmax(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                        nextBowen = nanmean(abs(bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                        nextTemp = nanmax(bowenTemp{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
+                        nextBowen = nanmean(abs(bowenTemp{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
                         
                         % only add full pairs
                         if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
@@ -218,8 +253,8 @@ if regionalAnalysis
                         % and do the same for future data if we're looking
                         % at a change
                         if monthlyMean
-                            nextTemp = nanmean(bowenTempFuture{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                            nextBowen = nanmean(abs(bowenTempFuture{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                            nextTemp = nanmean(bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
+                            nextBowen = nanmean(abs(bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
                             
                             % only add full pairs
                             if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
@@ -227,8 +262,8 @@ if regionalAnalysis
                                 bowenFuture = [bowenFuture; nextBowen];
                             end
                         else
-                            nextTemp = nanmax(bowenTempFuture{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                            nextBowen = nanmean(abs(bowenTempFuture{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                            nextTemp = nanmax(bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
+                            nextBowen = nanmean(abs(bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
 
                             % only add full pairs
                             if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
@@ -258,6 +293,9 @@ if regionalAnalysis
             
             meanTemp(model, month) = nanmean(temp);
             meanBowen(model, month) = nanmean(bowen);
+            
+            meanTempStd(model, month) = nanmean(tempStd);
+            meanBowenStd(model, month) = nanmean(bowenStd);
             
             % fit model for future data if looking at change
             if change
@@ -377,8 +415,9 @@ if regionalAnalysis
                 end
             end
         else
+            
             % plot multi-model mean
-            [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp, 1), 1:12, nanmean(meanBowen, 1));
+            [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp, 1), 1:12, nanmean(meanBowen(:, laggedMonths), 1));
             hold(ax(1));
             hold(ax(2));
             
@@ -387,10 +426,26 @@ if regionalAnalysis
             
             % plot individual models for temp/bowen change
             p3 = plot(ax(1), 1:12, meanTemp, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 1);
-            p4 = plot(ax(2), 1:12, meanBowen, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 1);
+            p4 = plot(ax(2), 1:12, meanBowen(:, laggedMonths), 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 1);
+            
+            % plot zero lines
+            plot(ax(1), 1:12, zeros(12, 1), '--', 'LineWidth', 2, 'Color', [239/255.0, 71/255.0, 85/255.0]);
+            plot(ax(2), 1:12, zeros(12, 1), '--', 'LineWidth', 2, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+            
+            %tempCV = nanmean(meanTempStd, 1) ./ nanmean(meanTemp, 1);
+            bowenCV = nanmean(meanBowenStd, 1) ./ nanmean(meanBowen, 1);
+            
+            % plot the temperature STD
+            er1 = errorbar(ax(1), 1:12, nanmean(meanTemp, 1), nanmean(meanTempStd, 1) ./ 2);
+            set(er1, 'LineWidth', 2, 'Color', [239/255.0, 71/255.0, 85/255.0]);
+            
+            % and the bowen coefficient of variability (STD / mean)
+            er2 = errorbar(ax(2), 1:12, nanmean(meanBowen(:, laggedMonths), 1), bowenCV(laggedMonths) ./ 2);
+            set(er2, 'LineWidth', 2, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+            
         end
         
-        grid(ax(1), 'on');
+        %grid(ax(1), 'on');
         box(ax(1), 'on');
         axis(ax(1), 'square');
         axis(ax(2), 'square');
@@ -402,11 +457,11 @@ if regionalAnalysis
             set(ax(1), 'YLim', [-1 8], 'YTick', -1:8);
             set(ax(2), 'YLim', [-5 5], 'YTick', -5:5);
         else
-            set(ax(1), 'YLim', [0 40], 'YTick', [0 10 20 30 40]);
+            set(ax(1), 'YLim', [-10 40], 'YTick', [-10 0 10 20 30 40]);
             if strcmp(regionAb{regionInd}, 'india')
                 set(ax(2), 'YLim', [0 15], 'YTick', 0:3:15);
             else
-                set(ax(2), 'YLim', [0 5], 'YTick', [0 1 2 3 4 5]);
+                set(ax(2), 'YLim', [-5 15], 'YTick', -5:3:15);
             end
         end
         set(ax(1), 'FontSize', 24);
@@ -458,7 +513,7 @@ if regionalAnalysis
         end
         
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['r2-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '.png'], '-m2');
+        export_fig(['r2-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag)  '.png'], '-m2');
         
     end
     
