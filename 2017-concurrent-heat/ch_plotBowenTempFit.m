@@ -13,7 +13,7 @@ plotEachModel = false;
 plotScatter = false;
 
 % use CMIP5 or ncep
-useNcep = false;
+useNcep = true;
 
 % use bowen lag months behind temperature as predictor
 lag = 0;
@@ -38,7 +38,7 @@ end
 load lat;
 load lon;
 
-regionInd = 7;
+regionInd = 4;
 months = 1:12;
 
 baseDir = 'f:/data';
