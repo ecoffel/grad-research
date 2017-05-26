@@ -61,6 +61,9 @@ function [fg, cb] = plotFromDataFile(saveData)
     
     [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
+    %set(gca, 'DrawMode', 'childorder');
+    %set(gca, 'SortMethod', 'childorder');
+    
     set(gca, 'Color', 'none');
     set(gca, 'FontSize', 24);
     xlabel(cb, saveData.plotXUnits, 'FontSize', 24);
@@ -71,10 +74,15 @@ function [fg, cb] = plotFromDataFile(saveData)
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');
     set(gca,'Position', [ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
-    tightmap;
+	tightmap;
     
     if statDataExists
         statData = saveData.statData;
+        
+        lat=saveData.data{1};
+        lon=saveData.data{2};
+        
+        [xCoords, yCoords] = mfwdtran(saveData.data{1},saveData.data{2});
         
         for xlat = 1:size(statData, 1)-1
             for ylon = 1:size(statData, 2)-1
@@ -85,14 +93,32 @@ function [fg, cb] = plotFromDataFile(saveData)
                     startingLon = saveData.data{2}(xlat, ylon);
                     endingLon = saveData.data{2}(xlat, ylon+1);
                     
-                    for j = linspace(startingLat, endingLat, abs(endingLat-startingLat)/saveData.stippleInterval)
-                        for k = linspace(startingLon, endingLon, abs(endingLon-startingLon)/saveData.stippleInterval)
-                            plotm(j, k, 'Marker', 'o',...
-                                        'MarkerEdgeColor', 'k',...
-                                        'MarkerFaceColor', 'k',...
-                                        'MarkerSize', 2)
-                        end
-                    end
+                    tulX = xCoords(xlat, ylon);
+                    tulY = yCoords(xlat, ylon);
+                    
+                    turX = xCoords(xlat+1, ylon);
+                    turY = yCoords(xlat+1, ylon);
+                    
+                    tblX = xCoords(xlat, ylon+1);
+                    tblY = yCoords(xlat, ylon+1);
+                    
+                    tbrX = xCoords(xlat+1, ylon+1);
+                    tbrY = yCoords(xlat+1, ylon+1);
+                    
+                    p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
+                    set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
+                    h = hatchfill(p, 'single', 45, 10);
+                    %uistack(h, 'bottom');
+                    
+%                     for j = linspace(startingLat, endingLat, abs(endingLat-startingLat)/saveData.stippleInterval)
+%                         for k = linspace(startingLon, endingLon, abs(endingLon-startingLon)/saveData.stippleInterval)
+%                             p1 = plotm(j, k, 'Marker', 'o',...
+%                                         'MarkerEdgeColor', 'k',...
+%                                         'MarkerFaceColor', 'k',...
+%                                         'MarkerSize', 2);
+%                             uistack(p1, 'down');
+%                         end
+%                     end
                 end
             end
         end
@@ -114,7 +140,9 @@ function [fg, cb] = plotFromDataFile(saveData)
     
     if saveData.blockWater
         load coast;
-        geoshow(flipud(lat),flipud(long),'DisplayType','polygon','FaceColor','white','EdgeColor','None');
+        geoshow(flipud(lat),flipud(long),'DisplayType','Polygon','FaceColor','white','EdgeColor','none');
+        geoshow(flipud(lat),flipud(long),'DisplayType','Line','Color','black','LineWidth',2);
+        %uistack(g, 'top');
     end
     
     if blockLand
@@ -128,6 +156,6 @@ function [fg, cb] = plotFromDataFile(saveData)
     end
     fileNameParts = strsplit(saveData.fileTitle, '.');
     save([fileNameParts{1} '.mat'], 'saveData');
-    close all;
+    %close all;
     
 end
