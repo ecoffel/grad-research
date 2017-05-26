@@ -82,16 +82,23 @@ function [fg, cb] = plotFromDataFile(saveData)
         lat=saveData.data{1};
         lon=saveData.data{2};
         
-        [xCoords, yCoords] = mfwdtran(saveData.data{1},saveData.data{2});
+        % expand to include the 360/0 lon line
+        %statData(:, end+1) = statData(:, 1);
+        %statData(:, 1) = 0;
+        %lat(:, end+1) = lat(:, 1);
+        %lon(:, end+1) = lon(:, 1);
+        
+        [xCoords, yCoords] = mfwdtran(lat,lon);
+       
+        % neet to rotate these so the crossover from x > 0 to x < 0 occurs
+        % at the first/last elements
+        xCoords = circshift(xCoords,-15,2);
+        yCoords = circshift(yCoords,-15,2);
+        statData = circshift(statData,-15,2);
         
         for xlat = 1:size(statData, 1)-1
             for ylon = 1:size(statData, 2)-1
                 if statData(xlat, ylon)
-                    startingLat = saveData.data{1}(xlat, ylon);
-                    endingLat = saveData.data{1}(xlat+1, ylon);
-
-                    startingLon = saveData.data{2}(xlat, ylon);
-                    endingLon = saveData.data{2}(xlat, ylon+1);
                     
                     tulX = xCoords(xlat, ylon);
                     tulY = yCoords(xlat, ylon);
@@ -148,14 +155,14 @@ function [fg, cb] = plotFromDataFile(saveData)
     if blockLand
         geoshow('landareas.shp','DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
-    
+        
     if magnify
-        eval(['export_fig ' saveData.fileTitle ' -m' magnify ';']);
+        eval(['export_fig ' saveData.fileTitle ' -painters -m' magnify ';']);
     else
-        eval(['export_fig ' saveData.fileTitle ';']);
+        eval(['export_fig ' saveData.fileTitle ' -painters;']);
     end
     fileNameParts = strsplit(saveData.fileTitle, '.');
     save([fileNameParts{1} '.mat'], 'saveData');
-    %close all;
+    close all;
     
 end
