@@ -4,18 +4,24 @@
 % across models and decades.
 
 season = 'all';
-dataset = 'ncep-reanalysis';
-tempVar = 'tmax';
+dataset = 'cmip5';
+tempVar = 'wb';
 bowenVar = 'bowen';
 
 if strcmp(dataset, 'cmip5')
-    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
+    if strcmp(tempVar, 'tasmax')
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                          'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                          'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                          'mpi-esm-mr', 'mri-cgcm3'};
+    elseif strcmp(tempVar, 'wb')
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+                  'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'gfdl-cm3', 'gfdl-esm2g', ...
+                  'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', 'mri-cgcm3'};
+    end
 
-    rcp = 'rcp85';
+    rcp = 'historical';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -26,7 +32,7 @@ end
 region = 'world';
 timePeriod = 1985:2004;
 
-baseDir = 'f:/data';
+baseDir = 'e:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -151,7 +157,7 @@ for m = 1:length(models)
     
     % save current model's data
     dailyBowenTemp = {tempData, bowenData};
-    save(['2017-concurrent-heat/daily-bowen-temp/dailyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dailyBowenTemp');
+    save(['2017-concurrent-heat/daily-bowen-temp/dailyBowenWb-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dailyBowenTemp');
 
 end
 
