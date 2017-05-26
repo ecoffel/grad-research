@@ -25,13 +25,15 @@ if ~monthlyMean
     monthlyMeanStr = 'monthlyMax';
 end
 
+dataset = 'cmip5';
+
 load lat;
 load lon;
 
-regionInd = 10;
+regionInd = 3;
 months = 1:12;
 
-baseDir = 'e:/data';
+baseDir = 'f:/data/bowen';
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -68,45 +70,54 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
 
-if strcmp(regionAb{regionInd}, 'amazon') || strcmp(regionAb{regionInd}, 'sa-n')
-    % in amazon leave out csiro, canesm2, ipsl
-    models = {'access1-0', 'access1-3', 'bnu-esm', ...
+switch regionAb{regionInd}
+    
+    case 'us-cent'
+        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+    case 'us-se'
+        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                  'mpi-esm-mr', 'mri-cgcm3'};
+    case 'europe'
+        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+    case 'med'
+        models = {'access1-3', 'bnu-esm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+    case 'sa-n'
+        models = {'access1-0', 'access1-3', 'bnu-esm', ...
+                  'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3'};
-elseif strcmp(regionAb{regionInd}, 'india')
-    % in india leave out csiro and mri-cgcm3
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-elseif strcmp(regionAb{regionInd}, 'africa')
-    % leave out 'mri-cgcm3'
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+    case 'amazon'
+        models = {'access1-3', 'bnu-esm', ...
+                  'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', 'mri-cgcm3'};
+    case 'india'
+        models = {'bnu-esm', 'cnrm-cm5', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
+                  'ipsl-cm5a-mr', 'miroc-esm'};
+    case 'china'
+        models = {'access1-3', 'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'ipsl-cm5a-mr', 'miroc-esm'};
+    case 'africa'
+        models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                   'mpi-esm-mr'};
-elseif strcmp(regionAb{regionInd}, 'us-cent') || strcmp(regionAb{regionInd}, 'us-se') || ...
-        strcmp(regionAb{regionInd}, 'europe') || strcmp(regionAb{regionInd}, 'med')
-    % leave out mri-cgcm3, gfdl-esm2m, gfdl-esm2g' due to bad temp performance
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-else
-    % leave out 'bcc-csm1-1-m' and 'inmcm4' due to bad bowen performance
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
 end
 
-dataset = 'cmip5';
+
+
        
 regionLatLonInd = {};
 
@@ -133,16 +144,16 @@ modelSig = [];
 for model = 1:length(models)
     ['processing ' models{model} '...']
 
-    load([baseDir '/daily-bowen-temp/dailyBowenTemp-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
-    bowenTemp=dailyBowenTemp;
-    clear dailyBowenTemp;
+    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+    bowenTemp = monthlyBowenTemp;
+    clear monthlyBowenTemp;
 
     ['loading future ' models{model} '...']
 
     % load historical bowen data for comparison
-    load([baseDir '/daily-bowen-temp/dailyBowenTemp-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
-    bowenTempFuture=dailyBowenTemp;
-    clear dailyBowenTemp;
+    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
+    bowenTempFuture = monthlyBowenTemp;
+    clear monthlyBowenTemp;
 
     for month = months
         ['month = ' num2str(month) '...']
@@ -150,52 +161,74 @@ for model = 1:length(models)
         bowen = [];
         tempFuture = [];
         bowenFuture = [];
-
+        
+        tempMonth = month;
+        bowenMonth = month;
 
         for xlat = 1:length(curLat)
             for ylon = 1:length(curLon)
                 % get all temp/bowen daily points for current region
                 % into one list (combines gridboxes & years for current model)
+                
+                % get all temp/bowen daily points for current region
+                % into one list (combines gridboxes & years for current model)
                 if monthlyMean
-                    % historical --------------------
-                    nextTemp = nanmean(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                    nextBowen = nanmean(abs(bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}'));
 
-                    % only add full pairs
-                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                        temp = [temp; nextTemp];
-                        bowen = [bowen; nextBowen];
+                    % lists of temps for current month for all years
+                    curMonthTemps = bowenTemp{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                    curMonthBowens = abs(bowenTemp{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
+
+                    for year = 1:length(curMonthTemps)
+
+                        tempYear = year;
+                        bowenYear = year;
+                        % if bowen month is *after* temp month, go to
+                        % previous year
+                        if tempMonth - bowenMonth < 0
+                            bowenYear = bowenYear - 1;
+                        end
+
+                        % this condition will slightly change the mean
+                        % temperature and bowen for lagged plots
+                        if bowenYear > 0
+                            nextTemp = curMonthTemps(tempYear);
+                            nextBowen = curMonthBowens(bowenYear);
+
+                            if ~isnan(nextTemp) && ~isnan(nextBowen)
+                                temp = [temp; nextTemp];
+                                bowen = [bowen; nextBowen];
+                            end
+                        end
                     end
+
                     
-                    % future -----------------------
-                    nextTemp = nanmean(bowenTempFuture{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                    nextBowen = nanmean(abs(bowenTempFuture{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                    % lists of temps for current month for all years
+                    curMonthTemps = bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                    curMonthBowens = abs(bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
 
-                    % only add full pairs
-                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                        tempFuture = [tempFuture; nextTemp];
-                        bowenFuture = [bowenFuture; nextBowen];
-                    end
-                else
-                    % historical ------------------------
-                    nextTemp = nanmax(bowenTemp{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                    nextBowen = nanmean(abs(bowenTemp{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                    for year = 1:length(curMonthTemps)
 
-                    % only add full pairs
-                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                        temp = [temp; nextTemp];
-                        bowen = [bowen; nextBowen];
-                    end
-                    
-                    % future -----------------------------
-                    nextTemp = nanmax(bowenTempFuture{1}{month}{curLat(xlat)}{curLon(ylon)}');
-                    nextBowen = nanmean(abs(bowenTempFuture{2}{month}{curLat(xlat)}{curLon(ylon)}'));
+                        tempYear = year;
+                        bowenYear = year;
+                        % if bowen month is *after* temp month, go to
+                        % previous year
+                        if tempMonth - bowenMonth < 0
+                            bowenYear = bowenYear - 1;
+                        end
 
-                    % only add full pairs
-                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                        tempFuture = [tempFuture; nextTemp];
-                        bowenFuture = [bowenFuture; nextBowen];
+                        % this condition will slightly change the mean
+                        % temperature and bowen for lagged plots
+                        if bowenYear > 0
+                            nextTempFuture = curMonthTemps(tempYear);
+                            nextBowenFuture = curMonthBowens(bowenYear);
+
+                            if ~isnan(nextTempFuture) && ~isnan(nextBowenFuture)
+                                tempFuture = [tempFuture; nextTempFuture];
+                                bowenFuture = [bowenFuture; nextBowenFuture];
+                            end
+                        end
                     end
+
                 end
             end
         end
@@ -217,13 +250,9 @@ for model = 1:length(models)
         meanTempFuture(model, month) = nanmean(tempFuture);
         meanBowenFuture(model, month) = nanmean(bowenFuture);
 
-        
-        
         % predict future temps based on model trained on historical data,
         % using future model bowen values as input
         meanTempPredicted(model, month) = predict(modelBT, meanBowenFuture(model, month));
-        
-        
         
         % test for significance of bowen change at 95%
         %[h, p, ci, stats] = ttest(meanTempFuture(model, month), meanTempPredicted(model, month), 0.05);
@@ -253,7 +282,7 @@ end
 diffErr = nanstd(diff, [], 1);
 predictedDiffErr = nanstd(predictedDiff, [], 1);
 
-figure('Color', [1,1,1]);
+f = figure('Color', [1,1,1]);
 hold on;
 axis square;
 box on;
@@ -279,8 +308,8 @@ xlabel('Month', 'FontSize', 24);
 ylabel(['Warming anomaly ' char(176) 'C'], 'FontSize', 24);
 set(gca, 'FontSize', 24);
 set(gcf, 'Position', get(0,'Screensize'));
-legend([p1.mainLine, p2.mainLine], 'CMIP5', 'Bowen model', 'location', 'best');
-export_fig(['seasonalDifference-' regionAb{regionInd} '.png'], '-m2');
+legend([p1.mainLine, p2.mainLine], 'CMIP5', 'Bowen model');%, 'location', 'best');
+export_fig(['seasonalDifference-' regionAb{regionInd} '.png']);
 close all;
 
 fig = figure('Color',[1,1,1]);
@@ -300,7 +329,7 @@ p2 = plot(1:12, nanmean(meanTempFuture, 1), 'LineWidth', 3, 'Color', [239/255.0,
 p3 = plot(1:12, nanmean(meanTempPredicted, 1), 'LineWidth', 3, 'Color', 'k');
 
 leg = legend([p1, p2, p3], 'CMIP5 historical', 'CMIP5 future', 'Predicted');
-set(leg, 'FontSize', 20, 'location', 'best');
+set(leg, 'FontSize', 20, 'location', 'south');
 xlabel('Month', 'FontSize', 24);
 ylabel(['Temperature ' char(176) 'C'], 'FontSize', 24);
 ylim([-10 40]);
@@ -332,7 +361,7 @@ xlabel('Month', 'FontSize', 24);
 ylabel('R2', 'FontSize', 24);
 
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['r2Prediction-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '.png'], '-m2');
+export_fig(['r2Prediction-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '.png']);
 close all;
 
 
