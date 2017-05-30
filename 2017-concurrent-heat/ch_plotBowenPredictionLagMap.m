@@ -6,7 +6,7 @@ monthlyMean = true;
 useNcep = true;
 
 % bowen lags to test months behind temperature as predictor
-lags = 1;%:2;
+lags = 2;%:2;
 
 % show monthly temp and bowen variability
 showVar = true;
