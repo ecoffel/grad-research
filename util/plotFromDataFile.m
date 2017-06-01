@@ -114,7 +114,7 @@ function [fg, cb] = plotFromDataFile(saveData)
                     
                     p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
                     set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
-                    h = hatchfill(p, 'single', 45, 10);
+                    h = hatchfill(p, 'single', 45, saveData.stippleInterval);
                     %uistack(h, 'bottom');
                     
 %                     for j = linspace(startingLat, endingLat, abs(endingLat-startingLat)/saveData.stippleInterval)

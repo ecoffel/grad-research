@@ -6,13 +6,13 @@ monthlyMean = true;
 useNcep = true;
 
 % bowen lags to test months behind temperature as predictor
-lags = 2;%:2;
+lags = 1:3;%:2;
 
 % show monthly temp and bowen variability
 showVar = true;
 
 % upsample world grid to new grid with squares of this size
-gridSize = 6;
+gridSize = 2;
 
 % type of model to fit to data
 fitType = 'poly2';
@@ -148,7 +148,7 @@ for model = 1:length(models)
                         end
                     end
                     
-                    if length(bowen) > 100 && length(temp) > 100
+                    if length(bowen) > 10 && length(temp) > 10
                         modelBT = fitlm(bowen, temp, fitType);
                         r2BT = modelBT.Rsquared.Ordinary;
                         
@@ -183,22 +183,22 @@ for model = 1:length(models)
                           'blockWater', true, ...
                           'magnify', '2', ...
                           'statData', modelSig(:, :, month, model), ...
-                          'stippleInterval', 2);
+                          'stippleInterval', 5);
         plotFromDataFile(saveData);  
         
         if length(lags) > 1
             result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(maxR2Lag(:,:,month,:),4)};
             saveData = struct('data', {result}, ...
                               'plotRegion', 'world', ...
-                              'plotRange', [0 2], ...
-                              'cbXTicks', [0 1 2], ...
+                              'plotRange', [lags(1) lags(end)], ...
+                              'cbXTicks', [lags(1):lags(end)], ...
                               'plotTitle', 'R2 Lag', ...
                               'fileTitle', ['bowenPredictionMap-lag-' num2str(month) '-' num2str(gridSize) '-lag-' lagStr '.png'], ...
                               'plotXUnits', 'Lag (months)', ...
                               'blockWater', true, ...
                               'magnify', '2', ...
                               'statData', modelSig(:, :, month, model), ...
-                              'stippleInterval', 2);
+                              'stippleInterval', 5);
             plotFromDataFile(saveData);  
         end
     end
