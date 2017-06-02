@@ -6,10 +6,7 @@ monthlyMean = true;
 useNcep = true;
 
 % bowen lags to test months behind temperature as predictor
-lags = 1:3;%:2;
-
-% show monthly temp and bowen variability
-showVar = true;
+lags = 0;%:2;
 
 % upsample world grid to new grid with squares of this size
 gridSize = 2;

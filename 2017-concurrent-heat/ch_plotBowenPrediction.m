@@ -21,18 +21,24 @@ predictOnHistoricalCmip5 = false;
 showBowenModelChange = true;
 
 % should we build the bowen/temp relationship using NCEP and then predict
-% using CMIP5 (doesn't really work)
-trainOnNcep = false;
+% using CMIP5-based percentage change in bowen to modify NCEP bowen
+trainOnNcep = true;
 
-lags = 1:3;
+lags = 0;
 
 lagStr = 'lag';
 for l = lags
     lagStr = [lagStr '-' num2str(l)];
 end
 
+trainOnNcepStr = '';
+if trainOnNcep
+    trainOnNcepStr = 'train-ncep';
+end
+
+
 % type of model to fit to data
-fitType = 'poly222';
+fitType = 'poly2';
 
 rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
@@ -50,7 +56,7 @@ dataset = 'cmip5';
 load lat;
 load lon;
 
-regionInd = 4;
+regionInd = 10;
 months = 1:12;
 
 baseDir = 'f:/data/bowen';
@@ -96,7 +102,7 @@ switch regionAb{regionInd}
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+                  'ipsl-cm5a-mr', 'miroc-esm'};
     case 'us-se'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -105,7 +111,7 @@ switch regionAb{regionInd}
                   'mpi-esm-mr', 'mri-cgcm3'};
     case 'europe'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
+                  'cmcc-cms', 'cnrm-cm5', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'med'
@@ -151,8 +157,12 @@ curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
 
 % historical model temp/bowen
-meanTempHistorical = [];
-meanBowenHistorical = [];
+meanTempHistoricalNCEP = [];
+meanBowenHistoricalNCEP = [];
+
+meanTempHistoricalCmip5 = [];
+meanBowenHistoricalCmip5 = [];
+
 % future model temp/bowen
 meanTempFuture = [];
 meanBowenFuture = [];
@@ -161,25 +171,34 @@ meanTempPredictedHistorical = [];
 % and future bowen
 meanTempPredictedFuture = [];
 modelR2 = [];
+
+% coefficient on the squared term to measure sensitivity
+modelCoeff = [];
+% is the squared coefficient significant
+modelCoeffSig = [];
+
 modelSig = [];
 
 % NCEP-based model for each month
 ncepModels = {};
+% CMIP5 models for each month/model
+cmip5Models = {};
 
 for model = 1:length(models)
 
     % if we are loading NCEP and haven't done so already
-    if trainOnNcep && length(meanTempHistorical) == 0
+    if trainOnNcep && model == 1
         ['loading NCEP...']
         load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-historical-ncep-reanalysis-' timePeriodHistorical '.mat']);
-        bowenTemp = monthlyBowenTemp;
-        clear monthlyBowenTemp;    
-    elseif ~trainOnNcep
-        ['loading historical ' models{model} '...']
-        load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
-        bowenTemp = monthlyBowenTemp;
+        bowenTempNcep = monthlyBowenTemp;
         clear monthlyBowenTemp;    
     end
+    
+    % load historical CMIP5
+    ['loading historical ' models{model} '...']
+    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+    bowenTempCmip5 = monthlyBowenTemp;
+    clear monthlyBowenTemp;    
     
     ['loading future ' models{model} '...']
 
@@ -188,17 +207,23 @@ for model = 1:length(models)
     bowenTempFuture = monthlyBowenTemp;
     clear monthlyBowenTemp;
 
+    cmip5Models{model} = {};
+    
     for month = months
         ['month = ' num2str(month) '...']
-        temp = [];
-        bowen = {};
+        tempCmip5 = [];
+        bowenCmip5 = {};
+        tempNcep = [];
+        bowenNcep = {};
+        
         tempFuture = [];
         bowenFuture = {};
         
         for l = 1:length(lags)
             lag = lags(l);
            
-            bowen{l} = [];
+            bowenNcep{l} = [];
+            bowenCmip5{l} = [];
             bowenFuture{l} = [];
             
             % look at temps in current month
@@ -219,15 +244,19 @@ for model = 1:length(models)
 
                         % --------- historical -------------
 
-                        % if we have historical data - if we are using NCEP and
-                        % have alreay processed it, will skip this
-                        if exist('bowenTemp')
-                            % lists of temps for current month for all years
-                            curMonthTemps = bowenTemp{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
-                            curMonthBowens = abs(bowenTemp{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
+                            % lists of temps for current month for all
+                            % years (cmip5)
+                            curMonthTempsCmip5 = bowenTempCmip5{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                            curMonthBowensCmip5 = abs(bowenTempCmip5{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
+                            
+                            % only process NCEP once, on first model
+                            if model == 1
+                                curMonthTempsNcep = bowenTempNcep{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                                curMonthBowensNcep = abs(bowenTempNcep{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
+                            end
 
                             % start at year 2 to allow for lags
-                            for year = 2:length(curMonthTemps)
+                            for year = 2:length(curMonthTempsCmip5)
 
                                 tempYear = year;
                                 bowenYear = year;
@@ -240,22 +269,38 @@ for model = 1:length(models)
                                 % this condition will slightly change the mean
                                 % temperature and bowen for lagged plots
                                 if bowenYear > 0
-                                    nextTemp = curMonthTemps(tempYear);
-                                    nextBowen = curMonthBowens(bowenYear);
+                                    nextTempCmip5 = curMonthTempsCmip5(tempYear);
+                                    nextBowenCmip5 = curMonthBowensCmip5(bowenYear);
+                                    
+                                    if model == 1
+                                        nextTempNcep = curMonthTempsNcep(tempYear);
+                                        nextBowenNcep = curMonthBowensNcep(bowenYear);
+                                    end
 
-                                    if ~isnan(nextTemp) && ~isnan(nextBowen)
+                                    if ~isnan(nextTempCmip5) && ~isnan(nextBowenCmip5)
                                         
                                         % only take one temp - the current,
                                         % lag 0
                                         if l == 1
-                                            temp = [temp; nextTemp];
+                                            tempCmip5 = [tempCmip5; nextTempCmip5];
                                         end
                                         
-                                        bowen{l} = [bowen{l}; nextBowen];
+                                        bowenCmip5{l} = [bowenCmip5{l}; nextBowenCmip5];
+                                    end
+                                    
+                                    % if we are on the first model and have
+                                    % non-nan NCEP values, process them
+                                    if model == 1 && ~isnan(nextTempNcep) && ~isnan(nextBowenNcep)
+                                        % only take one temp - the current,
+                                        % lag 0
+                                        if l == 1
+                                            tempNcep = [tempNcep; nextTempNcep];
+                                        end
+                                        
+                                        bowenNcep{l} = [bowenNcep{l}; nextBowenNcep];
                                     end
                                 end
                             end
-                        end
 
                         % --------- future -------------
 
@@ -289,24 +334,44 @@ for model = 1:length(models)
                                 end
                             end
                         end
-
                     end
                 end
             end
             
         end
 
+        % if using NCEP, only build models once (on first iteration)
+        if trainOnNcep && model == 1
+            curHistoricalTemp = tempNcep;
+            curHistoricalBowen = bowenNcep;
+        elseif trainOnNcep && model > 1
+            curHistoricalTemp = [];
+            curHistoricalBowen = [];
+        else
+            curHistoricalTemp = tempCmip5;
+            curHistoricalBowen = bowenCmip5;
+        end
+        
         % if we have prediction data (either NCEP for first time or current
         % CMIP5 model)
-        if length(bowen) > 0
+        if length(curHistoricalBowen) > 0
             
             % create cell array of all bowen lags and the temp variable as
             % the last column
             tbl = table();
-            for v = 1:length(bowen)
-                eval(['tbl.' 'lag' num2str(lags(v)) ' = bowen{' num2str(v) '};']);
+            for v = 1:length(curHistoricalBowen)
+                if v > 1 && length(curHistoricalBowen{v}) < size(tbl, 1)
+                    fill = zeros(size(tbl, 1) - length(curHistoricalBowen{v}), 1);
+                    fill(fill == 0) = NaN;
+                    if length(fill) > 0
+                        curHistoricalBowen{v} = [curHistoricalBowen{v}; fill];
+                    end
+                elseif v > 1 && length(curHistoricalBowen{v}) > size(tbl, 1)
+                    curHistoricalBowen{v} = curHistoricalBowen{v}(1:size(tbl, 1));
+                end
+                eval(['tbl.' 'lag' num2str(lags(v)) ' = curHistoricalBowen{' num2str(v) '};']);
             end
-            tbl.temp = temp;
+            tbl.temp = curHistoricalTemp;
             
             % convert cell into table
             modelBT = fitlm(tbl, fitType);
@@ -315,6 +380,8 @@ for model = 1:length(models)
             % future CMIP5 data
             if trainOnNcep
                 ncepModels{tempMonth} = modelBT;
+            else
+                cmip5Models{model}{tempMonth} = modelBT;
             end
 
             % get the model pValue out of the anova structure
@@ -323,17 +390,30 @@ for model = 1:length(models)
 
             % save r2 value of model
             modelR2(model, tempMonth) = modelBT.Rsquared.Ordinary;
-
-            % mean of historical temp
-            meanTempHistorical(model, month) = nanmean(temp);
             
-            % mean historical model bowen for all lags
-            for l = 1:length(lags)
-                meanBowenHistorical(model, month, l) = nanmean(bowen{l});
+            % save coefficient on squared term
+            if length(lags) == 1
+                modelCoeff(model, tempMonth) = modelBT.Coefficients.Estimate(end);
+                modelCoeffSig(model, tempMonth) = modelBT.Coefficients.pValue(end) <= 0.05 && ...
+                                                  modelBT.Coefficients.pValue(end) > 0;
             end
         end
+        
+        % mean of historical temp
+        if model == 1
+            meanTempHistoricalNCEP(model, month) = nanmean(tempNcep);
+        end
+        meanTempHistoricalCmip5(model, month) = nanmean(tempCmip5);
 
-        % mean of future temp
+        % mean historical model bowen for all lags
+        for l = 1:length(lags)
+            if model == 1
+                meanBowenHistoricalNCEP(month, l) = nanmean(bowenNcep{l});
+            end
+            meanBowenHistoricalCmip5(model, month, l) = nanmean(bowenCmip5{l});
+        end
+
+        % mean of future temp (CMIP5)
         meanTempFuture(model, month) = nanmean(tempFuture);
         
         % mean future model bowen for each lag
@@ -341,41 +421,59 @@ for model = 1:length(models)
             meanBowenFuture(model, month, l) = nanmean(bowenFuture{l});
         end
 
-        % predict future temps based on model trained on historical data,
-        % using future model bowen values as input
-        if trainOnNcep
-            % train using saved NCEP model for this month
-            meanTempPredictedHistorical(model, tempMonth) = predict(ncepModels{tempMonth}, squeeze(meanBowenFuture(model, tempMonth, :))');
-        else
-            % train using current CMIP5-based model
-            % historical CMIP5 bowens
-            meanTempPredictedHistorical(model, tempMonth) = predict(modelBT, squeeze(meanBowenHistorical(model, tempMonth, :))');
-            % and future CMIP5 bowen
-            meanTempPredictedFuture(model, tempMonth) = predict(modelBT, squeeze(meanBowenFuture(model, tempMonth, :))');
-        end
-
-        % test for significance of bowen change at 95%
-        %[h, p, ci, stats] = ttest(meanTempFuture(model, month), meanTempPredicted(model, month), 0.05);
-
-        clear temp tempFuture bowen bowenFuture;
+        clear tempNcep tempCmip5 tempFuture bowenNcep bowenCmip5 bowenFuture;
     end
     
-    
-    
-    clear bowenTemp bowenTempFuture;
+    clear bowenTempNcep bowenTempCmip5 bowenTempFuture;
 end
+
+% predict future temps based on model trained on historical data,
+% using future model bowen values as input
+if trainOnNcep
+    % trained using saved NCEP model for this month
+
+    % now use CMIP5 mean percent bowen change to amplify bowens for
+    % this region
+    bowenChgCmip5 = [];
+    for model = 1:size(meanBowenFuture, 1)
+        bowenChgCmip5(model, :) = (meanBowenFuture(model, :) - meanBowenHistoricalCmip5(model, :)) ./ meanBowenHistoricalCmip5(model, :) + 1;
+    end
+    
+    % multiply historical NCEP bowen by 
+    meanBowenFutureNCEP = repmat(meanBowenHistoricalNCEP', size(bowenChgCmip5, 1), 1) .* bowenChgCmip5;
+    
+    for month = 1:12
+        meanTempPredictedHistorical(month) = predict(ncepModels{month}, meanBowenHistoricalNCEP(month));
+        % predict future based on modified NCEP bowens (for each CMIP5
+        % model)
+        for model = 1:size(meanBowenFutureNCEP, 1)
+            meanTempPredictedFuture(model, month) = predict(ncepModels{month}, meanBowenFutureNCEP(model, month));
+        end
+    end
+else
+    % train using current CMIP5-based model
+    % historical CMIP5 bowens
+    meanTempPredictedHistorical(model, tempMonth) = predict(modelBT, squeeze(meanBowenHistoricalNCEP(model, tempMonth, :))');
+    % and future CMIP5 bowen
+    meanTempPredictedFuture(model, tempMonth) = predict(modelBT, squeeze(meanBowenFuture(model, tempMonth, :))');
+end
+
+% test for significance of bowen change at 95%
+%[h, p, ci, stats] = ttest(meanTempFuture(model, month), meanTempPredicted(model, month), 0.05);
 
 if trainOnNcep
-    meanTempHistorical = repmat(meanTempHistorical, [size(meanTempFuture, 1), 1]);
+    meanTempPredictedHistorical = repmat(meanTempPredictedHistorical, [size(meanTempFuture, 1), 1]);
+    meanTempHistoricalNCEP = repmat(meanTempHistoricalNCEP, [size(meanTempFuture, 1), 1]);
 end
 
-warming = squeeze(meanTempFuture - meanTempHistorical);
-annMeanWarming = squeeze(nanmean(meanTempFuture - meanTempHistorical, 2));
+% CMIP5 warming
+warming = squeeze(meanTempFuture - meanTempHistoricalCmip5);
+annMeanWarming = squeeze(nanmean(meanTempFuture - meanTempHistoricalCmip5, 2));
 
 % make prediction based on historical CMIP5 bowens
 if predictOnHistoricalCmip5
-    warmingPredicted = meanTempPredictedHistorical - meanTempHistorical;
-    annMeanWarmingPredicted = nanmean(meanTempPredictedHistorical - meanTempHistorical, 2);
+    warmingPredicted = meanTempPredictedHistorical - meanTempHistoricalNCEP;
+    annMeanWarmingPredicted = nanmean(meanTempPredictedHistorical - meanTempHistoricalNCEP, 2);
 else
     if showBowenModelChange
         % use historical bowens & future bowens and show the difference
@@ -384,8 +482,8 @@ else
         annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempPredictedHistorical, 2);
     else
         % normal - use future bowens and CMIP5 historical temps
-        warmingPredicted = meanTempPredictedFuture - meanTempHistorical;
-        annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempHistorical, 2);
+        warmingPredicted = meanTempPredictedFuture - meanTempHistoricalNCEP;
+        annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempHistoricalNCEP, 2);
     end
 end
 
@@ -429,12 +527,12 @@ set(gca, 'FontSize', 24);
 set(gcf, 'Position', get(0,'Screensize'));
 legend([p1.mainLine, p2.mainLine], 'CMIP5', 'Bowen model');%, 'location', 'best');
 if predictOnHistoricalCmip5
-    export_fig(['seasonalDifference-' regionAb{regionInd} '-historical-test' '-' lagStr '.png']);
+    export_fig(['seasonalDifference-' regionAb{regionInd} '-historical-test' '-' lagStr '-' trainOnNcepStr '.png']);
 else
     if showBowenModelChange
-        export_fig(['seasonalDifference-' regionAb{regionInd} '-bowen-model-change' '-' lagStr '.png']);
+        export_fig(['seasonalDifference-' regionAb{regionInd} '-bowen-model-change' '-' lagStr '-' trainOnNcepStr '.png']);
     else
-        export_fig(['seasonalDifference-' regionAb{regionInd} '-' lagStr '.png']);
+        export_fig(['seasonalDifference-' regionAb{regionInd} '-' lagStr '-' trainOnNcepStr '.png']);
     end
 end
 close all;
@@ -447,49 +545,90 @@ if ~predictOnHistoricalCmip5
     grid on;
     axis square;
 
-    % historical temps
-    p1 = plot(1:12, nanmean(meanTempHistorical, 1), 'LineWidth', 3, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+    % historical temps (NCEP)
+    p1 = plot(1:12, nanmean(meanTempHistoricalNCEP, 1), 'LineWidth', 3, 'Color', [25/255.0, 158/255.0, 56/255.0]);
 
+    % historical temps (predicted based on NCEP)
+    p2 = plot(1:12, nanmean(meanTempPredictedHistorical, 1), 'LineWidth', 3, 'Color', [85/255.0, 158/255.0, 237/255.0]);
+    
     % future temps (modeled)
-    p2 = plot(1:12, nanmean(meanTempFuture, 1), 'LineWidth', 3, 'Color', [239/255.0, 71/255.0, 85/255.0]);
+    p3 = plot(1:12, nanmean(meanTempFuture, 1), 'LineWidth', 3, 'Color', [239/255.0, 71/255.0, 85/255.0]);
 
     % future temps (predicted)
-    p3 = plot(1:12, nanmean(meanTempPredictedHistorical, 1), 'LineWidth', 3, 'Color', 'k');
+    p4 = plot(1:12, nanmean(meanTempPredictedFuture, 1), 'LineWidth', 3, 'Color', 'k');
 
-    leg = legend([p1, p2, p3], 'CMIP5 historical', 'CMIP5 future', 'Predicted');
+    leg = legend([p1, p2, p3, p4], 'NCEP historical', 'NCEP predicted historical', 'CMIP5 future', 'Predicted future');
     set(leg, 'FontSize', 20, 'location', 'south');
     xlabel('Month', 'FontSize', 24);
     ylabel(['Temperature ' char(176) 'C'], 'FontSize', 24);
     ylim([-10 40]);
     xlim([0.5 12.5]);
+    set(gca, 'FontSize', 24);
 
     % right hand plot -------------------
     subplot(1,2,2);     
-    hold on;
-    axis square;
     grid on;
-    box on;
 
-    plot(1:12, modelR2, 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
-    plot(1:12, nanmean(modelR2, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
-    ylim([0 1]);
+    [ax, p1, p2] = plotyy(1:12, nanmean(modelR2, 1), 1:12, ones(1, 12) .* 100);
+    hold(ax(1));
+    hold(ax(2));
+    
+    set(p1, 'Color', [0.3 0.3 0.3], 'LineWidth', 3);
+    set(p2, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+
+    box(ax(1), 'on');
+    axis(ax(1), 'square');
+    axis(ax(2), 'square');
+
+    set(ax(1), 'XTick', 1:12);
+    set(ax(2), 'XTick', 1:12);
+    set(ax(1), 'XLim', [.5 12.5]);
+    set(ax(2), 'XLim', [.5 12.5]);
+    set(ax(1), 'YLim', [0 1], 'YTick', [0 0.25 0.5 0.75 1]);
+    set(ax(2), 'YLim', [-10 1], 'YTick', -10:2:0);
+    set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+    set(ax(1), 'YColor', 'k', 'FontSize', 24);
+
+    %plot(ax(1), 1:12, modelR2, 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
+    %plot(1:12, nanmean(modelR2, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
+    %ylim([0 1]);
 
     for month = 1:size(modelR2, 2)
-        p5 = plot(month, nanmean(modelR2(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [0.5 0.5 0.5], 'MarkerEdgeColor', 'k');
-        if length(find(modelSig(:, month))) > 0.66*length(models)
+        % plot significance markers on R2 plot
+        p5 = plot(ax(1), month, nanmean(modelR2(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [0.5 0.5 0.5], 'MarkerEdgeColor', 'k');
+        
+        % if training on ncep, then only need the ncep model to be
+        % significant
+        if trainOnNcep
+            sigCutoff = 0;
+        else
+            % otherwise, want 2/3 of CMIP5 models to be sig
+            sigCutoff = 0.66*length(models);
+        end
+        
+        if length(find(modelSig(:, month))) > sigCutoff
             set(p5, 'LineWidth', 3, 'MarkerFaceColor', [0.5 0.5 0.5]);
         else
             set(p5, 'LineWidth', 3);
         end
+        
+        % plot significance markers on coeff plot plot
+        p6 = plot(ax(2), month, modelCoeff(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        if modelCoeffSig(month)
+            set(p6, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
+        else
+            set(p6, 'LineWidth', 3);
+        end
     end
 
-    xlim([0.5 12.5]);
+    %xlim([0.5 12.5]);
     set(gca, 'FontSize', 24);
     xlabel('Month', 'FontSize', 24);
-    ylabel('R2', 'FontSize', 24);
+    ylabel(ax(1), 'R2', 'FontSize', 24);
+    ylabel(ax(2), 'Coefficient', 'FontSize', 24);
 
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['r2Prediction-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '-' lagStr '.png']);
+    export_fig(['r2Prediction-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '-' lagStr '-' trainOnNcepStr '.png']);
     close all;
 end
 

@@ -6,7 +6,7 @@
 season = 'all';
 dataset = 'ncep-reanalysis';
 tempVar = 'tmax';
-bowenVar = 'bowen';
+bowenVar = 'soilw10';
 
 if strcmp(dataset, 'cmip5')
     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -150,8 +150,8 @@ for m = 1:length(models)
     end
     
     % save current model's data
-    dailyBowenTemp = {tempData, bowenData};
-    save(['2017-concurrent-heat/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dailyBowenTemp');
+    monthlySoilwTemp = {tempData, bowenData};
+    save(['f:/data/bowen/monthly-soilw-temp/monthlySoilwTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlySoilwTemp');
 
 end
 
