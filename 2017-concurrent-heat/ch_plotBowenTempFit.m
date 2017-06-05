@@ -1,6 +1,6 @@
 
 % should we look at change between rcp & historical (only for cmip5)
-change = false;
+change = true;
 
 % look at monthly mean temp/bowen fit or monthly mean max temperature &
 % mean bowen
@@ -16,7 +16,7 @@ plotScatter = false;
 useNcep = false;
 
 % use bowen lag months behind temperature as predictor
-lags = 0:2;
+lags = 0;
 
 % show monthly temp and bowen variability
 showVar = true;
@@ -38,7 +38,7 @@ end
 load lat;
 load lon;
 
-regionInd = 10;
+regionInd = 4;
 months = 1:12;
 
 baseDir = 'f:/data/bowen';
@@ -61,7 +61,7 @@ regionNames = {'World', ...
                 'Northern SA', ...
                 'Amazon', ...
                 'India', ...
-                'China', ...
+                'West Africa', ...
                 'Central Africa', ...
                 'Tropics'};
 regionAb = {'world', ...
@@ -72,19 +72,19 @@ regionAb = {'world', ...
             'sa-n', ...
             'amazon', ...
             'india', ...
-            'china', ...
-            'africa', ...
+            'africa-west', ...
+            'africa-cent', ...
             'tropics'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[35 46], [-105 -90] + 360]; ...     % central us
-           [[25 35], [-90 -75] + 360]; ...      % southeast us
+           [[35 46], [-107 -88] + 360]; ...     % central us
+           [[25 35], [-103 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
-           [[36 45], [-15+360, 35]]; ...        % Med
-           [[0 15], [-90 -45]+360]; ...         % Northern SA
-           [[-15, 0], [-60, -35]+360]; ...      % Amazon
+           [[36 45], [-5+360, 40]]; ...        % Med
+           [[5 20], [-90 -45]+360]; ...         % Northern SA
+           [[-18, 0], [-60, -35]+360]; ...      % Amazon
            [[8, 26], [67, 90]]; ...             % India
-           [[20, 40], [100, 125]]; ...          % China
+           [[7, 20], [-15 + 360, 15]]; ...          % west Africa
            [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
 
@@ -92,23 +92,23 @@ switch regionAb{regionInd}
     
     case 'us-cent'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+                  'cmcc-cm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'ipsl-cm5a-mr', 'miroc-esm'};
     case 'us-se'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+        models = {'access1-0', 'access1-3', 'bnu-esm', ...
+                  'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
+                  'mpi-esm-mr'};
     case 'europe'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'cnrm-cm5', ...
+                  'gfdl-cm3', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'med'
-        models = {'access1-3', 'bnu-esm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+        models = {'access1-3', 'bnu-esm', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'sa-n'
         models = {'access1-0', 'access1-3', 'bnu-esm', ...
@@ -118,15 +118,15 @@ switch regionAb{regionInd}
     case 'amazon'
         models = {'access1-3', 'bnu-esm', ...
                   'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', 'mri-cgcm3'};
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'india'
         models = {'bnu-esm', 'cnrm-cm5', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
                   'ipsl-cm5a-mr', 'miroc-esm'};
-    case 'china'
-        models = {'access1-3', 'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'ipsl-cm5a-mr', 'miroc-esm'};
-    case 'africa'
+    case 'africa-west'
+        models = {'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-esm2g', 'gfdl-esm2m'};
+    case 'africa-central'
         models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -136,7 +136,7 @@ end
 
 
 if useNcep
-    models = {'ncep-reanalysis'};
+    models = {''};
 end
 
 dataset = 'cmip5';
@@ -275,14 +275,34 @@ for lag = lags
                         % and do the same for future data if we're looking
                         % at a change
                         if monthlyMean
-                            nextTemp = nanmean(bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)}');
-                            nextBowen = nanmean(abs(bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)}'));
+                           
+                            % lists of temps for current month for all years
+                            curMonthTemps = bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                            curMonthBowens = abs(bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
 
-                            % only add full pairs
-                            if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                                tempFuture = [tempFuture; nextTemp];
-                                bowenFuture = [bowenFuture; nextBowen];
+                            for year = 1:length(curMonthTemps)
+
+                                tempYear = year;
+                                bowenYear = year;
+                                % if bowen month is *after* temp month, go to
+                                % previous year
+                                if tempMonth - bowenMonth < 0
+                                    bowenYear = bowenYear - 1;
+                                end
+
+                                % this condition will slightly change the mean
+                                % temperature and bowen for lagged plots
+                                if bowenYear > 0
+                                    nextTemp = curMonthTemps(tempYear);
+                                    nextBowen = curMonthBowens(bowenYear);
+
+                                    if ~isnan(nextTemp) && ~isnan(nextBowen)
+                                        tempFuture = [tempFuture; nextTemp];
+                                        bowenFuture = [bowenFuture; nextBowen];
+                                    end
+                                end
                             end
+                            
                         end
                     end
                 end
@@ -315,7 +335,7 @@ for lag = lags
                 meanBowenFuture(model, month) = nanmean(bowenFuture);
 
                 % test for significance of bowen change at 95%
-                [h, p, ci, stats] = ttest(bowen, bowenFuture, 0.05);
+                [h, p, ci, stats] = ttest(bowen(1:min(length(bowen), length(bowenFuture))), bowenFuture(1:min(length(bowen), length(bowenFuture))), 0.05);
                 changePower(model, month) = p;
                 changeSig(model, month) = h;
 

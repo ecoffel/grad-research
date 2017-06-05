@@ -12,17 +12,18 @@ plotScatter = false;
 %predictDifference = true;
 
 % whether to predict temps based on historical CMIP5 bowen to test whether
-% future response changes
+% future response changes - this is JUST HISTORICAL
 predictOnHistoricalCmip5 = false;
 
 % whether to show the change in the bowen model when run over historical
 % bowen vs future (true), or the difference between predicted temps when
-% run over future bowens vs. historical simulated CMIP5 temps
+% run over future bowens vs. historical simulated CMIP5 temps - this is
+% LIKE ABOVE parameter but for CHANGE in the bowen model
 showBowenModelChange = true;
 
 % should we build the bowen/temp relationship using NCEP and then predict
 % using CMIP5-based percentage change in bowen to modify NCEP bowen
-trainOnNcep = true;
+trainOnNcep = false;
 
 lags = 0;
 
@@ -56,7 +57,7 @@ dataset = 'cmip5';
 load lat;
 load lon;
 
-regionInd = 10;
+regionInd = 7;
 months = 1:12;
 
 baseDir = 'f:/data/bowen';
@@ -69,7 +70,7 @@ regionNames = {'World', ...
                 'Northern SA', ...
                 'Amazon', ...
                 'India', ...
-                'China', ...
+                'West Africa', ...
                 'Central Africa', ...
                 'Tropics'};
 regionAb = {'world', ...
@@ -80,19 +81,19 @@ regionAb = {'world', ...
             'sa-n', ...
             'amazon', ...
             'india', ...
-            'china', ...
-            'africa', ...
+            'africa-west', ...
+            'africa-cent', ...
             'tropics'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[35 46], [-105 -90] + 360]; ...     % central us
-           [[25 35], [-90 -75] + 360]; ...      % southeast us
+           [[35 46], [-107 -88] + 360]; ...     % central us
+           [[25 35], [-103 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
-           [[36 45], [-15+360, 35]]; ...        % Med
-           [[0 15], [-90 -45]+360]; ...         % Northern SA
-           [[-15, 0], [-60, -35]+360]; ...      % Amazon
+           [[36 45], [-5+360, 40]]; ...        % Med
+           [[5 20], [-90 -45]+360]; ...         % Northern SA
+           [[-18, 0], [-60, -35]+360]; ...      % Amazon
            [[8, 26], [67, 90]]; ...             % India
-           [[20, 40], [100, 125]]; ...          % China
+           [[7, 20], [-15 + 360, 15]]; ...          % west Africa
            [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
 
@@ -100,24 +101,31 @@ switch regionAb{regionInd}
     
     case 'us-cent'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'cmcc-cm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'ipsl-cm5a-mr', 'miroc-esm'};
     case 'us-se'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+        models = {'access1-0', 'access1-3', 'bnu-esm', ...
+                  'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
+                  'mpi-esm-mr'};
     case 'europe'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cms', 'cnrm-cm5', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'cnrm-cm5', ...
+                  'gfdl-cm3', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cnrm-cm5', ...
+%                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'med'
-        models = {'access1-3', 'bnu-esm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+        models = {'access1-3', 'bnu-esm', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
+%         models = {'access1-3', 'bnu-esm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'sa-n'
         models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -126,24 +134,21 @@ switch regionAb{regionInd}
     case 'amazon'
         models = {'access1-3', 'bnu-esm', ...
                   'cnrm-cm5', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', 'mri-cgcm3'};
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'india'
         models = {'bnu-esm', 'cnrm-cm5', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
                   'ipsl-cm5a-mr', 'miroc-esm'};
-    case 'china'
-        models = {'access1-3', 'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'ipsl-cm5a-mr', 'miroc-esm'};
-    case 'africa'
+    case 'africa-west'
+        models = {'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-esm2g', 'gfdl-esm2m'};
+    case 'africa-central'
         models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                   'mpi-esm-mr'};
 end
-
-
-
        
 regionLatLonInd = {};
 
@@ -189,7 +194,7 @@ for model = 1:length(models)
     % if we are loading NCEP and haven't done so already
     if trainOnNcep && model == 1
         ['loading NCEP...']
-        load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-historical-ncep-reanalysis-' timePeriodHistorical '.mat']);
+        load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-historical-ncep-reanalysis--' timePeriodHistorical '.mat']);
         bowenTempNcep = monthlyBowenTemp;
         clear monthlyBowenTemp;    
     end
@@ -250,7 +255,7 @@ for model = 1:length(models)
                             curMonthBowensCmip5 = abs(bowenTempCmip5{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
                             
                             % only process NCEP once, on first model
-                            if model == 1
+                            if trainOnNcep && model == 1
                                 curMonthTempsNcep = bowenTempNcep{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
                                 curMonthBowensNcep = abs(bowenTempNcep{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)});
                             end
@@ -272,7 +277,7 @@ for model = 1:length(models)
                                     nextTempCmip5 = curMonthTempsCmip5(tempYear);
                                     nextBowenCmip5 = curMonthBowensCmip5(bowenYear);
                                     
-                                    if model == 1
+                                    if trainOnNcep && model == 1
                                         nextTempNcep = curMonthTempsNcep(tempYear);
                                         nextBowenNcep = curMonthBowensNcep(bowenYear);
                                     end
@@ -290,7 +295,7 @@ for model = 1:length(models)
                                     
                                     % if we are on the first model and have
                                     % non-nan NCEP values, process them
-                                    if model == 1 && ~isnan(nextTempNcep) && ~isnan(nextBowenNcep)
+                                    if trainOnNcep && model == 1 && ~isnan(nextTempNcep) && ~isnan(nextBowenNcep)
                                         % only take one temp - the current,
                                         % lag 0
                                         if l == 1
@@ -400,14 +405,14 @@ for model = 1:length(models)
         end
         
         % mean of historical temp
-        if model == 1
+        if trainOnNcep && model == 1
             meanTempHistoricalNCEP(model, month) = nanmean(tempNcep);
         end
         meanTempHistoricalCmip5(model, month) = nanmean(tempCmip5);
 
         % mean historical model bowen for all lags
         for l = 1:length(lags)
-            if model == 1
+            if trainOnNcep && model == 1
                 meanBowenHistoricalNCEP(month, l) = nanmean(bowenNcep{l});
             end
             meanBowenHistoricalCmip5(model, month, l) = nanmean(bowenCmip5{l});
@@ -453,9 +458,13 @@ if trainOnNcep
 else
     % train using current CMIP5-based model
     % historical CMIP5 bowens
-    meanTempPredictedHistorical(model, tempMonth) = predict(modelBT, squeeze(meanBowenHistoricalNCEP(model, tempMonth, :))');
-    % and future CMIP5 bowen
-    meanTempPredictedFuture(model, tempMonth) = predict(modelBT, squeeze(meanBowenFuture(model, tempMonth, :))');
+    for month = 1:12
+        for model = 1:size(meanBowenHistoricalCmip5, 1)
+            meanTempPredictedHistorical(model, month) = predict(cmip5Models{model}{month}, squeeze(meanBowenHistoricalCmip5(model, month, :))');
+            % and future CMIP5 bowen
+            meanTempPredictedFuture(model, month) = predict(cmip5Models{model}{month}, squeeze(meanBowenFuture(model, month, :))');
+        end
+    end
 end
 
 % test for significance of bowen change at 95%
@@ -482,8 +491,8 @@ else
         annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempPredictedHistorical, 2);
     else
         % normal - use future bowens and CMIP5 historical temps
-        warmingPredicted = meanTempPredictedFuture - meanTempHistoricalNCEP;
-        annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempHistoricalNCEP, 2);
+        warmingPredicted = meanTempPredictedFuture - meanTempHistoricalCmip5;
+        annMeanWarmingPredicted = nanmean(meanTempPredictedFuture - meanTempHistoricalCmip5, 2);
     end
 end
 
@@ -545,8 +554,10 @@ if ~predictOnHistoricalCmip5
     grid on;
     axis square;
 
-    % historical temps (NCEP)
-    p1 = plot(1:12, nanmean(meanTempHistoricalNCEP, 1), 'LineWidth', 3, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+    if trainOnNcep
+        % historical temps (NCEP)
+        p1 = plot(1:12, nanmean(meanTempHistoricalNCEP, 1), 'LineWidth', 3, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+    end
 
     % historical temps (predicted based on NCEP)
     p2 = plot(1:12, nanmean(meanTempPredictedHistorical, 1), 'LineWidth', 3, 'Color', [85/255.0, 158/255.0, 237/255.0]);
@@ -557,7 +568,11 @@ if ~predictOnHistoricalCmip5
     % future temps (predicted)
     p4 = plot(1:12, nanmean(meanTempPredictedFuture, 1), 'LineWidth', 3, 'Color', 'k');
 
-    leg = legend([p1, p2, p3, p4], 'NCEP historical', 'NCEP predicted historical', 'CMIP5 future', 'Predicted future');
+    if trainOnNcep
+        leg = legend([p1, p2, p3, p4], 'NCEP historical', 'NCEP predicted historical', 'CMIP5 future', 'Predicted future');
+    else
+        leg = legend([p2, p3, p4], 'CMIP5 predicted historical', 'CMIP5 future', 'Predicted future');
+    end
     set(leg, 'FontSize', 20, 'location', 'south');
     xlabel('Month', 'FontSize', 24);
     ylabel(['Temperature ' char(176) 'C'], 'FontSize', 24);
@@ -589,7 +604,9 @@ if ~predictOnHistoricalCmip5
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     set(ax(1), 'YColor', 'k', 'FontSize', 24);
 
-    %plot(ax(1), 1:12, modelR2, 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
+    for model = 1:size(modelR2, 1)
+        plot(ax(1), 1:12, modelR2(model, :), 'Color', [0.5 0.5 0.5], 'LineWidth', 1);
+    end
     %plot(1:12, nanmean(modelR2, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
     %ylim([0 1]);
 
@@ -613,8 +630,8 @@ if ~predictOnHistoricalCmip5
         end
         
         % plot significance markers on coeff plot plot
-        p6 = plot(ax(2), month, modelCoeff(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-        if modelCoeffSig(month)
+        p6 = plot(ax(2), month, nanmean(modelCoeff(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        if length(find(modelCoeffSig(:, month))) > sigCutoff
             set(p6, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
         else
             set(p6, 'LineWidth', 3);

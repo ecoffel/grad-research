@@ -1,6 +1,6 @@
 % needs to handle plev
 baseGridModel = 'f:/data/ncep-reanalysis/output';
-regridVar = 'soilw10';
+regridVar = 'prate';
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
