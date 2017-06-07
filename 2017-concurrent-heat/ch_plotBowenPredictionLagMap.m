@@ -121,6 +121,10 @@ for model = 1:length(models)
                                 curMonthTemps = bowenTemp{1}{tempMonth}{subXlat}{subYlon};
                                 curMonthBowens = abs(bowenTemp{2}{bowenMonth}{subXlat}{subYlon});
 
+                                ind = find(curMonthBowens < 10);
+                                curMonthTemps = curMonthTemps(ind);
+                                curMonthBowens = curMonthBowens(ind);
+                                
                                 for year = 1:length(curMonthTemps)
 
                                     tempYear = year;
