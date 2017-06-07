@@ -54,7 +54,11 @@ for k = 1:length(ncFileNames)
     parts = strsplit(parts{1}, '.');
 
     %if length(parts) == 3
-    varName = lower(parts{1});
+    if strcmp(parts{1}, 'soilw') && strcmp(parts{2}, '0-10cm')
+        varName = 'soilw10';
+    else
+        varName = lower(parts{1});
+    end
     year = lower(parts{end-1});
     
     if weekly
@@ -114,11 +118,11 @@ for k = 1:length(ncFileNames)
     for i = 0:nvar-1
         [vname, vtype, vdim, vatts] = netcdf.inqVar(ncid,i);
         
-        if length(findstr(vname, 'lat')) ~= 0
+        if strcmp(vname, 'lat')
             varIdLat = i+1;
         end
         
-        if length(findstr(vname, 'lon')) ~= 0
+        if strcmp(vname, 'lon')
             varIdLon = i+1;
         end
         
@@ -126,7 +130,7 @@ for k = 1:length(ncFileNames)
             varIdMain = i+1;
         end
         
-        if length(findstr(vname, 'level')) ~= 0
+        if strcmp(vname, 'level')
             varIdLev = i+1;
         end
         

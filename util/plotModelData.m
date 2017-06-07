@@ -61,6 +61,11 @@ end
 if ~noNewFig
     fg = figure(fgNum);
     set(fg, 'Color', [1,1,1]);
+    
+    % this forces no z-ordering, was necessary to get the block water
+    % command to overwrite hatching
+    set(fg,'renderer','painters');
+    
     axis off;
 
     title(fgTitle);
@@ -70,9 +75,12 @@ end
 
 if strcmp(region, 'world')
     worldmap world;
-    data{1}(:, end+1) = data{1}(:, end) + (data{1}(:, end)-data{1}(:, end-1));
-    data{2}(:, end+1) = data{2}(:, end) + (data{2}(:, end)-data{2}(:, end-1));
-    data{3}(:, end+1) = data{3}(:, end) + (data{3}(:, end)-data{3}(:, end-1));
+    
+    % add in the final lon line (for lon = 360/0) - this hasn't been
+    % plotted yet
+    data{1}(:, end+1) = data{1}(:, 1);% + (data{1}(:, end)-data{1}(:, end-1));
+    data{2}(:, end+1) = data{2}(:, 1);% + (data{2}(:, end)-data{2}(:, end-1));
+    data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
     
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north atlantic')
@@ -110,6 +118,8 @@ else
     data{1}(:, end+1) = data{1}(:, end) + (data{1}(:, end)-data{1}(:, end-1));
     data{2}(:, end+1) = data{2}(:, end) + (data{2}(:, end)-data{2}(:, end-1));
 end
+
+set(gca, 'SortMethod', 'childorder');
 
 if length(colormapVal) > 0
     colormap(colormapVal);

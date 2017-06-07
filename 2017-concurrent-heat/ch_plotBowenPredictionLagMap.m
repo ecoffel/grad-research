@@ -1,7 +1,3 @@
-
-% should we look at change between rcp & historical (only for cmip5)
-change = false;
-
 % look at monthly mean temp/bowen fit or monthly mean max temperature &
 % mean bowen
 monthlyMean = true;
@@ -10,13 +6,10 @@ monthlyMean = true;
 useNcep = true;
 
 % bowen lags to test months behind temperature as predictor
-lags = 0:2;
-
-% show monthly temp and bowen variability
-showVar = true;
+lags = 0;%:2;
 
 % upsample world grid to new grid with squares of this size
-gridSize = 6;
+gridSize = 2;
 
 % type of model to fit to data
 fitType = 'poly2';
@@ -32,18 +25,20 @@ if ~monthlyMean
     monthlyMeanStr = 'monthlyMax';
 end
 
+lagStr = 'varied';
+if length(lags) == 1
+    lagStr = num2str(lags);
+end
+
 load lat;
 load lon;
 
 regionInd = 1;
 months = 1:12;
 
-baseDir = 'f:/data';
+baseDir = 'f:/data/bowen';
 
 rcpStr = 'historical';
-if change
-    rcpStr = 'chg';
-end
 
 % leave out 'bcc-csm1-1-m' and 'inmcm4' due to bad bowen performance
 models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
@@ -59,25 +54,6 @@ end
 dataset = 'cmip5';
 if length(models) == 1 && strcmp(models{1}, 'ncep-reanalysis')
     dataset = 'ncep';
-end
-
-% temp/bowen pairs for this region, by months
-meanTemp = [];
-meanTempStd = [];
-meanBowen = [];
-meanBowenStd = [];
-r2BT = [];
-
-modelSig = [];
-
-if change
-    meanTempFuture = [];
-    meanBowenFuture = [];
-    r2FutureBT = [];
-
-    % are the monthly/model changes in bowen statistically significant
-    changePower = [];
-    changeSig = [];
 end
 
 % max r2 value at each up-gridcell
@@ -97,18 +73,9 @@ modelSig = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models
 for model = 1:length(models)
     ['processing ' models{model} '...']
 
-    load([baseDir '/daily-bowen-temp/dailyBowenTemp-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
-    bowenTemp=dailyBowenTemp;
-    clear dailyBowenTemp;
-
-    if change
-        ['loading future ' models{model} '...']
-
-        % load historical bowen data for comparison
-        load([baseDir '/daily-bowen-temp/dailyBowenTemp-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
-        bowenTempFuture=dailyBowenTemp;
-        clear dailyBowenTemp;
-    end
+    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+    bowenTemp = monthlyBowenTemp;
+    clear monthlyBowenTemp;
 
     for month = months
 
@@ -140,14 +107,7 @@ for model = 1:length(models)
                     curUpLon = 1 + ((ylon-1) / gridSize);
                     
                     temp = [];
-                    tempStd = [];
                     bowen = [];
-                    bowenStd = [];
-
-                    if change
-                        tempFuture = [];
-                        bowenFuture = [];
-                    end
                     
                     % collect data for current up-sampled grid cell
                     for subXlat = curLat1:curLat2
@@ -156,53 +116,36 @@ for model = 1:length(models)
                             % get all temp/bowen daily points for current region
                             % into one list (combines gridboxes & years for current model)
                             if monthlyMean
-                                nextTemp = nanmean(bowenTemp{1}{tempMonth}{subXlat}{subYlon}');
-                                nextTempStd = nanstd(bowenTemp{1}{tempMonth}{subXlat}{subYlon}');
-                                nextBowen = nanmean(abs(bowenTemp{2}{bowenMonth}{subXlat}{subYlon}'));
-                                nextBowenStd = nanstd(abs(bowenTemp{2}{bowenMonth}{subXlat}{subYlon}'));
 
-                                % only add full pairs
-                                if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                                    temp = [temp; nextTemp];
-                                    bowen = [bowen; nextBowen];
-                                    tempStd = [tempStd; nextTempStd];
-                                    bowenStd = [bowenStd; nextBowenStd];
-                                end
-                            else
-                                nextTemp = nanmax(bowenTemp{1}{tempMonth}{subXlat}{subYlon}');
-                                nextBowen = nanmean(abs(bowenTemp{2}{bowenMonth}{subXlat}{subYlon}'));
+                                % lists of temps for current month for all years
+                                curMonthTemps = bowenTemp{1}{tempMonth}{subXlat}{subYlon};
+                                curMonthBowens = abs(bowenTemp{2}{bowenMonth}{subXlat}{subYlon});
 
-                                % only add full pairs
-                                if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                                    temp = [temp; nextTemp];
-                                    bowen = [bowen; nextBowen];
-                                end
-                            end
+                                ind = find(curMonthBowens < 10);
+                                curMonthTemps = curMonthTemps(ind);
+                                curMonthBowens = curMonthBowens(ind);
+                                
+                                for year = 1:length(curMonthTemps)
 
-                            if change
-                                % and do the same for future data if we're looking
-                                % at a change
-                                if monthlyMean
-                                    nextTemp = nanmean(bowenTempFuture{1}{tempMonth}{subXlat}{subYlon}');
-                                    nextBowen = nanmean(abs(bowenTempFuture{2}{bowenMonth}{subXlat}{subYlon}'));
-
-                                    % only add full pairs
-                                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                                        tempFuture = [tempFuture; nextTemp];
-                                        bowenFuture = [bowenFuture; nextBowen];
+                                    tempYear = year;
+                                    bowenYear = year;
+                                    % if bowen month is *after* temp month, go to
+                                    % previous year
+                                    if tempMonth - bowenMonth < 0
+                                        bowenYear = bowenYear - 1;
                                     end
-                                else
-                                    nextTemp = nanmax(bowenTempFuture{1}{tempMonth}{subXlat}{subYlon}');
-                                    nextBowen = nanmean(abs(bowenTempFuture{2}{bowenMonth}{subXlat}{subYlon}'));
 
-                                    % only add full pairs
-                                    if length(nextTemp) > 0 && ~isnan(nextTemp) && ~isnan(nextBowen)
-                                        tempFuture = [tempFuture; nextTemp];
-                                        bowenFuture = [bowenFuture; nextBowen];
+                                    if bowenYear > 0
+                                        nextTemp = curMonthTemps(tempYear);
+                                        nextBowen = curMonthBowens(bowenYear);
+
+                                        if ~isnan(nextTemp) && ~isnan(nextBowen)
+                                            temp = [temp; nextTemp];
+                                            bowen = [bowen; nextBowen];
+                                        end
                                     end
                                 end
-                            end
-                            
+                            end                            
                         end
                     end
                     
@@ -221,17 +164,6 @@ for model = 1:length(models)
                             a = anova(modelBT, 'summary');
                             modelSig(curUpLat, curUpLon, month, model) = a(2, 5).pValue < 0.05;
                         end
-
-                        % fit model for future data if looking at change
-                        if change
-                            modelFutureBT = fitlm(bowenFuture, tempFuture, fitType);
-                            r2FutureBT(model, month, lag) = modelFutureBT.Rsquared.Ordinary;
-
-                            % test for significance of bowen change at 95%
-                            [h, p, ci, stats] = ttest(bowen, bowenFuture, 0.05);
-                            changePower(model, month) = p;
-                            changeSig(model, month) = h;
-                        end
                     end
 
                     clear temp bowen;
@@ -247,29 +179,29 @@ for model = 1:length(models)
                           'plotRange', [0 1], ...
                           'cbXTicks', [0 .25 .5 .75 1], ...
                           'plotTitle', 'R2', ...
-                          'fileTitle', ['bowenPredictionMap-r2-' num2str(month) '-' num2str(gridSize) '.png'], ...
+                          'fileTitle', ['bowenPredictionMap-r2-' num2str(month) '-' num2str(gridSize) '-lag-' lagStr '.png'], ...
                           'plotXUnits', 'R2', ...
                           'blockWater', true, ...
                           'magnify', '2', ...
                           'statData', modelSig(:, :, month, model), ...
-                          'stippleInterval', 2);
+                          'stippleInterval', 5);
         plotFromDataFile(saveData);  
         
-        result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(maxR2Lag(:,:,month,:),4)};
-        saveData = struct('data', {result}, ...
-                          'plotRegion', 'world', ...
-                          'plotRange', [0 2], ...
-                          'cbXTicks', [0 1 2], ...
-                          'plotTitle', 'R2 Lag', ...
-                          'fileTitle', ['bowenPredictionMap-lag-' num2str(month) '-' num2str(gridSize) '.png'], ...
-                          'plotXUnits', 'Lag (months)', ...
-                          'blockWater', true, ...
-                          'magnify', '2', ...
-                          'statData', modelSig(:, :, month, model), ...
-                          'stippleInterval', 2);
-        plotFromDataFile(saveData);  
-        
-        close all;
+        if length(lags) > 1
+            result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(maxR2Lag(:,:,month,:),4)};
+            saveData = struct('data', {result}, ...
+                              'plotRegion', 'world', ...
+                              'plotRange', [lags(1) lags(end)], ...
+                              'cbXTicks', [lags(1):lags(end)], ...
+                              'plotTitle', 'R2 Lag', ...
+                              'fileTitle', ['bowenPredictionMap-lag-' num2str(month) '-' num2str(gridSize) '-lag-' lagStr '.png'], ...
+                              'plotXUnits', 'Lag (months)', ...
+                              'blockWater', true, ...
+                              'magnify', '2', ...
+                              'statData', modelSig(:, :, month, model), ...
+                              'stippleInterval', 5);
+            plotFromDataFile(saveData);  
+        end
     end
     clear bowenTemp bowenTempFuture;
 end
