@@ -61,7 +61,7 @@ for k = 1:length(ncFileNames)
         mkdir(folDataTarget);
     else
         if skipExistingFolders
-            continue;
+            %continue;
         end
     end
     
@@ -194,6 +194,7 @@ for k = 1:length(ncFileNames)
        length(findstr('cnrm', rawNcDir)) ~= 0 || ...
        length(findstr('inmcm', rawNcDir)) ~= 0 || ...
        length(findstr('ipsl', rawNcDir)) ~= 0 || ...
+       length(findstr('csiro', rawNcDir)) ~= 0 || ...
        length(findstr('miroc', rawNcDir)) ~= 0
         startDate = datenum([1850 01 01 00 00 00]);
     else
@@ -202,7 +203,6 @@ for k = 1:length(ncFileNames)
     
     timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]) + startDate;
 
-    
     for t = 0:length(timestep)-1
     
         if dimIdLev ~= -1

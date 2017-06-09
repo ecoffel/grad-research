@@ -1,4 +1,4 @@
-regridVars = {'hfls', 'hfss'};%, 'huss', 'psl'};
+regridVars = {'pr'};%, 'huss', 'psl'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -6,7 +6,7 @@ lonGrid = meshgrid(linspace(0, 360, 360/gridSpacing), linspace(-90, 90, 180/grid
 baseGrid = {latGrid, lonGrid, []};
 
 modelBaseDir = 'cmip5/output';
-models = {'access1-3', 'bcc-csm1-1-m', ...
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
           'bnu-esm', 'canesm2', ...
           'ccsm4', 'cesm1-bgc', ...
           'cesm1-cam5', 'cmcc-cm', ...
@@ -21,11 +21,12 @@ models = {'access1-3', 'bcc-csm1-1-m', ...
       
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
 ensembles = {'r1i1p1'};
-rcps = {'rcp85'};
+rcps = {'historical', 'rcp85'};
 plevs = {};
 
 region = 'world';
 skipexisting = true;
+monthly = true;
 
 latLonBounds = [];
 if strcmp(region, 'usne')
@@ -47,7 +48,11 @@ for v = 1:length(regridVars)
                         regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'plev', plevs{p}, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region);
                     end
                 else
-                    regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', true);
+                    if monthly
+                        regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v} '/amon'], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
+                    else
+                        regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
+                    end
                 end
             end
         end

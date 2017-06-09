@@ -1,4 +1,4 @@
-vars = {'tasmin', 'tasmax', 'ta', 'huss', 'hus', 'psl', 'rhs', 'pr', 'uas', 'vas', 'tos', 'hfss', 'hfls'};
+vars = {'pr'};
 
 modelBaseDir = 'cmip5/raw';
 models = {'csiro-mk3-6-0', 'ccsm4', 'cesm1-bgc', ...
@@ -20,7 +20,7 @@ for m = 1:length(models)
     for e = 1:length(ensembles)
         for r = 1:length(rcps)
             for v = 1:length(vars)
-                cmip5NcToMat(['f:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'f:/data/cmip5/output', vars{v}, -1);
+                cmip5NcToMat_monthly(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'e:/data/cmip5/output', vars{v}, -1);
             end
         end
     end
