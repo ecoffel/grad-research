@@ -4,18 +4,26 @@
 % across models and decades.
 
 season = 'all';
-dataset = 'ncep-reanalysis';
-tempVar = 'tmax';
-bowenVar = 'soilw10';
+dataset = 'cmip5';
+tempVar = 'wb';
+bowenVar = 'bowen';
 
 if strcmp(dataset, 'cmip5')
-    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+    if strcmp(tempVar, 'wb')
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                      'cnrm-cm5', 'csiro-mk3-6-0', ...
                       'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                      'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3'};
+    else
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                          'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                          'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                          'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                          'mpi-esm-mr', 'mri-cgcm3'};
+    end
 
-    rcp = 'rcp85';
+    rcp = 'historical';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -24,9 +32,9 @@ elseif strcmp(dataset, 'ncep-reanalysis')
 end
 
 region = 'world';
-timePeriod = 1985:2004;
+timePeriod = 1985:2004;%2060:2080;%1985:2004;
 
-baseDir = 'f:/data';
+baseDir = 'e:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -47,7 +55,13 @@ waterGrid = logical(waterGrid);
 for m = 1:length(models)
     curModel = models{m};
     
-    if exist(['2017-concurrent-heat/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'file')
+    if strcmp(tempVar, 'wb')
+        targetName = ['2017-concurrent-heat/monthly-bowen-wb/monthlyBowenWb-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'];
+    else
+        targetName = ['2017-concurrent-heat/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'];
+    end
+    
+    if exist(targetName, 'file')
         continue;
     end
     
@@ -150,8 +164,13 @@ for m = 1:length(models)
     end
     
     % save current model's data
-    monthlySoilwTemp = {tempData, bowenData};
-    save(['f:/data/bowen/monthly-soilw-temp/monthlySoilwTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlySoilwTemp');
+    if strcmp(tempVar, 'wb')
+        monthlyBowenWb = {tempData, bowenData};
+        save(['2017-concurrent-heat/monthly-bowen-wb/monthlyBowenWb-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+    else
+        monthlyBowenTemp = {tempData, bowenData};
+        save(['2017-concurrent-heat/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+    end
 
 end
 
