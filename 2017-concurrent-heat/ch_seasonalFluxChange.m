@@ -1,8 +1,6 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
 tempMetric = 'monthly-mean-max';
-showMaps = false;
-showMonthlyMaps = false;
 
 models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                       'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -21,22 +19,15 @@ if showChgAnomalies
     anomalyStr = 'anomaly';
 end
 
-
 load waterGrid;
 load lat;
 load lon;
 waterGrid = logical(waterGrid);
 
-bowenBaseDir = '2017-concurrent-heat\bowen\';
-tasmaxBaseDir = '2017-concurrent-heat\tasmax\';
+dataBaseDir = 'f:/data/bowen/monthly-flux-temp';
 
 % all available models for both bowen and tasmax
 availModels = {};
-
-% dimensions: x, y, month, model
-bowenHistorical = [];
-bowenChg = [];
-tasmaxChg = [];
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -82,70 +73,92 @@ for i = 1:size(regions, 1)
     regionLatLonInd{i} = {latIndexRange, lonIndexRange};
 end
 
+% spatial mean temp change for each month
+% dimensions: x, y, month, model
+tasmaxChg = [];
+% sensible heat flux
+sFluxChg = [];
+sFluxHistorical = [];
+% latent heat flux
+lFluxChg = [];
+lFluxHistorical = [];
 
-for m = 1:length(models)
+for model = 1:length(models)
+
+    ['processing ' models{model} '...']
+    
+    % store current model flux data
+    monthlyFluxTempHistorical = {};
+    monthlyFluxTempRcp85 = {};
+
     % load historical bowen ratio for this model if it exists
-    if exist([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat'], 'file')
-        load([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat']);
-        curBowenHistorical = monthlyMeans;
+    if exist([dataBaseDir '/monthlyFluxTemp-cmip5-historical-' models{model} '-1985-2004.mat'], 'file')
+        load([dataBaseDir '/monthlyFluxTemp-cmip5-historical-' models{model} '-1985-2004.mat']);
+        % temp, sflux, lflux
+        monthlyFluxTempHistorical = monthlyFluxTemp;
     end
-    
+
     % load rcp85 bowen ratio for this model if it exists
-    if exist([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat'], 'file')
-        load([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat']);
-        curBowenRcp85 = monthlyMeans;
+    if exist([dataBaseDir '/monthlyFluxTemp-cmip5-rcp85-' models{model} '-2060-2080.mat'], 'file')
+        load([dataBaseDir '/monthlyFluxTemp-cmip5-rcp85-' models{model} '-2060-2080.mat']);
+        % temp, sflux, lflux
+        monthlyFluxTempRcp85 = monthlyFluxTemp;
     end
-    
-    % load pre-computed change data for tasmax under rcp85 in 2070-2080
-    if exist([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat'], 'file')
-        load([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat']);
-        curTasmaxRcp85 = chgData;
-    end
-    
-    % if both historical and rcp85 data exist and were loaded for this
-    % model, add them to the change data
-    if exist('curBowenHistorical') && exist('curBowenRcp85') && exist('curTasmaxRcp85')
-        availModels{end+1} = models{m};
-        
-        % NaN-out all water gridcells
-        for month = 1:size(curBowenHistorical, 3)
-            % bowen historical
-            curGrid = curBowenHistorical(:, :, month);
-            curGrid(waterGrid) = NaN;
-            % limit unreasonable bowens
-            curGrid(curGrid > 10) = NaN;
-            curBowenHistorical(:, :, month) = curGrid;
 
-            % bowen future
-            curGrid = curBowenRcp85(:, :, month);
-            curGrid(waterGrid) = NaN;
-            % limit unreasonable bowens
-            curGrid(curGrid > 10) = NaN;
-            curBowenRcp85(:, :, month) = curGrid;
+    % loaded data for historical and future
+    if length(monthlyFluxTempHistorical) > 0 && length(monthlyFluxTempRcp85) > 0
+        availModels{end+1} = models{model};
 
-            % tasmax change
-            curGrid = curTasmaxRcp85(:, :, month);
-            curGrid(waterGrid) = NaN;
-            curTasmaxRcp85(:, :, month) = curGrid;
+        for month = 1:12
+            for xlat = 1:length(monthlyFluxTempHistorical{1}{month})
+                for ylon = 1:length(monthlyFluxTempHistorical{1}{month}{1})
+                    % historical temps for all years
+                    curTempHistorical = monthlyFluxTempHistorical{1}{month}{xlat}{ylon};
+                    % and future
+                    curTempFuture = monthlyFluxTempRcp85{1}{month}{xlat}{ylon};
+                    % calculate change or set to nan if no data (water
+                    % grid)
+                    if length(curTempHistorical) > 0 && length(curTempFuture) > 0
+                        tasmaxChg(xlat, ylon, month, model) = nanmean(curTempFuture) - nanmean(curTempHistorical);
+                    else
+                        tasmaxChg(xlat, ylon, month, model) = NaN;
+                    end
+
+                    % s flux
+                    curSFluxHistorical = monthlyFluxTempHistorical{2}{month}{xlat}{ylon};
+                    curSFluxFuture = monthlyFluxTempRcp85{2}{month}{xlat}{ylon};
+                    if length(curSFluxHistorical) > 0 && length(curSFluxFuture) > 0
+                        sFluxChg(xlat, ylon, month, model) = nanmean(curSFluxFuture) - nanmean(curSFluxHistorical);
+                        sFluxHistorical(xlat, ylon, month, model) = nanmean(curSFluxHistorical);
+                    else
+                        sFluxChg(xlat, ylon, month, model) = NaN;
+                        sFluxHistorical(xlat, ylon, month, model) = NaN;
+                    end
+
+                    % l flux
+                    curLFluxHistorical = monthlyFluxTempHistorical{3}{month}{xlat}{ylon};
+                    curLFluxFuture = monthlyFluxTempRcp85{3}{month}{xlat}{ylon};
+                    if length(curLFluxHistorical) > 0 && length(curLFluxFuture) > 0
+                        lFluxChg(xlat, ylon, month, model) = nanmean(curLFluxFuture) - nanmean(curLFluxHistorical);
+                        lFluxHistorical(xlat, ylon, month, model) = nanmean(curLFluxHistorical);
+                    else
+                        lFluxChg(xlat, ylon, month, model) = NaN;
+                        lFluxHistorical(xlat, ylon, month, model) = NaN;
+                    end
+                end
+            end
         end
-        
-        % record historical bowen
-        bowenHistorical(:, :, length(availModels), :) = curBowenHistorical;
-        
-        % take difference between rcp85 and historical
-        % dimensions: x, y, month, model
-        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
-        
-        tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
     end
-    
-    clear curBowenHistorical curBowenRcp85 curTasmaxRcp85;
-    
+
+    clear monthlyFluxTempRcp85 monthlyFluxTempHistorical;
+
 end
 
 % average bowen (absolute) and temperature change over each region
-bowenRegionsHistorical = {};
-bowenRegionsChange = {};
+lFluxRegionsHistorical = {};
+lFluxRegionsChange = {};
+sFluxRegionsHistorical = {};
+sFluxRegionsChange = {};
 tasmaxRegionsChange = {};
 
 % loop over regions and extract bowen & tasmax change data
@@ -153,85 +166,18 @@ for i = 1:length(regionNames)
     
     if showPercentChange
         % calculate spatial mean historical bowen
-        bowenRegionsHistorical{i} = squeeze(nanmean(nanmean(bowenHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        lFluxRegionsHistorical{i} = squeeze(nanmean(nanmean(lFluxHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        sFluxRegionsHistorical{i} = squeeze(nanmean(nanmean(sFluxHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
         % and spatial mean change
-        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        lFluxRegionsChange{i} = squeeze(nanmean(nanmean(lFluxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        sFluxRegionsChange{i} = squeeze(nanmean(nanmean(sFluxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
     else
-        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        lFluxRegionsChange{i} = squeeze(nanmean(nanmean(lFluxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+        sFluxRegionsChange{i} = squeeze(nanmean(nanmean(sFluxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
     end
     
     tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
 end
-
-% plot maps of change in each region
-if showMaps
-    for i = 1:length(regionNames)
-        curLat = lat(regionLatLonInd{i}{1}, regionLatLonInd{i}{2});
-        curLon = lon(regionLatLonInd{i}{1}, regionLatLonInd{i}{2});
-        
-        % take spatial average over region
-        curTasmax = nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 4), 3);
-        
-        [fg,cb] = plotModelData({curLat, curLon, curTasmax}, 'world', 'caxis', [0 8]);
-        set(gca, 'Color', 'none');
-        title(regionNames{i}, 'FontSize', 24);
-        set(gca, 'FontSize', 24);
-        xlabel(cb, ['Temperature change (' char(176) 'C)'], 'FontSize', 24);
-    end
-end
-
-% show maps for each month of bowen ratio change
-if showMonthlyMaps
-    % historical bowen
-%     figure('Color', [1,1,1]);
-%     for month = 1:12
-%         subplot(3, 4, month);
-%         hold on;
-%         plotModelData({lat,lon,nanmean(bowenHistorical(:,:,:,month), 3)}, 'world', 'caxis', [0 5], 'nonewfig', true);
-%         title(['month ' num2str(month)]);
-%     end
-%     % reduce spacing between subplots
-%     spaceplots(1,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
-%     cb = colorbar('Location', 'southoutside');
-    
-    % bowen change absolute
-    figure('Color', [1,1,1]);
-    for month = 1:12
-        subplot(3, 4, month);
-        hold on;
-        plotModelData({lat,lon,nanmean(bowenChg(:,:,:,month), 3)}, 'world', 'caxis', [-2 5], 'nonewfig', true);
-        title(['month ' num2str(month)]);
-    end
-    % reduce spacing between subplots
-    spaceplots(1,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
-    cb = colorbar('Location', 'southoutside');
-    
-    % bowen change percentage
-    figure('Color', [1,1,1]);
-    for month = 1:12
-        subplot(3, 4, month);
-        hold on;
-        plotModelData({lat,lon,nanmean((bowenChg(:,:,:,month)-bowenHistorical(:,:,:,month)) ./ bowenHistorical(:,:,:,month) .* 100, 3)}, 'world', 'caxis', [-100 100], 'nonewfig', true);
-        title(['month ' num2str(month)]);
-    end
-    % reduce spacing between subplots
-    spaceplots(2,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
-    cb = colorbar('Location', 'southoutside');
-    
-    % temp change
-%     figure('Color', [1,1,1]);
-%     for month = 1:12
-%         subplot(3, 4, month);
-%         hold on;
-%         plotModelData({lat,lon,nanmean(tasmaxChg(:,:,:,month), 3)}, 'world', 'caxis', [0 8], 'nonewfig', true);
-%         title(['month ' num2str(month)]);
-%     end
-%     % reduce spacing between subplots
-%     spaceplots(3,[0.005 0.005 0.005 0.005],[0.001 0.001 0.001 0.001]);
-%     cb = colorbar('Location', 'southoutside');
-end
-
-
 
 % plot ----------------------------------------------------
 
@@ -319,7 +265,6 @@ for i = 1:length(regionNames)
                       'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                       'mpi-esm-mr'};
     end
-
     
     % calculate indices for 25th/75th percentile bowen across models
     lowInd = max(round(0.25 * length(modelSubset)), 1);
@@ -328,36 +273,40 @@ for i = 1:length(regionNames)
     % indices of models for this region
     modelInd = [];
     
-    for m = 1:length(availModels)
+    for model = 1:length(availModels)
         % check if current model is a member of subset for this region
-        if ismember(availModels{m}, modelSubset)
-            modelInd(end+1) = m;
+        if ismember(availModels{model}, modelSubset)
+            modelInd(end+1) = model;
         end
     end
-    
+
     % cancluate change anomalies if needed
     if showChgAnomalies
-        annMeanBowen = nanmean(bowenRegionsChange{i}, 2);
-        annMeanTemp = nanmean(tasmaxRegionsChange{i}, 2);
-        bowenRegionsChange{i} = bowenRegionsChange{i} - repmat(annMeanBowen, 1, 12);
-        tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTemp, 1, 12);
+        annMeanLFlux = nanmean(lFluxRegionsChange{i}, 1);
+        annMeanSFlux = nanmean(sFluxRegionsChange{i}, 1);
+        annMeanTemp = nanmean(tasmaxRegionsChange{i}, 1);
+        lFluxRegionsChange{i} = lFluxRegionsChange{i} - repmat(annMeanLFlux, size(lFluxRegionsChange{i}, 1), 1);
+        sFluxRegionsChange{i} = sFluxRegionsChange{i} - repmat(annMeanSFlux, size(sFluxRegionsChange{i}, 1), 1);
+        tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTemp, size(tasmaxRegionsChange{i}, 1), 1);
     end
     
     % limit to models for this region
-    tasmaxRegionsChange{i} = tasmaxRegionsChange{i}(modelInd, :);
+    tasmaxRegionsChange{i} = tasmaxRegionsChange{i}(:, modelInd);
     if showPercentChange
-        bowenRegionsHistorical{i} = bowenRegionsHistorical{i}(modelInd, :);
+        lFluxRegionsHistorical{i} = lFluxRegionsHistorical{i}(:, modelInd);
+        sFluxRegionsHistorical{i} = sFluxRegionsHistorical{i}(:, modelInd);
     end
-    bowenRegionsChange{i} = bowenRegionsChange{i}(modelInd, :);
+    lFluxRegionsChange{i} = lFluxRegionsChange{i}(:, modelInd);
+    sFluxRegionsChange{i} = sFluxRegionsChange{i}(:, modelInd);
     
     % mean temperature change across models
-    tempY = squeeze(nanmean(tasmaxRegionsChange{i}, 1));
+    tempY = squeeze(nanmean(tasmaxRegionsChange{i}, 2));
     
     % sort models by temperature change to calculate error range
-    tasmaxRegionsChange{i} = sort(tasmaxRegionsChange{i}, 1);
+    tasmaxRegionsChange{i} = sort(tasmaxRegionsChange{i}, 2);
     
     % error is range across 25-75% models 
-    tempErr = squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    tempErr = squeeze(range(tasmaxRegionsChange{i}(:, lowInd:highInd), 2)) ./ 2.0;
     
     % if only one model, err will be 0 so generate an array of zeros
     if tempErr == 0
@@ -366,25 +315,37 @@ for i = 1:length(regionNames)
     
     if showPercentChange
         % average over models and then calculate total prc change
-        bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1)) ./ squeeze(nanmean(bowenRegionsHistorical{i}, 1)) .* 100;
+        lFluxY = squeeze(nanmean(lFluxRegionsChange{i}, 2)) ./ squeeze(nanmean(lFluxRegionsHistorical{i}, 2)) .* 100;
+        sFluxY = squeeze(nanmean(sFluxRegionsChange{i}, 2)) ./ squeeze(nanmean(sFluxRegionsHistorical{i}, 2)) .* 100;
         
         % first calculate % change for each model/month
-        bowenErr = bowenRegionsChange{i} ./ bowenRegionsHistorical{i} .* 100;
+        lFluxErr = lFluxRegionsChange{i} ./ lFluxRegionsHistorical{i} .* 100;
+        sFluxErr = sFluxRegionsChange{i} ./ sFluxRegionsHistorical{i} .* 100;
         % now sort by model
-        bowenErr = sort(bowenErr, 1);
+        lFluxErr = sort(lFluxErr, 2);
+        sFluxErr = sort(sFluxErr, 2);
         % now find range across 25-75% models
-        bowenErr = squeeze(range(bowenErr(lowInd:highInd, :), 1) / 2.0);
+        lFluxErr = squeeze(range(lFluxErr(:, lowInd:highInd), 2) / 2.0);
+        sFluxErr = squeeze(range(sFluxErr(:, lowInd:highInd), 2) / 2.0);
     else
+        
+        
         % calculate mean change across models
-        bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1));
+        lFluxY = squeeze(nanmean(lFluxRegionsChange{i}, 2));
+        sFluxY = squeeze(nanmean(sFluxRegionsChange{i}, 2));
         % sort, and take range across 25-75%
-        bowenRegionsChange{i} = sort(bowenRegionsChange{i}, 1);
-        bowenErr = squeeze(range(bowenRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+        lFluxRegionsChange{i} = sort(lFluxRegionsChange{i}, 2);
+        sFluxRegionsChange{i} = sort(sFluxRegionsChange{i}, 2);
+        lFluxErr = squeeze(range(lFluxRegionsChange{i}(:, lowInd:highInd), 2)) ./ 2.0;
+        sFluxErr = squeeze(range(sFluxRegionsChange{i}(:, lowInd:highInd), 2)) ./ 2.0;
     end
     
     % if only one model, err will be 0 so generate an array of zeros
-    if bowenErr == 0
-        bowenErr = zeros(12, 1);
+    if lFluxErr == 0
+        lFluxErr = zeros(12, 1);
+    end
+    if sFluxErr == 0
+        sFluxErr = zeros(12, 1);
     end
     
     f = figure('Color',[1,1,1]);
@@ -393,9 +354,13 @@ for i = 1:length(regionNames)
     box on;
 
     [ax, p1, p2] = shadedErrorBaryy(1:12, tempY, tempErr, 'r', ...
-                                    1:12, bowenY, bowenErr, 'g');
+                                    1:12, lFluxY, lFluxErr, 'g');
+    [ax2, p3, p4] = shadedErrorBaryy(1:12, tempY, tempErr, 'r', ...
+                                        1:12, sFluxY, sFluxErr, 'b');
     hold(ax(1));
     hold(ax(2));
+    hold(ax2(1));
+    hold(ax2(2));
     box(ax(1), 'on');
     set(p1.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
     set(p1.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
@@ -405,6 +370,15 @@ for i = 1:length(regionNames)
     set(p2.edge, 'Color', 'w');
     axis(ax(1), 'square');
     axis(ax(2), 'square');
+    
+    set(p3.mainLine, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+    set(p3.patch, 'FaceColor', [239/255.0, 71/255.0, 85/255.0]);
+    set(p3.edge, 'Color', 'w');
+    set(p4.mainLine, 'Color', [66/255.0, 170/255.0, 244/255.0], 'LineWidth', 3);
+    set(p4.patch, 'FaceColor', [66/255.0, 170/255.0, 244/255.0]);
+    set(p4.edge, 'Color', 'w');
+    axis(ax2(1), 'square');
+    axis(ax2(2), 'square');
 
     % plot bowen zero line 
     plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
@@ -412,33 +386,47 @@ for i = 1:length(regionNames)
     xlabel('Month', 'FontSize', 24);
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
+    set(ax2(1), 'XTick', 1:12);
+    set(ax2(2), 'XTick', []);
+    if showChgAnomalies
+        set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
+        set(ax2(1), 'YLim', [-3 3], 'YTick', -3:3);
+    else
+        set(ax(1), 'YLim', [0 7], 'YTick', 0:7);
+        set(ax2(1), 'YLim', [0 7], 'YTick', 0:7);
+    end
     
     if showPercentChange
-        set(ax(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
-        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+        set(ax(2), 'YLim', [-50 100], 'YTick', []);
+        set(ax2(2), 'YLim', [-50 100], 'YTick', [-50 0 50 100]);
+        ylabel(ax2(2), 'Flux change (percent)', 'FontSize', 24);
     elseif showChgAnomalies
-        set(ax(2), 'YLim', [-2 2], 'YTick', -2:2);
-        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 24);
+        set(ax(2), 'YLim', [-14 14], 'YTick', []);
+        set(ax2(2), 'YLim', [-14 14], 'YTick', -14:2:14);
+        ylabel(ax2(2), 'Flux change (anomaly)', 'FontSize', 24);
     else
-        set(ax(2), 'YLim', [-2 3], 'YTick', [-2 -1 0 1 2 3]);
-        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+        set(ax(2), 'YLim', [-20 20], 'YTick', []);
+        set(ax2(2), 'YLim', [-20 20], 'YTick', -20:5:20);
+        ylabel(ax2(2), 'Flux change', 'FontSize', 24);
     end
-    set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
-    set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+    set(ax(1), 'YColor', 'k', 'FontSize', 24);
+    set(ax(2), 'YColor', 'k', 'FontSize', 24);
+    set(ax2(1), 'YColor', 'k', 'FontSize', 24);
+    set(ax2(2), 'YColor', 'k', 'FontSize', 24);
     if showChgAnomalies
-        ylabel(ax(1), ['Tx anomaly change (' char(176) 'C)'], 'FontSize', 24);
-        set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
+        ylabel(ax(1), ['Tx change anomaly (' char(176) 'C)'], 'FontSize', 24);
     else
         ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
-        set(ax(1), 'YLim', [0 7], 'YTick', 0:7);
     end
     
     title(regionNames{i}, 'FontSize', 24);
+    leg = legend([p1.mainLine p2.mainLine p4.mainLine], 'Temperature', 'Latent heat flux', 'Sensible heat flux');
     set(gcf, 'Position', get(0,'Screensize'));
+    set(leg, 'FontSize', 24, 'location', 'southwest');
     if showPercentChange
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-percent.png;']);
+        export_fig(['flux-seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-percent.png;']);
     else
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-absolute.png;']);
+        export_fig(['flux-seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-absolute.png;']);
     end
     close all;
 end

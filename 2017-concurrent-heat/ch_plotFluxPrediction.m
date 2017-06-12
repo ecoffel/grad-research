@@ -6,13 +6,10 @@ monthlyMean = true;
 plotEachModel = false;
 
 % plot scatter plots for each month of bowen, temp
-plotScatter = false;
+plotScatter = true;
 
 % whether to predict the difference between the monthly warming and the the annual mean warming
 %predictDifference = true;
-
-% train and predict on the bowen ratio anomaly vs. the annual average
-useBowenAnomaly = false;
 
 % whether to predict temps based on historical CMIP5 bowen to test whether
 % future response changes - this is JUST HISTORICAL
@@ -35,19 +32,13 @@ for l = lags
     lagStr = [lagStr '-' num2str(l)];
 end
 
-anomalyStr = 'total';
-if useBowenAnomaly
-    anomalyStr = 'anomaly';
-end
-
 trainOnNcepStr = '';
 if trainOnNcep
     trainOnNcepStr = 'train-ncep';
 end
 
-
 % type of model to fit to data
-fitType = 'poly2';
+fitType = 'poly22';
 
 rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
@@ -65,7 +56,7 @@ dataset = 'cmip5';
 load lat;
 load lon;
 
-regionInd = 4;
+regionInd = 2;
 months = 1:12;
 
 baseDir = 'e:/data/bowen';
@@ -129,29 +120,18 @@ switch regionAb{regionInd}
               'gfdl-cm3', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
               'mpi-esm-mr'};
-%         models = {'access1-0', 'access1-3', 'bnu-esm', ...
-%               'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'gfdl-cm3', 'hadgem2-cc', ...
-%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-%               'mpi-esm-mr'};
     case 'europe'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'gfdl-cm3', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
               'mpi-esm-mr'};
-%         models = {'access1-0', 'access1-3', 'canesm2', ...
-%               'gfdl-cm3', 'hadgem2-cc', ...
-%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'med'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'gfdl-cm3', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
               'mpi-esm-mr'};
-%         models = {'bnu-esm', ...
-%               'csiro-mk3-6-0', 'gfdl-cm3', 'hadgem2-cc', ...
-%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm'};
     case 'sa-n'
         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -164,11 +144,6 @@ switch regionAb{regionInd}
               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3'};
-%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', ...
-%               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3'};
     case 'india'
         models = {'bnu-esm', 'cnrm-cm5', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
@@ -183,7 +158,7 @@ switch regionAb{regionInd}
                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                   'mpi-esm-mr'};
 end
-
+       
 regionLatLonInd = {};
 
 % loop over all regions to find lat/lon indicies
@@ -197,14 +172,17 @@ curLon = regionLatLonInd{regionInd}{2};
 
 % historical model temp/bowen
 meanTempHistoricalNCEP = [];
-meanBowenHistoricalNCEP = [];
+meanLFluxHistoricalNCEP = [];
+meanSFluxHistoricalNCEP = [];
 
 meanTempHistoricalCmip5 = [];
-meanBowenHistoricalCmip5 = [];
+meanLFluxHistoricalCmip5 = [];
+meanSFluxHistoricalCmip5 = [];
 
 % future model temp/bowen
 meanTempFuture = [];
-meanBowenFuture = [];
+meanLFluxFuture = [];
+meanSFluxFuture = [];
 % future predicted temp from modeled bowen (historical)
 meanTempPredictedHistorical = [];
 % and future bowen
@@ -226,52 +204,58 @@ cmip5Models = {};
 for model = 1:length(models)
 
     % if we are loading NCEP and haven't done so already
-    if trainOnNcep && model == 1
-        ['loading NCEP...']
-        load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-historical-ncep-reanalysis--' timePeriodHistorical '.mat']);
-        bowenTempNcep = monthlyBowenTemp;
-        clear monthlyBowenTemp;    
-    end
+%     if trainOnNcep && model == 1
+%         ['loading NCEP...']
+%         load([baseDir '/monthly-flux-temp/monthlyFluxTemp-historical-ncep-reanalysis--' timePeriodHistorical '.mat']);
+%         bowenTempNcep = monthlyBowenTemp;
+%         clear monthlyBowenTemp;    
+%     end
     
     % load historical CMIP5
     ['loading historical ' models{model} '...']
-    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
-    bowenTempCmip5 = monthlyBowenTemp;
-    clear monthlyBowenTemp;    
+    load([baseDir '/monthly-flux-temp/monthlyFluxTemp-' dataset '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+    fluxTempCmip5 = monthlyFluxTemp;
+    clear monthlyFluxTemp;    
     
     ['loading future ' models{model} '...']
 
     % load historical bowen data for comparison
-    load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
-    bowenTempFuture = monthlyBowenTemp;
-    clear monthlyBowenTemp;
+    load([baseDir '/monthly-flux-temp/monthlyFluxTemp-' dataset '-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
+    fluxTempFuture = monthlyFluxTemp;
+    clear monthlyFluxTemp;
 
     cmip5Models{model} = {};
     
     for month = months
         ['month = ' num2str(month) '...']
         tempCmip5 = [];
-        bowenCmip5 = {};
+        lFluxCmip5 = {};
+        sFluxCmip5 = {};
         tempNcep = [];
-        bowenNcep = {};
+        lFluxNcep = {};
+        sFluxNcep = {};
         
         tempFuture = [];
-        bowenFuture = {};
+        lFluxFuture = {};
+        sFluxFuture = {};
         
         for l = 1:length(lags)
             lag = lags(l);
            
-            bowenNcep{l} = [];
-            bowenCmip5{l} = [];
-            bowenFuture{l} = [];
+            lFluxNcep{l} = [];
+            sFluxNcep{l} = [];
+            lFluxCmip5{l} = [];
+            sFluxCmip5{l} = [];
+            lFluxFuture{l} = [];
+            sFluxFuture{l} = [];
             
             % look at temps in current month
             tempMonth = month;
             % look at bowens in lagged month
-            bowenMonth = month - lag;
+            fluxMonth = month - lag;
             % limit bowen month and roll over (0 -> dec, -1 -> nov, etc)
-            if bowenMonth <= 0
-                bowenMonth = 12 + bowenMonth;
+            if fluxMonth <= 0
+                fluxMonth = 12 + fluxMonth;
             end
 
             for xlat = 1:length(curLat)
@@ -285,43 +269,46 @@ for model = 1:length(models)
 
                             % lists of temps for current month for all
                             % years (cmip5)
-                            curMonthTempsCmip5 = bowenTempCmip5{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
-                            curMonthBowensCmip5 = bowenTempCmip5{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)};
+                            curMonthTempsCmip5 = fluxTempCmip5{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                            curMonthSFluxesCmip5 = fluxTempCmip5{2}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
+                            curMonthLFluxesCmip5 = fluxTempCmip5{3}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
                             
-                            ind = find(abs(curMonthBowensCmip5) <= 10);
-                        
-                            curMonthTempsCmip5 = curMonthTempsCmip5(ind);
-                            curMonthBowensCmip5 = curMonthBowensCmip5(ind);
+%                             ind = find(abs(curMonthSFluxesCmip5) <= 10);
+%                             curMonthTempsCmip5 = curMonthTempsCmip5(ind);
+%                             curMonthSFluxesCmip5 = curMonthSFluxesCmip5(ind);
                             
                             % only process NCEP once, on first model
                             if trainOnNcep && model == 1
-                                curMonthTempsNcep = bowenTempNcep{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
-                                curMonthBowensNcep = bowenTempNcep{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)};
+                                curMonthTempsNcep = fluxTempNcep{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                                curMonthSFluxesNcep = fluxTempNcep{2}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
+                                curMonthLFluxesNcep = fluxTempNcep{3}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
                             end
 
                             % start at year 2 to allow for lags
                             for year = 2:length(curMonthTempsCmip5)
 
                                 tempYear = year;
-                                bowenYear = year;
+                                fluxYear = year;
                                 % if bowen month is *after* temp month, go to
                                 % previous year
-                                if tempMonth - bowenMonth < 0
-                                    bowenYear = bowenYear - 1;
+                                if tempMonth - fluxMonth < 0
+                                    fluxYear = fluxYear - 1;
                                 end
 
                                 % this condition will slightly change the mean
                                 % temperature and bowen for lagged plots
-                                if bowenYear > 0
+                                if fluxYear > 0
                                     nextTempCmip5 = curMonthTempsCmip5(tempYear);
-                                    nextBowenCmip5 = curMonthBowensCmip5(bowenYear);
+                                    nextSFluxCmip5 = curMonthSFluxesCmip5(fluxYear);
+                                    nextLFluxCmip5 = curMonthLFluxesCmip5(fluxYear);
                                     
                                     if trainOnNcep && model == 1
                                         nextTempNcep = curMonthTempsNcep(tempYear);
-                                        nextBowenNcep = curMonthBowensNcep(bowenYear);
+                                        nextSFluxNcep = curMonthSFluxesNcep(fluxYear);
+                                        nextLFluxNcep = curMonthLFluxesNcep(fluxYear);
                                     end
 
-                                    if ~isnan(nextTempCmip5) && ~isnan(nextBowenCmip5)
+                                    if ~isnan(nextTempCmip5) && ~isnan(nextSFluxCmip5) && ~isnan(nextLFluxCmip5)
                                         
                                         % only take one temp - the current,
                                         % lag 0
@@ -329,19 +316,21 @@ for model = 1:length(models)
                                             tempCmip5 = [tempCmip5; nextTempCmip5];
                                         end
                                         
-                                        bowenCmip5{l} = [bowenCmip5{l}; nextBowenCmip5];
+                                        lFluxCmip5{l} = [lFluxCmip5{l}; nextLFluxCmip5];
+                                        sFluxCmip5{l} = [sFluxCmip5{l}; nextSFluxCmip5];
                                     end
                                     
                                     % if we are on the first model and have
                                     % non-nan NCEP values, process them
-                                    if trainOnNcep && model == 1 && ~isnan(nextTempNcep) && ~isnan(nextBowenNcep)
+                                    if trainOnNcep && model == 1 && ~isnan(nextTempNcep) && ~isnan(nextLFluxNcep) && ~isnan(nextSFluxNcep)
                                         % only take one temp - the current,
                                         % lag 0
                                         if l == 1
                                             tempNcep = [tempNcep; nextTempNcep];
                                         end
                                         
-                                        bowenNcep{l} = [bowenNcep{l}; nextBowenNcep];
+                                        lFluxNcep{l} = [lFluxNcep{l}; nextLFluxNcep];
+                                        sFluxNcep{l} = [sFluxNcep{l}; nextSFluxNcep];
                                     end
                                 end
                             end
@@ -349,37 +338,40 @@ for model = 1:length(models)
                         % --------- future -------------
 
                         % lists of temps for current month for all years
-                        curMonthTemps = bowenTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
-                        curMonthBowens = bowenTempFuture{2}{bowenMonth}{curLat(xlat)}{curLon(ylon)};
+                        curMonthTemps = fluxTempFuture{1}{tempMonth}{curLat(xlat)}{curLon(ylon)};
+                        curMonthSFlux = fluxTempFuture{2}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
+                        curMonthLFlux = fluxTempFuture{3}{fluxMonth}{curLat(xlat)}{curLon(ylon)};
 
-                        ind = find(abs(curMonthBowens) <= 10);
-
-                        curMonthTemps = curMonthTemps(ind);
-                        curMonthBowens = curMonthBowens(ind);
+%                         ind = find(abs(curMonthSFlux) <= 10);
+%                         curMonthTemps = curMonthTemps(ind);
+%                         curMonthSFlux = curMonthSFlux(ind);
                         
                         % start at year 2 to allow for lags
                         for year = 2:length(curMonthTemps)
 
                             tempYear = year;
-                            bowenYear = year;
+                            fluxYear = year;
                             % if bowen month is *after* temp month, go to
                             % previous year
-                            if tempMonth - bowenMonth < 0
-                                bowenYear = bowenYear - 1;
+                            if tempMonth - fluxMonth < 0
+                                fluxYear = fluxYear - 1;
                             end
 
                             % this condition will slightly change the mean
                             % temperature and bowen for lagged plots
-                            if bowenYear > 0
+                            if fluxYear > 0
                                 nextTempFuture = curMonthTemps(tempYear);
-                                nextBowenFuture = curMonthBowens(bowenYear);
+                                nextSFluxFuture = curMonthSFlux(fluxYear);
+                                nextLFluxFuture = curMonthLFlux(fluxYear);
 
-                                if ~isnan(nextTempFuture) && ~isnan(nextBowenFuture)
+                                if ~isnan(nextTempFuture) && ~isnan(nextSFluxFuture) && ~isnan(nextLFluxFuture)
                                     % only take lag 0 temp
                                     if l == 1
                                         tempFuture = [tempFuture; nextTempFuture];
                                     end
-                                    bowenFuture{l} = [bowenFuture{l}; nextBowenFuture];
+                                    
+                                    lFluxFuture{l} = [lFluxFuture{l}; nextLFluxFuture];
+                                    sFluxFuture{l} = [sFluxFuture{l}; nextSFluxFuture];
                                 end
                             end
                         end
@@ -392,43 +384,63 @@ for model = 1:length(models)
         % if using NCEP, only build models once (on first iteration)
         if trainOnNcep && model == 1
             curHistoricalTemp = tempNcep;
-            curHistoricalBowen = bowenNcep;
+            curHistoricalLFlux = lFluxNcep;
+            curHistoricalSFlux = sFluxNcep;
         elseif trainOnNcep && model > 1
             curHistoricalTemp = [];
-            curHistoricalBowen = [];
+            curHistoricalLFlux = [];
+            curHistoricalSFlux = [];
         else
             curHistoricalTemp = tempCmip5;
-            curHistoricalBowen = bowenCmip5;
+            curHistoricalLFlux = lFluxCmip5;
+            curHistoricalSFlux = sFluxCmip5;
         end
         
         % if we have prediction data (either NCEP for first time or current
         % CMIP5 model)
-        if length(curHistoricalBowen) > 0
+        if length(curHistoricalLFlux) > 0 && length(curHistoricalSFlux) > 0
             
             % create cell array of all bowen lags and the temp variable as
             % the last column
             tbl = table();
-            for v = 1:length(curHistoricalBowen)
-                if v > 1 && length(curHistoricalBowen{v}) < size(tbl, 1)
-                    fill = zeros(size(tbl, 1) - length(curHistoricalBowen{v}), 1);
+            for v = 1:length(curHistoricalLFlux)
+                if v > 1 && length(curHistoricalLFlux{v}) < size(tbl, 1)
+                    fill = zeros(size(tbl, 1) - length(curHistoricalLFlux{v}), 1);
                     fill(fill == 0) = NaN;
                     if length(fill) > 0
-                        curHistoricalBowen{v} = [curHistoricalBowen{v}; fill];
+                        curHistoricalLFlux{v} = [curHistoricalLFlux{v}; fill];
                     end
-                elseif v > 1 && length(curHistoricalBowen{v}) > size(tbl, 1)
-                    curHistoricalBowen{v} = curHistoricalBowen{v}(1:size(tbl, 1));
+                elseif v > 1 && length(curHistoricalLFlux{v}) > size(tbl, 1)
+                    curHistoricalLFlux{v} = curHistoricalLFlux{v}(1:size(tbl, 1));
                 end
-                
-                if useBowenAnomaly
-                    curHistoricalBowen{v} = curHistoricalBowen{v} - nanmean(curHistoricalBowen{v});
-                end
-                
-                eval(['tbl.' 'lag' num2str(lags(v)) ' = curHistoricalBowen{' num2str(v) '};']);
+                eval(['tbl.' 'lflux_lag' num2str(lags(v)) ' = curHistoricalLFlux{' num2str(v) '};']);
             end
+            
+            for v = 1:length(curHistoricalSFlux)
+                if v > 1 && length(curHistoricalSFlux{v}) < size(tbl, 1)
+                    fill = zeros(size(tbl, 1) - length(curHistoricalSFlux{v}), 1);
+                    fill(fill == 0) = NaN;
+                    if length(fill) > 0
+                        curHistoricalSFlux{v} = [curHistoricalSFlux{v}; fill];
+                    end
+                elseif v > 1 && length(curHistoricalSFlux{v}) > size(tbl, 1)
+                    curHistoricalSFlux{v} = curHistoricalSFlux{v}(1:size(tbl, 1));
+                end
+                eval(['tbl.' 'sflux_lag' num2str(lags(v)) ' = curHistoricalSFlux{' num2str(v) '};']);
+            end
+            
             tbl.temp = curHistoricalTemp;
             
             if plotScatter
-                scatter(tbl.temp, tbl.lag0);
+                figure('Color', [1,1,1]);
+                hold on;
+                scatter(tbl.temp, tbl.sflux_lag0);
+                title('S FLUX');
+                
+                figure('Color', [1,1,1]);
+                hold on;
+                scatter(tbl.temp, tbl.lflux_lag0);
+                title('L FLUX');
             end
             
             % convert cell into table
@@ -466,9 +478,11 @@ for model = 1:length(models)
         % mean historical model bowen for all lags
         for l = 1:length(lags)
             if trainOnNcep && model == 1
-                meanBowenHistoricalNCEP(month, l) = nanmean(bowenNcep{l});
+                meanLFluxHistoricalNCEP(month, l) = nanmean(lFluxNcep{l});
+                meanSFluxHistoricalNCEP(month, l) = nanmean(sFluxNcep{l});
             end
-            meanBowenHistoricalCmip5(model, month, l) = nanmean(bowenCmip5{l});
+            meanLFluxHistoricalCmip5(model, month, l) = nanmean(lFluxCmip5{l});
+            meanSFluxHistoricalCmip5(model, month, l) = nanmean(sFluxCmip5{l});
         end
 
         % mean of future temp (CMIP5)
@@ -476,13 +490,14 @@ for model = 1:length(models)
         
         % mean future model bowen for each lag
         for l = 1:length(lags)
-            meanBowenFuture(model, month, l) = nanmean(bowenFuture{l});
+            meanLFluxFuture(model, month, l) = nanmean(lFluxFuture{l});
+            meanSFluxFuture(model, month, l) = nanmean(sFluxFuture{l});
         end
 
-        clear tempNcep tempCmip5 tempFuture bowenNcep bowenCmip5 bowenFuture;
+        clear tempNcep tempCmip5 tempFuture lFluxNcep sFluxNcep lFluxCmip5 sFluxCmip5 lFluxFuture sFluxFuture;
     end
     
-    clear bowenTempNcep bowenTempCmip5 bowenTempFuture;
+    clear fluxTempNcep fluxTempCmip5 fluxTempFuture;
 end
 
 % predict future temps based on model trained on historical data,
@@ -492,30 +507,33 @@ if trainOnNcep
 
     % now use CMIP5 mean percent bowen change to amplify bowens for
     % this region
-    bowenChgCmip5 = [];
-    for model = 1:size(meanBowenFuture, 1)
-        bowenChgCmip5(model, :) = (meanBowenFuture(model, :) - meanBowenHistoricalCmip5(model, :)) ./ meanBowenHistoricalCmip5(model, :) + 1;
+    lFluxChgCmip5 = [];
+    sFluxChgCmip5 = [];
+    for model = 1:size(meanLFluxFuture, 1)
+        lFluxChgCmip5(model, :) = (meanLFluxFuture(model, :) - meanLFluxHistoricalCmip5(model, :)) ./ meanLFluxHistoricalCmip5(model, :) + 1;
+        sFluxChgCmip5(model, :) = (meanSFluxFuture(model, :) - meanSFluxHistoricalCmip5(model, :)) ./ meanSFluxHistoricalCmip5(model, :) + 1;
     end
     
     % multiply historical NCEP bowen by 
-    meanBowenFutureNCEP = repmat(meanBowenHistoricalNCEP', size(bowenChgCmip5, 1), 1) .* bowenChgCmip5;
+    meanLFluxFutureNCEP = repmat(meanLFluxHistoricalNCEP', size(lFluxChgCmip5, 1), 1) .* lFluxChgCmip5;
+    meanSFluxFutureNCEP = repmat(meanSFluxHistoricalNCEP', size(sFluxChgCmip5, 1), 1) .* sFluxChgCmip5;
     
     for month = 1:12
-        meanTempPredictedHistorical(month) = predict(ncepModels{month}, meanBowenHistoricalNCEP(month));
+        meanTempPredictedHistorical(month) = predict(ncepModels{month}, [meanLFluxHistoricalNCEP(month), meanSFluxHistoricalNCEP(month)]);
         % predict future based on modified NCEP bowens (for each CMIP5
         % model)
-        for model = 1:size(meanBowenFutureNCEP, 1)
-            meanTempPredictedFuture(model, month) = predict(ncepModels{month}, meanBowenFutureNCEP(model, month));
+        for model = 1:size(meanLFluxFutureNCEP, 1)
+            meanTempPredictedFuture(model, month) = predict(ncepModels{month}, [meanLFluxFutureNCEP(model, month), meanSFluxFutureNCEP(model, month)]);
         end
     end
 else
     % train using current CMIP5-based model
     % historical CMIP5 bowens
     for month = 1:12
-        for model = 1:size(meanBowenHistoricalCmip5, 1)
-            meanTempPredictedHistorical(model, month) = predict(cmip5Models{model}{month}, squeeze(meanBowenHistoricalCmip5(model, month, :))');
+        for model = 1:size(meanLFluxHistoricalCmip5, 1)
+            meanTempPredictedHistorical(model, month) = predict(cmip5Models{model}{month}, [squeeze(meanLFluxHistoricalCmip5(model, month, :))', squeeze(meanSFluxHistoricalCmip5(model, month, :))']);
             % and future CMIP5 bowen
-            meanTempPredictedFuture(model, month) = predict(cmip5Models{model}{month}, squeeze(meanBowenFuture(model, month, :))');
+            meanTempPredictedFuture(model, month) = predict(cmip5Models{model}{month}, [squeeze(meanLFluxFuture(model, month, :))', squeeze(meanSFluxFuture(model, month, :))']);
         end
     end
 end
@@ -587,14 +605,14 @@ xlabel('Month', 'FontSize', 24);
 ylabel(['Warming anomaly ' char(176) 'C'], 'FontSize', 24);
 set(gca, 'FontSize', 24);
 set(gcf, 'Position', get(0,'Screensize'));
-legend([p1.mainLine, p2.mainLine], 'CMIP5', 'Bowen model');%, 'location', 'best');
+legend([p1.mainLine, p2.mainLine], 'CMIP5', 'Flux model');%, 'location', 'best');
 if predictOnHistoricalCmip5
-    export_fig(['bowenModelPrediction-' regionAb{regionInd} '-historical-test' '-' lagStr '-' trainOnNcepStr '-' anomalyStr '.png']);
+    export_fig(['fluxModelPrediction-' regionAb{regionInd} '-historical-test' '-' lagStr '-' trainOnNcepStr '.png']);
 else
     if showBowenModelChange
-        export_fig(['bowenModelPrediction-' regionAb{regionInd} '-bowen-model-change' '-' lagStr '-' trainOnNcepStr '-' anomalyStr '.png']);
+        export_fig(['fluxModelPrediction-' regionAb{regionInd} '-bowen-model-change' '-' lagStr '-' trainOnNcepStr '.png']);
     else
-        export_fig(['bowenModelPrediction-' regionAb{regionInd} '-' lagStr '-' trainOnNcepStr '-' anomalyStr '.png']);
+        export_fig(['fluxModelPrediction-' regionAb{regionInd} '-' lagStr '-' trainOnNcepStr '.png']);
     end
 end
 close all;
@@ -698,7 +716,7 @@ if ~predictOnHistoricalCmip5
     ylabel(ax(2), 'Coefficient', 'FontSize', 24);
 
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['bowenModelPredictionR2-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '-' lagStr '-' trainOnNcepStr '-' anomalyStr '.png']);
+    export_fig(['r2PredictionFlux-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '-' lagStr '-' trainOnNcepStr '.png']);
     close all;
 end
 

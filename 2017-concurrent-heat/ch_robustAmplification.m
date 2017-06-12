@@ -1,7 +1,7 @@
 
 % should we look at changes in monthly temperature or changes in the annual
 % maximum vs. the mean daily maximum
-monthly = false;
+monthly = true;
 
 load lat;
 load lon;
@@ -47,7 +47,7 @@ if monthly
 
     % compute amplification - difference between month that warms the most and
     % month that warms the least
-    amp = nanmax(tasmaxChg, [], 4) - nanmin(tasmaxChg, [], 4);
+    amp = nanmax(tasmaxChg, [], 4) - nanmean(tasmaxChg, 4);
 else
     load chg-data\chgData-cmip5-ann-max-rcp85-2070-2080;
     annMax = chgData;
@@ -66,10 +66,10 @@ ampThresh = -1;
 ampAgreement = 66;
 
 % levels of amplification to search for model agreement on
-ampLevels = 0:5;
-if ~monthly
+%ampLevels = 0:5;
+%if ~monthly
     ampLevels = 0:0.25:2;
-end
+%end
 
 % how many models agree on change greater than threshold
 ampLevel = zeros(size(lat, 1), size(lat, 2));

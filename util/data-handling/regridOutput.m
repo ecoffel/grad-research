@@ -19,6 +19,7 @@ v7 = false;
 region = '';
 tosMod = false;
 gridCor = true;
+monthly = false;
 
 for i=1:2:length(varargin)
     key = varargin{i};
@@ -40,6 +41,8 @@ for i=1:2:length(varargin)
             region = val;
         case 'tos-strangegrid'
             tosMod = true;
+        case 'monthly'
+            monthly = true;
     end
 end
 
