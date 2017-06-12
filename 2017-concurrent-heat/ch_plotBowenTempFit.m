@@ -1,6 +1,6 @@
 
 % should we look at change between rcp & historical (only for cmip5)
-change = false;
+change = true;
 
 % look at monthly mean temp/bowen fit or monthly mean max temperature &
 % mean bowen
@@ -38,10 +38,10 @@ end
 load lat;
 load lon;
 
-regionInd = 7;
+regionInd = 2;
 months = 1:12;
 
-baseDir = 'f:/data/bowen';
+baseDir = 'e:/data/bowen';
 
 rcpStr = 'historical';
 if change
@@ -173,7 +173,7 @@ if useNcep
 end
 
 dataset = 'cmip5';
-if length(models) == 1 && strcmp(models{1}, 'ncep-reanalysis')
+if useNcep
     dataset = 'ncep';
 end
        
@@ -586,7 +586,11 @@ for lag = lags
         end
 
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag)  '.png'], '-m2');
+        if change
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m2');
+        else
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m2');
+        end
         close all;
     end
 end
