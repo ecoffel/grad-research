@@ -6,8 +6,8 @@
 season = 'all';
 dataset = 'cmip5';
 tempVar = 'tasmax';
-sflux = 'shtfl';
-lflux = 'lhtfl';
+sflux = 'hfss';
+lflux = 'hfls';
 
 
 if strcmp(dataset, 'cmip5')
@@ -17,7 +17,7 @@ if strcmp(dataset, 'cmip5')
                       'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3'};
 
-    rcp = 'historical';
+    rcp = 'rcp85';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -26,9 +26,10 @@ elseif strcmp(dataset, 'ncep-reanalysis')
 end
 
 region = 'world';
-timePeriod = 1985:2004;
+timePeriod = 2060:2080;%1985:2004;
 
-baseDir = 'f:/data';
+baseDir = 'e:/data';
+outputBaseDir = '2017-concurrent-heat';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -163,7 +164,7 @@ for m = 1:length(models)
     
     % save current model's data
     monthlyFluxTemp = {tempData, sfluxData, lfluxData};
-    save(['f:/data/bowen/monthly-flux-temp/monthlyFluxTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyFluxTemp');
+    save([outputBaseDir '/monthly-flux-temp/monthlyFluxTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyFluxTemp');
 
 end
 
