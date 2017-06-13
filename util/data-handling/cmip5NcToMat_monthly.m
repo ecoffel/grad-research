@@ -206,8 +206,16 @@ for k = 1:length(ncFileNames)
         startDate = datenum([0001 01 01 00 00 00]);
     end
     
+    %startDate = startDate - datenum([0000 01 15 00 00 00]);
+    
     timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]) + startDate;
 
+    % calc number of days from start of month
+    numDays = floor(timestep(1) - startDate);
+    
+    % subtract that number of days so each month starts on day 1
+    timestep = timestep - datenum([0000 00 numDays 00 00 00]);
+    
     for t = 0:length(timestep)-1
     
         if dimIdLev ~= -1
