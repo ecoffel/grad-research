@@ -5,7 +5,7 @@
 
 season = 'all';
 dataset = 'cmip5';
-tempVar = 'wb';
+tempVar = 'tasmax';
 bowenVar = 'bowen';
 
 if strcmp(dataset, 'cmip5')
@@ -23,7 +23,7 @@ if strcmp(dataset, 'cmip5')
                           'mpi-esm-mr', 'mri-cgcm3'};
     end
 
-    rcp = 'historical';
+    rcp = 'rcp85';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -32,7 +32,7 @@ elseif strcmp(dataset, 'ncep-reanalysis')
 end
 
 region = 'world';
-timePeriod = 1985:2004;%2060:2080;%1985:2004;
+timePeriod = 2041:2060;%1985:2004;
 
 baseDir = 'e:/data';
 yearStep = 1;
