@@ -20,6 +20,9 @@ for k = 1:length(ncFileNames)
     
     ncFileName = ncFileNames{k}
     
+    % if 'historical' not in file name, then a future model file
+    isFuture = length(strfind(ncFileName, 'historical')) == 0;
+    
     ncid = netcdf.open([rawNcDir, '/', ncFileName]);
     [ndim, nvar] = netcdf.inq(ncid);
 
@@ -47,7 +50,11 @@ for k = 1:length(ncFileNames)
         timeRange = timeRange{1};
         timeRange = strsplit(timeRange, '-');
         startDate = timeRange{1};
+        startYear = str2num(startDate(1:4));
+        startMonth = str2num(startDate(5:6));
         endDate = timeRange{2};
+        endYear = str2num(endDate(1:4));
+        endMonth = str2num(endDate(5:6));
     end
     
     monthly = false;
@@ -185,39 +192,73 @@ for k = 1:length(ncFileNames)
         end
         [lon, lat] = meshgrid(lon, lat);
     end
-    
-    useStartDate = false;
-    
-    if length(findstr('bcc-csm', rawNcDir)) ~= 0 || ...
-       length(findstr('bnu-esm', rawNcDir)) ~= 0 || ...
-       length(findstr('canesm', rawNcDir)) ~= 0 || ...
-       length(findstr('cnrm', rawNcDir)) ~= 0 || ...
-       length(findstr('cmcc', rawNcDir)) ~= 0 || ...
-       length(findstr('inmcm', rawNcDir)) ~= 0 || ...
-       length(findstr('ipsl', rawNcDir)) ~= 0 || ...
-       length(findstr('gfdl', rawNcDir)) ~= 0 || ...
-       length(findstr('csiro', rawNcDir)) ~= 0 || ...
-       length(findstr('mpi', rawNcDir)) ~= 0 || ...
-       length(findstr('mri', rawNcDir)) ~= 0 || ...
-       length(findstr('hadgem', rawNcDir)) ~= 0 || ...
-       length(findstr('miroc', rawNcDir)) ~= 0
-        startDate = datenum([1850 01 01 00 00 00]);
-    else
-        startDate = datenum([0001 01 01 00 00 00]);
-    end
+        
+%     if length(findstr('bcc-csm', rawNcDir)) ~= 0 || ...
+%        length(findstr('bnu-esm', rawNcDir)) ~= 0 || ...
+%        length(findstr('inmcm', rawNcDir)) ~= 0 || ...
+%        length(findstr('ipsl', rawNcDir)) ~= 0 || ...
+%        length(findstr('mpi', rawNcDir)) ~= 0 || ...
+%        length(findstr('mri', rawNcDir)) ~= 0 || ...
+%        length(findstr('miroc', rawNcDir)) ~= 0
+%         if isFuture
+%             startDate = datenum([2006 01 01 00 00 00]);
+%         else
+%             startDate = datenum([1850 01 01 00 00 00]);
+%         end
+%     elseif length(findstr('canesm', rawNcDir)) ~= 0 || ...
+%            length(findstr('csiro', rawNcDir)) ~= 0
+%         startDate = datenum([1850 02 00 00 00 00]);
+%     elseif length(findstr('cnrm', rawNcDir)) ~= 0
+%         startDate = datenum([1850 01 00 00 00 00]);
+%     elseif length(findstr('gfdl-cm3', rawNcDir)) ~= 0
+%         if isFuture
+%             startDate = datenum([2006 01 01 00 00 00]);
+%         else
+%             startDate = datenum([1860 02 01 00 00 00]);
+%         end
+%     elseif length(findstr('gfdl-esm2g', rawNcDir)) ~= 0
+%         if isFuture
+%             startDate = datenum([2006 01 01 00 00 00]);
+%         else
+%             startDate = datenum([1861 02 01 00 00 00]);
+%         end
+%     elseif length(findstr('gfdl-esm2m', rawNcDir)) ~= 0
+%         if isFuture
+%             startDate = datenum([2006 00 00 00 00 00]);
+%         else
+%             startDate = datenum([1861 02 01 00 00 00]);
+%         end
+%     elseif length(findstr('hadgem2-cc', rawNcDir)) ~= 0
+%         startDate = datenum([1800 00 00 00 00 00]);
+%     end
     
     %startDate = startDate - datenum([0000 01 15 00 00 00]);
     
-    timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]) + startDate;
+    timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]);
+    %timestep = timestep + startDate;
+    
+    while ~(month(timestep(1)) == startMonth && year(timestep(1)) == startYear)
+        timestep = timestep + datenum([0000 0 01 00 00 00]);
+    end
 
     % calc number of days from start of month
-    numDays = floor(timestep(1) - startDate);
+    %numDays = floor((timestep(1) - startDate)/2);
     
     % subtract that number of days so each month starts on day 1
-    timestep = timestep - datenum([0000 00 numDays 00 00 00]);
+    %timestep = timestep - datenum([0000 00 numDays 00 00 00]);
+    
+    lastMonth = month(timestep(1));
     
     for t = 0:length(timestep)-1
     
+        % if month hasn't advanced, add days until it does
+        if t > 0
+            while month(timestep(t+1)) ~= lastMonth+1 && ~(month(timestep(t+1)) == 1 && lastMonth == 12)
+                timestep(t+1) = timestep(t+1) + datenum([0000 00 01 00 00 00]);
+            end
+            lastMonth = month(timestep(t+1));
+        end
+        
         if dimIdLev ~= -1
             data(:,:,:,:) = single(netcdf.getVar(ncid, varIdMain, [0, 0, 0, t], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, dims{dimIdLev}{2}, t+1]));
             data = permute(data, [2 1 3 4]);
