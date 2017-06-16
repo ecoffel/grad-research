@@ -28,7 +28,7 @@ rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
 
 timePeriodHistorical = '1985-2004';
-timePeriodFuture = '2060-2080';
+timePeriodFuture = '2021-2040';
 
 monthlyMeanStr = 'monthlyMean';
 if ~monthlyMean
@@ -38,10 +38,10 @@ end
 load lat;
 load lon;
 
-regionInd = 10;
+regionInd = 4;
 months = 1:12;
 
-baseDir = 'e:/data/bowen';
+baseDir = 'f:/data/bowen';
 
 rcpStr = 'historical';
 if change

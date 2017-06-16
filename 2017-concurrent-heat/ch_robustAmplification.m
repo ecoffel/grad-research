@@ -1,7 +1,7 @@
 
 % should we look at changes in monthly temperature or changes in the annual
 % maximum vs. the mean daily maximum
-monthly = true;
+monthly = false;
 
 load lat;
 load lon;

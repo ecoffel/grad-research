@@ -53,6 +53,8 @@ if useNcep
     models = {'ncep-reanalysis'};
 end
 
+%models = {'access1-0', 'gfdl-cm3'};
+
 dataset = 'cmip5';
 if length(models) == 1 && strcmp(models{1}, 'ncep-reanalysis')
     dataset = 'ncep';
@@ -62,6 +64,12 @@ end
 % dimensions: (latInd, lonInd, month, model)
 maxR2 = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models));
 maxR2(maxR2 == 0) = NaN;
+
+% the mean bowen at each gridbox, used to compute global bowen/R2
+% relationship
+% dimensions: (latInd, lonInd, month, model)
+meanBowen = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models));
+meanBowen(meanBowen == 0) = NaN;
 
 % the lag associated with the max R2 at each up-gridcell
 % dimensions: (latInd, lonInd, month, model)
@@ -77,34 +85,15 @@ modelSig = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models
 bowenModelCorr = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, length(models));
 bowenModelCorr(bowenModelCorr == 0) = NaN;
 
-% predicted monthly temp change using bowen model (minus annual mean
-% warming)
+% predicted monthly temp change using bowen model
 % dims: (x, y, month, model)
 bowenModelTempChgPredicted = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models));
 bowenModelTempChgPredicted(bowenModelTempChgPredicted == 0) = NaN;
 
-% same as above but using CMIP5 (minus annual mean warming)
+% same as above but using CMIP5 
 cmip5TempChgPredicted = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, 12, length(models));
 cmip5TempChgPredicted(cmip5TempChgPredicted == 0) = NaN;
 
-% amplification for bowen & cmip5 - change in historically hottest month minus mean
-% change
-bowenAmp = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, length(models));
-bowenAmp(bowenAmp == 0) = NaN;
-
-cmip5Amp = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, length(models));
-cmip5Amp(cmip5Amp == 0) = NaN;
-
-% the historical period hottest month in each grid cell, used to compute
-% change in annual maximum - mean change
-% this is the value of the hottest month, used to keep track of the hottest
-% month seen so far
-hottestMonthValue = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, length(models));
-hottestMonthValue(hottestMonthValue == 0) = NaN;
-
-% the month number of the hottest month at each grid cell & model
-hottestMonth = zeros(size(lat, 1)/gridSize, size(lon, 2)/gridSize, length(models));
-hottestMonth(hottestMonth == 0) = NaN;
 
 for model = 1:length(models)
     ['processing ' models{model} '...']
@@ -191,15 +180,6 @@ for model = 1:length(models)
                                     end
                                 end
                                 
-                                % if this historical month hotter than seen
-                                % so far, record it
-                                if isnan(hottestMonthValue(curUpLat, curUpLon, model)) || nanmean(temp) > hottestMonthValue(curUpLat, curUpLon, model)
-                                    % only if we have temp readings
-                                    if ~isnan(nanmean(temp))
-                                        hottestMonthValue(curUpLat, curUpLon, model) = nanmean(temp);
-                                        hottestMonth(curUpLat, curUpLon, model) = month;
-                                    end
-                                end
                                 
                                 % -------- FUTURE ----------
                                 % lists of temps for current month for all years
@@ -241,6 +221,9 @@ for model = 1:length(models)
                         % save the R2 for this grid cell
                         maxR2(curUpLat, curUpLon, month, model) = r2BT;
                         
+                        % save the mean absolute bowen for this square
+                        meanBowen(curUpLat, curUpLon, month, model) = nanmean(bowen);
+                        
                         % get the model pValue out of the anova structure
                         a = anova(modelBT, 'summary');
                         modelSig(curUpLat, curUpLon, month, model) = a(2, 5).pValue < 0.05;
@@ -276,25 +259,21 @@ for model = 1:length(models)
         for ylon = 1:size(bowenModelTempChgPredicted, 2)
             
             % get predicted change
-            bowenModelCurChg = squeeze(bowenModelTempChgPredicted(xlat, ylon, :, model));
+            bowenModelChg = squeeze(bowenModelTempChgPredicted(xlat, ylon, :, model));
             % predicted annual mean change
             bowenModelAnnMeanChg = nanmean(bowenModelTempChgPredicted(xlat, ylon, :, model), 3);
             
             % get cmip5 change
-            cmip5CurChg = squeeze(cmip5TempChgPredicted(xlat, ylon, :, model));
+            cmip5Chg = squeeze(cmip5TempChgPredicted(xlat, ylon, :, model));
             % cmip5 annual mean change
             cmip5AnnMeanChg = nanmean(cmip5TempChgPredicted(xlat, ylon, :, model), 3);
             
             % subtract off annual mean changes
-            bowenModelTempChgPredicted(xlat, ylon, :, model) = bowenModelTempChgPredicted(xlat, ylon, :, model) - bowenModelAnnMeanChg;
-            cmip5TempChgPredicted(xlat, ylon, :, model) = cmip5TempChgPredicted(xlat, ylon, :, model) - cmip5AnnMeanChg;
-            
-            % calculate amplification for hottest month
-            bowenAmp(xlat, ylon, model) = bowenModelTempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - bowenModelAnnMeanChg;
-            cmip5Amp(xlat, ylon, model) = cmip5TempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - cmip5AnnMeanChg;
+            bowenModelChg = bowenModelChg - bowenModelAnnMeanChg;
+            cmip5Chg = cmip5Chg - cmip5AnnMeanChg;
             
             % calculate correlation
-            cor = corrcoef(bowenModelCurChg, cmip5CurChg);
+            cor = corrcoef(bowenModelChg, cmip5Chg);
             bowenModelCorr(xlat, ylon, model) = cor(1,2);
 
         end
@@ -303,46 +282,56 @@ for model = 1:length(models)
     clear bowenTemp bowenTempFuture;
 end
 
-result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(bowenModelCorr(:,:,:),3)};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'world', ...
-                  'plotRange', [-1 1], ...
-                  'cbXTicks', [-1 -.5 0 .5 1], ...
-                  'plotTitle', 'R2', ...
-                  'fileTitle', ['bowenPredictionCorrMap-' num2str(gridSize) '-lag-' lagStr '.png'], ...
-                  'plotXUnits', 'Correlation', ...
-                  'blockWater', true, ...
-                  'magnify', '2');%, ...
-                  %'statData', modelSig(:, :, month, model), ...
-                  %'stippleInterval', 5);
-plotFromDataFile(saveData);  
+rblat=[];
+rlat=[];
+blat=[];
+for xlat=1:size(maxR2,1)
+    for month=1:12
+        for model = 1:size(maxR2, 4)
+            f = fitlm(squeeze(meanBowen(xlat, :, month, model)), squeeze(maxR2(xlat, :, month, model)), 'poly2');
+            rblat(xlat, month, model) = f.Rsquared.Ordinary;
+            rlat(xlat, month, model) = nanmean(maxR2(xlat, :, month, model), 2);
+            blat(xlat, month, model) = nanmean(meanBowen(xlat, :, month, model), 2);
+        end
+    end
+end
 
-result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(bowenAmp(:,:,:),3)};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'world', ...
-                  'plotRange', [-2 2], ...
-                  'cbXTicks', -2:2, ...
-                  'plotTitle', 'Bowen model temperature change', ...
-                  'fileTitle', ['temp-chg-bowen-model-' num2str(gridSize) '-lag-' lagStr '.png'], ...
-                  'plotXUnits', [char(176) ' C'], ...
-                  'blockWater', true, ...
-                  'magnify', '2');%, ...
-                  %'statData', modelSig(:, :, month, model), ...
-                  %'stippleInterval', 5);
-plotFromDataFile(saveData);  
+r2mean = nanmean(nanmean(rlat, 3), 2);
+r2err = nanmean(nanstd(rlat,[],3),2);
 
-result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(cmip5Amp(:,:,:),3)};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'world', ...
-                  'plotRange', [4 9], ...
-                  'cbXTicks', 4:9, ...
-                  'plotTitle', 'CMIP5 temperature change', ...
-                  'fileTitle', ['temp-chg-cmip5-' num2str(gridSize) '-lag-' lagStr '.png'], ...
-                  'plotXUnits', [char(176) ' C'], ...
-                  'blockWater', true, ...
-                  'magnify', '2');%, ...
-                  %'statData', modelSig(:, :, month, model), ...
-                  %'stippleInterval', 5);
-plotFromDataFile(saveData);  
+bowenMean = nanmean(nanmean(blat, 3), 2);
+bowenErr = nanmean(nanstd(blat,[],3),2)
+
+figure('Color',[1,1,1]);
+subplot(1,2,1);
+hold on;
+axis square;
+box on;
+p1 = shadedErrorBar(-88:4:88, r2mean, r2err, '-', 1);
+set(p1.mainLine, 'LineWidth', 2, 'Color', 'k');
+set(p1.patch, 'FaceColor', [0.2 0.2 0.2]);
+set(p1.edge, 'Color', 'w');
+set(gca, 'FontSize', 24);
+ylim([0 1]);
+xlim([-90 90]);
+set(gca, 'XTick', [-90 -60 -30 0 30 60 90]);
+xlabel('Latitude', 'FontSize', 24);
+ylabel('R2', 'FontSize', 24);
+
+subplot(1,2,2);
+hold on;
+axis square;
+box on;
+p2 = shadedErrorBar(-88:4:88, bowenMean, bowenErr, '-', 1);
+set(p2.mainLine, 'LineWidth', 2, 'Color', [25/255.0, 158/255.0, 56/255.0]);
+set(p2.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+set(p2.edge, 'Color', 'w');
+set(gca, 'FontSize', 24);
+ylim([0 10]);
+xlim([-90 90]);
+set(gca, 'XTick', [-90 -60 -30 0 30 60 90]);
+xlabel('Latitude', 'FontSize', 24);
+ylabel('Bowen ratio', 'FontSize', 24);
+
 
 
