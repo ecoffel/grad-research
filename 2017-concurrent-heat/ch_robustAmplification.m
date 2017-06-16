@@ -9,15 +9,15 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
+
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                  'mpi-esm-mr', 'mri-cgcm3'};
+
+
 if monthly
-    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
-
-
-
     % monthly-mean-max or monthly-max
     tempMetric = 'monthly-mean-max';
 
@@ -27,8 +27,8 @@ if monthly
     % load temp change data for all models
     for m = 1:length(models)
         % load pre-computed monthly change data for tasmax under rcp85 in 2070-2080
-        if exist([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat'], 'file')
-            load([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat']);
+        if exist([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2060-2080.mat'], 'file')
+            load([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2060-2080.mat']);
             curTasmaxChg = chgData;
 
             % NaN-out all water gridcells
@@ -49,13 +49,48 @@ if monthly
     % month that warms the least
     amp = nanmax(tasmaxChg, [], 4) - nanmean(tasmaxChg, 4);
 else
-    load chg-data\chgData-cmip5-ann-max-rcp85-2070-2080;
-    annMax = chgData;
     
-    load chg-data\chgData-cmip5-daily-max-rcp85-2070-2080;
-    dailyMax = chgData;
+    tasmaxChg = [];
+    annMaxChg = [];
     
-    amp = annMax - dailyMax;
+    for m = 1:length(models)
+        % load pre-computed monthly change data for tasmax under rcp85 in 2060-2080
+        if exist(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat'], 'file')
+            load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat']);
+            curAnnMaxChg = chgData;
+
+            % NaN-out all water gridcells
+            for month = 1:size(curAnnMaxChg, 3)
+                % tasmax change
+                curGrid = curAnnMaxChg(:, :, month);
+                curGrid(waterGrid) = NaN;
+                curAnnMaxChg(:, :, month) = curGrid;
+            end
+
+            annMaxChg(:, :, m, :) = curAnnMaxChg;
+        end
+
+        clear curAnnMaxChg chgData;
+        
+        if exist(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-rcp85-2060-2080.mat'], 'file')
+            load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-rcp85-2060-2080.mat']);
+            curTasmaxChg = chgData;
+
+            % NaN-out all water gridcells
+            for month = 1:size(curTasmaxChg, 3)
+                % tasmax change
+                curGrid = curTasmaxChg(:, :, month);
+                curGrid(waterGrid) = NaN;
+                curTasmaxChg(:, :, month) = curGrid;
+            end
+
+            tasmaxChg(:, :, m, :) = curTasmaxChg;
+        end
+
+        clear curTasmaxRcp85 chgData;
+    end
+    
+    amp = annMaxChg - tasmaxChg;
 end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
@@ -68,7 +103,7 @@ ampAgreement = 66;
 % levels of amplification to search for model agreement on
 %ampLevels = 0:5;
 %if ~monthly
-    ampLevels = 0:0.25:2;
+    ampLevels = -2:0.5:2;
 %end
 
 % how many models agree on change greater than threshold

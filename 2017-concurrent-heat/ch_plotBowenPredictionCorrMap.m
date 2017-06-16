@@ -9,7 +9,10 @@ useNcep = false;
 lags = 0;%:2;
 
 % upsample world grid to new grid with squares of this size
-gridSize = 2;
+gridSize = 3;
+
+% average predictions over models first and then take correlation
+averagePredictions = true;
 
 % type of model to fit to data
 fitType = 'poly2';
@@ -296,9 +299,11 @@ for model = 1:length(models)
                 cmip5Amp(xlat, ylon, model) = cmip5TempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - cmip5AnnMeanChg;
             end
             
-            % calculate correlation
-            cor = corrcoef(bowenModelCurChg, cmip5CurChg);
-            bowenModelCorr(xlat, ylon, model) = cor(1,2);
+            if ~averagePredictions
+                % calculate correlation
+                cor = corrcoef(bowenModelCurChg, cmip5CurChg);
+                bowenModelCorr(xlat, ylon, model) = abs(cor(1,2));
+            end
 
         end
     end
@@ -306,11 +311,86 @@ for model = 1:length(models)
     clear bowenTemp bowenTempFuture;
 end
 
+
+
+if averagePredictions
+    bowenModelMeanCorr = [];
+    for xlat = 1:size(cmip5TempChgPredicted, 1)
+        for ylon = 1:size(cmip5TempChgPredicted, 2)
+            % calculate correlation
+            cor = corrcoef(squeeze(nanmean(bowenModelTempChgPredicted(xlat, ylon, :, :), 4)), ...
+                           squeeze(nanmean(cmip5TempChgPredicted(xlat, ylon, :, :), 4)));
+            bowenModelMeanCorr(xlat, ylon) = abs(cor(1,2));
+        end
+    end
+    
+    result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),bowenModelMeanCorr};
+    saveData = struct('data', {result}, ...
+                      'plotRegion', 'world', ...
+                      'plotRange', [0 1], ...
+                      'cbXTicks', [0 0.25 .5 0.75 1], ...
+                      'plotTitle', 'R2', ...
+                      'fileTitle', ['bowenPredictionCorrMap-' num2str(gridSize) '-lag-' lagStr '-meancorr.png'], ...
+                      'plotXUnits', 'Correlation', ...
+                      'blockWater', true, ...
+                      'magnify', '2');%, ...
+                      %'statData', modelSig(:, :, month, model), ...
+                      %'stippleInterval', 5);
+    plotFromDataFile(saveData); 
+end
+        
+
+robustCorrThresh = 0.75 * length(models);
+
+robustCorrVal = zeros(size(bowenModelCorr, 1), size(bowenModelCorr, 2));
+robustCorrVal(robustCorrVal == 0) = NaN;
+
+% loop over map
+for xlat = 1:size(bowenModelCorr, 1)
+    for ylon = 1:size(bowenModelCorr, 2)
+        
+        % possible correlation values
+        for corrVal = 0:0.1:1
+            
+            % count how many models agree that at least current corr value
+            % reached
+            cnt = 0;
+            
+            % loop over models
+            for m = 1:size(bowenModelCorr, 3)
+                % if model greater than current corr val, record it
+                if bowenModelCorr(xlat, ylon, m) > corrVal
+                    cnt = cnt + 1;
+                end
+            end
+            
+            % if enough models agree, record this as the max corr value
+            if cnt > robustCorrThresh
+                robustCorrVal(xlat, ylon) = corrVal;
+            end
+        end
+    end
+end
+
+result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(robustCorrVal(:,:,:),3)};
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [0 1], ...
+                  'cbXTicks', [0 0.25 .5 0.75 1], ...
+                  'plotTitle', 'R2', ...
+                  'fileTitle', ['bowenPredictionCorrMap-' num2str(gridSize) '-lag-' lagStr '-robust.png'], ...
+                  'plotXUnits', 'Correlation', ...
+                  'blockWater', true, ...
+                  'magnify', '2');%, ...
+                  %'statData', modelSig(:, :, month, model), ...
+                  %'stippleInterval', 5);
+plotFromDataFile(saveData); 
+
 result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(bowenModelCorr(:,:,:),3)};
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-1 1], ...
-                  'cbXTicks', [-1 -.5 0 .5 1], ...
+                  'plotRange', [0 1], ...
+                  'cbXTicks', [0 0.25 .5 0.75 1], ...
                   'plotTitle', 'R2', ...
                   'fileTitle', ['bowenPredictionCorrMap-' num2str(gridSize) '-lag-' lagStr '.png'], ...
                   'plotXUnits', 'Correlation', ...
@@ -318,7 +398,7 @@ saveData = struct('data', {result}, ...
                   'magnify', '2');%, ...
                   %'statData', modelSig(:, :, month, model), ...
                   %'stippleInterval', 5);
-plotFromDataFile(saveData);  
+plotFromDataFile(saveData); 
 
 result = {lat(1:gridSize:end, 1:gridSize:end),lon(1:gridSize:end, 1:gridSize:end),nanmean(bowenAmp(:,:,:),3)};
 saveData = struct('data', {result}, ...

@@ -11,10 +11,10 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                       'mpi-esm-mr', 'mri-cgcm3'};
 
 % show the percentage change in bowen ratio or the absolute change
-showPercentChange = false;
+showPercentChange = true;
 
 % subtact the annual mean change?
-showChgAnomalies = true;
+showChgAnomalies = false;
 
 anomalyStr = 'total';
 if showChgAnomalies
@@ -57,7 +57,7 @@ regionAb = {'world', ...
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[35 46], [-107 -88] + 360]; ...     % central us
-           [[25 35], [-103 -75] + 360]; ...      % southeast us
+           [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
            [[36 45], [-5+360, 40]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
@@ -142,15 +142,11 @@ tasmaxRegionsChange = {};
 % loop over regions and extract bowen & tasmax change data
 for i = 1:length(regionNames)
     
-    if showPercentChange
-        % calculate spatial mean historical bowen
-        bowenRegionsHistorical{i} = squeeze(nanmean(nanmean(bowenHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
-        % and spatial mean change
-        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
-    else
-        bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
-    end
-    
+    % calculate spatial mean historical bowen
+    bowenRegionsHistorical{i} = squeeze(nanmean(nanmean(bowenHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+
+    bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
+
     tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
 end
 
@@ -328,6 +324,13 @@ for i = 1:length(regionNames)
     if tempErr == 0
         tempErr = zeros(12, 1);
     end
+
+    % test for significant change in each month at 95th percentile
+    bowenSig = [];
+    for month = 1:12
+        bowenSig(month) = ttest(bowenRegionsChange{i}(:, month), 0, 'Alpha', 0.05);
+    end
+
     
     if showPercentChange
         % average over models and then calculate total prc change
@@ -342,6 +345,7 @@ for i = 1:length(regionNames)
     else
         % calculate mean change across models
         bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1));
+        
         % sort, and take range across 25-75%
         bowenRegionsChange{i} = sort(bowenRegionsChange{i}, 1);
         bowenErr = squeeze(range(bowenRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
@@ -373,6 +377,17 @@ for i = 1:length(regionNames)
 
     % plot bowen zero line 
     plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+
+    % plot significance indicators
+    for month = 1:12
+        p3 = plot(ax(2), month, bowenY(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        if bowenSig(month)
+            set(p3, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
+        else
+            set(p3, 'LineWidth', 3);
+        end
+        uistack(p3, 'top');
+    end
 
     xlabel('Month', 'FontSize', 24);
     set(ax(1), 'XTick', 1:12);

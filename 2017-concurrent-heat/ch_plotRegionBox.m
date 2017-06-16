@@ -22,14 +22,14 @@ regionAb = {'us-cent', ...
             'africa-cent'};
             
 regions = [[[35 46 46 35], [-107 -107 -88 -88] + 360]; ...     % central us
-           [[25 35 35 25], [-103 -103 -75 -75] + 360]; ...      % southeast us
+           [[30 41 41 30], [-95 -95 -75 -75] + 360]; ...      % southeast us
            [[45 55 55 45], [10 10 35 35]]; ...            % Europe
            [[36 45 45 36], [-5+360 -5+360 40 40]]; ...        % Med
            [[5 20 20 5], [-90 -90 -45 -45]+360]; ...         % Northern SA
            [[-10 1 1 -10], [-75 -75 -53 -53]+360]; ...      % Amazon
            [[-10 10 10 -10], [15 15 30 30]]];                % central africa
 
-regionInd = 4;
+regionInd = 2;
        
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
 countries = shaperead('countries', 'UseGeoCoords', true);
