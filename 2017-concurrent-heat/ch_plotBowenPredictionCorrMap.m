@@ -289,9 +289,12 @@ for model = 1:length(models)
             bowenModelTempChgPredicted(xlat, ylon, :, model) = bowenModelTempChgPredicted(xlat, ylon, :, model) - bowenModelAnnMeanChg;
             cmip5TempChgPredicted(xlat, ylon, :, model) = cmip5TempChgPredicted(xlat, ylon, :, model) - cmip5AnnMeanChg;
             
-            % calculate amplification for hottest month
-            bowenAmp(xlat, ylon, model) = bowenModelTempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - bowenModelAnnMeanChg;
-            cmip5Amp(xlat, ylon, model) = cmip5TempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - cmip5AnnMeanChg;
+            % calculate amplification for hottest month if we have a
+            % hottest month at this gridbox
+            if ~isnan(hottestMonth(xlat, ylon, model))
+                bowenAmp(xlat, ylon, model) = bowenModelTempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - bowenModelAnnMeanChg;
+                cmip5Amp(xlat, ylon, model) = cmip5TempChgPredicted(xlat, ylon, hottestMonth(xlat, ylon, model), model) - cmip5AnnMeanChg;
+            end
             
             % calculate correlation
             cor = corrcoef(bowenModelCurChg, cmip5CurChg);

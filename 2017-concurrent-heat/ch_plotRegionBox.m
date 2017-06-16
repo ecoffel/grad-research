@@ -29,7 +29,7 @@ regions = [[[35 46 46 35], [-107 -107 -88 -88] + 360]; ...     % central us
            [[-10 1 1 -10], [-75 -75 -53 -53]+360]; ...      % Amazon
            [[-10 10 10 -10], [15 15 30 30]]];                % central africa
 
-regionInd = 6;
+regionInd = 4;
        
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
 countries = shaperead('countries', 'UseGeoCoords', true);

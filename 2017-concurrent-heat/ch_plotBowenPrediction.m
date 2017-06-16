@@ -65,10 +65,10 @@ dataset = 'cmip5';
 load lat;
 load lon;
 
-regionInd = 4;
+regionInd = 2;
 months = 1:12;
 
-baseDir = 'e:/data/bowen';
+baseDir = 'f:/data/bowen';
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -701,6 +701,8 @@ if ~predictOnHistoricalCmip5
     export_fig(['bowenModelPredictionR2-' regionAb{regionInd} '-' dataset '-BT-' monthlyMeanStr '-' lagStr '-' trainOnNcepStr '-' anomalyStr '.png']);
     close all;
 end
+
+corrcoef(nanmean(predictedDiff, 1), nanmean(diff, 1))
 
 
 

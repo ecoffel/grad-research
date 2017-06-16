@@ -47,50 +47,78 @@ for i = 1:size(regions, 1)
     regionLatLonInd{i} = {latIndexRange, lonIndexRange};
 end
 
-% historical and future monthly precip, mm/day
-% dims: (x, y, month, year)
-prHistorical = {};
-prFuture = {};
+for region = 1:length(regionLatLonInd)
+    % historical and future monthly precip, mm/day
+    % dims: (x, y, month, model)
+    regionalPrChg = [];
+    
+    curLat = regionLatLonInd{region}{1};
+    curLon = regionLatLonInd{region}{2};
+    
+    for model = 1:length(models)
+        
+        % this will load the variable 'prChg'
+        load(['f:/data/bowen/monthly-pr/monthlyPrChg-cmip5-historical-' models{model} '-2060-2080.mat']);
 
-for model = 1:length(models)
-    
-    ['loading ' models{model} '...']
-    
-    % load historical precip
-    curMonthlyPrecipHistorical = loadMonthlyData([baseDir '/' models{model} '/r1i1p1/historical/pr/amon/regrid/world'], 'pr', 'yearStart', timePeriodHistorical(1), 'yearEnd', timePeriodHistorical(end));
-    
-    % and load future precip
-    curMonthlyPrecipFuture = loadMonthlyData([baseDir '/' models{model} '/r1i1p1/rcp85/pr/amon/regrid/world'], 'pr', 'yearStart', timePeriodFuture(1), 'yearEnd', timePeriodFuture(end));
-        
-    % loop over all regions
-    for region = 1:length(regionLatLonInd)
-    
-        % lat/lon index range for current region
-        curLat = regionLatLonInd{region}{1};
-        curLon = regionLatLonInd{region}{2};
-        
-        % add cell for region if not there already
-        if length(prHistorical) < region
-            prHistorical{region} = [];
-            prFuture{region} = [];
-        end
-        
-        for month = 1:12
-        
-            % loop over all years of historical data
-            for year = 1:length(curMonthlyPrecipHistorical{month})
-                % get precip in mm/day for current month, model, and region
-                prHistorical{region}(:, :, month, model) = nanmean(curMonthlyPrecipHistorical{month}{year}{3}(curLat, curLon)) * 60 * 60 * 24;
-            end
-            
-            % loop over all years of future data
-            for year = 1:length(curMonthlyPrecipFuture{month})
-                % get precip in mm/day for current month, model, and region
-                prFuture{region}(:, :, month, model) = nanmean(curMonthlyPrecipFuture{month}{year}{3}(curLat, curLon)) * 60 * 60 * 24;
-            end
-        end
-        
+        regionalPrChg(:, :, :, model) = prChg(curLat, curLon, :);
+
     end
+    
+    % spatial average
+    regionalPrChg = squeeze(nanmean(nanmean(regionalPrChg, 2), 1));
+    
+    % average over models
+    regionalPrChgMean = nanmean(regionalPrChg, 2);
+    
+    % std over models
+    regionalPrChgStd = nanstd(regionalPrChg, [], 2);
+    
+    % test if different from zero at 95th percentile
+    sigChg = [];
+    for month = 1:12
+        sigChg(month) = ttest(regionalPrChg(month, :), 0, 'Alpha', 0.05);
+    end
+    
+    f = figure('Color',[1,1,1]);
+    hold on;
+    grid on;
+    box on;
+    axis square;
+    
+    p1 = shadedErrorBar(1:12, regionalPrChgMean, regionalPrChgStd, 'g', 1);
+    
+    set(p1.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
+    set(p1.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
+    set(p1.edge, 'Color', 'w');
+
+    % plot bowen zero line 
+    plot(1:12, zeros(1,12), '--', 'Color', 'k', 'LineWidth', 2);
+
+    xlabel('Month', 'FontSize', 24);
+    set(gca, 'XLim', [1 12], 'XTick', 1:12);
+
+    set(gca, 'YLim', [-4 4], 'YTick', -4:1:4);
+    ylabel('Precip change (mm/day)', 'FontSize', 24);
+    set(gca, 'FontSize', 24);
+    
+    title(regionNames{region}, 'FontSize', 24);
+    
+    for month = 1:12
+        p2 = plot(month, regionalPrChgMean(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        if sigChg(month)
+            set(p2, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
+        else
+            set(p2, 'LineWidth', 3);
+        end
+        uistack(p2, 'bottom');
+    end
+    
+    set(gcf, 'Position', get(0,'Screensize'));
+    
+    export_fig(['prChg-' regionAb{region} '-absolute.png;']);
+    
+    close all;
+    
 end
 
 
