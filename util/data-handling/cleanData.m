@@ -16,12 +16,15 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};  
 
 %models = {'cmcc-cm', 'cmcc-cms', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'mpi-esm-mr', 'mri-cgcm3'};
-vars = {'pr'};
+vars = {'tasmax', 'tasmin'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1',};
 
 % should we just remove the non-regridded data or the whole variable
-removeAll = true;
+removeAll = false;
+
+% remove only this dir inside of regrid
+removeSubdir = 'regrid/world-bc';
 
 baseDir = 'e:\data\cmip5\output';
 
@@ -57,13 +60,21 @@ for m = 1:length(models)
                             rmdir(delDir, 's');
                         end
                     else
-                        % keep everything in regrid
-                        if strcmp(subDirs{d}, 'regrid') || strcmp(subDirs{d}, '.') || strcmp(subDirs{d}, '..')
-                            continue;
-                        % delete everything else
+                        if length(removeSubdir) > 0
+                            if exist([curDir '\' removeSubdir])
+                                delDir = [curDir '\' removeSubdir]
+                                rmdir(delDir, 's');
+                                break;
+                            end
                         else
-                            delDir = [curDir '\' subDirs{d}]
-                            rmdir(delDir, 's');
+                            % keep everything in regrid
+                            if strcmp(subDirs{d}, 'regrid') || strcmp(subDirs{d}, '.') || strcmp(subDirs{d}, '..')
+                                continue;
+                            % delete everything else
+                            else
+                                delDir = [curDir '\' subDirs{d}]
+                                rmdir(delDir, 's');
+                            end
                         end
                     end
                 end
