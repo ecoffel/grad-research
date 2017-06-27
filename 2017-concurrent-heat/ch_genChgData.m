@@ -7,7 +7,7 @@ basePeriod = 'past';
 % add in base models and add to the base loading loop
 
 baseDataset = 'cmip5';
-baseVar = 'tasmax';
+
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -19,7 +19,7 @@ baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
 futureDataset = 'cmip5';
-futureVar = 'tasmax';
+
 
 % futureModels = {'access1-0'};
 futureRcps = {'rcp85'};
@@ -51,11 +51,22 @@ load lon;
 
 % what change to look at:
 % ann-max = annual max temperature
+% ann-min = annual min temperature
 % daily-max = mean daily max temperature
+% daily-min = mean daily min temperature
 % seasonal-monthly-max = monthly maximum temperature
 % seasonal-monthly-mean-max = mean daily maximum temperature for each month
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'daily-max';
+changeMetric = 'daily-min';
+
+
+if length(findstr(changeMetric, 'min')) > 0
+    baseVar = 'tasmin';
+    futureVar = 'tasmin';
+else
+    baseVar = 'tasmax';
+    futureVar = 'tasmax';
+end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = [1 10:10:90 99];
@@ -151,20 +162,27 @@ for m = 1:length(models)
 
             % store annual max temperature at each gridbox for this year
             baseData(:, :, m, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily), [], 3);
+            
+        elseif strcmp(changeMetric, 'ann-min')
 
-        elseif strcmp(changeMetric, 'daily-max')
+            % store annual min temperature at each gridbox for this year
+            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmin(squeeze(baseDaily), [], 3);
+
+        elseif strcmp(changeMetric, 'daily-max') || strcmp(changeMetric, 'daily-min')
 
             % store mean daily max temperature at each gridbox for this year
             baseData(:, :, m, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily), 3);
 
         end
+        
 
         clear baseDaily baseDaily3d;
     end
 end
 
 
-if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
+if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max') || ...
+   strcmp(changeMetric, 'ann-min') || strcmp(changeMetric, 'daily-min')
     % if computing annual maximum or mean daily maximum, take the mean across all base period
     % years (baseData now 3D: (x, y, model))
     baseData = nanmean(baseData, 4);
@@ -260,7 +278,12 @@ for f = 1:size(futurePeriods, 1)
                 % store annual max temperature at each gridbox for this year
                 futureData(:, :, y-futurePeriodYears(1)+1) = nanmax(squeeze(futureDaily), [], 3);
 
-            elseif strcmp(changeMetric, 'daily-max')
+            elseif strcmp(changeMetric, 'ann-min')
+
+                % store annual max temperature at each gridbox for this year
+                futureData(:, :, y-futurePeriodYears(1)+1) = nanmin(squeeze(futureDaily), [], 3);
+
+            elseif strcmp(changeMetric, 'daily-max') || strcmp(changeMetric, 'daily-min')
 
                 % store annual max temperature at each gridbox for this year
                 futureData(:, :, y-futurePeriodYears(1)+1) = nanmean(squeeze(futureDaily), 3);
@@ -270,7 +293,8 @@ for f = 1:size(futurePeriods, 1)
             clear futureDaily futureDaily3d;
         end
         
-        if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max')
+        if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max') || ...
+           strcmp(changeMetric, 'ann-min') || strcmp(changeMetric, 'daily-min')
             % if computing annual maximum or mean daily maximum, take the mean across all
             % years (futureData now 3D: (x, y))
             futureData = nanmean(futureData, 3);

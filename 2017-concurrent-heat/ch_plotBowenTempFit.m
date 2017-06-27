@@ -1,6 +1,6 @@
 
 % should we look at change between rcp & historical (only for cmip5)
-change = false;
+change = true;
 
 % look at monthly mean temp/bowen fit or monthly mean max temperature &
 % mean bowen
@@ -28,7 +28,7 @@ rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
 
 timePeriodHistorical = '1985-2004';
-timePeriodFuture = '2021-2040';
+timePeriodFuture = '2060-2080';
 
 monthlyMeanStr = 'monthlyMean';
 if ~monthlyMean
@@ -38,7 +38,7 @@ end
 load lat;
 load lon;
 
-regionInd = 4;
+regionInd = 7;
 months = 1:12;
 
 baseDir = 'f:/data/bowen';
@@ -78,7 +78,7 @@ regionAb = {'world', ...
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[35 46], [-107 -88] + 360]; ...     % central us
-           [[25 35], [-103 -75] + 360]; ...      % southeast us
+           [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
            [[36 45], [-5+360, 40]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
@@ -534,11 +534,23 @@ for lag = lags
         if change
             %plot(1:12, r2FutureTB - r2TB, 'Color', [0.4 0.4 0.4]);
             %plot(1:12, nanmean(r2FutureTB - r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+            r2Chg = r2FutureBT - r2BT;
+            
             for k = 1:size(r2BT, 1)
-                plot(1:12, r2FutureBT(k, :) - r2BT(k, :), 'Color', [0.6 0.6 0.6]);
+                plot(1:12, r2Chg(k, :), 'Color', [0.6 0.6 0.6]);
             end
-            plot(1:12, nanmean(r2FutureBT - r2BT, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
+            plot(1:12, nanmean(r2Chg, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
             ylim([-0.5 0.5]);
+            
+            for month = 1:size(r2Chg, 2)
+                p5 = plot(month, nanmean(r2Chg(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [0.5 0.5 0.5], 'MarkerEdgeColor', 'k');
+                if ttest(r2Chg(:, month), 0, 'Alpha', 0.05)
+                    set(p5, 'LineWidth', 3, 'MarkerFaceColor', [0.5 0.5 0.5]);
+                else
+                    set(p5, 'LineWidth', 3);
+                end
+            end
+            
         else
             %plot(1:12, r2TB, 'Color', [0.4 0.4 0.4]);
             %plot(1:12, nanmean(r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
