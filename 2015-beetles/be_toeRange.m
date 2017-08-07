@@ -21,10 +21,10 @@ for r = 1:length(rcps)
     for k = 1:length(kvals)
         kval = kvals{k};
 
-        load(['toe-ci-lower-ensemble-' rcp '-' kval]);
+        load(['2015-beetles/bt-output/toe-ci-lower-ensemble-' rcp '-' kval]);
         ensembleLow = saveData;
 
-        load(['toe-ci-upper-ensemble-' rcp '-' kval]);
+        load(['2015-beetles/bt-output/toe-ci-upper-ensemble-' rcp '-' kval]);
         ensembleHigh = saveData;
 
         curEnsRange = ensembleHigh.data{3} - ensembleLow.data{3};
@@ -45,9 +45,9 @@ end
 
 rangeInternal = round(nanmean(rangeInternal, 3));
 
-load('toe-model-range-lower-model-range');
+load('2015-beetles/bt-output/toe-model-range-lower-model-range');
 lowerRange = saveData;
-load('toe-model-range-upper-model-range');
+load('2015-beetles/bt-output/toe-model-range-upper-model-range');
 upperRange = saveData;
 mmRangeResults = upperRange.data{3} - lowerRange.data{3};
 mmRangeResults = mmRangeResults(2:end-4, 8:end-1);
@@ -63,13 +63,14 @@ result = {lat, lon, ratioInternal .* 100};
 saveData = struct('data', {result}, ...
                   'plotRegion', 'usne', ...
                   'plotRange', [0 50], ...
+                  'cbXTicks', 0:10:50, ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', 'internal-var.pdf', ...
+                  'fileTitle', 'internal-var.svg', ...
                   'plotXUnits', 'Internal variability percentage', ...
                   'blockWater', true, ...
                   'plotStates', true, ...
                   'plotCountries', false, ...
-                  'colormap', 'summer');
+                  'colormap', 'parula');
 
 plotFromDataFile(saveData);
 
@@ -87,9 +88,9 @@ for r = 1:length(rcps)
     rcp = rcps{r};
     
     for m = 1:length(models)
-        load(['toe-model-range-' models{m} '-' rcp '-077']);
+        load(['2015-beetles/bt-output/toe-model-range-' models{m} '-' rcp '-077']);
         kLow = saveData;
-        load(['toe-model-range-' models{m} '-' rcp '-221']);
+        load(['2015-beetles/bt-output/toe-model-range-' models{m} '-' rcp '-221']);
         kHigh = saveData;
 
         % higher K = more buffering = higher TOE
@@ -102,9 +103,9 @@ end
 rangeK = rangeK(2:end-4,8:end-1, :, :);
 rangeK = round(nanmean(nanmean(rangeK, 4), 3));
 
-load('toe-model-range-lower-model-range');
+load('2015-beetles/bt-output/toe-model-range-lower-model-range');
 lowerRange = saveData;
-load('toe-model-range-upper-model-range');
+load('2015-beetles/bt-output/toe-model-range-upper-model-range');
 upperRange = saveData;
 mmRangeResults = abs(upperRange.data{3} - lowerRange.data{3});
 mmRangeResults = mmRangeResults(2:end-4, 8:end-1);
@@ -120,13 +121,14 @@ result = {lat, lon, ratioK .* 100};
 saveData = struct('data', {result}, ...
                   'plotRegion', 'usne', ...
                   'plotRange', [0 50], ...
+                  'cbXTicks', 0:10:50, ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', 'k-variability.pdf', ...
+                  'fileTitle', 'k-variability.svg', ...
                   'plotXUnits', 'Percent', ...
                   'blockWater', true, ...
                   'plotStates', true, ...
                   'plotCountries', false, ...
-                  'colormap', 'summer');
+                  'colormap', 'parula');
 
 plotFromDataFile(saveData);
 
@@ -147,9 +149,9 @@ for k = 1:length(kvals)
     kval = kvals{k};
     
     for m = 1:length(models)
-        load(['toe-model-range-' models{m} '-rcp45-' kval]);
+        load(['2015-beetles/bt-output/toe-model-range-' models{m} '-rcp45-' kval]);
         rcpLow = saveData;
-        load(['toe-model-range-' models{m} '-rcp85-' kval]);
+        load(['2015-beetles/bt-output/toe-model-range-' models{m} '-rcp85-' kval]);
         rcpHigh = saveData;
 
         % RCP85 = LOWER time of emergence, so low-high here
@@ -162,9 +164,9 @@ end
 rangeRCP = rangeRCP(2:end-4,8:end-1, :, :);
 rangeRCP = round(nanmean(nanmean(rangeRCP, 4), 3));
 
-load('toe-model-range-lower-model-range');
+load('2015-beetles/bt-output/toe-model-range-lower-model-range');
 lowerRange = saveData;
-load('toe-model-range-upper-model-range');
+load('2015-beetles/bt-output/toe-model-range-upper-model-range');
 upperRange = saveData;
 mmRangeResults = abs(upperRange.data{3} - lowerRange.data{3});
 mmRangeResults = mmRangeResults(2:end-4, 8:end-1);
@@ -180,13 +182,14 @@ result = {lat, lon, ratioRCP .* 100};
 saveData = struct('data', {result}, ...
                   'plotRegion', 'usne', ...
                   'plotRange', [0 50], ...
+                  'cbXTicks', 0:10:50, ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', 'rcp-variability.pdf', ...
+                  'fileTitle', 'rcp-variability.svg', ...
                   'plotXUnits', 'Percent', ...
                   'blockWater', true, ...
                   'plotStates', true, ...
                   'plotCountries', false, ...
-                  'colormap', 'summer');
+                  'colormap', 'parula');
 
 plotFromDataFile(saveData);
 
@@ -212,7 +215,7 @@ for k = 1:length(kvals)
         curModelRange = [];
         
         for m = 1:length(models)
-            load(['toe-model-range-' models{m} '-' rcp '-' kval]);
+            load(['2015-beetles/bt-output/toe-model-range-' models{m} '-' rcp '-' kval]);
             curModelRange(:, :, m) = saveData.data{3};
         end
         
@@ -248,9 +251,9 @@ end
 rangeModel = rangeModel(2:end-4,8:end-1, :, :);
 rangeModel = round(nanmean(nanmean(rangeModel, 4), 3));
 
-load('toe-model-range-lower-model-range');
+load('2015-beetles/bt-output/toe-model-range-lower-model-range');
 lowerRange = saveData;
-load('toe-model-range-upper-model-range');
+load('2015-beetles/bt-output/toe-model-range-upper-model-range');
 upperRange = saveData;
 mmRangeResults = abs(upperRange.data{3} - lowerRange.data{3});
 mmRangeResults = mmRangeResults(2:end-4, 8:end-1);
@@ -266,13 +269,14 @@ result = {lat, lon, ratioModel .* 100};
 saveData = struct('data', {result}, ...
                   'plotRegion', 'usne', ...
                   'plotRange', [0 100], ...
+                  'cbXTicks', 0:10:100, ...
                   'plotTitle', plotTitle, ...
-                  'fileTitle', 'model-variability.pdf', ...
+                  'fileTitle', 'model-variability.svg', ...
                   'plotXUnits', 'Percent', ...
                   'blockWater', true, ...
                   'plotStates', true, ...
                   'plotCountries', false, ...
-                  'colormap', 'summer');
+                  'colormap', 'parula');
 
 plotFromDataFile(saveData);
 
@@ -293,7 +297,7 @@ ratioK = nanmean(nanmean(ratioK));
 m = (ratioInternal + ratioModel + ratioRCP + ratioK) / 100.0;
 ratios = [ratioInternal/m, ratioModel/m, ratioRCP/m, ratioK/m; 0 0 0 0];
 
-x = colormap('summer');
+x = colormap('parula');
 b = bar(ratios,'stacked')
 xlim([0.5 1.5])
 set(b(1),'FaceColor',x(2,:))

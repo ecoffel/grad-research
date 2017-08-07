@@ -4,15 +4,15 @@
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-models = {'hadgem2-es'};
+models = {'access1-0'};
       
-rcps = {'rcp85'};
+rcps = {'historical'};
 ensembles = 1;
 
 for m = 1:length(models)
     for r = 1:length(rcps)
         for e = ensembles
-            hh_wetBulb(['e:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}], true, 'world', true);
+            hh_wetBulb(['f:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}], true, 'world', false);
         end
     end
 end

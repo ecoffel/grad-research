@@ -10,7 +10,7 @@ exposureErr45 = [];
 exposureErr85 = [];
 
 for temp = temps
-    load(['heatExposure-ncep-wb-' num2str(temp) '-rcp85-ssp5-world.mat']);
+    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-' num2str(temp) '-rcp85-ssp5-world.mat']);
     
     exposureTotals85(end+1) = saveData.futureDecY(end,end);
     exposureErr85(end+1, :) = abs(saveData.futureDecYerr(end,end,:));
@@ -22,7 +22,7 @@ for temp = temps
         end
     end
     
-    load(['heatExposure-ncep-wb-' num2str(temp) '-rcp45-ssp5-world.mat']);
+    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-' num2str(temp) '-rcp45-ssp5-world.mat']);
     
     exposureTotals45(end+1) = saveData.futureDecY(end,end);
     exposureErr45(end+1, :) = abs(saveData.futureDecYerr(end,end,:));
@@ -41,13 +41,13 @@ mSize = 15;
 figure('Color', [1,1,1]);
 hold on; box on; axis square; grid on;
 
-e1 = errorbar(temps, exposureTotals85, exposureErr85(:,1)', exposureErr85(:,2)', ...
+e1 = errorbar(temps+0.1, exposureTotals85, exposureErr85(:,1)', exposureErr85(:,2)', ...
               'o', 'MarkerSize', mSize, 'LineWidth', 2, 'Color', [221/255.0, 53/255.0, 67/255.0], 'MarkerFaceColor', [221/255.0, 53/255.0, 67/255.0]);
-p1 = plot(temps, exposureTotals85, 'ko', 'MarkerSize', mSize, 'LineWidth', 3);
+p1 = plot(temps+0.1, exposureTotals85, 'ko', 'MarkerSize', mSize, 'LineWidth', 3);
 
-e2 = errorbar(temps, exposureTotals45, exposureErr45(:,1)', exposureErr45(:,2)', ...
+e2 = errorbar(temps-0.1, exposureTotals45, exposureErr45(:,1)', exposureErr45(:,2)', ...
               'o', 'MarkerSize', mSize, 'LineWidth', 2, 'Color', [66/255.0, 170/255.0, 244/255.0], 'MarkerFaceColor', [66/255.0, 170/255.0, 244/255.0]);
-p2 = plot(temps, exposureTotals45, 'ko', 'MarkerSize', mSize, 'LineWidth', 3);
+p2 = plot(temps-0.1, exposureTotals45, 'ko', 'MarkerSize', mSize, 'LineWidth', 3);
 %p2 = plot(temps, exposureTotals45, 'ko', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [66/255.0, 170/255.0, 244/255.0]);
 
 

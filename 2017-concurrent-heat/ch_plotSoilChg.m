@@ -1,7 +1,7 @@
 
 baseDir = '2017-concurrent-heat/bowen';
-soilVar = 'mrsos';                  
-percentChange = true;
+soilVar = 'mrso';                  
+percentChange = false;
 
 if strcmp(soilVar, 'mrso')
     models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
@@ -123,7 +123,7 @@ for region = 1:length(regionLatLonInd)
     if percentChange
         % percentage change
         regionalSoilChgStd = nanstd((regionalSoilFuture - regionalSoilHistorical) ./ regionalSoilHistorical .* 100, [], 2);
-        regionSoilChg = (regionalSoilFuture - regionalSoilHistorical) ./ regionalSoilHistorical .* 100;
+        regionSoilChg = regionalSoilFuture - regionalSoilHistorical;
         regionSoilChgMean = (regionalSoilFutureMean - regionalSoilHistoricalMean) ./ regionalSoilHistoricalMean .* 100;
     else
         % absolute change
@@ -158,11 +158,21 @@ for region = 1:length(regionLatLonInd)
     set(gca, 'XLim', [1 12], 'XTick', 1:12);
     
     if strcmp(soilVar, 'mrso')
-        set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
-        ylabel('Total soil moisture change (percent)', 'FontSize', 24);
+        if percentChange
+            set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
+            ylabel('Total soil moisture change (percent)', 'FontSize', 24);
+        else
+            set(gca, 'YLim', [-1e7 1e7]);
+            ylabel('Total soil moisture change', 'FontSize', 24);
+        end
     elseif strcmp(soilVar, 'mrsos')
-        set(gca, 'YLim', [-50 50], 'YTick', -50:20:50);
-        ylabel('Surface soil moisture change (percent)', 'FontSize', 24);
+        if percentChange
+            set(gca, 'YLim', [-50 50], 'YTick', -50:20:50);
+            ylabel('Surface soil moisture change (percent)', 'FontSize', 24);
+        else
+            set(gca, 'YLim', [-1e6 1e6]);
+            ylabel('Surface soil moisture change', 'FontSize', 24);
+        end
     elseif strcmp(soilVar, 'snw')
         set(gca, 'YLim', [-100 50], 'YTick', -100:50:50);
         ylabel('Snow mass change (percent)', 'FontSize', 24);
