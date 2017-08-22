@@ -13,14 +13,16 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-min';
+chgMetric = 'ann-max';
 
+rcp = 'rcp85';
+timePeriod = '2060-2080';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 
 % if monthly
@@ -65,16 +67,16 @@ for m = 1:length(models)
     
     % load and process change 1
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -93,16 +95,16 @@ for m = 1:length(models)
 
     % load and process change 2
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-rcp85-2060-2080.mat']);
+        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -183,7 +185,7 @@ saveData = struct('data', {result}, ...
                   'plotRange', [ampLevels(1) ampLevels(end)], ...
                   'cbXTicks', ampLevels, ...
                   'plotTitle', ['Amplification, ' num2str(ampAgreement) '% model agreement'], ...
-                  'fileTitle', ['ampAgreement-rcp85-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' chgMetric '.png'], ...
+                  'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' chgMetric '-' timePeriod '.png'], ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'magnify', '2');

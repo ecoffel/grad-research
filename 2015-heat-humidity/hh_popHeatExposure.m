@@ -9,8 +9,8 @@ baseModels = {''};
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'wb-davies-jones';
+testVar = 'wb-davies-jones';
 
 baseRegrid = true;
 
@@ -278,7 +278,7 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
         selGrid = selGrid ./ size(baseData, 4);
         clear curFutureData;
         
-        %save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
         
         % loop over scenario 
         for ssp = ssps
@@ -395,7 +395,7 @@ futPopE= [futurePopCountSorted(:, round((prcRange(1)/100.0)*size(futurePopCountS
 
 % save population data
 popResult = {{futurePopCountSorted, futPopE}, {climPopEffectSorted, climE}, {popPopEffectSorted, popE}, {interactionEffectSorted, intE}};
-save('population-exposure-rcp85-35', 'popResult');
+save(['population-exposure-' baseVar '-' rcp '-' num2str(exposureThreshold)], 'popResult');
          
 mmClimatePopEffect = nanmean(climPopEffectSorted, 2);
 mmPopPopEffect = nanmean(popPopEffectSorted, 2);

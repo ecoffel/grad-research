@@ -9,16 +9,16 @@ testDataset = 'cmip5';
 % baseModels = {'csiro-mk3-6-0'};
 % testModels = {'csiro-mk3-6-0'};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'canesm2', 'cnrm-cm5', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'wb-davies-jones';
+testVar = 'wb-davies-jones';
 
 baseRegrid = true;
 testRegrid = true;
@@ -27,7 +27,7 @@ baseBiasCorrect = false;
 testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2060:2070;
+testPeriodYears = 2020:2030;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 annualmean = false;
@@ -50,7 +50,7 @@ if length(baseModels) > 1
     mode = 'multi-model';
 end
 
-baseDir = 'e:/data/';
+baseDir = 'f:/data/';
 yearStep = 1;
 
 if ~testBiasCorrect
