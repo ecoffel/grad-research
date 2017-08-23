@@ -1,20 +1,28 @@
-function ch_bowenRatio(dataDir)
+function ch_bowenRatio(dataDir, regrid)
+
+regridStr = '/';
+if regrid
+    regridStr = '/regrid/';
+end
 
 % ncep reanalysis
 if length(strfind(dataDir, 'ncep')) > 0
     hfssVar = 'shtfl';
     hflsVar = 'lhtfl';
+elseif length(strfind(dataDir, 'era')) > 0
+    hfssVar = 'slhf';
+    hflsVar = 'sshf';
 else
     % or cmip5
     hfssVar = 'hfss';
     hflsVar = 'hfls';
 end
 
-hfssDirNames = dir([dataDir '/' hfssVar '/regrid/world']);
+hfssDirNames = dir([dataDir '/' hfssVar regridStr 'world']);
 hfssDirIndices = [hfssDirNames(:).isdir];
 hfssDirNames = {hfssDirNames(hfssDirIndices).name}';
 
-hflsDirNames = dir([dataDir '/' hflsVar '/regrid/world']);
+hflsDirNames = dir([dataDir '/' hflsVar regridStr 'world']);
 hflsDirIndices = [hflsDirNames(:).isdir];
 hflsDirNames = {hflsDirNames(hflsDirIndices).name}';
 
@@ -40,7 +48,7 @@ for d = 1:length(hfssDirNames)
         continue;
     end
     
-    hfssCurDir = [dataDir '/' hfssVar '/regrid/world/'  hfssDirNames{d}];
+    hfssCurDir = [dataDir '/' hfssVar regridStr 'world/'  hfssDirNames{d}];
     
     if ~isdir(hfssCurDir)
         continue;
@@ -60,7 +68,7 @@ for d = 1:length(hflsDirNames)
         continue;
     end
     
-    hflsCurDir = [dataDir  '/' hflsVar '/regrid/world/' hflsDirNames{d}];
+    hflsCurDir = [dataDir  '/' hflsVar regridStr 'world/' hflsDirNames{d}];
     
     if ~isdir(hflsCurDir)
         continue;

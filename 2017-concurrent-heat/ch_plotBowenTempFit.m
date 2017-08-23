@@ -12,11 +12,11 @@ plotEachModel = false;
 % plot scatter plots for each month of bowen, temp
 plotScatter = false;
 
-% use CMIP5 or ncep
+% use ncep results?
 useNcep = true;
 
-% should we compare ncep to CMIP5 (requires useNcep=true)
-compareNcep = true;
+% use era reanalysis?
+useEra = true;
 
 % show legend on both plots? (some regions it doesn't fit)
 showLegend = true;
@@ -49,7 +49,7 @@ waterGrid = logical(waterGrid);
 regionInd = 2;
 months = 1:12;
 
-baseDir = 'f:/data/bowen';
+baseDir = '2017-concurrent-heat/bowen';
 
 rcpStr = 'historical';
 if change
@@ -95,7 +95,9 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
+              'mpi-esm-mr', 'mri-cgcm3', 'ncep-reanalysis', 'era-interim'};
+          
+models = {'access1-0', 'access1-3', 'ncep-reanalysis', 'era-interim'};
        
 % switch regionAb{regionInd}
 %     
@@ -159,13 +161,22 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
 
 dataset = 'cmip5';
 
-if useNcep && ~compareNcep
-    models = {''};
-    dataset = 'ncep';
-elseif useNcep && compareNcep
-    % insert ncep into last model slot
-    models = {models{:}, ''};
-    dataset = 'ncep-cmip5';
+% construct proper dataset str depending on whether using cmip5, ncep, era,
+% one or all.
+if strcmp(models{1}, '')
+    dataset = '';
+end
+
+if useNcep
+    if strcmp(dataset, '')
+        dataset = 'ncep';
+    else
+        dataset = [dataset '-ncep'];
+    end
+end
+
+if useEra
+    dataset = [dataset '-era'];
 end
        
 regionLatLonInd = {};
@@ -178,7 +189,6 @@ end
 
 curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
-
 
 for lag = lags
 
@@ -215,12 +225,19 @@ for lag = lags
         datasetStr = 'cmip5';
         % if we are using ncep and current model is blank, then this is
         % ncep
-        if useNcep && strcmp(models{model}, '')
+        if strcmp(models{model}, 'ncep-reanalysis')
             datasetStr = 'ncep-reanalysis';
+        elseif strcmp(models{model}, 'era-interim')
+            datasetStr = 'era-interim';
+        end
+        
+        modelStr = models{model};
+        if strcmp(modelStr, 'ncep-reanalysis') || strcmp(modelStr, 'era-interim')
+            modelStr = '';
         end
         
         if monthlyMean
-            load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+            load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpHistorical '-' modelStr '-' timePeriodHistorical '.mat']);
             bowenTemp = monthlyBowenTemp;
             clear monthlyBowenTemp;
         end
@@ -230,7 +247,7 @@ for lag = lags
 
             % load historical bowen data for comparison
             if monthlyMean
-                load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
+                load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpFuture '-' modelStr '-' timePeriodFuture '.mat']);
                 bowenTempFuture = monthlyBowenTemp;
                 clear monthlyBowenTemp;
             end

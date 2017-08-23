@@ -17,6 +17,8 @@ showPercentChange = true;
 % subtact the annual mean change?
 showChgAnomalies = false;
 
+showLegend = true;
+
 anomalyStr = 'total';
 if showChgAnomalies
     anomalyStr = 'anomaly';
@@ -420,8 +422,10 @@ for i = 1:length(regionNames)
     % plot bowen zero line 
     plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
-    leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
-    set(leg, 'location', 'northwest');
+    if showLegend
+        leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
+        set(leg, 'location', 'northwest', 'FontSize', 30);
+    end
     
     % plot significance indicators
     for month = 1:12
