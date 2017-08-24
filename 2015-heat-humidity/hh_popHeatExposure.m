@@ -9,8 +9,8 @@ baseModels = {''};
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb-davies-jones';
-testVar = 'wb-davies-jones';
+baseVar = 'wb-davies-jones-full';
+testVar = 'wb-davies-jones-full';
 
 baseRegrid = true;
 

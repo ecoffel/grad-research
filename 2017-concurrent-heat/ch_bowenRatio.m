@@ -10,8 +10,8 @@ if length(strfind(dataDir, 'ncep')) > 0
     hfssVar = 'shtfl';
     hflsVar = 'lhtfl';
 elseif length(strfind(dataDir, 'era')) > 0
-    hfssVar = 'slhf';
-    hflsVar = 'sshf';
+    hfssVar = 'sshf';
+    hflsVar = 'slhf';
 else
     % or cmip5
     hfssVar = 'hfss';

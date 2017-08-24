@@ -46,7 +46,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-regionInd = 2;
+regionInd = 1;
 months = 1:12;
 
 baseDir = '2017-concurrent-heat/bowen';
@@ -96,8 +96,6 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'ncep-reanalysis', 'era-interim'};
-          
-models = {'access1-0', 'access1-3', 'ncep-reanalysis', 'era-interim'};
        
 % switch regionAb{regionInd}
 %     
@@ -510,7 +508,9 @@ for lag = lags
             % plot multi-model mean
             % if comparing ncep, then here only plot cmip5 models and we'll
             % plot ncep later in bold
-            if useNcep && compareNcep
+            if useNcep && useEra
+                [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp(1:end-2,:), 1), 1:12, nanmean(meanBowen(1:end-2, laggedMonths), 1));
+            elseif useNcep || useEra
                 [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp(1:end-1,:), 1), 1:12, nanmean(meanBowen(1:end-1, laggedMonths), 1));
             else
                 [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp, 1), 1:12, nanmean(meanBowen(:, laggedMonths), 1));
@@ -536,10 +536,22 @@ for lag = lags
             er2 = errorbar(ax(2), 1:12, nanmean(meanBowen(:, laggedMonths), 1), bowenCV(laggedMonths) ./ 2);
             set(er2, 'LineWidth', 2, 'Color', [25/255.0, 158/255.0, 56/255.0]);
 
+            
+            
             % plot individual models for temp/bowen change
             for k = 1:size(meanTemp, 1)
                 % plot the ncep line in black
-                if useNcep && compareNcep && k == size(meanTemp, 1)
+                if (useNcep && useEra) && k >= size(meanTemp, 1)-1
+                    
+                    if strcmp(models{k}, 'ncep-reanalysis')
+                        p3 = plot(ax(1), 1:12, meanTemp(k, :), 'k', 'LineWidth', 4);
+                        p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'k', 'LineWidth', 4);
+                    elseif strcmp(models{k}, 'era-interim')
+                        p5 = plot(ax(1), 1:12, meanTemp(k, :), '--k', 'LineWidth', 4);
+                        p6 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), '--k', 'LineWidth', 4);
+                    end
+                    
+                elseif (useNcep || useEra) && k == size(meanTemp, 1)
                     p3 = plot(ax(1), 1:12, meanTemp(k, :), 'Color', 'k', 'LineWidth', 4);
                     p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'Color', 'k', 'LineWidth', 4);
                 else
@@ -549,7 +561,7 @@ for lag = lags
             end
             
             if showLegend
-                leg = legend([p1 p2, p3], 'CMIP5 Tx', 'CMIP5 Bowen', 'NCEP');
+                leg = legend([p1 p2, p3, p5], 'CMIP5 Tx', 'CMIP5 Bowen', 'NCEP', 'Era-Interim');
                 set(leg, 'location', 'northwest', 'FontSize', 20);
             end
             
@@ -628,7 +640,17 @@ for lag = lags
             
             % if we are comparing ncep to cmip, draw the last model (ncep)
             % bold and black
-            if useNcep && compareNcep
+            if useNcep && useEra
+                % era
+                p2 = plot(1:12, r2BT(end, :), '--k', 'LineWidth', 4);
+                %ncep
+                p3 = plot(1:12, r2BT(end-1, :), 'k', 'LineWidth', 4);
+                
+                if showLegend
+                    leg = legend([p1 p3, p2], 'CMIP5', 'NCEP', 'Era-Interim');
+                    set(leg, 'location', 'northwest', 'FontSize', 20);
+                end
+            elseif useNcep
                 p2 = plot(1:12, r2BT(end, :), 'Color', 'k', 'LineWidth', 4);
                 
                 if showLegend
