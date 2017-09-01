@@ -562,7 +562,7 @@ for lag = lags
             
             if showLegend
                 leg = legend([p1 p2, p3, p5], 'CMIP5 Tx', 'CMIP5 Bowen', 'NCEP', 'Era-Interim');
-                set(leg, 'location', 'northwest', 'FontSize', 20);
+                set(leg, 'location', 'northwest', 'FontSize', 30);
             end
             
         end
@@ -584,13 +584,13 @@ for lag = lags
         end
         set(ax(1), 'FontSize', 24);
         set(ax(2), 'FontSize', 24);
-        xlabel('Month', 'FontSize', 24);
+        xlabel('Month', 'FontSize', 30);
         if change
-            ylabel(ax(1), 'Temperature change', 'FontSize', 24);
-            ylabel(ax(2), 'Bowen change', 'FontSize', 24);
+            ylabel(ax(1), 'Temperature change', 'FontSize', 30);
+            ylabel(ax(2), 'Bowen change', 'FontSize', 30);
         else
-            ylabel(ax(1), 'Temperature', 'FontSize', 24);
-            ylabel(ax(2), 'Bowen', 'FontSize', 24);
+            ylabel(ax(1), 'Temperature', 'FontSize', 30);
+            ylabel(ax(2), 'Bowen', 'FontSize', 30);
         end
 
         % right hand plot -------------------
@@ -648,34 +648,35 @@ for lag = lags
                 
                 if showLegend
                     leg = legend([p1 p3, p2], 'CMIP5', 'NCEP', 'Era-Interim');
-                    set(leg, 'location', 'northwest', 'FontSize', 20);
+                    set(leg, 'location', 'northwest', 'FontSize', 30);
                 end
             elseif useNcep
                 p2 = plot(1:12, r2BT(end, :), 'Color', 'k', 'LineWidth', 4);
                 
                 if showLegend
                     leg = legend([p1 p2], 'CMIP5', 'NCEP');
-                    set(leg, 'location', 'northwest', 'FontSize', 20);
+                    set(leg, 'location', 'northwest', 'FontSize', 30);
                 end
             end
             
             
             
         end
-        xlim([0.5 12.5]);
+        set(gca, 'XLim', [0.5 12.5], 'XTick', 1:12);
+        
         set(gca, 'FontSize', 24);
-        xlabel('Month', 'FontSize', 24);
+        xlabel('Month', 'FontSize', 30);
         if change
-            ylabel('R2 change', 'FontSize', 24);
+            ylabel('R2 change', 'FontSize', 30);
         else
-            ylabel('R2', 'FontSize', 24);
+            ylabel('R2', 'FontSize', 30);
         end
 
         set(gcf, 'Position', get(0,'Screensize'));
         if change
-            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m2');
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m1');
         else
-            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m2');
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m1');
         end
         close all;
     end

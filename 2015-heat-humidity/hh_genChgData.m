@@ -6,8 +6,8 @@ testPeriod = 'future';
 baseDataset = 'cmip5';
 testDataset = 'cmip5';
 
-% baseModels = {'csiro-mk3-6-0'};
-% testModels = {'csiro-mk3-6-0'};
+% baseModels = {'access1-0', 'csiro-mk3-6-0'};
+% testModels = {'access1-0', 'csiro-mk3-6-0'};
 baseModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
@@ -16,7 +16,7 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0','fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-
+      
 baseVar = 'wb-davies-jones-full';
 testVar = 'wb-davies-jones-full';
 
@@ -27,20 +27,15 @@ baseBiasCorrect = false;
 testBiasCorrect = false;
 
 basePeriodYears = 1985:2004;
-testPeriodYears = 2020:2030;
+testPeriodYears = 2070:2080;
 
-% compare the annual mean temperatures or the mean extreme temperatures
-annualmean = false;
-
-meanStr = 'mean';
-if ~annualmean
-    meanStr = 'extreme';
-end
+% either extreme, annual-mean, monthly-mean
+timeString = 'monthly-mean';
 
 ensembles = 1;
 
-rcps = {'rcp45'};
-rcpStr = 'rcp45';
+rcps = {'rcp85'};
+rcpStr = 'rcp85';
 
 region = 'world';
 
@@ -50,7 +45,7 @@ if length(baseModels) > 1
     mode = 'multi-model';
 end
 
-baseDir = 'f:/data/';
+baseDir = 'e:/data/';
 yearStep = 1;
 
 if ~testBiasCorrect
@@ -138,9 +133,11 @@ for e = ensembles
                 ['K -> C...']
             end
             
-            if annualmean
+            if strcmp(timeString, 'annual-mean')
                 baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(nanmean(baseDaily{3}(:,:,:,months,:), 5), 4)}};
-            else
+            elseif strcmp(timeString, 'monthly-mean')
+                baseExtTmp = {{baseDaily{1}, baseDaily{2}, nanmean(baseDaily{3}(:,:,:,months,:), 5)}};
+            elseif strcmp(timeString, 'extreme')
                 baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
             end
             
@@ -209,10 +206,12 @@ for e = ensembles
                         testDaily{3} = testDaily{3} - 273.15;
                         ['K -> C...']
                     end
-
-                    if annualmean
+                    
+                    if strcmp(timeString, 'annual-mean')
                         testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(nanmean(testDaily{3}(:,:,:,months,:), 5), 4)}};
-                    else
+                    elseif strcmp(timeString, 'monthly-mean')
+                        testDailyExtTmp = {{testDaily{1}, testDaily{2}, nanmean(testDaily{3}(:,:,:,months,:), 5)}};
+                    elseif strcmp(timeString, 'extreme')
                         testDailyExtTmp = findYearlyExtremes(testDaily, months, findMax);
                     end
 
@@ -235,7 +234,18 @@ chgData = [];
 for e = 1:length(ensembles)
     for m = 1:length(baseExt{e})
         for y = 1:length(baseExt{e}{m})
-            baseData(:,:,e,m,y) = baseExt{e}{m}{y}{3};
+            
+            % if we have monthly data, we need to loop over months
+            if strcmp(timeString, 'monthly-mean')
+                for month = 1:size(baseExt{e}{m}{y}{3}, 4)
+                    baseData(:,:,e,m,month,y) = baseExt{e}{m}{y}{3}(:, :, :, month);
+                end
+            
+            % otherwise, we have just one data point per year (extreme or
+            % annual mean)
+            else
+                baseData(:,:,e,m,y) = baseExt{e}{m}{y}{3};
+            end
         end
     end
 end
@@ -244,25 +254,40 @@ for e = 1:length(ensembles)
     for r = 1:length(rcps)
         for m = 1:length(futureExt{e}{r})
             for y = 1:length(futureExt{e}{r}{m})
-                testData(:,:,e,m,r,y) = futureExt{e}{r}{m}{y}{3};
+                
+                % if we have monthly data, we need to loop over months
+                if strcmp(timeString, 'monthly-mean')
+                    for month = 1:size(futureExt{e}{r}{m}{y}{3}, 4)
+                        testData(:,:,e,m,r,month,y) = futureExt{e}{r}{m}{y}{3}(:, :, :, month);
+                    end
+                else
+                    testData(:,:,e,m,r,y) = futureExt{e}{r}{m}{y}{3};
+                end
             end
         end
     end
 end
 
-% average over future period
-baseData = nanmean(baseData, 5);
-testData = nanmean(testData, 6);
+% average over future period years
+baseData = nanmean(baseData, 6);
+testData = nanmean(testData, 7);
 
 % loop over models and rcps to make a list of all possible changes
 i = 1;
 for e = 1:size(testData, 3)
     for m = 1:size(testData, 4)
         for r = 1:size(testData, 5)
-            chgData(:,:,i) = squeeze(testData(:,:,e,m,r)) - baseData(:,:,e,m);
+            % if we have monthly data, we need to loop over months
+            if strcmp(timeString, 'monthly-mean')
+                for month = 1:12
+                    chgData(:,:,month,i) = squeeze(testData(:,:,e,m,r,month)) - baseData(:,:,e,m,month);
+                end
+            else
+                chgData(:,:,i) = squeeze(testData(:,:,e,m,r)) - baseData(:,:,e,m);
+            end
             i = i+1;
         end
     end
 end
 
-save(['chg-data-' baseVar '-' rcpStr '-' mode '-' meanStr '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');
+save(['chg-data-' baseVar '-' rcpStr '-' mode '-' timeString '-' num2str(testPeriodYears(1)) '-' num2str(testPeriodYears(end)) '.mat'], 'chgData');

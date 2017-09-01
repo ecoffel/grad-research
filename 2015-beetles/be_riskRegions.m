@@ -65,7 +65,7 @@ if plotMap
     geoshow(states, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none', 'LineWidth', 1);
 end
 
-load('bt-output/bt-toe-bc-mean-r1i1p1-mm-rcp85-bt-100-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004');
+load('2015-beetles/bt-output/bt-toe-bc-mean-r1i1p1-mm-rcp85-bt-100-perc--10-cmip5-all-ext-2006-2090-cmip5-1985-2004');
 X=saveData.data{1};
 Y=saveData.data{2};
 Z=saveData.data{3};

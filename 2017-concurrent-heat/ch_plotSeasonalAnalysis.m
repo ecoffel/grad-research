@@ -17,7 +17,7 @@ showPercentChange = true;
 % subtact the annual mean change?
 showChgAnomalies = false;
 
-showLegend = true;
+showLegend = false;
 
 anomalyStr = 'total';
 if showChgAnomalies
@@ -31,7 +31,7 @@ load lon;
 waterGrid = logical(waterGrid);
 
 bowenBaseDir = '2017-concurrent-heat\bowen\';
-tempBaseDir = '2017-concurrent-heat\tasmax\';
+tempBaseDir = '2017-concurrent-heat\bowen\temp-chg-data\';
 
 % all available models for both bowen and tasmax
 availModels = {};
@@ -438,43 +438,43 @@ for i = 1:length(regionNames)
         uistack(p3, 'top');
     end
 
-    xlabel('Month', 'FontSize', 24);
+    xlabel('Month', 'FontSize', 30);
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
     
     if showPercentChange
         set(ax(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
         set(ax2(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
-        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 30);
     elseif showChgAnomalies
         set(ax(2), 'YLim', [-2 2], 'YTick', -2:2);
         set(ax2(2), 'YLim', [-2 2], 'YTick', -2:2);
-        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 24);
+        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 30);
     else
         set(ax(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
         set(ax2(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
-        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 30);
     end
     set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax2(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     set(ax2(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     if showChgAnomalies
-        ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 24);
+        ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 30);
         set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
         set(ax2(1), 'YLim', [-3 3], 'YTick', -3:3);
     else
-        ylabel(ax(1), ['Temperature change (' char(176) 'C)'], 'FontSize', 24);
+        ylabel(ax(1), ['Temperature change (' char(176) 'C)'], 'FontSize', 30);
         set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
         set(ax2(1), 'YLim', [0 8], 'YTick', 0:8);
     end
     
-    title(regionNames{i}, 'FontSize', 24);
+    title(regionNames{i}, 'FontSize', 34);
     set(gcf, 'Position', get(0,'Screensize'));
     if showPercentChange
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m2');
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m1');
     else
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m2');
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m1');
     end
     close all;
 end
