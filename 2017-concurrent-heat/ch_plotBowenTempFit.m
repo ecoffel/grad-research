@@ -1,6 +1,6 @@
 
 % should we look at change between rcp & historical (only for cmip5)
-change = true;
+change = false;
 
 % look at monthly mean temp/bowen fit or monthly mean max temperature &
 % mean bowen
@@ -12,8 +12,14 @@ plotEachModel = false;
 % plot scatter plots for each month of bowen, temp
 plotScatter = false;
 
-% use CMIP5 or ncep
-useNcep = false;
+% use ncep results?
+useNcep = true;
+
+% use era reanalysis?
+useEra = true;
+
+% show legend on both plots? (some regions it doesn't fit)
+showLegend = true;
 
 % use bowen lag months behind temperature as predictor
 lags = 0;
@@ -37,20 +43,17 @@ end
 
 load lat;
 load lon;
+load waterGrid;
+waterGrid = logical(waterGrid);
 
-regionInd = 7;
+regionInd = 1;
 months = 1:12;
 
-baseDir = 'f:/data/bowen';
+baseDir = '2017-concurrent-heat/bowen';
 
 rcpStr = 'historical';
 if change
     rcpStr = 'chg';
-end
-
-datasetStr = 'cmip5';
-if useNcep
-    datasetStr = 'ncep-reanalysis';
 end
 
 regionNames = {'World', ...
@@ -88,74 +91,90 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10 10], [15, 30]]; ...            % central Africa
            [[-20 20], [0 360]]];                % Tropics
 
-switch regionAb{regionInd}
-    
-    %         {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'ncep-reanalysis', 'era-interim'};
+       
+% switch regionAb{regionInd}
+%     
+%     %         {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+% %               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+% %               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+% %               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+% %               'mpi-esm-mr', 'mri-cgcm3'};
+% 
+%     
+%     case 'us-cent'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr'};
+%     case 'us-se'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr'};
+%     case 'europe'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr'};
+%     case 'med'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr'};
+%     case 'sa-n'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
 %               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
 %               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
 %               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
 %               'mpi-esm-mr', 'mri-cgcm3'};
-
-    
-    case 'us-cent'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr'};
-    case 'us-se'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr'};
-    case 'europe'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr'};
-    case 'med'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr'};
-    case 'sa-n'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
-    case 'amazon'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
-    case 'india'
-        models = {'bnu-esm', 'cnrm-cm5', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
-                  'ipsl-cm5a-mr', 'miroc-esm'};
-    case 'africa-west'
-        models = {'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-esm2g', 'gfdl-esm2m'};
-    case 'africa-cent'
-        models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3'};
-end
-
-
-if useNcep
-    models = {''};
-end
+%     case 'amazon'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3'};
+%     case 'india'
+%         models = {'bnu-esm', 'cnrm-cm5', ...
+%                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', ...
+%                   'ipsl-cm5a-mr', 'miroc-esm'};
+%     case 'africa-west'
+%         models = {'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-esm2g', 'gfdl-esm2m'};
+%     case 'africa-cent'
+%         models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3'};
+% end
 
 dataset = 'cmip5';
+
+% construct proper dataset str depending on whether using cmip5, ncep, era,
+% one or all.
+if strcmp(models{1}, '')
+    dataset = '';
+end
+
 if useNcep
-    dataset = 'ncep';
+    if strcmp(dataset, '')
+        dataset = 'ncep';
+    else
+        dataset = [dataset '-ncep'];
+    end
+end
+
+if useEra
+    dataset = [dataset '-era'];
 end
        
 regionLatLonInd = {};
@@ -168,7 +187,6 @@ end
 
 curLat = regionLatLonInd{regionInd}{1};
 curLon = regionLatLonInd{regionInd}{2};
-
 
 for lag = lags
 
@@ -202,8 +220,22 @@ for lag = lags
     for model = 1:length(models)
         ['processing ' models{model} '...']
 
+        datasetStr = 'cmip5';
+        % if we are using ncep and current model is blank, then this is
+        % ncep
+        if strcmp(models{model}, 'ncep-reanalysis')
+            datasetStr = 'ncep-reanalysis';
+        elseif strcmp(models{model}, 'era-interim')
+            datasetStr = 'era-interim';
+        end
+        
+        modelStr = models{model};
+        if strcmp(modelStr, 'ncep-reanalysis') || strcmp(modelStr, 'era-interim')
+            modelStr = '';
+        end
+        
         if monthlyMean
-            load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpHistorical '-' models{model} '-' timePeriodHistorical '.mat']);
+            load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpHistorical '-' modelStr '-' timePeriodHistorical '.mat']);
             bowenTemp = monthlyBowenTemp;
             clear monthlyBowenTemp;
         end
@@ -213,7 +245,7 @@ for lag = lags
 
             % load historical bowen data for comparison
             if monthlyMean
-                load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpFuture '-' models{model} '-' timePeriodFuture '.mat']);
+                load([baseDir '/monthly-bowen-temp/monthlyBowenTemp-' datasetStr '-' rcpFuture '-' modelStr '-' timePeriodFuture '.mat']);
                 bowenTempFuture = monthlyBowenTemp;
                 clear monthlyBowenTemp;
             end
@@ -244,6 +276,11 @@ for lag = lags
 
             for xlat = 1:length(curLat)
                 for ylon = 1:length(curLon)
+                    
+                    if waterGrid(xlat, ylon)
+                        continue;
+                    end
+                    
                     % get all temp/bowen daily points for current region
                     % into one list (combines gridboxes & years for current model)
                     if monthlyMean
@@ -469,18 +506,20 @@ for lag = lags
         else
 
             % plot multi-model mean
-            [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp, 1), 1:12, nanmean(meanBowen(:, laggedMonths), 1));
+            % if comparing ncep, then here only plot cmip5 models and we'll
+            % plot ncep later in bold
+            if useNcep && useEra
+                [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp(1:end-2,:), 1), 1:12, nanmean(meanBowen(1:end-2, laggedMonths), 1));
+            elseif useNcep || useEra
+                [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp(1:end-1,:), 1), 1:12, nanmean(meanBowen(1:end-1, laggedMonths), 1));
+            else
+                [ax,p1,p2] = plotyy(1:12, nanmean(meanTemp, 1), 1:12, nanmean(meanBowen(:, laggedMonths), 1));
+            end
             hold(ax(1));
             hold(ax(2));
 
             set(p1, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 4);
             set(p2, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 4);
-
-            % plot individual models for temp/bowen change
-            for k = 1:size(meanTemp, 1)
-                p3 = plot(ax(1), 1:12, meanTemp(k, :), 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 1);
-                p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 1);
-            end
 
             % plot zero lines
             plot(ax(1), 1:12, zeros(12, 1), '--', 'LineWidth', 2, 'Color', [239/255.0, 71/255.0, 85/255.0]);
@@ -497,6 +536,35 @@ for lag = lags
             er2 = errorbar(ax(2), 1:12, nanmean(meanBowen(:, laggedMonths), 1), bowenCV(laggedMonths) ./ 2);
             set(er2, 'LineWidth', 2, 'Color', [25/255.0, 158/255.0, 56/255.0]);
 
+            
+            
+            % plot individual models for temp/bowen change
+            for k = 1:size(meanTemp, 1)
+                % plot the ncep line in black
+                if (useNcep && useEra) && k >= size(meanTemp, 1)-1
+                    
+                    if strcmp(models{k}, 'ncep-reanalysis')
+                        p3 = plot(ax(1), 1:12, meanTemp(k, :), 'k', 'LineWidth', 4);
+                        p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'k', 'LineWidth', 4);
+                    elseif strcmp(models{k}, 'era-interim')
+                        p5 = plot(ax(1), 1:12, meanTemp(k, :), '--k', 'LineWidth', 4);
+                        p6 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), '--k', 'LineWidth', 4);
+                    end
+                    
+                elseif (useNcep || useEra) && k == size(meanTemp, 1)
+                    p3 = plot(ax(1), 1:12, meanTemp(k, :), 'Color', 'k', 'LineWidth', 4);
+                    p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'Color', 'k', 'LineWidth', 4);
+                else
+                    p3 = plot(ax(1), 1:12, meanTemp(k, :), 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 1);
+                    p4 = plot(ax(2), 1:12, meanBowen(k, laggedMonths), 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 1);
+                end
+            end
+            
+            if showLegend
+                leg = legend([p1 p2, p3, p5], 'CMIP5 Tx', 'CMIP5 Bowen', 'NCEP', 'Era-Interim');
+                set(leg, 'location', 'northwest', 'FontSize', 30);
+            end
+            
         end
 
         %grid(ax(1), 'on');
@@ -512,17 +580,17 @@ for lag = lags
             set(ax(2), 'YLim', [-5 5], 'YTick', -5:5);
         else
             set(ax(1), 'YLim', [-10 40], 'YTick', [-10 0 10 20 30 40]);
-            set(ax(2), 'YLim', [-5 15], 'YTick', -5:3:15);
+            set(ax(2), 'YLim', [-1 5], 'YTick', -1:5);
         end
         set(ax(1), 'FontSize', 24);
         set(ax(2), 'FontSize', 24);
-        xlabel('Month', 'FontSize', 24);
+        xlabel('Month', 'FontSize', 30);
         if change
-            ylabel(ax(1), 'Temperature change', 'FontSize', 24);
-            ylabel(ax(2), 'Bowen change', 'FontSize', 24);
+            ylabel(ax(1), 'Temperature change', 'FontSize', 30);
+            ylabel(ax(2), 'Bowen change', 'FontSize', 30);
         else
-            ylabel(ax(1), 'Temperature', 'FontSize', 24);
-            ylabel(ax(2), 'Bowen', 'FontSize', 24);
+            ylabel(ax(1), 'Temperature', 'FontSize', 30);
+            ylabel(ax(2), 'Bowen', 'FontSize', 30);
         end
 
         % right hand plot -------------------
@@ -555,34 +623,60 @@ for lag = lags
             %plot(1:12, r2TB, 'Color', [0.4 0.4 0.4]);
             %plot(1:12, nanmean(r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
             for k = 1:size(r2BT, 1)
-                plot(1:12, r2BT(k, :), 'Color', [0.6 0.6 0.6], 'LineWidth', 1);
+                plot(1:12, r2BT(k, :), 'Color', [92/255.0, 192/255.0, 242/255.0], 'LineWidth', 1);
             end
-            plot(1:12, nanmean(r2BT, 1), 'Color', [0.3 0.3 0.3], 'LineWidth', 4);
+            
+            p1 = plot(1:12, nanmean(r2BT, 1), 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 4);
             ylim([0 1]);
 
             for month = 1:size(r2BT, 2)
-                p5 = plot(month, nanmean(r2BT(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [0.5 0.5 0.5], 'MarkerEdgeColor', 'k');
+                p5 = plot(month, nanmean(r2BT(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [85/255.0, 158/255.0, 237/255.0], 'MarkerEdgeColor', 'k');
                 if length(find(modelSig(:, month))) > 0.66*length(models)
-                    set(p5, 'LineWidth', 3, 'MarkerFaceColor', [0.5 0.5 0.5]);
+                    set(p5, 'LineWidth', 3, 'MarkerFaceColor', [85/255.0, 158/255.0, 237/255.0]);
                 else
                     set(p5, 'LineWidth', 3);
                 end
             end
+            
+            % if we are comparing ncep to cmip, draw the last model (ncep)
+            % bold and black
+            if useNcep && useEra
+                % era
+                p2 = plot(1:12, r2BT(end, :), '--k', 'LineWidth', 4);
+                %ncep
+                p3 = plot(1:12, r2BT(end-1, :), 'k', 'LineWidth', 4);
+                
+                if showLegend
+                    leg = legend([p1 p3, p2], 'CMIP5', 'NCEP', 'Era-Interim');
+                    set(leg, 'location', 'northwest', 'FontSize', 30);
+                end
+            elseif useNcep
+                p2 = plot(1:12, r2BT(end, :), 'Color', 'k', 'LineWidth', 4);
+                
+                if showLegend
+                    leg = legend([p1 p2], 'CMIP5', 'NCEP');
+                    set(leg, 'location', 'northwest', 'FontSize', 30);
+                end
+            end
+            
+            
+            
         end
-        xlim([0.5 12.5]);
+        set(gca, 'XLim', [0.5 12.5], 'XTick', 1:12);
+        
         set(gca, 'FontSize', 24);
-        xlabel('Month', 'FontSize', 24);
+        xlabel('Month', 'FontSize', 30);
         if change
-            ylabel('R2 change', 'FontSize', 24);
+            ylabel('R2 change', 'FontSize', 30);
         else
-            ylabel('R2', 'FontSize', 24);
+            ylabel('R2', 'FontSize', 30);
         end
 
         set(gcf, 'Position', get(0,'Screensize'));
         if change
-            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m2');
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m1');
         else
-            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m2');
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m1');
         end
         close all;
     end

@@ -9,8 +9,8 @@ baseModels = {''};
 %           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
 %           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'wb';
-testVar = 'wb';
+baseVar = 'wb-davies-jones-full';
+testVar = 'wb-davies-jones-full';
 
 baseRegrid = true;
 
@@ -23,7 +23,7 @@ popRegrid = true;
 
 region = 'world';
 rcp = 'rcp85';
-exposureThreshold = 32;
+exposureThreshold = 31;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
@@ -148,36 +148,35 @@ for m = 1:length(baseModels)
         if length(latIndexRange) == 0
             [latIndexRange, lonIndexRange] = latLonIndexRange(baseDaily, latRange, lonRange);
         end
-        baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :);
-        baseDaily{3} = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
-                                              size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
+        
+        
+        baseDaily{3} = baseDaily{3}(latIndexRange, lonIndexRange, :, :, :);
+        
+        % don't do this b/c we need monthly separation
+        %baseDaily{3} = reshape(baseDaily{3}, [size(baseDaily{3}, 1), size(baseDaily{3}, 2), ...
+        %                                      size(baseDaily{3}, 3)*size(baseDaily{3}, 4)*size(baseDaily{3}, 5)]);
         
         if length(lat) == 0
             lat = baseDaily{1}(latIndexRange, lonIndexRange);
             lon = baseDaily{2}(latIndexRange, lonIndexRange);
         end
         
-        %baseExtTmp = findYearlyExtremes(baseDaily, months, findMax);
-        %baseExt{m} = {baseExt{m}{:} baseExtTmp{:}};
-        %baseExtTmp = baseExtTmp{1}{3};
         baseDataRaw{m}{y-basePeriodYears(1)+1} = baseDaily{3};
         
+        % find number of times per grid cell that exposure thresh is
+        % reached in historical (NCEP)
         selGrid = zeros(size(lat));
         for xlat = 1:size(baseDaily{3}, 1)
             for ylon = 1:size(baseDaily{3}, 2)
                 
-                selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(baseDaily{3}(xlat, ylon, :) > exposureThreshold));
+                selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(baseDaily{3}(xlat, ylon, :, :, :) > exposureThreshold));
                 
-%                 for d = 1:size(baseDaily{3}, 3)
-%                     if baseDaily{3}(xlat, ylon, d) >= exposureThreshold
-%                          + 1;
-%                     end
-%                 end
             end
         end
         
         meanBaseSelGrid(:, :, m, y-basePeriodYears(1)+1) = selGrid;
         
+        % count historical pop exposure for each grid cell
         for ssp = ssps
             basePopCount(m, ssp, y-basePeriodYears(1)+1) = hh_countPop({lat, lon, selGrid}, region, [2010], ssp, popRegrid);
         end
@@ -190,21 +189,13 @@ meanBaseSelGrid = nanmean(nanmean(meanBaseSelGrid, 4), 3);
 
 ['done loading...']
 
-% average over ensembles, models, and years
-%for e = 1:length(ensembles)
-    for m = 1:length(baseDataRaw)
-        for y = 1:length(baseDataRaw{m})
-            baseData(:,:,:,m,y) = baseDataRaw{m}{y};
-        end
-    end
-%end
+% loop over all years in ncep data and collect in baseData matrix
+% baseData will have dims (x, y, year, month, day)
+for y = 1:length(baseDataRaw{1})-1
+    baseData(:,:,y,:,:) = baseDataRaw{1}{y};
+end
 
 clear baseDataRaw;
-
-% if ncep, select 1st model
-if strcmp(baseDataset, 'ncep')
-    baseData = squeeze(baseData(:, :, :, 1, :));
-end
 
 % average over years in base period
 %baseData = nanmean(baseData, 4);
@@ -219,66 +210,46 @@ constPopCount = [];
 decCount = 1;
 for t = testPeriodYears(1):10:testPeriodYears(end-1)
     ['t = ' num2str(t)]
-    load(['chg-data/chg-data-wb-' rcp '-multi-model-mean-' num2str(t) '-' num2str(t+10) '.mat']);
+    load(['chg-data/chg-data-wb-davies-jones-full-' rcp '-multi-model-monthly-mean-' num2str(t) '-' num2str(t+10) '.mat']);
     
     chgData(chgData > 10) = NaN;
     
-    % calc mean change for each scenario
-%     chgDataMeans = [];
-%     for c = 1:size(chgData, 3)
-%         chgDataMeans(c) = nanmean(nanmean(chgData(20:70 , :, c), 2), 1);
-%     end
-%     
-%     % sort by mean change
-%     [chgDataMeans, chgDataMeansI] = sort(chgDataMeans);
-%     
-%     chgData = chgData(:, :, chgDataMeansI);
-    
     for x = 1:size(chgData, 1)
         for y = 1:size(chgData, 2)
-            chgData(x, y, :) = sort(chgData(x, y, :));
+            for month = 1:size(chgData, 3)
+                chgData(x, y, month, :) = sort(chgData(x, y, month, :));
+            end
         end
     end
     
-    for c = 1:size(chgData, 3)
+    for c = 1:size(chgData, 4)
         
         % one sel grid for each scenario
         selGrid = zeros(size(lat));
         
-        for year = 1:size(baseData, 4)
-            curFutureData = baseData(:, :, :, year) + repmat(chgData(latIndexRange, lonIndexRange, c), [1, 1, size(baseData, 3)]);
-            for xlat = 1:size(chgData, 1)
-                for ylon = 1:size(chgData, 2)
-                    selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(curFutureData(xlat, ylon, :) > exposureThreshold));
+        for year = 1:size(baseData, 3)
+            for month = 1:12
+                % add change data for current month onto daily data for
+                % current NCEP year
+                curFutureData = squeeze(baseData(:, :, year, month, :)) + repmat(chgData(latIndexRange, lonIndexRange, month, c), [1, 1, size(baseData, 5)]);
+                
+                % for each gridcell, add number of exposed days for current
+                % month/year
+                for xlat = 1:size(chgData, 1)
+                    for ylon = 1:size(chgData, 2)
+                        selGrid(xlat, ylon) = selGrid(xlat, ylon) + length(find(curFutureData(xlat, ylon, :) > exposureThreshold));
+                    end
                 end
             end
         end
         
-%         for year = 1:size(baseData, 4)
-%             for day = 1:size(baseData, 3)
-%                 % compute future scenarios by adding change onto base data
-%                 curFutureData = baseData(:, :, day, year) + repmat(chgData(latIndexRange, lonIndexRange, c);
-%                 
-%                 for xlat = 1:size(curFutureData, 1)
-%                     for ylon = 1:size(curFutureData, 2)
-%                         % add up all exceedences for this scenario (loop
-%                         % over day, year, x, y)
-%                         if curFutureData(xlat, ylon, day, year) >= exposureThreshold
-%                             selGrid(xlat, ylon) = selGrid(xlat, ylon) + 1;
-%                         end
-%                     end
-%                 end
-%                 
-%                 %futureData(:, :, day, year, decCount, c) = baseData(:, :, day, year) + chgData(latIndexRange, lonIndexRange, c);
-%             end
-%         end
-        
         % divide by number of years to get mean exceedences per year in
-        % this scenario & decade
-        selGrid = selGrid ./ size(baseData, 4);
+        % this scenario & decade (-1 on the # years because final NCEP year
+        % has only 11 months so is discarded)
+        selGrid = selGrid ./ (size(baseData, 3)-1);
         clear curFutureData;
         
-        %save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
+        save(['2015-heat-humidity/selGrid/selGrid-' num2str(t) 's-' rcp '-' num2str(exposureThreshold) 'C-scenario-' num2str(c) '.mat'], 'selGrid');
         
         % loop over scenario 
         for ssp = ssps
@@ -395,7 +366,7 @@ futPopE= [futurePopCountSorted(:, round((prcRange(1)/100.0)*size(futurePopCountS
 
 % save population data
 popResult = {{futurePopCountSorted, futPopE}, {climPopEffectSorted, climE}, {popPopEffectSorted, popE}, {interactionEffectSorted, intE}};
-save('population-exposure-rcp85-35', 'popResult');
+save(['population-exposure-' baseVar '-' rcp '-' num2str(exposureThreshold)], 'popResult');
          
 mmClimatePopEffect = nanmean(climPopEffectSorted, 2);
 mmPopPopEffect = nanmean(popPopEffectSorted, 2);

@@ -1,6 +1,7 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
-tempMetric = 'monthly-mean-max';
+tasmaxMetric = 'monthly-mean-max';
+tasminMetric = 'monthly-mean-min';
 showMaps = false;
 showMonthlyMaps = false;
 
@@ -16,6 +17,8 @@ showPercentChange = true;
 % subtact the annual mean change?
 showChgAnomalies = false;
 
+showLegend = false;
+
 anomalyStr = 'total';
 if showChgAnomalies
     anomalyStr = 'anomaly';
@@ -28,7 +31,7 @@ load lon;
 waterGrid = logical(waterGrid);
 
 bowenBaseDir = '2017-concurrent-heat\bowen\';
-tasmaxBaseDir = '2017-concurrent-heat\tasmax\';
+tempBaseDir = '2017-concurrent-heat\bowen\temp-chg-data\';
 
 % all available models for both bowen and tasmax
 availModels = {};
@@ -37,6 +40,7 @@ availModels = {};
 bowenHistorical = [];
 bowenChg = [];
 tasmaxChg = [];
+tasminChg = [];
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -88,14 +92,20 @@ for m = 1:length(models)
     end
     
     % load pre-computed change data for tasmax under rcp85 in 2070-2080
-    if exist([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat'], 'file')
-        load([tasmaxBaseDir 'chgData-cmip5-seasonal-' tempMetric '-' models{m} '-rcp85-2070-2080.mat']);
+    if exist([tempBaseDir 'chgData-cmip5-seasonal-' tasmaxMetric '-' models{m} '-rcp85-2060-2080.mat'], 'file')
+        load([tempBaseDir 'chgData-cmip5-seasonal-' tasmaxMetric '-' models{m} '-rcp85-2060-2080.mat']);
         curTasmaxRcp85 = chgData;
+    end
+    
+    % load pre-computed change data for tasmin under rcp85 in 2070-2080
+    if exist([tempBaseDir 'chgData-cmip5-seasonal-' tasminMetric '-' models{m} '-rcp85-2060-2080.mat'], 'file')
+        load([tempBaseDir 'chgData-cmip5-seasonal-' tasminMetric '-' models{m} '-rcp85-2060-2080.mat']);
+        curTasminRcp85 = chgData;
     end
     
     % if both historical and rcp85 data exist and were loaded for this
     % model, add them to the change data
-    if exist('curBowenHistorical') && exist('curBowenRcp85') && exist('curTasmaxRcp85')
+    if exist('curBowenHistorical') && exist('curBowenRcp85') && exist('curTasmaxRcp85') && exist('curTasminRcp85')
         availModels{end+1} = models{m};
         
         % NaN-out all water gridcells
@@ -118,6 +128,11 @@ for m = 1:length(models)
             curGrid = curTasmaxRcp85(:, :, month);
             curGrid(waterGrid) = NaN;
             curTasmaxRcp85(:, :, month) = curGrid;
+            
+            % tasmin change
+            curGrid = curTasminRcp85(:, :, month);
+            curGrid(waterGrid) = NaN;
+            curTasminRcp85(:, :, month) = curGrid;
         end
         
         % record historical bowen
@@ -128,9 +143,10 @@ for m = 1:length(models)
         bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
         
         tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
+        tasminChg(:, :, length(availModels), :) = curTasminRcp85;
     end
     
-    clear curBowenHistorical curBowenRcp85 curTasmaxRcp85;
+    clear curBowenHistorical curBowenRcp85 curTasmaxRcp85 curTasminRcp85;
     
 end
 
@@ -138,6 +154,7 @@ end
 bowenRegionsHistorical = {};
 bowenRegionsChange = {};
 tasmaxRegionsChange = {};
+tasminRegionsChange = {};
 
 % loop over regions and extract bowen & tasmax change data
 for i = 1:length(regionNames)
@@ -148,6 +165,8 @@ for i = 1:length(regionNames)
     bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
 
     tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
+    
+    tasminRegionsChange{i} = squeeze(nanmean(nanmean(tasminChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
 end
 
 % plot maps of change in each region
@@ -228,58 +247,58 @@ for i = 1:length(regionNames)
     % list of models to use for this region
     modelSubset = availModels;
     
-    switch regionAb{i}
-
-        %         {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-    %               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-    %               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-    %               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-    %               'mpi-esm-mr', 'mri-cgcm3'};
-
-
-        case 'us-cent'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-        case 'us-se'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-        case 'europe'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-        case 'med'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr'};
-        case 'sa-n'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
-        case 'amazon'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
-        case 'africa-central'
-            modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
-    end
+%     switch regionAb{i}
+% 
+%         %         {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%     %               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%     %               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%     %               'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%     %               'mpi-esm-mr', 'mri-cgcm3'};
+% 
+% 
+%         case 'us-cent'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr'};
+%         case 'us-se'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr'};
+%         case 'europe'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr'};
+%         case 'med'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr'};
+%         case 'sa-n'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr', 'mri-cgcm3'};
+%         case 'amazon'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%                   'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                   'mpi-esm-mr', 'mri-cgcm3'};
+%         case 'africa-central'
+%             modelSubset = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+%                       'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%                       'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%                       'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+%                       'mpi-esm-mr', 'mri-cgcm3'};
+%     end
 
     
     % calculate indices for 25th/75th percentile bowen across models
@@ -299,30 +318,40 @@ for i = 1:length(regionNames)
     % cancluate change anomalies if needed
     if showChgAnomalies
         annMeanBowen = nanmean(bowenRegionsChange{i}, 2);
-        annMeanTemp = nanmean(tasmaxRegionsChange{i}, 2);
+        annMeanTasmax = nanmean(tasmaxRegionsChange{i}, 2);
+        annMeanTasmin = nanmean(tasminRegionsChange{i}, 2);
         bowenRegionsChange{i} = bowenRegionsChange{i} - repmat(annMeanBowen, 1, 12);
-        tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTemp, 1, 12);
+        tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTasmax, 1, 12);
+        tasminRegionsChange{i} = tasminRegionsChange{i} - repmat(annMeanTasmin, 1, 12);
     end
     
     % limit to models for this region
     tasmaxRegionsChange{i} = tasmaxRegionsChange{i}(modelInd, :);
+    tasminRegionsChange{i} = tasminRegionsChange{i}(modelInd, :);
     if showPercentChange
         bowenRegionsHistorical{i} = bowenRegionsHistorical{i}(modelInd, :);
     end
     bowenRegionsChange{i} = bowenRegionsChange{i}(modelInd, :);
     
     % mean temperature change across models
-    tempY = squeeze(nanmean(tasmaxRegionsChange{i}, 1));
+    tasmaxY = squeeze(nanmean(tasmaxRegionsChange{i}, 1));
+    tasminY = squeeze(nanmean(tasminRegionsChange{i}, 1));
     
     % sort models by temperature change to calculate error range
     tasmaxRegionsChange{i} = sort(tasmaxRegionsChange{i}, 1);
+    tasminRegionsChange{i} = sort(tasminRegionsChange{i}, 1);
     
-    % error is range across 25-75% models 
-    tempErr = squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    % error is full range across models
+    tasmaxErr = squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    tasminErr = squeeze(range(tasmaxRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
     
     % if only one model, err will be 0 so generate an array of zeros
-    if tempErr == 0
-        tempErr = zeros(12, 1);
+    if tasmaxErr == 0
+        tasmaxErr = zeros(12, 1);
+    end
+    
+    if tasminErr == 0
+        tasminErr = zeros(12, 1);
     end
 
     % test for significant change in each month at 95th percentile
@@ -357,11 +386,11 @@ for i = 1:length(regionNames)
     end
     
     f = figure('Color',[1,1,1]);
-    hold on;
+    %hold on;
     grid on;
     box on;
 
-    [ax, p1, p2] = shadedErrorBaryy(1:12, tempY, tempErr, 'r', ...
+    [ax, p1, p2] = shadedErrorBaryy(1:12, tasmaxY, tasmaxErr, 'r', ...
                                     1:12, bowenY, bowenErr, 'g');
     hold(ax(1));
     hold(ax(2));
@@ -374,10 +403,30 @@ for i = 1:length(regionNames)
     set(p2.edge, 'Color', 'w');
     axis(ax(1), 'square');
     axis(ax(2), 'square');
+    
+    [ax2, p3, p4] = shadedErrorBaryy(1:12, tasminY, tasminErr, 'b', ...
+                                    1:12, bowenY, bowenErr, 'g');
+    hold(ax2(1));
+    hold(ax2(2));
+    box(ax(1), 'on');
+    set(p3.mainLine, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 3);
+    set(p3.patch, 'FaceColor', [85/255.0, 158/255.0, 237/255.0]);
+    set(p3.edge, 'Color', 'w');
+    % this is a copy of the bowen line from p2, so make it invisible
+    set(p4.mainLine, 'visible', 'off');
+    set(p4.patch, 'visible', 'off');
+    set(p4.edge, 'visible', 'off');
+    axis(ax2(1), 'square');
+    axis(ax2(2), 'square');
 
     % plot bowen zero line 
     plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
+    if showLegend
+        leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
+        set(leg, 'location', 'northwest', 'FontSize', 30);
+    end
+    
     % plot significance indicators
     for month = 1:12
         p3 = plot(ax(2), month, bowenY(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
@@ -389,36 +438,43 @@ for i = 1:length(regionNames)
         uistack(p3, 'top');
     end
 
-    xlabel('Month', 'FontSize', 24);
+    xlabel('Month', 'FontSize', 30);
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
     
     if showPercentChange
         set(ax(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
-        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 24);
+        set(ax2(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
+        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 30);
     elseif showChgAnomalies
         set(ax(2), 'YLim', [-2 2], 'YTick', -2:2);
-        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 24);
+        set(ax2(2), 'YLim', [-2 2], 'YTick', -2:2);
+        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 30);
     else
         set(ax(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
-        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 24);
+        set(ax2(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
+        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 30);
     end
     set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
+    set(ax2(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
     set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+    set(ax2(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
     if showChgAnomalies
-        ylabel(ax(1), ['Tx anomaly change (' char(176) 'C)'], 'FontSize', 24);
+        ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 30);
         set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
+        set(ax2(1), 'YLim', [-3 3], 'YTick', -3:3);
     else
-        ylabel(ax(1), ['Tx change (' char(176) 'C)'], 'FontSize', 24);
+        ylabel(ax(1), ['Temperature change (' char(176) 'C)'], 'FontSize', 30);
         set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
+        set(ax2(1), 'YLim', [0 8], 'YTick', 0:8);
     end
     
-    title(regionNames{i}, 'FontSize', 24);
+    title(regionNames{i}, 'FontSize', 34);
     set(gcf, 'Position', get(0,'Screensize'));
     if showPercentChange
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-percent.png;']);
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m1');
     else
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tempMetric '-' anomalyStr '-absolute.png;']);
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m1');
     end
     close all;
 end

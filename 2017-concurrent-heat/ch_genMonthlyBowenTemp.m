@@ -4,8 +4,8 @@
 % across models and decades.
 
 season = 'all';
-dataset = 'cmip5';
-tempVar = 'tasmax';
+dataset = 'era-interim';
+tempVar = 'mx2t';
 bowenVar = 'bowen';
 
 if strcmp(dataset, 'cmip5')
@@ -25,16 +25,18 @@ if strcmp(dataset, 'cmip5')
 
     rcp = 'rcp85';
     ensemble = 'r1i1p1';
-elseif strcmp(dataset, 'ncep-reanalysis')
+elseif strcmp(dataset, 'ncep-reanalysis') || strcmp(dataset, 'era-interim')
     models = {''};
     rcp = '';
     ensemble = '';
 end
 
-region = 'world';
-timePeriod = 2041:2060;%1985:2004;
+tempRegrid = true;
 
-baseDir = 'e:/data';
+region = 'world';
+timePeriod = 1985:2004;
+
+baseDir = 'g:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -44,6 +46,12 @@ elseif strcmp(season, 'winter')
 elseif strcmp(season, 'all')
     months = 1:12;
 end
+
+tempRegridStr = '';
+if tempRegrid
+    tempRegridStr = 'regrid';
+end
+
 
 load lat;
 load lon;
@@ -76,7 +84,7 @@ for m = 1:length(models)
     for y = timePeriod(1):yearStep:timePeriod(end)
         ['year ' num2str(y) '...']
 
-        baseDailyTemp = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' tempVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+        baseDailyTemp = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' tempVar '/' tempRegridStr '/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         baseDailyBowen = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' bowenVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         
         % remove lat/lon data (we loaded this earlier)
@@ -166,10 +174,14 @@ for m = 1:length(models)
     % save current model's data
     if strcmp(tempVar, 'wb')
         monthlyBowenWb = {tempData, bowenData};
-        save(['2017-concurrent-heat/monthly-bowen-wb/monthlyBowenWb-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+        save(['2017-concurrent-heat/bowen/monthly-bowen-wb/monthlyBowenWb-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
     else
         monthlyBowenTemp = {tempData, bowenData};
-        save(['2017-concurrent-heat/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+        if strcmp(dataset, 'ncep-reanalysis') || strcmp(dataset, 'era-interim')
+            save(['2017-concurrent-heat/bowen/monthly-bowen-temp/monthlyBowenTemp-' dataset '-historical-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+        else
+            save(['2017-concurrent-heat/bowen/monthly-bowen-temp/monthlyBowenTemp-' dataset '-' rcp '-' curModel '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'monthlyBowenTemp');
+        end
     end
 
 end

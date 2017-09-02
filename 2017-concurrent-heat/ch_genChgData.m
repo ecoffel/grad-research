@@ -14,7 +14,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% baseModels = {'access1-0'};
+% models = {'access1-0','access1-3'};
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
@@ -35,7 +35,7 @@ futurePeriods = [2060:2080];
 
 % futurePeriods = [2070:2080];
 
-baseDir = 'e:/data';
+baseDir = 'f:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')
@@ -55,9 +55,11 @@ load lon;
 % daily-max = mean daily max temperature
 % daily-min = mean daily min temperature
 % seasonal-monthly-max = monthly maximum temperature
+% seasonal-monthly-min = monthly minimum temperature
 % seasonal-monthly-mean-max = mean daily maximum temperature for each month
+% seasonal-monthly-mean-min = mean daily minimum temperature for each month
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'daily-min';
+changeMetric = 'seasonal-monthly-mean-min';
 
 
 if length(findstr(changeMetric, 'min')) > 0
@@ -99,7 +101,8 @@ for m = 1:length(models)
         end
 
         % if we are not using a seasonal metric
-        if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max')
+        if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
+           ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min')
             % reshape to be 3D (x, y, day)
             baseDaily = reshape(baseDaily, [size(baseDaily, 1), size(baseDaily, 2), ...
                                                  size(baseDaily, 3)*size(baseDaily, 4)*size(baseDaily, 5)]);
@@ -149,9 +152,23 @@ for m = 1:length(models)
             for month = 1:size(baseDaily, 4)
                 baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmax(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
             end
+        elseif strcmp(changeMetric, 'seasonal-monthly-min')
+            % calculate the seasonal minimum for each month
+            
+            % loop over months
+            for month = 1:size(baseDaily, 4)
+                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmin(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
+            end
             
         elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
             % calculate the seasonal mean daily maximum for each month
+            
+            % loop over months
+            for month = 1:size(baseDaily, 4)
+                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
+            end
+        elseif strcmp(changeMetric, 'seasonal-monthly-mean-min') 
+            % calculate the seasonal mean daily minimum for each month
             
             % loop over months
             for month = 1:size(baseDaily, 4)
@@ -186,7 +203,8 @@ if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max') || ...
     % if computing annual maximum or mean daily maximum, take the mean across all base period
     % years (baseData now 3D: (x, y, model))
     baseData = nanmean(baseData, 4);
-elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
+elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
+       strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min')
     % if computing seasonal metrics, average over all the annual
     % maximum or mean daily maximum, take the mean across all years
     % (baseData now 4D: (x, y, model, month))
@@ -220,7 +238,8 @@ for f = 1:size(futurePeriods, 1)
             end
 
             % if we are not using a seasonal metric
-            if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max')
+            if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
+               ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min')
                 % reshape to 3D (x, y, day)
                 futureDaily = reshape(futureDaily, [size(futureDaily, 1), size(futureDaily, 2), ...
                                                          size(futureDaily, 3)*size(futureDaily, 4)*size(futureDaily, 5)]);
@@ -264,9 +283,23 @@ for f = 1:size(futurePeriods, 1)
                 for month = 1:size(futureDaily, 4)
                     futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmax(squeeze(futureDaily(:, :, 1, month, :)), [], 3);
                 end
+            elseif strcmp(changeMetric, 'seasonal-monthly-min')
+                % calculate the seasonal minimum for each month
+
+                % loop over months
+                for month = 1:size(futureDaily, 4)
+                    futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmin(squeeze(futureDaily(:, :, 1, month, :)), [], 3);
+                end
             
             elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
                 % calculate the seasonal mean daily maximum for each month
+
+                % loop over months
+                for month = 1:size(futureDaily, 4)
+                    futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futureDaily(:, :, 1, month, :)), 3);
+                end
+            elseif strcmp(changeMetric, 'seasonal-monthly-mean-min') 
+                % calculate the seasonal mean daily minimum for each month
 
                 % loop over months
                 for month = 1:size(futureDaily, 4)
@@ -302,13 +335,14 @@ for f = 1:size(futurePeriods, 1)
             % calculate change for the current base period model:
             chgData = futureData - baseData(:, :, m);
 
-        elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max')
+        elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
+               strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min')
             % if computing seasonal metrics, average over all the annual
             % maximum or mean daily maximum, take the mean across all years
-            % (futureData now 4D: (x, y, month))
+            % (futureData now 4D: (x, y, year, month))
             futureData = squeeze(nanmean(futureData, 3));
             
-            % calculate change for the current base period model:
+            % calculate change for the current base period model, average over base models:
             chgData = futureData - squeeze(baseData(:, :, m, :));
         end
 
