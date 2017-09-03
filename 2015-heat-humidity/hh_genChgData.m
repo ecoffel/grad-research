@@ -30,12 +30,12 @@ basePeriodYears = 1985:2004;
 testPeriodYears = 2070:2080;
 
 % either extreme, annual-mean, monthly-mean
-timeString = 'monthly-mean';
+timeString = 'extreme';
 
 ensembles = 1;
 
-rcps = {'rcp85'};
-rcpStr = 'rcp85';
+rcps = {'rcp45'};
+rcpStr = 'rcp45';
 
 region = 'world';
 

@@ -1,6 +1,6 @@
 decade = 2070;
 rcp = 'rcp85';
-thresh = 31;
+thresh = 35;
 
 baseDir = '2015-heat-humidity/selGrid/';
 

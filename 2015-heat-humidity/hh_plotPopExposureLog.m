@@ -10,7 +10,7 @@ exposureErr45 = [];
 exposureErr85 = [];
 
 for temp = temps
-    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-' num2str(temp) '-rcp85-ssp5-world.mat']);
+    load(['heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp85-ssp5-world.mat']);
     
     exposureTotals85(end+1) = saveData.futureDecY(end,end);
     exposureErr85(end+1, :) = abs(saveData.futureDecYerr(end,end,:));
@@ -22,7 +22,7 @@ for temp = temps
         end
     end
     
-    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-' num2str(temp) '-rcp45-ssp5-world.mat']);
+    load(['heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp45-ssp5-world.mat']);
     
     exposureTotals45(end+1) = saveData.futureDecY(end,end);
     exposureErr45(end+1, :) = abs(saveData.futureDecYerr(end,end,:));

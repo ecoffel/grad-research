@@ -8,10 +8,10 @@ plotRange = [0 6];
 plotYUnits = ['Change, ' char(176) 'C'];
 
 meanStr = 'extreme';   
-var = 'wb';
+var = 'wb-davies-jones-full';
 
 varTitle = 'Temperature';
-if strcmp(var, 'wb')
+if length(strfind(var, 'wb')) > 0
     varTitle = 'Wet bulb temperature';
 end
 

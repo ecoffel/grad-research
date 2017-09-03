@@ -54,7 +54,7 @@ for h = 1:length(heatThresholds)
         end
         
         for c = scenarios
-            selGridStr = ['selGrid/selGrid-' num2str(decade) 's-' rcp '-' num2str(heatThreshold) 'C-scenario-' num2str(c)];
+            selGridStr = ['2015-heat-humidity/selGrid/selGrid-' num2str(decade) 's-' rcp '-' num2str(heatThreshold) 'C-scenario-' num2str(c)];
 
             % try to load future file
             if exist([selGridStr '.mat'], 'file')
@@ -95,6 +95,6 @@ end
 
 set(gcf, 'Position', get(0,'Screensize'));
 set(gcf, 'Color', [1,1,1]);
-%l = legend(lStr);
-%set(l, 'FontSize', 24);
+l = legend('RCP 4.5', 'RCP 8.5');
+set(l, 'FontSize', 24);
 %export_fig(['heatExposureProbability-' num2str(heatThreshold) '.png']);
