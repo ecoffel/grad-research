@@ -19,6 +19,9 @@ showChgAnomalies = false;
 
 showLegend = false;
 
+% show correlation between Tx and Bowen
+showCorr = true;
+
 anomalyStr = 'total';
 if showChgAnomalies
     anomalyStr = 'anomaly';
@@ -419,6 +422,12 @@ for i = 1:length(regionNames)
     axis(ax2(1), 'square');
     axis(ax2(2), 'square');
 
+    if showCorr
+        cor = corrcoef(tasmaxY, bowenY);
+        cor = cor(2,1);
+        
+    end
+    
     % plot bowen zero line 
     plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
