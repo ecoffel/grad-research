@@ -1,7 +1,7 @@
 
 baseDir = '2017-concurrent-heat/bowen';
 soilVar = 'mrso';                  
-percentChange = false;
+percentChange = true;
 
 if strcmp(soilVar, 'mrso')
     models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
@@ -9,18 +9,14 @@ if strcmp(soilVar, 'mrso')
                           'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                           'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
                           'mpi-esm-mr', 'mri-cgcm3'};
+    maxVal = 1e9;
 elseif strcmp(soilVar, 'mrsos')
     models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                       'cnrm-cm5', 'csiro-mk3-6-0', ...
                       'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'ipsl-cm5a-mr', ...
                       'mri-cgcm3'};
-elseif strcmp(soilVar, 'snw')
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
+    maxVal = 1e9;
 end
 
 timePeriodHistorical = 1985:2005;
@@ -31,6 +27,9 @@ load lon;
 
 load waterGrid;
 waterGrid = logical(waterGrid);
+
+showMonths = [7 8 9];
+showRegions = 1;
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -71,7 +70,7 @@ if percentChange
     soilVarStr = 'percent';
 end
 
-for region = 1:length(regionLatLonInd)
+for region = showRegions
     % historical and future monthly precip, mm/day
     % dims: (x, y, month, model)
     regionalSoilHistorical = [];
@@ -92,7 +91,7 @@ for region = 1:length(regionLatLonInd)
         end
         
         % some partial water tiles have very large values - remove
-        soilHistorical(soilHistorical > 10e8) = NaN;
+        soilHistorical(soilHistorical > maxVal) = NaN;
         
         regionalSoilHistorical(:, :, :, model) = soilHistorical(curLat, curLon, :);
         
@@ -106,11 +105,37 @@ for region = 1:length(regionLatLonInd)
         end
         
         % some partial water tiles have very large values - remove
-        soilFuture(soilFuture > 10e8) = NaN;
+        soilFuture(soilFuture > maxVal) = NaN;
         
         regionalSoilFuture(:, :, :, model) = soilFuture(curLat, curLon, :);
 
     end
+    
+    % calculate soil change for each model
+    chg = [];
+    for model = 1:size(regionalSoilHistorical, 4)
+        chg(:, :, :, model) = (regionalSoilFuture(:,:,showMonths,model)-regionalSoilHistorical(:,:,showMonths,model)) ./ regionalSoilHistorical(:,:,showMonths,model);
+    end
+    % exclude bad values and don't show zeros or increasing
+    chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
+    chg = nanmean(nanmean(chg, 4), 3);
+    chg = chg .* 100;
+    chg(:,1) = chg(:,end);
+    
+    result = {lat, lon, chg};
+
+    saveData = struct('data', {result}, ...
+                      'plotRegion', 'world', ...
+                      'plotRange', [-25 0], ...
+                      'cbXTicks', -25:5:0, ...
+                      'plotTitle', ['Soil moisture mass change'], ...
+                      'fileTitle', ['soil-chg-' num2str(region) '.png'], ...
+                      'plotXUnits', ['Percent'], ...
+                      'blockWater', true, ...
+                      'magnify', '2');
+    plotFromDataFile(saveData);
+    
+    
     
     % spatial average
     regionalSoilHistorical = squeeze(nanmean(nanmean(regionalSoilHistorical, 2), 1));
