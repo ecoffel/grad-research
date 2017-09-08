@@ -13,7 +13,7 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-max';
+chgMetric = 'ann-min';
 
 rcp = 'rcp85';
 timePeriod = '2060-2080';
@@ -67,16 +67,16 @@ for m = 1:length(models)
     
     % load and process change 1
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -95,16 +95,16 @@ for m = 1:length(models)
 
     % load and process change 2
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/tasmax/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 

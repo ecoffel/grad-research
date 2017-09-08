@@ -3,10 +3,10 @@ baseDir = '2017-concurrent-heat/bowen';
 SnwVar = 'snw';                  
 percentChange = true;
 
-models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'miroc-esm', ...
+                  'hadgem2-es', ...
                   'mpi-esm-mr', 'mri-cgcm3'};
 maxVal = 1e7;
 
@@ -22,7 +22,7 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showMonths = [12 1 2 3];
-showRegions =  1;
+showRegions =  4;
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -110,10 +110,17 @@ for region = showRegions
 
     end
     
+    % eliminate cells with little snow in historical
+	regionalSnwHistorical(regionalSnwHistorical < 1.5e6) = NaN;
+    
+    
     % calculate snow change for each model
     chg = [];
     for model = 1:size(regionalSnwHistorical, 4)
-        chg(:, :, :, model) = (regionalSnwFuture(:,:,showMonths,model)-regionalSnwHistorical(:,:,showMonths,model)) ./ regionalSnwHistorical(:,:,showMonths,model);
+        tmpHistorical = regionalSnwHistorical;
+        tmpFuture = regionalSnwFuture;
+        
+        chg(:, :, :, model) = (tmpFuture(:,:,showMonths,model)-tmpHistorical(:,:,showMonths,model)) ./ tmpHistorical(:,:,showMonths,model);
     end
     % exclude bad values and don't show zeros or increasing
     chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
@@ -129,10 +136,11 @@ for region = showRegions
                       'plotRegion', 'world', ...
                       'plotRange', [-100 0], ...
                       'cbXTicks', [-100 -75 -50 -25 0], ...
-                      'plotTitle', ['Snow mass change'], ...
+                      'plotTitle', ['DJFM Snow mass change'], ...
                       'fileTitle', ['snw-chg-' num2str(region) '.png'], ...
                       'plotXUnits', ['Percent'], ...
                       'blockWater', true, ...
+                      'colormap', cmocean('ice'), ...
                       'magnify', '2');
     plotFromDataFile(saveData);
 
@@ -179,32 +187,32 @@ for region = showRegions
     % plot bowen zero line 
     plot(1:12, zeros(1,12), '--', 'Color', 'k', 'LineWidth', 2);
 
-    xlabel('Month', 'FontSize', 24);
+    xlabel('Month', 'FontSize', 36);
     set(gca, 'XLim', [1 length(showMonths)], 'XTick', 1:length(showMonths), 'XTickLabel', showMonths);
     
     if strcmp(SnwVar, 'mrso')
         if percentChange
             set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
-            ylabel('Total Snw moisture change (percent)', 'FontSize', 24);
+            ylabel('Total Snw moisture change (percent)', 'FontSize', 36);
         else
             set(gca, 'YLim', [-1e7 1e7]);
-            ylabel('Total Snw moisture change', 'FontSize', 24);
+            ylabel('Total Snw moisture change', 'FontSize', 36);
         end
     elseif strcmp(SnwVar, 'mrsos')
         if percentChange
             set(gca, 'YLim', [-50 50], 'YTick', -50:20:50);
-            ylabel('Surface Snw moisture change (percent)', 'FontSize', 24);
+            ylabel('Surface Snw moisture change (percent)', 'FontSize', 36);
         else
             set(gca, 'YLim', [-1e6 1e6]);
-            ylabel('Surface Snw moisture change', 'FontSize', 24);
+            ylabel('Surface Snw moisture change', 'FontSize', 36);
         end
     elseif strcmp(SnwVar, 'snw')
-        set(gca, 'YLim', [-100 50], 'YTick', -100:50:50);
-        ylabel('Snow mass change (percent)', 'FontSize', 24);
+        set(gca, 'YLim', [-100 20], 'YTick', -100:20:20);
+        ylabel('Snow mass change (percent)', 'FontSize', 36);
     end
-    set(gca, 'FontSize', 24);
+    set(gca, 'FontSize', 36);
     
-    title(regionNames{region}, 'FontSize', 24);
+    title(regionNames{region}, 'FontSize', 40);
     
     for month = 1:length(showMonths)
         p2 = plot(month, regionSnwChgMean(showMonths(month)), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');

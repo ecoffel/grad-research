@@ -433,7 +433,7 @@ for i = 1:length(regionNames)
 
     if showLegend
         leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
-        set(leg, 'location', 'northwest', 'FontSize', 30);
+        set(leg, 'location', 'northwest', 'FontSize', 32);
     end
     
     % plot significance indicators
@@ -447,33 +447,33 @@ for i = 1:length(regionNames)
         uistack(p3, 'top');
     end
 
-    xlabel('Month', 'FontSize', 30);
+    xlabel('Month', 'FontSize', 36);
     set(ax(1), 'XTick', 1:12);
     set(ax(2), 'XTick', []);
     
     if showPercentChange
         set(ax(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
         set(ax2(2), 'YLim', [-50 200], 'YTick', [-50 0 50 100 150 200]);
-        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 30);
+        ylabel(ax(2), 'Bowen ratio change (percent)', 'FontSize', 36);
     elseif showChgAnomalies
         set(ax(2), 'YLim', [-2 2], 'YTick', -2:2);
         set(ax2(2), 'YLim', [-2 2], 'YTick', -2:2);
-        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 30);
+        ylabel(ax(2), 'Bowen ratio anomaly change', 'FontSize', 36);
     else
         set(ax(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
         set(ax2(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
-        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 30);
+        ylabel(ax(2), 'Bowen ratio change', 'FontSize', 36);
     end
-    set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
-    set(ax2(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 24);
-    set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
-    set(ax2(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 24);
+    set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 32);
+    set(ax2(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 32);
+    set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 32);
+    set(ax2(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 32);
     if showChgAnomalies
-        ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 30);
+        ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 36);
         set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
         set(ax2(1), 'YLim', [-3 3], 'YTick', -3:3);
     else
-        ylabel(ax(1), ['Temperature change (' char(176) 'C)'], 'FontSize', 30);
+        ylabel(ax(1), ['Temperature change (' char(176) 'C)'], 'FontSize', 36);
         set(ax(1), 'YLim', [0 8], 'YTick', 0:8);
         set(ax2(1), 'YLim', [0 8], 'YTick', 0:8);
     end
