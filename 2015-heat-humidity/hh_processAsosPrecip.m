@@ -1,19 +1,15 @@
 % this reads pre-processed state-station ASOS hourly wx files, processed by
 % ag_processAsosPrecip.py
 
-baseDir = 'f:/data/ag/wx-data/';
+baseDir = 'e:/data/projects/heat/asos/wx-data/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-states = {'al', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', ...
-          'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', ...
-          'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', ...
-          'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', ...
-          'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'};
+states = {'in', 'india'};
 
 % this is for comma delimited ASOS data with the format:
-% year, month, day, hour, lon, lat, tempC, relH, precipH
+% year, month, day, hour, lon, lat, tempC, relH, surf pressure, mslp
 % -999 indicates a missing value
-fileFormatStr = '%n %n %n %n %n %n %n %n %n %*[^\n]';
+fileFormatStr = '%n %n %n %n %n %n %n %n %n %n %*[^\n]';
 
 % process all files
 for s = 1:length(states)
@@ -56,7 +52,8 @@ for s = 1:length(states)
         % 6 - lat
         % 7 - temp (C, -999 = missing value)
         % 8 - rel humidity (%, -999 = missing value)
-        % 9 - precip (hourly, mm, -999 = missing value)
+        % 9 - surface pressure (in)
+        % 10 - mslp (mb)
 
         years = data{1};
         months = data{2};
@@ -65,12 +62,37 @@ for s = 1:length(states)
         
         lons = data{5};
         lats = data{6};
-        temps = data{7};
-        relHs = data{8};
-        precips = data{9};
-        precips(precips == -999) = NaN;
         
-        asosData{end+1} = {code, lons(1), lats(1), years, months, days, hours, temps, relHs, precips};
+        temps = data{7};
+        temps(temps == -999) = NaN;
+        
+        relHs = data{8};
+        relHs(relHs == -999) = NaN;
+        
+        % convert in to Pa
+        surf = data{9} ;
+        surf(surf == -999) = NaN;
+        surf = surf .* 3386.39;
+        
+        % convert mb to Pa
+        mslp = data{10};
+        mslp(mslp == -999) = NaN;
+        mslp = mslp .* 133.322;
+        
+        wb = [];
+        
+        % now calculate wet bulb for all obs
+        ['computing wet bulb...']
+        for i = 1:length(temps)
+            % if we have all data for this timestep...
+            if ~isnan(temps(i)) && ~isnan(relHs(i)) && ~isnan(surf(i))
+                wb(i) = kopp_wetBulb(temps(i), surf(i), relHs(i), 1);
+            else
+                wb(i) = NaN;
+            end
+        end
+        
+        asosData{end+1} = {code, lons(1), lats(1), years, months, days, hours, temps, relHs, surf, mslp, wb};
     end
     
     save([baseDir 'asos-' state '.mat'], 'asosData', '-v7.3');
