@@ -5,8 +5,8 @@ waterGrid = logical(waterGrid);
 
 tempVar = 'tmax';
 hussVar = 'shum';
-rhVar = 'rh';
-pVar = 'mslp';
+%rhVar = 'rh';
+pVar = 'pres';
 
 skipExisting = true;
 x4 = false;
@@ -33,10 +33,10 @@ tempDirNames = {tempDirNames(tempDirIndices).name}';
 hussDirNames = dir([dataDir '/' hussVar '/' x4Str regridStr '/' region]);
 hussDirIndices = [hussDirNames(:).isdir];
 hussDirNames = {hussDirNames(hussDirIndices).name}';
-
-rhDirNames = dir([dataDir '/' rhVar '/' x4Str regridStr '/' region]);
-rhDirIndices = [rhDirNames(:).isdir];
-rhDirNames = {rhDirNames(rhDirIndices).name}';
+% 
+% rhDirNames = dir([dataDir '/' rhVar '/' x4Str regridStr '/' region]);
+% rhDirIndices = [rhDirNames(:).isdir];
+% rhDirNames = {rhDirNames(rhDirIndices).name}';
 
 pDirNames = dir([dataDir '/' pVar '/' x4Str regridStr '/' region]);
 pDirIndices = [pDirNames(:).isdir];
@@ -50,10 +50,10 @@ end
 if length(hussDirNames) == 0
     hussDirNames{1} = '';
 end
-
-if length(rhDirNames) == 0
-    rhDirNames{1} = '';
-end
+% 
+% if length(rhDirNames) == 0
+%     rhDirNames{1} = '';
+% end
 
 if length(pDirNames) == 0
     pDirNames{1} = '';
@@ -66,8 +66,8 @@ tempMatFileNames = {};
 tempMatDirNames = {};
 hussMatFileNames = {};
 hussMatDirNames = {};
-rhMatFileNames = {};
-rhMatDirNames = {};
+% rhMatFileNames = {};
+% rhMatDirNames = {};
 pMatFileNames = {};
 pMatDirNames = {};
 
@@ -109,25 +109,25 @@ for d = 1:length(hussDirNames)
         hussMatDirNames = {hussMatDirNames{:} hussCurDir};
     end
 end
-
-for d = 1:length(rhDirNames)
-    if strcmp(rhDirNames{d}, '.') | strcmp(rhDirNames{d}, '..')
-        continue;
-    end
-    
-    rhCurDir = [dataDir  '/' rhVar '/' x4Str regridStr '/' region '/' rhDirNames{d}];
-    
-    if ~isdir(rhCurDir)
-        continue;
-    end
-    
-    curRhMatFileNames = dir([rhCurDir, '/*.mat']);
-    rhMatFileNames = {rhMatFileNames{:} curRhMatFileNames.name};
-    
-    for i = 1:length({curRhMatFileNames.name})
-        rhMatDirNames = {rhMatDirNames{:} rhCurDir};
-    end
-end
+% 
+% for d = 1:length(rhDirNames)
+%     if strcmp(rhDirNames{d}, '.') | strcmp(rhDirNames{d}, '..')
+%         continue;
+%     end
+%     
+%     rhCurDir = [dataDir  '/' rhVar '/' x4Str regridStr '/' region '/' rhDirNames{d}];
+%     
+%     if ~isdir(rhCurDir)
+%         continue;
+%     end
+%     
+%     curRhMatFileNames = dir([rhCurDir, '/*.mat']);
+%     rhMatFileNames = {rhMatFileNames{:} curRhMatFileNames.name};
+%     
+%     for i = 1:length({curRhMatFileNames.name})
+%         rhMatDirNames = {rhMatDirNames{:} rhCurDir};
+%     end
+% end
 
 for d = 1:length(pDirNames)
     if strcmp(pDirNames{d}, '.') | strcmp(pDirNames{d}, '..')
@@ -148,7 +148,7 @@ for d = 1:length(pDirNames)
     end
 end
 
-if length(tempMatFileNames) == 0 | length(hussMatFileNames) == 0 | length(rhMatFileNames) == 0 | length(pMatFileNames) == 0
+if length(tempMatFileNames) == 0 | length(hussMatFileNames) == 0 | length(pMatFileNames) == 0
     return;
 end
 
@@ -157,12 +157,12 @@ monthIndex = 1;
 % find index of matching first file name
 tempStartInd = 1;
 hussStartInd = 1;
-rhStartInd = 1;
+%rhStartInd = 1;
 pStartInd = 1;
 
 tempEndInd = length(tempMatFileNames);
 hussEndInd = length(hussMatFileNames);
-rhEndInd = length(hussMatFileNames);
+%rhEndInd = length(hussMatFileNames);
 pEndInd = length(pMatFileNames);
 
 maxStartYear = -1;
@@ -179,10 +179,10 @@ tempMatFileNameNoExt = tempMatFileNameParts{1};
 hussMatFileName = hussMatFileNames{1};
 hussMatFileNameParts = strsplit(hussMatFileName, '.');
 hussMatFileNameNoExt = hussMatFileNameParts{1};
-
-rhMatFileName = rhMatFileNames{1};
-rhMatFileNameParts = strsplit(rhMatFileName, '.');
-rhMatFileNameNoExt = rhMatFileNameParts{1};
+% 
+% rhMatFileName = rhMatFileNames{1};
+% rhMatFileNameParts = strsplit(rhMatFileName, '.');
+% rhMatFileNameNoExt = rhMatFileNameParts{1};
 
 pMatFileName = pMatFileNames{1};
 pMatFileNameParts = strsplit(pMatFileName, '.');
@@ -190,21 +190,21 @@ pMatFileNameNoExt = pMatFileNameParts{1};
 
 tempFileSubParts = strsplit(tempMatFileNameParts{1}, '_');
 hussFileSubParts = strsplit(hussMatFileNameParts{1}, '_');
-rhFileSubParts = strsplit(rhMatFileNameParts{1}, '_');
+%rhFileSubParts = strsplit(rhMatFileNameParts{1}, '_');
 pFileSubParts = strsplit(pMatFileNameParts{1}, '_');
 
 tempStartYear = str2num(tempFileSubParts{2});
 hussStartYear = str2num(hussFileSubParts{2});
-rhStartYear = str2num(rhFileSubParts{2});
+%rhStartYear = str2num(rhFileSubParts{2});
 pStartYear = str2num(pFileSubParts{2});
 
 tempStartMonth = str2num(tempFileSubParts{3});
 hussStartMonth = str2num(hussFileSubParts{3});
-rhStartMonth = str2num(rhFileSubParts{3});
+%rhStartMonth = str2num(rhFileSubParts{3});
 pStartMonth = str2num(pFileSubParts{3});
 
-maxStartYear = max(tempStartYear, max(hussStartYear, max(pStartYear, rhStartYear)));
-maxStartMonth = max(tempStartMonth, max(hussStartMonth, max(pStartMonth, rhStartMonth)));
+maxStartYear = max(tempStartYear, max(hussStartYear, pStartYear));
+maxStartMonth = max(tempStartMonth, max(hussStartMonth, pStartMonth));
 
 while tempStartYear < maxStartYear | tempStartMonth < maxStartMonth
     tempStartInd = tempStartInd+1;
@@ -230,17 +230,17 @@ while hussStartYear < maxStartYear | hussStartMonth < maxStartMonth
     hussStartMonth = str2num(hussFileSubParts{3});
 end
 
-while rhStartYear < maxStartYear | rhStartMonth < maxStartMonth
-    rhStartInd = rhStartInd+1;
-
-    rhMatFileName = rhMatFileNames{rhStartInd};
-    %rhMatFileNameParts = strsplit(rhMatFileName, '.');
-    rhMatFileNameNoExt = rhMatFileName(1:end-4);
-    rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
-
-    rhStartYear = str2num(rhFileSubParts{2});
-    rhStartMonth = str2num(rhFileSubParts{3});
-end
+% while rhStartYear < maxStartYear | rhStartMonth < maxStartMonth
+%     rhStartInd = rhStartInd+1;
+% 
+%     rhMatFileName = rhMatFileNames{rhStartInd};
+%     %rhMatFileNameParts = strsplit(rhMatFileName, '.');
+%     rhMatFileNameNoExt = rhMatFileName(1:end-4);
+%     rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
+% 
+%     rhStartYear = str2num(rhFileSubParts{2});
+%     rhStartMonth = str2num(rhFileSubParts{3});
+% end
 
 while pStartYear < maxStartYear | pStartMonth < maxStartMonth
     pStartInd = pStartInd+1;
@@ -262,10 +262,10 @@ tempMatFileNameNoExt = tempMatFileName(1:end-4);
 hussMatFileName = hussMatFileNames{end};
 %hussMatFileNameParts = strsplit(hussMatFileName, '.');
 hussMatFileNameNoExt = hussMatFileName(1:end-4);
-
-rhMatFileName = rhMatFileNames{end};
-%rhMatFileNameParts = strsplit(rhMatFileName, '.');
-rhMatFileNameNoExt = rhMatFileName(1:end-4);
+% 
+% rhMatFileName = rhMatFileNames{end};
+% %rhMatFileNameParts = strsplit(rhMatFileName, '.');
+% rhMatFileNameNoExt = rhMatFileName(1:end-4);
 
 pMatFileName = pMatFileNames{end};
 %pMatFileNameParts = strsplit(pMatFileName, '.');
@@ -273,21 +273,21 @@ pMatFileNameNoExt = pMatFileName(1:end-4);
 
 tempFileSubParts = strsplit(tempMatFileNameNoExt, '_');
 hussFileSubParts = strsplit(hussMatFileNameNoExt, '_');
-rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
+%rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
 pFileSubParts = strsplit(pMatFileNameNoExt, '_');
 
 tempEndYear = str2num(tempFileSubParts{2});
 hussEndYear = str2num(hussFileSubParts{2});
-rhEndYear = str2num(rhFileSubParts{2});
+%rhEndYear = str2num(rhFileSubParts{2});
 pEndYear = str2num(pFileSubParts{2});
 
 tempEndMonth = str2num(tempFileSubParts{3});
 hussEndMonth = str2num(hussFileSubParts{3});
-rhEndMonth = str2num(rhFileSubParts{3});
+%rhEndMonth = str2num(rhFileSubParts{3});
 pEndMonth = str2num(pFileSubParts{3});
 
-minEndYear = min(tempEndYear, min(hussEndYear, min(pEndYear, rhEndYear)));
-minEndMonth = min(tempEndMonth, min(hussEndMonth, min(pEndMonth, rhEndMonth)));
+minEndYear = min(tempEndYear, min(hussEndYear, pEndYear));
+minEndMonth = min(tempEndMonth, min(hussEndMonth, pEndMonth));
 
 while tempEndYear > minEndYear | tempEndMonth > minEndMonth
     tempEndInd = tempEndInd-1;
@@ -312,18 +312,18 @@ while hussEndYear > minEndYear | hussEndMonth > minEndMonth
     hussEndYear = str2num(hussFileSubParts{2});
     hussEndMonth = str2num(hussFileSubParts{3});
 end
-
-while rhEndYear > minEndYear | rhEndMonth > minEndMonth
-    rhEndInd = rhEndInd-1;
-
-    rhMatFileName = rhMatFileNames{rhEndInd};
-    %rhMatFileNameParts = strsplit(rhMatFileName, '.');
-    rhMatFileNameNoExt = rhMatFileName(1:end-4);
-    rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
-
-    rhEndYear = str2num(rhFileSubParts{2});
-    rhEndMonth = str2num(rhFileSubParts{3});
-end
+% 
+% while rhEndYear > minEndYear | rhEndMonth > minEndMonth
+%     rhEndInd = rhEndInd-1;
+% 
+%     rhMatFileName = rhMatFileNames{rhEndInd};
+%     %rhMatFileNameParts = strsplit(rhMatFileName, '.');
+%     rhMatFileNameNoExt = rhMatFileName(1:end-4);
+%     rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
+% 
+%     rhEndYear = str2num(rhFileSubParts{2});
+%     rhEndMonth = str2num(rhFileSubParts{3});
+% end
 
 while pEndYear > minEndYear | pEndMonth > minEndMonth
     pEndInd = pEndInd-1;
@@ -346,7 +346,7 @@ end
 
 wbCurDir = folDataTarget;
 
-while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEndInd & rhStartInd < rhEndInd
+while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEndInd
     tempMatFileName = tempMatFileNames{tempStartInd};
     %tempMatFileNameParts = strsplit(tempMatFileName, '.');
     tempMatFileNameNoExt = tempMatFileName(1:end-4);
@@ -354,28 +354,28 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
     hussMatFileName = hussMatFileNames{hussStartInd};
     %hussMatFileNameParts = strsplit(hussMatFileName, '.');
     hussMatFileNameNoExt = hussMatFileName(1:end-4);
-    
-    rhMatFileName = rhMatFileNames{rhStartInd};
-    %rhMatFileNameParts = strsplit(rhMatFileName, '.');
-    rhMatFileNameNoExt = rhMatFileName(1:end-4);
-    
+%     
+%     rhMatFileName = rhMatFileNames{rhStartInd};
+%     %rhMatFileNameParts = strsplit(rhMatFileName, '.');
+%     rhMatFileNameNoExt = rhMatFileName(1:end-4);
+%     
     pMatFileName = pMatFileNames{pStartInd};
     %pMatFileNameParts = strsplit(pMatFileName, '.');
     pMatFileNameNoExt = pMatFileName(1:end-4);
 
     tempFileSubParts = strsplit(tempMatFileNameNoExt, '_');
     hussFileSubParts = strsplit(hussMatFileNameNoExt, '_');
-    rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
+    %rhFileSubParts = strsplit(rhMatFileNameNoExt, '_');
     pFileSubParts = strsplit(pMatFileNameNoExt, '_');
 
     tempStartYear = str2num(tempFileSubParts{2});
     hussStartYear = str2num(hussFileSubParts{2});
-    rhStartYear = str2num(rhFileSubParts{2});
+    %rhStartYear = str2num(rhFileSubParts{2});
     pStartYear = str2num(pFileSubParts{2});
 
     tempStartMonth = str2num(tempFileSubParts{3});
     hussStartMonth = str2num(hussFileSubParts{3});
-    rhStartMonth = str2num(rhFileSubParts{3});
+    %rhStartMonth = str2num(rhFileSubParts{3});
     pStartMonth = str2num(pFileSubParts{3});
 
     if tempStartYear ~= hussStartYear
@@ -406,18 +406,18 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
         tempStartInd = tempStartInd + 1;
         hussStartInd = hussStartInd + 1;
         pStartInd = pStartInd + 1;
-        rhStartInd = rhStartInd + 1;
+     %   rhStartInd = rhStartInd + 1;
         continue;
     end
 
     tempCurFileName = [tempMatDirNames{tempStartInd}, '/', tempMatFileName];
     hussCurFileName = [hussMatDirNames{hussStartInd}, '/', hussMatFileName];
-    rhCurFileName = [rhMatDirNames{rhStartInd}, '/', rhMatFileName];
+    %rhCurFileName = [rhMatDirNames{rhStartInd}, '/', rhMatFileName];
     pCurFileName = [pMatDirNames{pStartInd}, '/', pMatFileName];
 
     load(tempCurFileName);
     load(hussCurFileName);
-    load(rhCurFileName);
+    %load(rhCurFileName);
     load(pCurFileName);
 
     eval(['tempLat = ' tempMatFileNameNoExt '{1};']);
@@ -429,12 +429,12 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
     eval(['hussLon = ' hussMatFileNameNoExt '{2};']);
     eval(['hussData = ' hussMatFileNameNoExt '{3};']);
     eval(['clear ' hussMatFileNameNoExt ';']);
-    
-    eval(['rhLat = ' rhMatFileNameNoExt '{1};']);
-    eval(['rhLon = ' rhMatFileNameNoExt '{2};']);
-    eval(['rhData = ' rhMatFileNameNoExt '{3};']);
-    eval(['clear ' rhMatFileNameNoExt ';']);
-    
+%     
+%     eval(['rhLat = ' rhMatFileNameNoExt '{1};']);
+%     eval(['rhLon = ' rhMatFileNameNoExt '{2};']);
+%     eval(['rhData = ' rhMatFileNameNoExt '{3};']);
+%     eval(['clear ' rhMatFileNameNoExt ';']);
+%     
     eval(['pLat = ' pMatFileNameNoExt '{1};']);
     eval(['pLon = ' pMatFileNameNoExt '{2};']);
     eval(['pData = ' pMatFileNameNoExt '{3};']);
@@ -442,7 +442,7 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
     
     tempStartInd = tempStartInd + 1;
     hussStartInd = hussStartInd + 1;
-    rhStartInd = rhStartInd + 1;
+    %rhStartInd = rhStartInd + 1;
     pStartInd = pStartInd + 1;
 
     if size(hussData,1) ~= size(tempData,1)
@@ -450,7 +450,7 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
         clear tempLat tempLon tempData;
         clear hussLat hussLon hussData;
         clear pLat pLon pData;
-        clear rhLat rhLon rhData;
+     %   clear rhLat rhLon rhData;
         continue;
     end
 
@@ -459,7 +459,7 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
         clear tempLat tempLon tempData;
         clear hussLat hussLon hussData;
         clear pLat pLon pData;
-        clear rhLat rhLon rhData;
+      %  clear rhLat rhLon rhData;
         continue;
     end
 
@@ -468,7 +468,7 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pStartInd < pEnd
         clear tempLat tempLon tempData;
         clear hussLat hussLon hussData;
         clear pLat pLon pData;
-        clear rhLat rhLon rhData;
+       % clear rhLat rhLon rhData;
         continue;
     end
 

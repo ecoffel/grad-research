@@ -483,14 +483,14 @@ set(E(4), 'Color', [0.1, 0.1, 0.1]);
 set(E(4), 'LineWidth', 2);
 
 %title(saveData.plotTitle, 'FontSize', 24);
-title(['33' char(176) 'C, RCP 8.5'], 'FontSize', 34);
-xlabel(saveData.Xlabel, 'FontSize', 24);
-ylabel(saveData.Ylabel, 'FontSize', 24);
-set(gca, 'FontSize', 24);
+title(['32' char(176) 'C, RCP 8.5'], 'FontSize', 34);
+xlabel(saveData.Xlabel, 'FontSize', 36);
+ylabel(saveData.Ylabel, 'FontSize', 36);
+set(gca, 'FontSize', 32);
 set(gcf, 'Position', get(0,'Screensize'));
 
-l = legend(B, 'population effect', 'climate effect', 'interaction effect', 'total change');
-set(l, 'FontSize', 24, 'Location', 'northwest');
+l = legend(B, 'population effect', 'climate effect', 'combined effect', 'total change');
+set(l, 'FontSize', 32, 'Location', 'northwest');
 
 ylim([0, inf]);
     
