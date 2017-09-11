@@ -1,7 +1,7 @@
 asosDir = 'e:/data/projects/heat/asos/wx-data/';
 ncepDir = 'e:/data/ncep-reanalysis/output';
 
-asosFiles = {'in', 'india'};
+asosFiles = {'in', 'india', 'brazil', 'china', 'germany', 'nigeria', 'spain', 'saudi'};
 
 % the asos data from each available file
 asosFileData = {};
@@ -30,7 +30,7 @@ for a = 1:length(asosFiles);
         [latInd, lonInd] = latLonIndex({lat, lon, []}, [curLat curLon]);
         
         % if we don't already have this one, add it
-        if ~ismember(latInd, ncepXlat)
+        if ~(ismember(latInd, ncepXlat) && ismember(lonInd, ncepYlon))
             ncepXlat(end+1) = latInd;
             ncepYlon(end+1) = lonInd;
         end
@@ -110,9 +110,31 @@ figure('Color', [1,1,1]);
 hold on;
 axis square;
 box on;
+grid on;
 
-colors = {'k', 'r'};
+colors = distinguishable_colors(length(asosFiles));
+regions = {'US-Indiana', 'India', 'Brazil', 'China', 'Germany', ...
+           'Nigeria', 'Spain', 'Saudi Arabia'};
 
+legItems = [];
+       
 for n = 1:length(ncepBias)
-    errorbar(n, nanmean(ncepBias{n}{1}), nanmean(ncepBias{n}{2}), 'o', 'Color', 'k', 'MarkerSize', 15);
+    e = errorbar(n, nanmean(ncepBias{n}{1}), nanmean(ncepBias{n}{2}), 'o', 'Color', colors(n, :), 'MarkerSize', 15, 'LineWidth', 2);
+    
+    annotation('textbox', [.2 .5 .3 .3], regions{n}, 'Color', colors(n, :), 'FontSize', 32, 'FitBoxToText', 'on');
+    
+    if ttest(ncepBias{n}{1})
+        p = plot(n, nanmean(ncepBias{n}{1}), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(n, :), 'MarkerEdgeColor', colors(n, :));
+        legItems(end+1) = p;
+    else
+        legItems(end+1) = e;
+    end
+    
 end
+
+%legend(legItems, regions);
+
+set(gca, 'XTick', []);
+set(gca, 'FontSize', 32);
+ylabel(['NCEP wet bulb bias (' char(176) 'C)'], 'FontSize', 36');
+ylim([-3 1]);

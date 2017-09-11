@@ -4,7 +4,7 @@
 baseDir = 'e:/data/projects/heat/asos/wx-data/';
 %baseDir = '2017-ag-precip/wx-data/';
 
-states = {'in', 'india'};
+states = {'saudi'};
 
 % this is for comma delimited ASOS data with the format:
 % year, month, day, hour, lon, lat, tempC, relH, surf pressure, mslp
@@ -92,7 +92,42 @@ for s = 1:length(states)
             end
         end
         
-        asosData{end+1} = {code, lons(1), lats(1), years, months, days, hours, temps, relHs, surf, mslp, wb};
+        % find daily max wb
+        lastDay = days(1);
+        
+        % list of daily max temp/wb
+        dailyTemp = [];
+        dailyWb = [];
+        
+        % list of hourly temps/wb for current day
+        curDayTemp = [];
+        curDayWb = [];
+        
+        for d = 1:length(days)
+            
+            % on a new day
+            if days(d) ~= lastDay
+                lastDay = days(d);
+                
+                % add cur daily max
+                dailyTemp(end+1) = nanmax(curDayTemp);
+                dailyWb(end+1) = nanmax(curDayWb);
+                
+                % reset daily lists
+                curDayTemp = [];
+                curDayWb = [];
+            end
+            
+            % record current hourly
+            curDayTemp(end+1) = temps(d);
+            curDayWb(end+1) = wb(d);
+        end
+
+        % add cur daily max for the last day
+        dailyTemp(end+1) = nanmax(curDayTemp);
+        dailyWb(end+1) = nanmax(curDayWb);
+        
+        asosData{end+1} = {code, lons(1), lats(1), years, months, days, dailyTemp, dailyWb};
     end
     
     save([baseDir 'asos-' state '.mat'], 'asosData', '-v7.3');

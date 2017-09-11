@@ -3,7 +3,7 @@
 import os
 
 asosBase = 'e:/data/projects/heat/asos/'
-states = ['in']
+states = ['saudi']
 
 # how many lines to read at a time
 N = 1000000
