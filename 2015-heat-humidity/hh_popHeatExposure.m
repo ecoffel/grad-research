@@ -22,14 +22,14 @@ baseBiasCorrect = false;
 popRegrid = true;
 
 region = 'world';
-rcp = 'rcp85';
+rcp = 'rcp45';
 exposureThreshold = 30;
 ssps = 1:5;
 
 % compare the annual mean temperatures or the mean extreme temperatures
 exportformat = 'png';
 
-baseDir = 'd:/data/';
+baseDir = 'e:/data/';
 yearStep = 1;
 
 if ~baseBiasCorrect
@@ -483,7 +483,7 @@ set(E(4), 'Color', [0.1, 0.1, 0.1]);
 set(E(4), 'LineWidth', 2);
 
 %title(saveData.plotTitle, 'FontSize', 24);
-title(['32' char(176) 'C, RCP 8.5'], 'FontSize', 34);
+title(['35' char(176) 'C, RCP 8.5'], 'FontSize', 34);
 xlabel(saveData.Xlabel, 'FontSize', 36);
 ylabel(saveData.Ylabel, 'FontSize', 36);
 set(gca, 'FontSize', 32);

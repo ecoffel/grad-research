@@ -1,10 +1,10 @@
 
 % load NCEP temp / soil moisture and bowen relationships
-load C:\git-ecoffel\grad-research\2017-concurrent-heat\bowen\monthly-soilw-temp\monthlySoilwTemp-ncep-reanalysis-historical--1985-2004.mat
+load C:\git-ecoffel\grad-research\2017-bowen\bowen\monthly-soilw-temp\monthlySoilwTemp-ncep-reanalysis-historical--1985-2004.mat
 ncepSoilw = dailySoilwTemp;
 clear dailySoilwTemp;
 
-load C:\git-ecoffel\grad-research\2017-concurrent-heat\bowen\monthly-bowen-temp\monthlyBowenTemp-ncep-reanalysis-historical--1985-2004.mat
+load C:\git-ecoffel\grad-research\2017-bowen\bowen\monthly-bowen-temp\monthlyBowenTemp-ncep-reanalysis-historical--1985-2004.mat
 ncepBowen = monthlyBowenTemp;
 clear monthlyBowenTemp;
 
@@ -16,8 +16,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-
-regionIds = [1, 2, 4, 7];
+regionIds = [1,2,4,7];
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -78,34 +77,39 @@ end
 bowen(bowen < 0) = 0;
 bowen(bowen > 50) = 0;
 
-dispLatRange = 45:75;
+dispLatRange = 15:75;
 dispLonRange = 1:180;
-dispMonth = 6:9;
+dispMonths = 1:12;
 
 % soilw / bowen slopes at different grid cells
-slopes = zeros(size(lat));
+slopes = zeros(size(lat, 1), size(lat, 2), length(dispMonths));
 slopes(slopes == 0) = NaN';
 
 for xlat = dispLatRange
     for ylon = dispLonRange
-        s = soil(xlat, ylon, dispMonth, :);
-        s = reshape(s, [numel(s), 1]);
         
-        b = bowen(xlat, ylon, dispMonth, :);
-        b = reshape(b, [numel(s), 1]);
+        if waterGrid(xlat, ylon)
+            continue;
+        end
         
-        nn = find(~isnan(s) & ~isnan(b) & b > 0 & s > 0);
-        s = s(nn);
-        b = b(nn);
-        
-        s = s ./ norm(s);
-        b = b ./ norm(b);
-        
-        if length(s) > 10*length(dispMonth) && length(b) > 10*length(dispMonth) && range(s) > 0
-            f = fit(s, b, 'poly1');
-            slopes(xlat, ylon) = f.p1;
-        else
-            slopes(xlat, ylon) = NaN;
+        for month = dispMonths
+            s = squeeze(soil(xlat, ylon, month, :));
+            b = squeeze(bowen(xlat, ylon, month, :));
+
+            nn = find(~isnan(s) & ~isnan(b) & b > 0 & s > 0);
+            s = s(nn);
+            b = b(nn);
+
+            s = s ./ norm(s);
+            b = b ./ norm(b);
+
+            % if we have soil and bowen data
+            if range(s) > 0
+                f = fit(s, b, 'poly1');
+                slopes(xlat, ylon, month) = f.p1;
+            else
+                slopes(xlat, ylon, month) = NaN;
+            end
         end
     end
 end
@@ -120,7 +124,11 @@ box on;
 grid on;
 axis square;
 
+colors = distinguishable_colors(length(regionIds));
+
 regionalSlopes = {};
+
+legItems = [];
 
 for r = 1:length(regionIds)
     regionId = regionIds(r);
@@ -129,27 +137,43 @@ for r = 1:length(regionIds)
     curLat = regionLatLonInd{regionId}{1};
     curLon = regionLatLonInd{regionId}{2};
     
-    curSlopes = slopes(curLat, curLon);
-    curSlopes = reshape(curSlopes, [numel(curSlopes), 1]);
+    curSlopes = slopes(curLat, curLon, :);
     
     regionalSlopes{r} = curSlopes;
     
-    errorbar(r, nanmean(curSlopes), nanstd(curSlopes), 'o', 'LineWidth', 2, 'MarkerSize', 15, 'Color', [178/255.0, 113/255.0, 60/255.0]);
+    p = plot(dispMonths, squeeze(nanmean(nanmean(curSlopes, 2), 1)), 'LineWidth', 3, 'Color', colors(r, :));
+    legItems(r) = p;
     
-    % if significantly different
-    if kstest2(curSlopes, regionalSlopes{1}, 'alpha', 0.05)
-        plot(r, nanmean(curSlopes), 'o', 'LineWidth', 1, 'MarkerSize', 15, 'MarkerFaceColor', [178/255.0, 113/255.0, 60/255.0], 'MarkerEdgeColor', [178/255.0, 113/255.0, 60/255.0], 'Color', [178/255.0, 113/255.0, 60/255.0]);
+    for month = dispMonths
+        ypos = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1));
+        erry = nanstd(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)),1]));
+        
+        plot(month, ypos, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
+        %e = errorbar(month, ypos, erry, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
+        
+        % if significantly different from global slope
+        [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...
+                   reshape(regionalSlopes{1}(:, :, month), [numel(regionalSlopes{1}(:, :, month)), 1]), 'alpha', 0.05)
+        if h
+            plot(month, ypos, 'o', 'LineWidth', 1, 'MarkerSize', 10, 'MarkerFaceColor', colors(r, :), 'MarkerEdgeColor', colors(r, :), 'Color', colors(r, :));
+        end
     end
 end
 
+% plot zero line
+plot(0:13, zeros(length(0:13),1), '--k', 'LineWidth', 2);
+
+xlabel('Month', 'FontSize', 36);
 ylabel('Slope: Bowen ratio to soil moisture', 'FontSize', 36);
-xlim([0.5 4.5]);
-set(gca, 'XTick', [1 2 3 4], 'XTickLabel', {'NH', 'US', 'Europe', 'Amazon'});
+xlim([0.5 12.5]);
+ylim([-10 5]);
+set(gca, 'XTick', 1:12);
 set(gca, 'FontSize', 36);
+legend(legItems, {'World', 'Central US', 'Europe', 'Amazon'});
+
 
 
 result = {lat, lon, slopes};
-
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
                   'plotRange', [-15 0], ...

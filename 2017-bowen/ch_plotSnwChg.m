@@ -1,16 +1,15 @@
 
-baseDir = '2017-concurrent-heat/bowen';
+baseDir = '2017-bowen/bowen';
 SnwVar = 'snw';                  
 percentChange = true;
 
 models = {'access1-0', 'access1-3', 'bnu-esm', ...
                   'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', ...
-                  'mpi-esm-mr', 'mri-cgcm3'};
+                  'hadgem2-es', 'mpi-esm-mr', 'mri-cgcm3'};
 maxVal = 1e7;
 
-plotMap = true;
+plotMap = false;
 
 timePeriodHistorical = 1985:2005;
 timePeriodFuture = 2060:2080;
@@ -111,7 +110,7 @@ for region = showRegions
     end
     
     % eliminate cells with little snow in historical
-	regionalSnwHistorical(regionalSnwHistorical < 1.5e6) = NaN;
+	regionalSnwHistorical(regionalSnwHistorical < 1e5) = NaN;
     
     
     % calculate snow change for each model
@@ -122,28 +121,62 @@ for region = showRegions
         
         chg(:, :, :, model) = (tmpFuture(:,:,showMonths,model)-tmpHistorical(:,:,showMonths,model)) ./ tmpHistorical(:,:,showMonths,model);
     end
+    
     % exclude bad values and don't show zeros or increasing
     chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
-    chg = nanmean(nanmean(chg, 4), 3);
     chg(chg >= 0) = NaN;
-    chg = chg .* 100;
-    chg(:,1) = chg(:,end);
     
-    
-    result = {lat, lon, chg};
+    if plotMap
+        % find statistical significance of change over selected months across models
+        sigChg = zeros(size(lat,1), size(lat, 2), size(chg, 3));
+        for xlat = 1:size(chg, 1)
+            for ylon = 1:size(chg, 2)
+                for month = 1:size(chg, 3)
 
-    saveData = struct('data', {result}, ...
-                      'plotRegion', 'world', ...
-                      'plotRange', [-100 0], ...
-                      'cbXTicks', [-100 -75 -50 -25 0], ...
-                      'plotTitle', ['DJFM Snow mass change'], ...
-                      'fileTitle', ['snw-chg-' num2str(region) '.png'], ...
-                      'plotXUnits', ['Percent'], ...
-                      'blockWater', true, ...
-                      'colormap', cmocean('ice'), ...
-                      'magnify', '2');
-    plotFromDataFile(saveData);
+                    % select only non-nan items
+                    curChg = squeeze(chg(xlat, ylon, month, :));
+                    ind = find(~isnan(curChg) & ~isinf(curChg));
+                    curChg = curChg(ind);
 
+                    % for each grid cell and month, calculate sig across models
+                    % where there are at least 10 models
+                    if length(curChg) > 10
+                        if ttest(curChg, zeros(size(curChg)), 'alpha', 0.1)
+                            sigChg(xlat, ylon, month) = 1;
+                        end
+                    end
+                end
+            end
+        end
+
+        % average over months - will give the fraction of months that are
+        % signficant
+        sigChg = nanmean(sigChg, 3);
+
+        % with >= 2/3 of months sig, stipple it
+        sigChg(sigChg >= 0.25) = 1;
+        sigChg(sigChg < 0.25) = 0;
+
+        chg = nanmean(nanmean(chg, 4), 3);
+        chg = chg .* 100;
+        chg(:,1) = chg(:,end);
+
+        result = {lat, lon, chg};
+
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'world', ...
+                          'plotRange', [-100 0], ...
+                          'cbXTicks', [-100 -75 -50 -25 0], ...
+                          'plotTitle', ['DJFM Snow mass change'], ...
+                          'fileTitle', ['snw-chg-' num2str(region) '.png'], ...
+                          'plotXUnits', ['Percent'], ...
+                          'blockWater', true, ...
+                          'colormap', cmocean('ice'), ...
+                          'statData', sigChg, ...
+                          'stippleInterval', 5, ...
+                          'magnify', '2');
+        plotFromDataFile(saveData);
+    end
     
     % spatial average
     regionalSnwHistorical = squeeze(nanmean(nanmean(regionalSnwHistorical, 2), 1));

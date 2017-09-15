@@ -59,8 +59,11 @@ for t = 1:length(tChg)
         plot(tChg(t), meanSnwCor(t), 'o', 'MarkerSize', 15, 'MarkerFaceColor', [85/255.0, 158/255.0, 237/255.0], 'MarkerEdgeColor', [85/255.0, 158/255.0, 237/255.0]);
     end
 end
+
+%plot(-4:4, zeros(1,9), '--', 'Color', 'k', 'LineWidth', 2);
+
 ylim([-100 20]);
-xlim([-2.25 3.25]);
+xlim([-1.75 3.25]);
 xlabel(['TNn amplification (' char(176) 'C)'], 'FontSize', 36);
 ylabel('% Snow mass change', 'FontSize', 36);
-set(gca, 'FontSize', 32);
+set(gca, 'FontSize', 36);

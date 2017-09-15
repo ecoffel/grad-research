@@ -121,7 +121,7 @@ legItems = [];
 for n = 1:length(ncepBias)
     e = errorbar(n, nanmean(ncepBias{n}{1}), nanmean(ncepBias{n}{2}), 'o', 'Color', colors(n, :), 'MarkerSize', 15, 'LineWidth', 2);
     
-    annotation('textbox', [.2 .5 .3 .3], regions{n}, 'Color', colors(n, :), 'FontSize', 32, 'FitBoxToText', 'on');
+    text(n, nanmean(ncepBias{n}{1}), regions{n}, 'Color', colors(n, :), 'FontSize', 32);
     
     if ttest(ncepBias{n}{1})
         p = plot(n, nanmean(ncepBias{n}{1}), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(n, :), 'MarkerEdgeColor', colors(n, :));
@@ -138,3 +138,4 @@ set(gca, 'XTick', []);
 set(gca, 'FontSize', 32);
 ylabel(['NCEP wet bulb bias (' char(176) 'C)'], 'FontSize', 36');
 ylim([-3 1]);
+plotedit('on');

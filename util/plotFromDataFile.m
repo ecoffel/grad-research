@@ -11,6 +11,11 @@ function [fg, cb] = plotFromDataFile(saveData)
         statDataExists = true;
     end
     
+    stippleInterval = 5;
+    if isfield(saveData, 'stippleInterval')
+        stippleInterval = saveData.stippleInterval;
+    end
+    
     if isfield(saveData, 'colormap')
         colorMap = saveData.colormap;
     else
@@ -65,8 +70,8 @@ function [fg, cb] = plotFromDataFile(saveData)
     %set(gca, 'SortMethod', 'childorder');
     
     set(gca, 'Color', 'none');
-    set(gca, 'FontSize', 24);
-    xlabel(cb, saveData.plotXUnits, 'FontSize', 24);
+    set(gca, 'FontSize', 50);
+    xlabel(cb, saveData.plotXUnits, 'FontSize', 50);
     set(cb, 'XTick', xticks);
     cbPos = get(cb, 'Position');
     title(saveData.plotTitle, 'FontSize', 30);
@@ -96,8 +101,13 @@ function [fg, cb] = plotFromDataFile(saveData)
         yCoords = circshift(yCoords,-15,2);
         statData = circshift(statData,-15,2);
         
-        for xlat = 1:size(statData, 1)-1
-            for ylon = 1:size(statData, 2)-1
+        xCoords(end+1, :) = xCoords(1, :);
+        xCoords(:, end+1) = xCoords(:, 1);
+        yCoords(:, end+1) = yCoords(:, 1);
+        yCoords(end+1, :) = yCoords(1, :);
+        
+        for xlat = 1:size(statData, 1)
+            for ylon = 1:size(statData, 2)
                 if statData(xlat, ylon)
                     
                     tulX = xCoords(xlat, ylon);
@@ -112,9 +122,10 @@ function [fg, cb] = plotFromDataFile(saveData)
                     tbrX = xCoords(xlat+1, ylon+1);
                     tbrY = yCoords(xlat+1, ylon+1);
                     
-                    p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
+                    p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'w');
                     set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
-                    h = hatchfill(p, 'single', 45, saveData.stippleInterval);
+                    h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'w', 'HatchSpacing', stippleInterval);
+                    %h = hatchfill(p, 'single', 45, stippleInterval);
                     %uistack(h, 'bottom');
                     
 %                     for j = linspace(startingLat, endingLat, abs(endingLat-startingLat)/saveData.stippleInterval)

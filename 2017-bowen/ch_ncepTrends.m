@@ -5,7 +5,7 @@ timePeriod = 1981:2012;
 
 baseDir = 'e:/data/ncep-reanalysis/output';
 
-regionInd = 7;
+regionInd = 4;
 
 regionNames = {'World', ...
                 'Central U.S.', ...

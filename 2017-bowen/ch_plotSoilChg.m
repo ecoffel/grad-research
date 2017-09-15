@@ -1,5 +1,5 @@
 
-baseDir = '2017-concurrent-heat/bowen';
+baseDir = '2017-bowen/bowen';
 soilVar = 'mrso';                  
 percentChange = true;
 
@@ -28,7 +28,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-showMonths = [7 8 9];
+showMonths = [9 10 11 12];
 showRegions = 1;
 
 regionNames = {'World', ...
@@ -116,6 +116,38 @@ for region = showRegions
     for model = 1:size(regionalSoilHistorical, 4)
         chg(:, :, :, model) = (regionalSoilFuture(:,:,showMonths,model)-regionalSoilHistorical(:,:,showMonths,model)) ./ regionalSoilHistorical(:,:,showMonths,model);
     end
+    
+    % find statistical significance of change over selected months across models
+    sigChg = [];
+    for xlat = 1:size(chg, 1)
+        for ylon = 1:size(chg, 2)
+            for month = 1:size(chg, 3)
+                
+                % select only non-nan items
+                curChg = squeeze(chg(xlat, ylon, month, :));
+                ind = find(~isnan(curChg) & ~isinf(curChg));
+                curChg = curChg(ind);
+                
+                % for each grid cell and month, calculate sig across models
+                if length(curChg) > 5
+                    if ttest(curChg)
+                        sigChg(xlat, ylon, month) = 1;
+                    else
+                        sigChg(xlat, ylon, month) = 0;
+                    end
+                end
+            end
+        end
+    end
+    
+    % average over months - will give the fraction of months that are
+    % signficant
+    sigChg = nanmean(sigChg, 3);
+    
+    % with >= 2/3 of months sig, stipple it
+    sigChg(sigChg >= 0.66) = 1;
+    sigChg(sigChg < 0.66) = 0;
+    
     % exclude bad values and don't show zeros or increasing
     chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
     chg = nanmean(nanmean(chg, 4), 3);
@@ -128,11 +160,13 @@ for region = showRegions
                       'plotRegion', 'world', ...
                       'plotRange', [-25 0], ...
                       'cbXTicks', -25:5:0, ...
-                      'plotTitle', ['JAS Soil moisture mass change'], ...
+                      'plotTitle', ['SOND Soil moisture mass change'], ...
                       'fileTitle', ['soil-chg-' num2str(region) '.png'], ...
                       'plotXUnits', ['Percent'], ...
                       'blockWater', true, ...
                       'colormap', cmocean('-turbid'), ...
+                      'statData', sigChg, ...
+                      'stippleInterval', 5, ...
                       'magnify', '2');
     plotFromDataFile(saveData);
     

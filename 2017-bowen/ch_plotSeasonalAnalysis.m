@@ -17,7 +17,7 @@ showPercentChange = true;
 % subtact the annual mean change?
 showChgAnomalies = false;
 
-showLegend = false;
+showLegend = true;
 
 % show correlation between Tx and Bowen
 showCorr = true;
@@ -33,8 +33,8 @@ load lat;
 load lon;
 waterGrid = logical(waterGrid);
 
-bowenBaseDir = '2017-concurrent-heat\bowen\';
-tempBaseDir = '2017-concurrent-heat\bowen\temp-chg-data\';
+bowenBaseDir = '2017-bowen\bowen\';
+tempBaseDir = '2017-bowen\bowen\temp-chg-data\';
 
 % all available models for both bowen and tasmax
 availModels = {};
@@ -142,7 +142,7 @@ for m = 1:length(models)
         bowenHistorical(:, :, length(availModels), :) = curBowenHistorical;
         
         % take difference between rcp85 and historical
-        % dimensions: x, y, month, model
+        % dimensions: x, y, model, month
         bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
         
         tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
@@ -478,7 +478,7 @@ for i = 1:length(regionNames)
         set(ax2(1), 'YLim', [0 8], 'YTick', 0:8);
     end
     
-    title(regionNames{i}, 'FontSize', 34);
+    title(regionNames{i}, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
     if showPercentChange
         export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m1');
