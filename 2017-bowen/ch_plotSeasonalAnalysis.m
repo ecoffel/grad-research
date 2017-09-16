@@ -15,7 +15,7 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
 showPercentChange = true;
 
 % subtact the annual mean change?
-showChgAnomalies = false;
+showChgAnomalies = true;
 
 showLegend = true;
 
@@ -393,6 +393,9 @@ for i = 1:length(regionNames)
     grid on;
     box on;
 
+    data = {tasmaxY, nanmean(annMeanTasmax)};
+    save(['warming-' regionAb{i}], 'data');
+    
     [ax, p1, p2] = shadedErrorBaryy(1:12, tasmaxY, tasmaxErr, 'r', ...
                                     1:12, bowenY, bowenErr, 'g');
     hold(ax(1));
