@@ -1,3 +1,4 @@
+import numpy
 
 def loadStateDb(path, nameKey):
     f = open(path, 'r')
@@ -90,5 +91,13 @@ def loadStationWx(baseDir, state, station):
         wxData['precip'].append(precip)
     
     f.close()
+    
+    wxData['year'] = numpy.array(wxData['year'])
+    wxData['month'] = numpy.array(wxData['month'])
+    wxData['day'] = numpy.array(wxData['day'])
+    wxData['hour'] = numpy.array(wxData['hour'])
+    wxData['temp'] = numpy.array(wxData['temp'])
+    wxData['precip'] = numpy.array(wxData['precip'])
+    
     return wxData
     

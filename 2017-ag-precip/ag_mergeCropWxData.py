@@ -12,6 +12,7 @@ import pickle
 import gzip
 import sys
 import geopy.distance
+import numpy
 
 baseDirCrop = '2017-ag-precip/'
 baseDirWx = 'E:/data/projects/ag/wx-data/'
@@ -80,8 +81,27 @@ for state in selectedStates:
             # if station close enough to county
             if dist < distThresh:
                 
+                # load the weather data for this station
+                wxData = ag_utils.loadStationWx(baseDirWx, state, station)
+                
+                # find missing data
+                tempMissingInd = numpy.where(wxData['temp'] == -999)
+                precipMissingInd = numpy.where(wxData['precip'] == -999)
+                
+                # convert missing temp/precip to nan
+                wxData['temp'] = wxData['temp'].astype('float')
+                wxData['temp'][tempMissingInd] = numpy.nan
+                
+                wxData['precip'] = wxData['precip'].astype('float')
+                wxData['precip'][precipMissingInd] = numpy.nan
+                
+                # calculate missing percentage
+                tempMissingPercentage = numpy.size(tempMissingInd) / numpy.size(wxData['temp'])
+                precipMissingPercentage = numpy.size(precipMissingInd) / numpy.size(wxData['precip'])
+                
                 # no data yet for this county or current station is closer...
-                if len(mergedCropData[county]) == 0 or dist < mergedCropData[county]['distance']:
+                if len(mergedCropData[county]) == 0 or dist < mergedCropData[county]['distance'] or \
+                   (tempMissingPercentage < mergedCropData[county]['tempMissingPercentage'] and precipMissingPercentage < mergedCropData[county]['precipMissingPercentage']):
                     
                     # a new county
                     if len(mergedCropData[county]) == 0:
@@ -90,11 +110,11 @@ for state in selectedStates:
                     # record distance to this station
                     mergedCropData[county]['distance'] = dist
                     
+                    mergedCropData[county]['tempMissingPercentage'] = tempMissingPercentage;
+                    mergedCropData[county]['precipMissingPercentage'] = precipMissingPercentage;
+                    
                     # add yield data
                     mergedCropData[county]['yield'] = yieldDb[state][county]
-                    
-                    # load the weather data for this station
-                    wxData = ag_utils.loadStationWx(baseDirWx, state, station)
                     
                     # add hourly temp/precip data (dictionaries, key = year, value = list of hourly values)
                     mergedCropData[county]['year'] = wxData['year']
