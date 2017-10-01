@@ -38,7 +38,12 @@ def loadCountyDb(path):
 
             # extract county parts from line
             state = parts[0].strip().lower()
-            name = parts[3].lower().strip('county').strip()
+            
+            if state == 'la':
+                name = parts[3].lower().replace('parish', '').strip().replace('st.', 'saint')
+            else:
+                name = parts[3].lower().replace('county', '').strip()
+            
             lat = float(parts[10].strip())
             lon = float(parts[11].strip())
 

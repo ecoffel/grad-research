@@ -9,11 +9,15 @@ Merges crop and asos data to create a dictionary with weather & yield data for e
 
 import ag_utils
 import pickle
+import gzip
 import sys
 import geopy.distance
 
 baseDirCrop = '2017-ag-precip/'
 baseDirWx = 'E:/data/projects/ag/wx-data/'
+
+# leave blank to use all states
+selectedStates = []
 
 countyDb = ag_utils.loadCountyDb('E:/data/projects/ag/crop/counties.txt')
 
@@ -28,8 +32,12 @@ f.close()
 # the percentage of matched counties for each state
 successRate = {}
 
+# if no specific states selected, use all
+if len(selectedStates) == 0:
+    selectedStates = yieldDb.keys()
+
 # loop over states
-for state in yieldDb.keys():
+for state in selectedStates:
 
     # final result: dictionary(key = county name, 
     # value = dictionary(key = 'yield', 'temp', 'precip', value = data)
@@ -57,7 +65,7 @@ for state in yieldDb.keys():
         
         # create sub-dict for this county
         mergedCropData[county] = {}
-        
+                
         # search for the lat/lon of this county        
         [lat, lon] = ag_utils.getCountyLatLon(countyDb, state, county)
         
@@ -68,7 +76,7 @@ for state in yieldDb.keys():
             
             # calculate distance (km) between station & county center
             dist = geopy.distance.distance((lat, lon), wxStationLocation).km
-            
+                                          
             # if station close enough to county
             if dist < distThresh:
                 
@@ -89,6 +97,10 @@ for state in yieldDb.keys():
                     wxData = ag_utils.loadStationWx(baseDirWx, state, station)
                     
                     # add hourly temp/precip data (dictionaries, key = year, value = list of hourly values)
+                    mergedCropData[county]['year'] = wxData['year']
+                    mergedCropData[county]['month'] = wxData['month']
+                    mergedCropData[county]['day'] = wxData['day']
+                    mergedCropData[county]['hour'] = wxData['hour']
                     mergedCropData[county]['temp'] = wxData['temp']
                     mergedCropData[county]['precip'] = wxData['precip']
 
@@ -96,9 +108,8 @@ for state in yieldDb.keys():
     successRate[state] = success
     print('matched ' + str(success) + '% of counties...')
     
-    fout = open(baseDirCrop + '/merged-crop-wx-' + state + '.dat', 'wb')
-    pickle.dump(mergedCropData, fout)
-    fout.close()
+    with gzip.GzipFile(baseDirCrop + '/merged-crop-wx-' + state + '.pgz', 'w') as fout:
+        pickle.dump(mergedCropData, fout)
     
     del mergedCropData
             
