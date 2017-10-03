@@ -51,29 +51,9 @@ for state in states:
         for line in f:
             parts = line.split(',')
             
-            year = int(parts[0].strip())
-            month = int(parts[1].strip())
-            day = int(parts[2].strip())
-            hour = int(parts[3].strip())
             lon = float(parts[4].strip())
             lat = float(parts[5].strip())
-            temp = float(parts[6].strip())
-            precip = float(parts[7].strip())
-            
-#            if stationID in stateDb:
-#                stateDb[stationID][2]['year'].append(year)
-#                stateDb[stationID][2]['month'].append(month)
-#                stateDb[stationID][2]['day'].append(day)
-#                stateDb[stationID][2]['hour'].append(hour)
-#                stateDb[stationID][2]['temp'].append(temp)
-#                stateDb[stationID][2]['precip'].append(precip)
-#            else:
-#            stateDb[stationID] = (lat, lon, {'year':[year],\
-#                                             'month':[month],\
-#                                             'day':[day],\
-#                                             'hour':[hour],\
-#                                             'temp':[temp],\
-#                                             'precip':[precip]})
+
             stateDb[stationID] = (lat, lon)
             break        
             

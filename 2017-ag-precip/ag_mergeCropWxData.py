@@ -40,6 +40,10 @@ if len(selectedStates) == 0:
 # loop over states
 for state in selectedStates:
 
+    # check if file already exists...
+    if os.path.exists(baseDirCrop + 'merged-crop-wx-' + state + '.pgz'):
+        continue
+    
     # final result: dictionary(key = county name, 
     # value = dictionary(key = 'yield', 'temp', 'precip', value = data)
     mergedCropData = {}
@@ -109,6 +113,7 @@ for state in selectedStates:
                     
                     # record distance to this station
                     mergedCropData[county]['distance'] = dist
+                    mergedCropData[county]['station'] = station
                     
                     mergedCropData[county]['tempMissingPercentage'] = tempMissingPercentage;
                     mergedCropData[county]['precipMissingPercentage'] = precipMissingPercentage;

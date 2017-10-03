@@ -15,16 +15,45 @@ waterGrid = logical(waterGrid);
 % daily-max-min: change in daily max minus change in daily min
 chgMetric = 'ann-min';
 
+modelSubset = 'snow';
+
 rcp = 'rcp85';
 timePeriod = '2060-2080';
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+modelsBowen = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+              'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3'};
+          
+modelsSoil = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
+                          'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                          'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                          'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
+                          'mpi-esm-mr', 'mri-cgcm3'};
 
+modelsSnow = {'access1-0', 'access1-3', 'bnu-esm', ...
+                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'mpi-esm-mr', 'mri-cgcm3'};
+
+if strcmp(modelSubset, 'bowen')
+    models = modelsBowen;
+elseif strcmp(modelSubset, 'soil')
+    models = modelsSoil;
+elseif strcmp(modelSubset, 'snow')
+    models = modelsSnow;
+elseif strcmp(modelSubset, 'all')
+    models = modelsAll;
+end
+              
+                      
 % if monthly
 %     % monthly-mean-max or monthly-max
 %     tempMetric = 'monthly-mean-max';
@@ -67,16 +96,16 @@ for m = 1:length(models)
     
     % load and process change 1
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -95,16 +124,16 @@ for m = 1:length(models)
 
     % load and process change 2
     if strcmp(chgMetric, 'ann-max')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['2017-concurrent-heat/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -185,7 +214,7 @@ saveData = struct('data', {result}, ...
                   'plotRange', [ampLevels(1) ampLevels(end)], ...
                   'cbXTicks', ampLevels, ...
                   'plotTitle', ['Amplification, ' num2str(ampAgreement) '% model agreement'], ...
-                  'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' chgMetric '-' timePeriod '.png'], ...
+                  'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' chgMetric '-' modelSubset '-' timePeriod '.png'], ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'magnify', '2');

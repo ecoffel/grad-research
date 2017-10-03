@@ -28,7 +28,7 @@ lags = 0;
 showVar = true;
 
 % type of model to fit to data
-fitType = 'poly2';
+fitType = 'poly1';
 
 rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
@@ -49,7 +49,7 @@ waterGrid = logical(waterGrid);
 regionInd = 1;
 months = 1:12;
 
-baseDir = '2017-concurrent-heat/bowen';
+baseDir = 'e:/data/projects/bowen';
 
 rcpStr = 'historical';
 if change
@@ -407,6 +407,9 @@ for lag = lags
         end
         clear bowenTemp bowenTempFuture;
     end
+    
+    % save r2 data for this fit
+    save(['r2BT-' regionAb{regionInd} '-' fitType], 'r2BT');
 
     if plotEachModel
         for model = 1:length(models)

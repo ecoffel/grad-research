@@ -16,7 +16,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-regionIds = [1,2,4,7];
+regionIds = [2,4,7];
 
 regionNames = {'World', ...
                 'Central U.S.', ...
@@ -141,19 +141,39 @@ for r = 1:length(regionIds)
     
     regionalSlopes{r} = curSlopes;
     
-    p = plot(dispMonths, squeeze(nanmean(nanmean(curSlopes, 2), 1)), 'LineWidth', 3, 'Color', colors(r, :));
+    curYpos = [];
+    otherMonths = [];
+    for month = 1:12
+        
+        % months to compare current month to (the cold/wet seasons)
+        otherMonths = zeros(length(regionIds), 8);
+        if regionId == 2 || regionId == 4
+            otherMonths(r,:) = [1 2 3 4 5 10 11 12];
+        elseif regionId == 7
+            otherMonths(r,:) = [1 2 3 4 5 6 7 8];
+        end
+        
+        ypos = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1)) - squeeze(nanmean(nanmean(nanmean(curSlopes(:, :, otherMonths), 3), 2), 1));
+    end
+    
+    p = plot(dispMonths, curYpos, 'LineWidth', 3, 'Color', colors(r, :));
     legItems(r) = p;
     
     for month = dispMonths
-        ypos = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1));
+        
+        ypos = curYpos(month)
         erry = nanstd(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)),1]));
         
         plot(month, ypos, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
         %e = errorbar(month, ypos, erry, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
         
         % if significantly different from global slope
-        [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...
-                   reshape(regionalSlopes{1}(:, :, month), [numel(regionalSlopes{1}(:, :, month)), 1]), 'alpha', 0.05)
+%         [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...
+%                    reshape(regionalSlopes{1}(:, :, month), [numel(regionalSlopes{1}(:, :, month)), 1]), 'alpha', 0.05)
+
+        [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...   
+                         reshape(curSlopes(:, :, otherMonths(r, :)), [numel(curSlopes(:, :, otherMonths(r, :))), 1]), 'alpha', 0.05)
+
         if h
             plot(month, ypos, 'o', 'LineWidth', 1, 'MarkerSize', 10, 'MarkerFaceColor', colors(r, :), 'MarkerEdgeColor', colors(r, :), 'Color', colors(r, :));
         end
@@ -173,18 +193,18 @@ legend(legItems, {'World', 'Central US', 'Europe', 'Amazon'});
 
 
 
-result = {lat, lon, slopes};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'world', ...
-                  'plotRange', [-15 0], ...
-                  'cbXTicks', -15:5:0, ...
-                  'plotTitle', ['Soil moisture & Bowen ratio'], ...
-                  'fileTitle', ['slope-soilw-bowen.png'], ...
-                  'plotXUnits', ['Slope'], ...
-                  'blockWater', true, ...
-                  'colormap', cmocean('-turbid'), ...
-                  'magnify', '2');
-plotFromDataFile(saveData);
+% result = {lat, lon, slopes};
+% saveData = struct('data', {result}, ...
+%                   'plotRegion', 'world', ...
+%                   'plotRange', [-15 0], ...
+%                   'cbXTicks', -15:5:0, ...
+%                   'plotTitle', ['Soil moisture & Bowen ratio'], ...
+%                   'fileTitle', ['slope-soilw-bowen.png'], ...
+%                   'plotXUnits', ['Slope'], ...
+%                   'blockWater', true, ...
+%                   'colormap', cmocean('-turbid'), ...
+%                   'magnify', '2');
+% plotFromDataFile(saveData);
 
 % plotModelData({lat,lon,slopes},'world','caxis',[-50,0]);
 

@@ -81,7 +81,13 @@ def loadStationWx(baseDir, state, station):
         lon = float(parts[4].strip())
         lat = float(parts[5].strip())
         temp = float(parts[6].strip())
-        precip = float(parts[7].strip())
+        
+        # no RH column
+        if len(parts) == 8:
+            precip = float(parts[7].strip())
+        # there is an RH column
+        elif len(parts) == 9:
+            precip = float(parts[8].strip())
         
         wxData['year'].append(year)
         wxData['month'].append(month)
