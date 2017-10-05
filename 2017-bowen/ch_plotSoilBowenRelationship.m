@@ -141,43 +141,35 @@ for r = 1:length(regionIds)
     
     regionalSlopes{r} = curSlopes;
     
-    curYpos = [];
-    otherMonths = [];
-    for month = 1:12
-        
-        % months to compare current month to (the cold/wet seasons)
-        otherMonths = zeros(length(regionIds), 8);
-        if regionId == 2 || regionId == 4
-            otherMonths(r,:) = [1 2 3 4 5 10 11 12];
-        elseif regionId == 7
-            otherMonths(r,:) = [1 2 3 4 5 6 7 8];
-        end
-        
-        ypos = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1)) - squeeze(nanmean(nanmean(nanmean(curSlopes(:, :, otherMonths), 3), 2), 1));
+    ypos = [];
+    for month = 1:12 
+        ypos(month) = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1));
     end
     
-    p = plot(dispMonths, curYpos, 'LineWidth', 3, 'Color', colors(r, :));
+    p = plot(dispMonths, ypos, 'LineWidth', 3, 'Color', colors(r, :));
     legItems(r) = p;
     
     for month = dispMonths
+        % plot marker
+        plot(month, ypos(month), 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
         
-        ypos = curYpos(month)
-        erry = nanstd(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)),1]));
+        % list of all months except current one
+        otherMonths = 1:12;
+        otherMonths(month) = [];
         
-        plot(month, ypos, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
-        %e = errorbar(month, ypos, erry, 'o', 'LineWidth', 2, 'MarkerSize', 10, 'Color', colors(r, :));%[178/255.0, 113/255.0, 60/255.0]);
-        
-        % if significantly different from global slope
-%         [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...
-%                    reshape(regionalSlopes{1}(:, :, month), [numel(regionalSlopes{1}(:, :, month)), 1]), 'alpha', 0.05)
-
+        % test significance between this month and all other months in the
+        % year
         [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...   
-                         reshape(curSlopes(:, :, otherMonths(r, :)), [numel(curSlopes(:, :, otherMonths(r, :))), 1]), 'alpha', 0.05)
+                         reshape(curSlopes(:, :, otherMonths), [numel(curSlopes(:, :, otherMonths)), 1]), 'alpha', 0.05)
 
+        % fill marker if significant
         if h
-            plot(month, ypos, 'o', 'LineWidth', 1, 'MarkerSize', 10, 'MarkerFaceColor', colors(r, :), 'MarkerEdgeColor', colors(r, :), 'Color', colors(r, :));
+            plot(month, ypos(month), 'o', 'LineWidth', 1, 'MarkerSize', 10, 'MarkerFaceColor', colors(r, :), 'MarkerEdgeColor', colors(r, :), 'Color', colors(r, :));
         end
     end
+    
+    % plot regional slope mean across year
+    plot(1:12, ones(1,12) .* nanmean(ypos), '--', 'LineWidth', 2, 'Color', colors(r, :));
 end
 
 % plot zero line
@@ -189,7 +181,7 @@ xlim([0.5 12.5]);
 ylim([-10 5]);
 set(gca, 'XTick', 1:12);
 set(gca, 'FontSize', 36);
-legend(legItems, {'World', 'Central US', 'Europe', 'Amazon'});
+legend(legItems, {'Central US', 'Europe', 'Amazon'});
 
 
 

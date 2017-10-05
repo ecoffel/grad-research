@@ -28,7 +28,7 @@ lags = 0;
 showVar = true;
 
 % type of model to fit to data
-fitType = 'poly1';
+fitType = 'poly3';
 
 rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
@@ -46,7 +46,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-regionInd = 1;
+regionInd = 7;
 months = 1:12;
 
 baseDir = 'e:/data/projects/bowen';
