@@ -56,7 +56,7 @@ end
 fgHandles = findobj('Type','figure');
 fgNum = 1;
 if length(fgHandles) > 0
-    fgNum = max(fgHandles)+1;
+    fgNum = length(fgHandles)+1;
 end
 if ~noNewFig
     fg = figure(fgNum);

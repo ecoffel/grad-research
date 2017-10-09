@@ -366,8 +366,8 @@ for i = 1:length(regionNames)
     grid on;
     box on;
 
-    data = {tasmaxY, nanmean(annMeanTasmax)};
-    save(['warming-' regionAb{i}], 'data');
+    %data = {tasmaxY, nanmean(annMeanTasmax)};
+    %save(['warming-' regionAb{i}], 'data');
     
     [ax, p1, p2] = shadedErrorBaryy(1:12, tasmaxY, tasmaxErr, 'r', ...
                                     1:12, bowenY, bowenErr, 'g');
@@ -463,7 +463,7 @@ for i = 1:length(regionNames)
     title(regionNames{i}, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
     if showPercentChange
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m1');
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m2');
     else
         export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m1');
     end
