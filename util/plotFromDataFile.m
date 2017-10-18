@@ -122,9 +122,9 @@ function [fg, cb] = plotFromDataFile(saveData)
                     tbrX = xCoords(xlat+1, ylon+1);
                     tbrY = yCoords(xlat+1, ylon+1);
                     
-                    p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'w');
+                    p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
                     set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
-                    h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'w', 'HatchSpacing', stippleInterval);
+                    h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'k', 'HatchSpacing', stippleInterval);
                     %h = hatchfill(p, 'single', 45, stippleInterval);
                     %uistack(h, 'bottom');
                     
@@ -142,20 +142,6 @@ function [fg, cb] = plotFromDataFile(saveData)
         end
     end
     
-    if boxCoordsExists
-        boxCoords = saveData.boxCoords;
-        
-        lat1 = boxCoords(1,1);
-        lat2 = boxCoords(1,2);
-        lon1 = boxCoords(2,1);
-        lon2 = boxCoords(2,2);
-        
-        plotm([lat1; lat2], [lon1; lon1], 'LineWidth', 2, 'Color', 'r');
-        plotm([lat2; lat2], [lon1; lon2], 'LineWidth', 2, 'Color', 'r');
-        plotm([lat2; lat1], [lon2; lon2], 'LineWidth', 2, 'Color', 'r');
-        plotm([lat1; lat1], [lon2; lon1], 'LineWidth', 2, 'Color', 'r');
-    end
-    
     if saveData.blockWater
         load coast;
         geoshow(flipud(lat),flipud(long),'DisplayType','Polygon','FaceColor','white','EdgeColor','none');
@@ -166,7 +152,23 @@ function [fg, cb] = plotFromDataFile(saveData)
     if blockLand
         geoshow('landareas.shp','DisplayType','polygon','FaceColor','white','EdgeColor','None');
     end
+       
+    if boxCoordsExists
+        boxCoords = saveData.boxCoords;
         
+        for c = 1:size(boxCoords,1)
+            lat1 = boxCoords(c,1);
+            lat2 = boxCoords(c,2);
+            lon1 = boxCoords(c,3);
+            lon2 = boxCoords(c,4);
+
+            plotm([lat1; lat2], [lon1; lon1], 'LineWidth', 2, 'Color', 'k');
+            plotm([lat2; lat2], [lon1; lon2], 'LineWidth', 2, 'Color', 'k');
+            plotm([lat2; lat1], [lon2; lon2], 'LineWidth', 2, 'Color', 'k');
+            plotm([lat1; lat1], [lon2; lon1], 'LineWidth', 2, 'Color', 'k');
+        end
+    end
+    
     if magnify
         eval(['export_fig ' saveData.fileTitle ' -painters -m' magnify ';']);
     else

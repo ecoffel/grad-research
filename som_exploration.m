@@ -2,20 +2,20 @@ clear
 clc
 
 tmaxBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
-%soilwBase = loadDailyData('e:/data/ncep-reanalysis/output/soilw10/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
+soilwBase = loadDailyData('e:/data/ncep-reanalysis/output/soilw10/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
 hgtBase = loadDailyData('e:/data/ncep-reanalysis/output/hgt/regrid', 'yearStart', 1980, 'yearEnd', 2010);
 hgtBase{3}(:,end,:,:,:)=hgtBase{3}(:,1,:,:,:);
 
 % select paris lat/lon
 %[latInd, lonInd] = latLonIndexRange(hgtBase, [45 45], [9 9]);
-[latInd, lonInd] = latLonIndexRange(hgtBase, [41 41], [269 269]);
+[latInd, lonInd] = latLonIndexRange(tmaxBase, [41 41], [269 269]);
 %[latInd, lonInd] = latLonIndexRange(hgtBase, [33 33], [248 248]);
 
 lat = hgtBase{1};
 lon = hgtBase{2};
 
 % find heat waves
-tmax = nanmean(nanmean(tmaxBase{3}(latInd, lonInd, :, :, :),2), 1)-273.15;
+tmax = nanmean(nanmean(tmaxBase{3}(latInd, lonInd, :, 6:8, :),2), 1)-273.15;
 thresh = prctile(reshape(tmax, [numel(tmax),1]), 95);
 tmax = reshape(tmax, [numel(tmax), 1]);
 heatWaveInd = find(tmax > thresh);
@@ -29,11 +29,25 @@ regionLon = lonInd(1)-20:lonInd(1)+20;
 regionLon(regionLon<1) = regionLon(regionLon<1)+size(lon,2);
 
 hgt = hgtBase{3}(regionLat, regionLon, :, :, :);
+soilw = soilwBase{3}(latInd, lonInd, :, 6:8, :);
 
 % take calendar day hgt anomaly
 for month = 1:size(hgt, 4)
     hgt(:, :, :, month, :) = hgt(:, :, :, month, :) - nanmean(hgt(:, :, :, month, :), 3);
 end
+
+% and monthly mean anomaly for soilw
+for month = 1:size(soilw, 4)
+    mm = nanmean(nanmean(soilw(:, :, :, month, :),5), 3);
+    soilw(:, :, :, month, :) = (soilw(:, :, :, month, :) - mm)./mm.*100;
+end
+
+soilw=squeeze(soilw);
+soilw=reshape(soilw,[numel(soilw),1]);
+nn = find(~isnan(soilw) & ~isnan(tmax));
+soilw=soilw(nn);
+tmax=tmax(nn);
+
 
 hgtC = [];
 row = 1;

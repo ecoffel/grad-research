@@ -1,15 +1,14 @@
 
-regions = {'world', 'europe', 'us-cent', 'amazon'};
+regions = {'world', 'europe', 'us-east', 'amazon'};
 regionNames = {'World', 'Central Europe', 'Eastern U.S.', 'Amazon'};
 models = {'poly1', 'poly2'};
 
 
-figure('Color', [1,1,1]);
+
 
 for r = 1:length(regions)
     ['region = ' regions{r} '...']
-    
-    subplot(2,2,r);
+    figure('Color', [1,1,1]);
     hold on;
     axis square;
     grid on;
@@ -34,10 +33,14 @@ for r = 1:length(regions)
         legend('NCEP, 1st degree', 'ERA, 1st degree', 'NCEP, 2nd degree', 'ERA, 2nd degree');
     end
     
-    title(regionNames{r}, 'FontSize', 36);
-    xlabel('Month', 'FontSize', 24);
+    set(gca, 'FontSize', 30);
+    title(regionNames{r}, 'FontSize', 40);
+    xlabel('Month', 'FontSize', 32);
     xlim([0.5 12.5]);
     set(gca, 'XTick', 1:12);
-    ylabel('R2', 'FontSize', 24);
-    set(gca, 'FontSize', 20);
+    ylabel('R2', 'FontSize', 32);
+    
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['model-comparison-' regions{r} '.png']);
+    close all;
 end

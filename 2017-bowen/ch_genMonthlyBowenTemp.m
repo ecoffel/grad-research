@@ -4,8 +4,8 @@
 % across models and decades.
 
 season = 'all';
-dataset = 'era-interim';
-tempVar = 'mx2t';
+dataset = 'ncep-reanalysis';
+tempVar = 'tmax';
 bowenVar = 'bowen';
 
 if strcmp(dataset, 'cmip5')
@@ -36,7 +36,7 @@ tempRegrid = true;
 region = 'world';
 timePeriod = 1985:2004;
 
-baseDir = 'g:/data';
+baseDir = 'e:/data';
 yearStep = 1;
 
 if strcmp(season, 'summer')

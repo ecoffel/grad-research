@@ -18,8 +18,9 @@ waterGrid = logical(waterGrid);
 
 regionIds = [2,4,7];
 
+
 regionNames = {'World', ...
-                'Central U.S.', ...
+                'Eastern U.S.', ...
                 'Southeast U.S.', ...
                 'Central Europe', ...
                 'Mediterranean', ...
@@ -27,7 +28,7 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'Central Africa'};
 regionAb = {'world', ...
-            'us-cent', ...
+            'us-east', ...
             'us-se', ...
             'europe', ...
             'med', ...
@@ -36,7 +37,7 @@ regionAb = {'world', ...
             'africa-cent'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[35 46], [-107 -88] + 360]; ...     % central us
+           [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
            [[36 45], [-5+360, 40]]; ...        % Med
@@ -121,7 +122,7 @@ slopes(slopes > 16) = NaN;
 figure('Color', [1,1,1]);
 hold on;
 box on;
-grid on;
+%grid on;
 axis square;
 
 colors = distinguishable_colors(length(regionIds));
@@ -143,7 +144,7 @@ for r = 1:length(regionIds)
     
     ypos = [];
     for month = 1:12 
-        ypos(month) = squeeze(nanmean(nanmean(curSlopes(:, :, month), 2), 1));
+        ypos(month) = -nanmean(nanmean(squeeze(curSlopes(:, :, month))));
     end
     
     p = plot(dispMonths, ypos, 'LineWidth', 3, 'Color', colors(r, :));
@@ -160,7 +161,7 @@ for r = 1:length(regionIds)
         % test significance between this month and all other months in the
         % year
         [h, p] = kstest2(reshape(curSlopes(:, :, month), [numel(curSlopes(:, :, month)), 1]), ...   
-                         reshape(curSlopes(:, :, otherMonths), [numel(curSlopes(:, :, otherMonths)), 1]), 'alpha', 0.05)
+                         reshape(curSlopes(:, :, otherMonths), [numel(curSlopes(:, :, otherMonths)), 1]), 'alpha', 0.05);
 
         % fill marker if significant
         if h
@@ -176,12 +177,13 @@ end
 plot(0:13, zeros(length(0:13),1), '--k', 'LineWidth', 2);
 
 xlabel('Month', 'FontSize', 36);
-ylabel('Slope: Bowen ratio to soil moisture', 'FontSize', 36);
-xlim([0.5 12.5]);
-ylim([-10 5]);
-set(gca, 'XTick', 1:12);
 set(gca, 'FontSize', 36);
-legend(legItems, {'Central US', 'Europe', 'Amazon'});
+title('Bowen ratio sensitivity to soil moisture', 'FontSize', 32);
+xlim([0.5 12.5]);
+ylim([-5 10]);
+set(gca, 'XTick', 1:12);
+
+legend(legItems, {'Eastern U.S.', 'Europe', 'Amazon'});
 
 
 

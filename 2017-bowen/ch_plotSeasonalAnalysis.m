@@ -17,7 +17,7 @@ showPercentChange = true;
 % subtact the annual mean change?
 showChgAnomalies = false;
 
-showLegend = true;
+showLegend = false;
 
 % show correlation between Tx and Bowen
 showCorr = true;
@@ -55,7 +55,7 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'Central Africa'};
 regionAb = {'world', ...
-            'us-cent', ...
+            'us-east', ...
             'us-se', ...
             'europe', ...
             'med', ...
@@ -64,7 +64,7 @@ regionAb = {'world', ...
             'africa-cent'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[35 46], [-107 -88] + 360]; ...     % central us
+           [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
            [[36 45], [-5+360, 40]]; ...        % Med
@@ -292,10 +292,10 @@ for i = 1:length(regionNames)
     end
     
     % cancluate change anomalies if needed
-    if showChgAnomalies
-        annMeanBowen = nanmean(bowenRegionsChange{i}, 2);
-        annMeanTasmax = nanmean(tasmaxRegionsChange{i}, 2);
-        annMeanTasmin = nanmean(tasminRegionsChange{i}, 2);
+    annMeanBowen = nanmean(bowenRegionsChange{i}, 2);
+    annMeanTasmax = nanmean(tasmaxRegionsChange{i}, 2);
+    annMeanTasmin = nanmean(tasminRegionsChange{i}, 2);
+    if showChgAnomalies        
         bowenRegionsChange{i} = bowenRegionsChange{i} - repmat(annMeanBowen, 1, 12);
         tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTasmax, 1, 12);
         tasminRegionsChange{i} = tasminRegionsChange{i} - repmat(annMeanTasmin, 1, 12);
@@ -366,8 +366,8 @@ for i = 1:length(regionNames)
     grid on;
     box on;
 
-    %data = {tasmaxY, nanmean(annMeanTasmax)};
-    %save(['warming-' regionAb{i}], 'data');
+    data = {tasmaxY, nanmean(annMeanTasmax)};
+    save(['warming-' regionAb{i}], 'data');
     
     [ax, p1, p2] = shadedErrorBaryy(1:12, tasmaxY, tasmaxErr, 'r', ...
                                     1:12, bowenY, bowenErr, 'g');
@@ -390,17 +390,19 @@ for i = 1:length(regionNames)
     
     
     [ax2, p3, p4] = shadedErrorBaryy(1:12, tasminY, tasminErr, 'b', ...
-                                    1:12, bowenY, bowenErr, 'g');
+                                    1:12, ones(12,1).*1000, zeros(12,1), 'g');
     hold(ax2(1));
     hold(ax2(2));
     box(ax(1), 'on');
+    grid(ax(2),'on');
     set(p3.mainLine, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 3);
     set(p3.patch, 'FaceColor', [85/255.0, 158/255.0, 237/255.0]);
     set(p3.edge, 'Color', 'w');
     % this is a copy of the bowen line from p2, so make it invisible
     set(p4.mainLine, 'visible', 'off');
     set(p4.patch, 'visible', 'off');
-    set(p4.edge, 'visible', 'off');
+    set(p4.edge(1), 'visible', 'off');
+    set(p4.edge(2), 'visible', 'off');
     axis(ax2(1), 'square');
     axis(ax2(2), 'square');
 
@@ -411,7 +413,7 @@ for i = 1:length(regionNames)
     end
     
     % plot bowen zero line 
-    plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+    %plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
     if showLegend
         leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
@@ -446,10 +448,10 @@ for i = 1:length(regionNames)
         set(ax2(2), 'YLim', [-2 4], 'YTick', [-2 -1 0 1 2 3 4]);
         ylabel(ax(2), 'Bowen ratio change', 'FontSize', 36);
     end
-    set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 32);
-    set(ax2(1), 'YColor', [239/255.0, 71/255.0, 85/255.0], 'FontSize', 32);
-    set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 32);
-    set(ax2(2), 'YColor', [25/255.0, 158/255.0, 56/255.0], 'FontSize', 32);
+    set(ax(1), 'YColor', 'k', 'FontSize', 32);
+    set(ax2(1), 'YColor', 'k', 'FontSize', 32);
+    set(ax(2), 'YColor', 'k', 'FontSize', 32);
+    set(ax2(2), 'YColor', 'k', 'FontSize', 32);
     if showChgAnomalies
         ylabel(ax(1), ['Temperature anomaly change (' char(176) 'C)'], 'FontSize', 36);
         set(ax(1), 'YLim', [-3 3], 'YTick', -3:3);
@@ -463,7 +465,7 @@ for i = 1:length(regionNames)
     title(regionNames{i}, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
     if showPercentChange
-        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m2');
+        export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m4');
     else
         export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m1');
     end

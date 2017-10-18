@@ -19,7 +19,7 @@ useNcep = true;
 useEra = true;
 
 % show legend on both plots? (some regions it doesn't fit)
-showLegend = true;
+showLegend = false;
 
 % use bowen lag months behind temperature as predictor
 lags = 0;
@@ -28,7 +28,7 @@ lags = 0;
 showVar = true;
 
 % type of model to fit to data
-fitType = 'poly3';
+fitType = 'poly2';
 
 rcpHistorical = 'historical';
 rcpFuture = 'rcp85';
@@ -46,7 +46,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-regionInd = 7;
+regionInd = 4;
 months = 1:12;
 
 baseDir = 'e:/data/projects/bowen';
@@ -57,39 +57,31 @@ if change
 end
 
 regionNames = {'World', ...
-                'Central U.S.', ...
+                'Eastern U.S.', ...
                 'Southeast U.S.', ...
                 'Central Europe', ...
                 'Mediterranean', ...
                 'Northern SA', ...
                 'Amazon', ...
-                'India', ...
-                'West Africa', ...
-                'Central Africa', ...
-                'Tropics'};
+                'Central Africa'};
 regionAb = {'world', ...
-            'us-cent', ...
+            'us-east', ...
             'us-se', ...
             'europe', ...
             'med', ...
             'sa-n', ...
             'amazon', ...
-            'india', ...
-            'africa-west', ...
-            'africa-cent', ...
-            'tropics'};
+            'africa-cent'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
-           [[35 46], [-107 -88] + 360]; ...     % central us
+           [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
            [[36 45], [-5+360, 40]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
-           [[8, 26], [67, 90]]; ...             % India
-           [[7, 20], [-15 + 360, 15]]; ...          % west Africa
-           [[-10 10], [15, 30]]; ...            % central Africa
-           [[-20 20], [0 360]]];                % Tropics
+           [[-10 10], [15, 30]]];                % central africa
+            
 
 models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -439,12 +431,12 @@ for lag = lags
             set(p2, 'Color', 'b');
             set(p3, 'Color', 'r', 'LineWidth', 3);
             set(p4, 'Color', 'b', 'LineWidth', 3);
-            set(ax(1), 'YColor', 'r');
-            set(ax(2), 'YColor', 'b');
+            %set(ax(1), 'YColor', 'r');
+            %set(ax(2), 'YColor', 'b');
             set(ax(1), 'XLim', [1 12], 'XTick', 1:12);
             set(ax(2), 'XLim', [1 12], 'XTick', []);
-            set(ax2(1), 'YColor', 'r');
-            set(ax2(2), 'YColor', 'b');
+            %set(ax2(1), 'YColor', 'r');
+            %set(ax2(2), 'YColor', 'b');
             set(ax2(1), 'XLim', [1 12], 'XTick', 1:12);
             set(ax2(2), 'XLim', [1 12], 'XTick', []);
             if change
@@ -574,8 +566,8 @@ for lag = lags
         box(ax(1), 'on');
         axis(ax(1), 'square');
         axis(ax(2), 'square');
-        set(ax(1), 'YColor', [239/255.0, 71/255.0, 85/255.0]);
-        set(ax(2), 'YColor', [25/255.0, 158/255.0, 56/255.0]);
+        set(ax(1), 'YColor', 'k');
+        set(ax(2), 'YColor', 'k');
         set(ax(1), 'XLim', [0.5 12.5], 'XTick', 1:12);
         set(ax(2), 'XLim', [0.5 12.5], 'XTick', []);
         if change
@@ -585,15 +577,15 @@ for lag = lags
             set(ax(1), 'YLim', [-10 40], 'YTick', [-10 0 10 20 30 40]);
             set(ax(2), 'YLim', [-1 5], 'YTick', -1:5);
         end
-        set(ax(1), 'FontSize', 24);
-        set(ax(2), 'FontSize', 24);
-        xlabel('Month', 'FontSize', 30);
+        set(ax(1), 'FontSize', 30);
+        set(ax(2), 'FontSize', 30);
+        xlabel('Month', 'FontSize', 36);
         if change
-            ylabel(ax(1), 'Temperature change', 'FontSize', 30);
-            ylabel(ax(2), 'Bowen change', 'FontSize', 30);
+            ylabel(ax(1), 'Temperature change', 'FontSize', 32);
+            ylabel(ax(2), 'Bowen change', 'FontSize', 32);
         else
-            ylabel(ax(1), 'Temperature', 'FontSize', 30);
-            ylabel(ax(2), 'Bowen', 'FontSize', 30);
+            ylabel(ax(1), 'Temperature', 'FontSize', 32);
+            ylabel(ax(2), 'Bowen', 'FontSize', 32);
         end
 
         % right hand plot -------------------
@@ -625,21 +617,31 @@ for lag = lags
         else
             %plot(1:12, r2TB, 'Color', [0.4 0.4 0.4]);
             %plot(1:12, nanmean(r2TB, 1), 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
-            for k = 1:size(r2BT, 1)
+            
+            reanalysisCnt = 0;
+            if useNcep
+                reanalysisCnt = reanalysisCnt+1;
+            end
+            if useEra
+                reanalysisCnt = reanalysisCnt+1;
+            end
+            
+            for k = 1:size(r2BT, 1)-reanalysisCnt
                 plot(1:12, r2BT(k, :), 'Color', [92/255.0, 192/255.0, 242/255.0], 'LineWidth', 1);
             end
             
-            p1 = plot(1:12, nanmean(r2BT, 1), 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 4);
+            p1 = plot(1:12, nanmean(r2BT(1:end-reanalysisCnt,:), 1), 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 4);
             ylim([0 1]);
 
-            for month = 1:size(r2BT, 2)
-                p5 = plot(month, nanmean(r2BT(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [85/255.0, 158/255.0, 237/255.0], 'MarkerEdgeColor', 'k');
-                if length(find(modelSig(:, month))) > 0.66*length(models)
-                    set(p5, 'LineWidth', 3, 'MarkerFaceColor', [85/255.0, 158/255.0, 237/255.0]);
-                else
-                    set(p5, 'LineWidth', 3);
-                end
-            end
+            % this plots the stat significance of the CMIP5 based fits
+%             for month = 1:size(r2BT, 2)
+%                 p5 = plot(month, nanmean(r2BT(:, month), 1), 'o', 'MarkerSize', 15, 'Color', [85/255.0, 158/255.0, 237/255.0], 'MarkerEdgeColor', 'k');
+%                 if length(find(modelSig(:, month))) > 0.66*length(models)
+%                     set(p5, 'LineWidth', 3, 'MarkerFaceColor', [85/255.0, 158/255.0, 237/255.0]);
+%                 else
+%                     set(p5, 'LineWidth', 3);
+%                 end
+%             end
             
             % if we are comparing ncep to cmip, draw the last model (ncep)
             % bold and black
@@ -667,19 +669,19 @@ for lag = lags
         end
         set(gca, 'XLim', [0.5 12.5], 'XTick', 1:12);
         
-        set(gca, 'FontSize', 24);
-        xlabel('Month', 'FontSize', 30);
+        set(gca, 'FontSize', 30);
+        xlabel('Month', 'FontSize', 36);
         if change
-            ylabel('R2 change', 'FontSize', 30);
+            ylabel('R2 change', 'FontSize', 32);
         else
-            ylabel('R2', 'FontSize', 30);
+            ylabel('R2', 'FontSize', 32);
         end
 
         set(gcf, 'Position', get(0,'Screensize'));
         if change
             export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodFuture  '.png'], '-m1');
         else
-            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m1');
+            export_fig(['r2Fit-' regionAb{regionInd} '-' dataset '-' rcpStr '-BT-' monthlyMeanStr '-lag-' num2str(lag) '-' timePeriodHistorical  '.png'], '-m2');
         end
         close all;
     end

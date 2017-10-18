@@ -109,6 +109,9 @@ elseif strcmp(region, 'middle')
 elseif strcmp(region, 'nepal')
     axesm('mercator','MapLatLimit',[15 40],'MapLonLimit',[70 100]);
     framem off; gridm off; mlabel off; plabel off;
+elseif strcmp(region, 'nile')
+    axesm('mercator','MapLatLimit',[0 35],'MapLonLimit',[20 50]);
+    framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'asia-heat')
     axesm('mercator','MapLatLimit',[0 60],'MapLonLimit',[-40 180]);
     
