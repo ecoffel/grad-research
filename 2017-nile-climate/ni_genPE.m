@@ -5,7 +5,7 @@ basePeriod = 'past';
 
 % add in base models and add to the base loading loop
 
-dataset = 'cmip5';
+dataset = 'era-interim';
 
 prVar = 'pr';
 lhtflVar = 'hfls';
@@ -15,7 +15,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ec-earth', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'access1-0'};
+models = {''};
 
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
@@ -76,6 +76,14 @@ for m = 1:length(models)
             baseLhtfl = loadDailyData([baseDir '/ncep-reanalysis/output/lhtfl/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day (from W/m2)
             baseLhtfl{3} = baseLhtfl{3} / 2.45e6 .* 3600 .* 24;
+        elseif strcmp(dataset, 'era-interim')
+            basePr = loadDailyData([baseDir '/era-interim/output/prate/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            % convert to mm/day
+            basePr{3} = basePr{3} .* 3600 .* 24;
+            
+            baseLhtfl = loadDailyData([baseDir '/era-interim/output/slhf/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            % convert to mm/day (from W/m2)
+            baseLhtfl{3} = baseLhtfl{3} / 2.45e6 .* 3600 .* 24;
         end
         
         % remove lat/lon data (we loaded this earlier)
@@ -123,6 +131,10 @@ end
 if strcmp(dataset, 'ncep-reanalysis')
     PE = basePE;
     save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-' changeMetric '-historical.mat'], 'PE');
+    return;
+elseif strcmp(dataset, 'era-interim')
+    PE = basePE;
+    save(['2017-nile-climate/data/pe/chgData-era-interim-' changeMetric '-historical.mat'], 'PE');
     return;
 end
 

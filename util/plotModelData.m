@@ -17,6 +17,7 @@ colormapVal = '';
 vectorData = {};
 plotCountries = false;
 plotStates = false;
+correctLon0 = false;
 
 if mod(length(varargin), 2) ~= 0
     'error: must have an even # of arguments.'
@@ -49,6 +50,8 @@ else
                 plotCountries = val;
             case 'states'
                 plotStates = val;
+            case 'correctLon0'
+                correctLon0 = val;
         end
     end
 end
@@ -78,9 +81,11 @@ if strcmp(region, 'world')
     
     % add in the final lon line (for lon = 360/0) - this hasn't been
     % plotted yet
-    data{1}(:, end+1) = data{1}(:, 1);% + (data{1}(:, end)-data{1}(:, end-1));
-    data{2}(:, end+1) = data{2}(:, 1);% + (data{2}(:, end)-data{2}(:, end-1));
-    data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
+    if correctLon0
+        data{1}(:, end+1) = data{1}(:, 1);% + (data{1}(:, end)-data{1}(:, end-1));
+        data{2}(:, end+1) = data{2}(:, 1);% + (data{2}(:, end)-data{2}(:, end-1));
+        data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
+    end
     
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north atlantic')

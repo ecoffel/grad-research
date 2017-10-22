@@ -1,4 +1,4 @@
-regridVars = {'snw'};%, 'huss', 'psl'};
+regridVars = {'pr'};%, 'huss', 'psl'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';
@@ -21,12 +21,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
       
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
 ensembles = {'r1i1p1'};
-rcps = {'historical', 'rcp85'};
+rcps = {'rcp45'};
 plevs = {};
 
 region = 'world';
 skipexisting = true;
-monthly = true;
+monthly = false;
 
 latLonBounds = [];
 if strcmp(region, 'usne')
@@ -45,13 +45,13 @@ for v = 1:length(regridVars)
             for r = 1:length(rcps)
                 if length(plevs) > 0
                     for p = 1:length(plevs)
-                        regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'plev', plevs{p}, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region);
+                        regridOutput(['d:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'plev', plevs{p}, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region);
                     end
                 else
                     if monthly
-                        regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v} '/limon'], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
+                        regridOutput(['d:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v} '/limon'], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
                     else
-                        regridOutput(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
+                        regridOutput(['d:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' regridVars{v}], regridVars{v}, baseGrid, 'skipexisting', skipexisting, 'latLonBounds', latLonBounds, 'v7', v7, 'region', region, 'tos-strangegrid', false);
                     end
                 end
             end

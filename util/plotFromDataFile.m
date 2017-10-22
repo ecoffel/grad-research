@@ -70,8 +70,8 @@ function [fg, cb] = plotFromDataFile(saveData)
     %set(gca, 'SortMethod', 'childorder');
     
     set(gca, 'Color', 'none');
-    set(gca, 'FontSize', 50);
-    xlabel(cb, saveData.plotXUnits, 'FontSize', 50);
+    set(gca, 'FontSize', 40);
+    xlabel(cb, saveData.plotXUnits, 'FontSize', 40);
     set(cb, 'XTick', xticks);
     cbPos = get(cb, 'Position');
     title(saveData.plotTitle, 'FontSize', 30);

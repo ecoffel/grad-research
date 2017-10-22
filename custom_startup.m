@@ -12,6 +12,7 @@ addpath('C:\git-ecoffel\grad-research\2016-heat-humid-mortality');
 addpath('C:\git-ecoffel\grad-research\2017-bowen');
 addpath('C:\git-ecoffel\grad-research\2017-ag-precip');
 addpath('C:\git-ecoffel\grad-research\2017-nile-climate');
+addpath('C:\git-ecoffel\grad-research\2018-seasonality');
 userpath('C:\git-ecoffel\grad-research');
 
 plotlysetup('ecoffel', 'zo5qjdmelk')
