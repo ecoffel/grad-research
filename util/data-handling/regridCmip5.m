@@ -21,7 +21,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', ...
       
 %ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1'};
 ensembles = {'r1i1p1'};
-rcps = {'rcp45'};
+rcps = {'rcp85'};
 plevs = {};
 
 region = 'world';

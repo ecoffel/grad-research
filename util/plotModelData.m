@@ -4,7 +4,7 @@ function [fg, cb] = plotModelData(data, region, varargin)
 
 step = -1;
 caxisRange = [];
-fgNum = 1;
+fgNum = -1;
 contour = false;
 cb = 0;
 fg = 0;
@@ -62,7 +62,11 @@ if length(fgHandles) > 0
     fgNum = length(fgHandles)+1;
 end
 if ~noNewFig
-    fg = figure(fgNum);
+    if fgNum > 0
+        fg = figure(fgNum);
+    else
+        fg = figure;
+    end
     set(fg, 'Color', [1,1,1]);
     
     % this forces no z-ordering, was necessary to get the block water
