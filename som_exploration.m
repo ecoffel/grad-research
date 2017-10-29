@@ -1,24 +1,18 @@
-clear
-clc
 
-tmaxBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
-soilwBase = loadDailyData('e:/data/ncep-reanalysis/output/soilw10/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
-hgtBase = loadDailyData('e:/data/ncep-reanalysis/output/hgt/regrid', 'yearStart', 1980, 'yearEnd', 2010);
-hgtBase{3}(:,end,:,:,:)=hgtBase{3}(:,1,:,:,:);
+if ~exist('tmaxBase', 'var')
+    tmaxBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1980, 'yearEnd', 2015);
+    %soilwBase = loadDailyData('e:/data/ncep-reanalysis/output/soilw10/regrid/world', 'yearStart', 1980, 'yearEnd', 2010);
+    hgtBase = loadDailyData('e:/data/ncep-reanalysis/output/hgt/regrid', 'yearStart', 1980, 'yearEnd', 2015);
+    hgtBase{3}(:,end,:,:,:)=hgtBase{3}(:,1,:,:,:);
+end
 
 % select paris lat/lon
-%[latInd, lonInd] = latLonIndexRange(hgtBase, [45 45], [9 9]);
-[latInd, lonInd] = latLonIndexRange(tmaxBase, [41 41], [269 269]);
+%[latInd, lonInd] = latLonIndexRange(hgtBase, [48 48], [2 2]);
+[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [269 269]);
 %[latInd, lonInd] = latLonIndexRange(hgtBase, [33 33], [248 248]);
 
 lat = hgtBase{1};
 lon = hgtBase{2};
-
-% find heat waves
-tmax = nanmean(nanmean(tmaxBase{3}(latInd, lonInd, :, 6:8, :),2), 1)-273.15;
-thresh = prctile(reshape(tmax, [numel(tmax),1]), 95);
-tmax = reshape(tmax, [numel(tmax), 1]);
-heatWaveInd = find(tmax > thresh);
 
 % find 3 day heat waves
 %heatWaveInd = heatWaveInd(find(diff(diff(heatWaveInd))==1));
@@ -27,9 +21,10 @@ regionLat = latInd(1)-20:latInd(1)+20;
 regionLon = lonInd(1)-20:lonInd(1)+20;
 
 regionLon(regionLon<1) = regionLon(regionLon<1)+size(lon,2);
+regionLon(regionLon>size(lon,2)) = regionLon(regionLon>size(lon,2))-size(lon,2);
 
-hgt = hgtBase{3}(regionLat, regionLon, :, :, :);
-soilw = soilwBase{3}(latInd, lonInd, :, 6:8, :);
+hgt = hgtBase{3}(regionLat, regionLon, :, 6:9, :);
+tmax = squeeze(nanmean(nanmean(tmaxBase{3}(latInd, lonInd, :, 6:9, :),2), 1)-273.15);
 
 % take calendar day hgt anomaly
 for month = 1:size(hgt, 4)
@@ -37,30 +32,51 @@ for month = 1:size(hgt, 4)
 end
 
 % and monthly mean anomaly for soilw
-for month = 1:size(soilw, 4)
-    mm = nanmean(nanmean(soilw(:, :, :, month, :),5), 3);
-    soilw(:, :, :, month, :) = (soilw(:, :, :, month, :) - mm)./mm.*100;
-end
+% for month = 1:size(soilw, 4)
+%     mm = nanmean(nanmean(soilw(:, :, :, month, :),5), 3);
+%     soilw(:, :, :, month, :) = (soilw(:, :, :, month, :) - mm)./mm.*100;
+% end
 
-soilw=squeeze(soilw);
-soilw=reshape(soilw,[numel(soilw),1]);
-nn = find(~isnan(soilw) & ~isnan(tmax));
-soilw=soilw(nn);
-tmax=tmax(nn);
-
+% soilw=squeeze(soilw);
+% soilw=reshape(soilw,[numel(soilw),1]);
+% nn = find(~isnan(soilw) & ~isnan(tmax));
+% soilw=soilw(nn);
+% tmax=tmax(nn);
 
 hgtC = [];
 row = 1;
+nn = [];
 for xlat = 1:size(hgt,1)
     for ylon = 1:size(hgt, 2)
-        x = squeeze(reshape(hgt(xlat, ylon, :, :, :), [numel(hgt(xlat, ylon, :, :, :)), 1]));
-        %x = x(heatWaveInd);
-        hgtC(row, :) = x;
+        
+        % detrend...
+        curHgt = squeeze(hgt(xlat, ylon, :, :, :));
+        curHgt = permute(curHgt,[3,2,1]);
+        curHgt = reshape(curHgt, [numel(curHgt),1]);
+        nn = union(nn,find(~isnan(curHgt)));
+        
+        hgtC(row, :) = curHgt(nn);
         row = row+1;
     end
 end
 
-hgtC(find(isnan(hgtC)))=0;
+% find heat waves
+thresh = prctile(reshape(tmax, [numel(tmax),1]), 90);
+tmax = reshape(permute(tmax,[3,2,1]), [numel(tmax), 1]);
+heatWaveInd = find(tmax(nn) > thresh);
+
+% 
+% hgtC = [];
+% row = 1;
+% for xlat = 1:size(hgt,1)
+%     for ylon = 1:size(hgt, 2)
+%         x = squeeze(reshape(hgt(xlat, ylon, :, :, :), [numel(hgt(xlat, ylon, :, :, :)), 1]));
+%         %x = x(heatWaveInd);
+%         hgtC(row, :) = x;
+%         row = row+1;
+%     end
+% end
+
 % only summer soil moisture during 3 day heat waves
 % soilw = soilwBase{3}(regionLat, regionLon, :, 6:8, :);
 % 
@@ -100,12 +116,12 @@ hgtC(find(isnan(hgtC)))=0;
 X = [hgtC];
 Xn = [hgtC];%[somTmax(nonNan), somSoilw(nonNan), somwb(nonNan)]';
 
-%X = normc(X);
+%X = normc(X);  
 
-dims = [3 3];
+dims = [2 3];
 
 som = selforgmap(dims);
-som.trainParam.epochs = 100;
+som.trainParam.epochs = 200;
 som = configure(som, Xn);
 som = train(som, Xn);
 
@@ -130,32 +146,36 @@ for k = 1:length(classSets)
     end
 end
 
-
-
 m=[];
 fcount = 1;
 %figure('Color',[1,1,1]);
 for k=1:size(classVals,1)
     for c=1:size(classVals,2)
-        m(k,c,:,:)=reshape(classVals(k,c,:),[length(regionLat) length(regionLon)]);
+        row = 1;
+        for xlat = 1:length(regionLat)
+            for ylon = 1:length(regionLon)
+                m(k,c,ylon,xlat)=classVals(k,c,row);
+                row = row+1;
+            end
+        end
         %subplot(dims(1),dims(2),fcount);
         fcount = fcount+1;
-        %plotModelData({lat(regionLat,regionLon),lon(regionLat,regionLon),squeeze(m(k,c,:,:))'},'north america', 'caxis', [-200 200], 'nonewfig', true);
-        %title(['Class ' num2str(c)]);
+        plotModelData({lat(regionLat,regionLon),lon(regionLat,regionLon),squeeze(m(k,c,:,:))'},'north america', 'caxis', [-100 100]);
+        title(['Class ' num2str(c)]);
     end
 end
-
-result = {lat(regionLat,regionLon),lon(regionLat,regionLon),squeeze(m(k,c,:,:))'};
-
+% 
+result = {lat(regionLat,regionLon),lon(regionLat,regionLon),squeeze(m(k,3,:,:))'};
+plotModelData(result, 'north america', 'caxis', [-100 100]);
 saveData = struct('data', {result}, ...
-                  'plotRegion', 'north america', ...
-                  'plotRange', [-200 200], ...
-                  'cbXTicks', -200:50:200, ...
+                  'plotRegion', 'north-america', ...
+                  'plotRange', [-100 100], ...
+                  'cbXTicks', -100:25:100, ...
                   'plotTitle', [''], ...
                   'fileTitle', ['som-z500.png'], ...
                   'plotXUnits', ['m'], ...
-                  'blockWater', true, ...
-                  'colormap', cmocean('thermal'), ...
+                  'blockWater', false, ...
+                  'colormap', cmocean('balance'), ...
                   'magnify', '2');
 plotFromDataFile(saveData);
 

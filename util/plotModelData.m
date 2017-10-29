@@ -107,7 +107,7 @@ elseif strcmp(region, 'west-africa')
     axesm('mercator','MapLatLimit',[0 30],'MapLonLimit',[-20 40]);
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north-america')
-    axesm('mercator','MapLatLimit',[20 75],'MapLonLimit',[-160 -35]);
+    axesm('mercator','MapLatLimit',[10 70],'MapLonLimit',[-150 -70]);
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'usne')
     axesm('mercator','MapLatLimit',[36 50],'MapLonLimit',[-90 -60]);

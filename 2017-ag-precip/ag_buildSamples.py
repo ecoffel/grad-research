@@ -17,8 +17,8 @@ import numpy
 cropBaseDir = '2017-ag-precip/'
 
 # percentile cutoffs
-tempPrc = 99
-precipPrc = 99
+tempPrc = 99.99
+precipPrc = 99.99
 
 # get all state wx
 fileList = glob.glob(cropBaseDir + '*.pgz')
@@ -101,18 +101,18 @@ for file in fileList:
                 groupedData[state][county]['precipMissingFraction'].append(1-(len(precipInd) / float(len(list(wxGrowingInd)))))
                 
                 # if we have a temp that passes threshold
-                if len(numpy.where(countyData['temp'][tempInd] >= tempThresh)) > 0:
+                if numpy.size(numpy.where(countyData['temp'][tempInd] >= tempThresh)) > 0:
                     groupedData[state][county]['isTempGroup'].append(True)
                 else:
                     groupedData[state][county]['isTempGroup'].append(False)
                     
                 # and same for precip
-                if len(numpy.where(countyData['precip'][precipInd] >= precipThresh)) > 0:
+                if numpy.size(numpy.where(countyData['precip'][precipInd] >= precipThresh)) > 0:
                     groupedData[state][county]['isPrecipGroup'].append(True)
                 else:
                     groupedData[state][county]['isPrecipGroup'].append(False)
         
-f = open('grouped-data.dat', 'wb')
+f = open('grouped-data-999.dat', 'wb')
 pickle.dump(groupedData, f)
 f.close()
     

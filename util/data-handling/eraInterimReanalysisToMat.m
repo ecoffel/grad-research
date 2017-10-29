@@ -19,7 +19,7 @@ for k = 1:length(ncFileNames)
     ncid = netcdf.open([rawNcDir, '/', ncFileName]);
     [ndim, nvar, natts] = netcdf.inq(ncid);
 
-    year = '';
+    yearStr = '';
     
 %     % pull data out of the nc file name
 %     parts = strsplit(ncFileName, '/');
@@ -141,22 +141,7 @@ for k = 1:length(ncFileNames)
 %         end
 %     end
 
-    % check for output folder and make it if it doesn't exist
-    if monthly
-        folDataTarget = [outputDir, '/', varName, '/monthly', year];
-    elseif weekly
-        folDataTarget = [outputDir, '/', varName, '/weekly/', year];
-    elseif x4
-        folDataTarget = [outputDir, '/', varName, '/x4/', year];
-    else
-        folDataTarget = [outputDir, '/', varName, '/world/1979-2010', year];
-    end
     
-    if ~isdir(folDataTarget)
-        mkdir(folDataTarget);
-    else
-        %continue;
-    end
     
     lat = double(netcdf.getVar(ncid, varIdLat-1, [0], [dims{dimIdLat}{2}]));
     lon = double(netcdf.getVar(ncid, varIdLon-1, [0], [dims{dimIdLon}{2}]));
@@ -165,7 +150,7 @@ for k = 1:length(ncFileNames)
     lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1900 01 00 00 00 00]);
+    starttime = datenum([1901 01 00 00 00 00]);
     time = [];
     
     % these are hours since 1900-01-01 01:01:01
@@ -174,20 +159,51 @@ for k = 1:length(ncFileNames)
     for t = 1:length(timestep)
         time(t) = addtodate(starttime, timestep(t), 'hour');
     end
+    
+    % check for output folder and make it if it doesn't exist
+    if monthly
+        folDataTarget = [outputDir, '/', varName, '/monthly' num2str(year(time(1))) '-' num2str(year(time(end)))];
+    else
+        folDataTarget = [outputDir, '/', varName, '/world/' num2str(year(time(1))) '-' num2str(year(time(end)))];
+    end
+    
+    if ~isdir(folDataTarget)
+        mkdir(folDataTarget);
+    else
+        %continue;
+    end
+    
 
     ind = 0;
 
     % month of last time step, so we know when to save
     curStartDate = -1;
     lastMonth = -1;
+    lastDay = -1;
+    dateInd = 1;
     monthlyInd = 1;
     monthlyData = [];
+    dailyData = [];
 
     while ind < dims{dimIdTime}{2}
-        data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
-        data = permute(data, [2 1 3]);
+        if lastDay == -1
+            lastDay = day(time(ind+1));
+        end
         
+        data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
+        data = permute(data, [2 1]);
+        
+        curDay = day(time(ind+1));
         curMonth = month(time(ind+1));
+        
+        % new day, average over previous days
+        if curDay ~= lastDay
+            monthlyData(:, :, monthlyInd) = nanmean(dailyData, 3);
+            dailyData = [];
+            monthlyInd = monthlyInd + 1;
+            lastDay = curDay;
+            dateInd = 1;
+        end
         
         % we're on a new month - save
         if lastMonth == -1
@@ -195,7 +211,12 @@ for k = 1:length(ncFileNames)
             curStartDate = time(ind+1);
         elseif curMonth ~= lastMonth
             monthlyData = squeeze(monthlyData);
-
+            
+            % skip empty months (hopefully just first one)
+            if length(monthlyData) == 0
+                continue;
+            end
+            
             monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
 
             % save the .mat file in the correct location and w/ the correct name
@@ -211,9 +232,9 @@ for k = 1:length(ncFileNames)
             eval(['clear ' fileName ';']);
         end
         
-        monthlyData(:, :, monthlyInd) = data;
+        dailyData(:, :, dateInd) = data;
         
-        monthlyInd = monthlyInd + 1;
+        dateInd = dateInd + 1;
         ind = ind + 1;
     end
     
