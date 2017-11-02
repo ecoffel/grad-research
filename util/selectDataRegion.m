@@ -74,16 +74,18 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureD
             continue;
         end
         
+		% ----------------------------------------- APPLICATION OF BIAS CORRECTION ------------------------------------------------
         if biasCorrect
             
             if strcmp(bc_rcp, 'historical')
                 bc_rcp = 'rcp85';
             end
             
-            %load(['bias-correction/cmip5BiasCorrection_' variable '_' region '_' rcp '.mat']);
+            %load the bias correction file created by biasCorrect.m
             load(['cmip5BiasCorrection_' bc_variable '_' region '_' bc_rcp '.mat']);
             eval(['cmip5BiasCor = cmip5BiasCorrection_' bc_variable '_' region ';']);
             
+			% search the correction file for the current cmip5 model
             biasModel = -1;
             for mn = 1:length(cmip5BiasCor)
                 if strcmp(cmip5BiasCor{mn}{1}, bc_model)
@@ -103,15 +105,20 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureD
                 closestDecade = closestDecade - 1;
             end
             
+			% loop over every gridbox
             for xlat = 1:size(data{3}, 1)
                 for ylon = 1:size(data{3}, 2)
+					% skip water tiles
                     if waterGrid(xlat, ylon)
                         continue;
                     end
+					% loop over every day in new model data
                     for day = 1:size(data{3}, 3)
+						% loop over each decile
                         for p = 10:-1:1
+							% if it is in the historical period...
                             if isBaseYear
-                                % test against base cutoffs
+                                % test against historical period decile cutoffs
                                 if p == 1
                                     % if we have reached p = 1, then cell
                                     % is either between p = 1 and 2 or < p
@@ -126,7 +133,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureD
                                     end
                                 end
                             else
-                                % test against future cutoffs
+                                % test against future decile cutoffs
                                 if p == 1
                                     data{3}(xlat, ylon, day) = data{3}(xlat, ylon, day) + cmip5BiasCor{biasModel}{2}(xlat, ylon, p);
                                     break;
@@ -142,7 +149,7 @@ function selectDataRegion(fileDir, outputDir, baseYears, futureYears, bc_futureD
                 end
             end
         end
-
+		% ------------------------------------------ END OF BIAS CORRECTION APPLICATION --------------------------------------------------
         if ~exist(outputDir)
             mkdir(outputDir);
         end

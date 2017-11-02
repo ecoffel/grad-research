@@ -13,9 +13,9 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-min';
+chgMetric = 'ann-max';
 
-modelSubset = 'snow';
+modelSubset = 'all';
 
 rcp = 'rcp85';
 timePeriod = '2060-2080';
@@ -157,12 +157,8 @@ amp = chg1 - chg2;
 % max threshold that still allows for specified level of model agreement
 ampThresh = -1;
 
-% percentage of models that must agree on amplification
-ampAgreement = 66;
-
-% levels of amplification to search for model agreement on
-%ampLevels = 0:5;
-%if ~monthly
+% fraction of models that must agree on dir of change
+prcAgree = 0.75;
 
 if strcmp(chgMetric, 'ann-max') || strcmp(chgMetric, 'ann-min') || strcmp(chgMetric, 'daily-max-min')
     ampLevels = -3:0.5:3;
@@ -175,29 +171,25 @@ end
 ampLevel = zeros(size(lat, 1), size(lat, 2));
 ampLevel(ampLevel == 0) = NaN;
 
+% is the dir of change sig at the model grid box
+ampAgree = zeros(size(lat, 1), size(lat, 2));
+
 for xlat = 1:size(amp, 1)
     for ylon = 1:size(amp, 2)
         data = squeeze(amp(xlat, ylon, :));
+        nn = find(~isnan(data));
+        data = data(nn);
         
-        % count how many models find > thresh amplification for this grid
-        % cell
-        if ampThresh ~= -1
-            ampLevel(xlat, ylon) = length(data(data > ampThresh));
+        if length(data) > 10
+            med = median(data);
+            ampLevel(xlat, ylon) = med;
+            % show where not enough models agree
+            ampAgree(xlat, ylon) = length(find(sign(data) == sign(med))) < round(prcAgree*size(amp,3));
         else
-            % loop over all possible amplification levels
-            for curAmpLevel = ampLevels
-                % find number of models exceeding this amp level
-                numModels = length(find(data(data > curAmpLevel)));
-                
-                % if enough models agree, set amp level for this gridcell -
-                % keep resetting until we find a level that doesn't have
-                % required model agreement
-                if numModels > (ampAgreement / 100.0) * size(amp, 3)
-                    ampLevel(xlat, ylon) = curAmpLevel;
-                end
-                
-            end
+            ampLevel(xlat, ylon) = NaN;
         end
+            
+        
     end
 end
 
@@ -213,11 +205,12 @@ saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
                   'plotRange', [ampLevels(1) ampLevels(end)], ...
                   'cbXTicks', ampLevels, ...
-                  'plotTitle', ['Amplification, ' num2str(ampAgreement) '% model agreement'], ...
-                  'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' num2str(ampAgreement) '-' chgMetric '-' modelSubset '-' timePeriod '.png'], ...
+                  'plotTitle', ['Amplification'], ...
+                  'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' chgMetric '-' modelSubset '-' timePeriod '.eps'], ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
-                  'magnify', '2');
+                  'colormap', brewermap([],'*RdBu'), ...
+                  'statData', ampAgree);
 plotFromDataFile(saveData);
 %plotModelData({lat, lon, nanmean(amp, 3)}, 'world', 'caxis', [-4 4]);
 

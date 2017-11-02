@@ -277,7 +277,7 @@ for i = 1:length(regionNames)
     % list of models to use for this region
     modelSubset = availModels;
     
-    % calculate indices for 25th/75th percentile bowen across models
+    % take full range across models
     lowInd = max(round(0.25 * length(modelSubset)), 1);
     highInd = min(round(0.75 * length(modelSubset)), length(models));
 
@@ -333,7 +333,7 @@ for i = 1:length(regionNames)
     % test for significant change in each month at 95th percentile
     bowenSig = [];
     for month = 1:12
-        bowenSig(month) = ttest(bowenRegionsChange{i}(:, month), 0, 'Alpha', 0.05);
+        bowenSig(month) = kstest(bowenRegionsChange{i}(:, month))
     end
 
     

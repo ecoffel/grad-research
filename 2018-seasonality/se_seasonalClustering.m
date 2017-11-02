@@ -1,21 +1,47 @@
 
-timePeriod = [1980 2016];
 
-subPeriods = {[1980 2014],...
-              [1981 2015],...
-              [1982 2016]};
 yearN = 35;
 
-dataset = 'ncep-reanalysis';
+dataset = 'era-interim';
 
 if ~exist('tmaxBase','var')
     if strcmp(dataset, 'ncep-reanalysis')
+        timePeriod = [1980 2016];
+
+        subPeriods = {[1980 2014],...
+                      [1981 2015],...
+                      [1982 2016]};
+
+%         subPeriods = {[1980 2009],...
+%                       [1981 2010],...
+%                       [1982 2011],...
+%                       [1983 2012],...
+%                       [1984 2013],...
+%                       [1985 2014],...
+%                       [1986 2015],...
+%                       [1987 2016]};
+        
         tmaxBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
         prBase = loadDailyData('e:/data/ncep-reanalysis/output/prate/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
         %qBase = loadDailyData('e:/data/ncep-reanalysis/output/shum/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
     elseif strcmp(dataset, 'era-interim')
-        tmaxBase = loadDailyData('e:/data/era-interim/output/mx2t/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-        prBase = loadDailyData('e:/data/era-interim/output/tp/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+        timePeriod = [1980 2016]+1;
+
+        subPeriods = {[1980 2014]+1,...
+                      [1981 2015]+1,...
+                      [1982 2016]+1};
+
+%         subPeriods = {[1980 2009]+1,...
+%                       [1981 2010]+1,...
+%                       [1982 2011]+1,...
+%                       [1983 2012]+1,...
+%                       [1984 2013]+1,...
+%                       [1985 2014]+1,...
+%                       [1986 2015]+1,...
+%                       [1987 2016]+1};
+                  
+        tmaxBase = loadDailyData('e:/data/era-interim/output/mx2t/world/regrid', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+        prBase = loadDailyData('e:/data/era-interim/output/tp/world/regrid', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
         %qBase = loadDailyData('e:/data/era-interim/output/q/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
     end
     
@@ -42,17 +68,17 @@ end
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [33 33], [247 247]); % phoenix
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [27 27], [281 281]); % miami
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [47 47], [238 238]); % seattle
-%[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [255 255]); % denver
+[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [255 255]); % denver
 
-[latInd, lonInd] = latLonIndexRange(tmaxBase, [25 55], [225 300]); % central US
+%[latInd, lonInd] = latLonIndexRange(tmaxBase, [38 42], [278 282]); % central US
 
-gridSize = 3;
+gridSize = 1;
 avoidWater = true;
 plotLine = true;
-plotMap = true;
+plotMap = false;
 robustTimeSeries = true;
 numSomRuns = 1;
-percentile = false;
+percentile = true;
 detrendData = false;
 
 lat = tmaxBase{1};
@@ -60,7 +86,7 @@ lon = tmaxBase{2};
 
 seasonalTrends = {};
 
-dims = [3 3];
+dims = [2 2];
 
 for somRun = 1:numSomRuns
 
@@ -99,30 +125,33 @@ for somRun = 1:numSomRuns
             
             % season names for line plot legend
             seasonNames = {};
+            
+            % the months associated with each season classification
+            classMonths = {};
 
             for period = 1:length(subPeriods)
 
                 startYear = subPeriods{period}(1) - timePeriod(1) + 1;
-                endYear = startYear + yearN -1;
+                endYear = startYear + yearN - 1;
 
                 % classifications for seasons... {name, tmax, tmaxVar, pr, wb}
                 % stable: tmaxVar = 5; variable: tmaxVar = 30
                 seasonProperties = containers.Map;
 
                 if percentile
-                    seasonProperties('tmax') = {{'hot', 'warm', 'mod', 'cold'}, ...
-                                                 [95,    75,     50,         5]};
-                    seasonProperties('tmaxVar') = {{'stable', 'variable', 'chaos'}, ...
-                                                   [10,       50,          95]};
-                    seasonProperties('pr') = {{'dry', 'damp', 'wet', 'soaked'}, ...
-                                                [5,    25,    50,     95]}; 
+                    seasonProperties('tmax') = {{'hot', 'warm', 'cool', 'cold'}, ...
+                                                 [90,    65,     45,    10]};
+                    seasonProperties('tmaxVar') = {{'stable', 'flux', 'var'}, ...
+                                                   [10,        50,     90]};
+                    seasonProperties('pr') = {{'dry', 'damp', 'wet'}, ...
+                                                [10,   50,     90]}; 
                 else
                     seasonProperties('tmax') = {{'hot', 'warm', 'cool', 'cold'}, ...
-                                                [40,    25,     10,     0]};
-                    seasonProperties('tmaxVar') = {{'stable', 'variable', 'chaos'}, ...
-                                                   [10,       50,          100]};
-                    seasonProperties('pr') = {{'pdry', 'wet'}, ...
-                                                [5,    50]}; 
+                                                [40,    25,     15,     0]};
+                    seasonProperties('tmaxVar') = {{'stable', 'flux'}, ...
+                                                   [1,         9]};
+                    seasonProperties('pr') = {{'pdry', 'damp', 'wet'}, ...
+                                                [5,    30,      100]}; 
                 end
                 
                 % variables
@@ -133,15 +162,23 @@ for somRun = 1:numSomRuns
                 pr = reshape(permute(pr,[3,2,1]), [numel(pr), 1]);
                 
                 % build arrays of year, month
-                [y, m, d] = ind2sub(size(squeeze(tmaxBase{3}(xlat(1), ylon(1), startYear:endYear, :, :))), 1:length(tmax));
-
+                monthList = [];
+                yearList = [];
+                
+                for y = 1:size(tmaxBase{3}, 3)
+                    for m = 1:size(tmaxBase{3}, 4)
+                        for d = 1:size(tmaxBase{3}, 5)
+                            monthList(end+1) = m;
+                            yearList(end+1) = y;
+                        end
+                    end
+                end
                 nn = find(~isnan(tmax) & ~isnan(pr));
                 
                 tmax = tmax(nn);
                 pr = pr(nn);
-                y = y(nn);
-                m = m(nn);
-                d = d(nn);
+                yearList = yearList(nn);
+                monthList = monthList(nn);
                 
                 if detrendData
                     tmax = detrend(tmax);
@@ -164,18 +201,19 @@ for somRun = 1:numSomRuns
                 tmax = tmax(2:end);
                 pr = pr(2:end);
                 %q = q(2:end);
-                m = m(2:end);
+                monthList = monthList(2:end);
 
                 % how many days to group over (1 week now)
-                groupingN = 7;
+                groupingN = 4;
 
                 % now compute weekly metrics
                 tmaxGroup = arrayfun(@(i) nanmean(tmax(i:i+groupingN-1)),1:groupingN:length(tmax)-groupingN+1)'; 
-                tmaxVar = arrayfun(@(i) nanvar(tmax(i:i+groupingN-1)),1:groupingN:length(tmax)-groupingN+1)';
+                tmaxVar = arrayfun(@(i) nanstd(tmax(i:i+groupingN-1)),1:groupingN:length(tmax)-groupingN+1)';
                 %qGroup = arrayfun(@(i) nanmean(q(i:i+groupingN-1)),1:groupingN:length(q)-groupingN+1)'; 
                 prGroup = arrayfun(@(i) nansum(pr(i:i+groupingN-1)),1:groupingN:length(pr)-groupingN+1)'; 
-                mGroup = arrayfun(@(i) round(nanmean(m(i:i+groupingN-1))),1:groupingN:length(m)-groupingN+1)'; 
-
+                mGroup = arrayfun(@(i) round(nanmean(monthList(i:i+groupingN-1))),1:groupingN:length(monthList)-groupingN+1)'; 
+                yGroup = arrayfun(@(i) round(nanmean(yearList(i:i+groupingN-1))),1:groupingN:length(yearList)-groupingN+1)'; 
+                
                 % if using percentile, convert season params into
                 % percentiles...
                 if percentile
@@ -215,7 +253,7 @@ for somRun = 1:numSomRuns
 
                 % stores the variable values for each class
                 classVals = [];
-
+                
                 % variable names for line plot
                 varNames = {'TmaxWeek', 'TmaxVar', 'PrWeek'};
 
@@ -227,10 +265,14 @@ for somRun = 1:numSomRuns
                     ind = find(classes == i);
                     prc = length(ind)/length(classes)*100;
 
+                    % store months for this node
+                    %classMonths{i} = mGroup(ind);
+                    
                     % most common month
                     topMonth = mode(mGroup(ind));
                     %figure;
                     %hist(mGroup(ind), unique(mGroup(ind)));
+                    %title(['Class ' num2str(i)]);
 
                     %fprintf('Class %i, %.1f, month = %i\n', i, prc, topMonth);
 
@@ -240,7 +282,7 @@ for somRun = 1:numSomRuns
                         % get the mean variable value for this som class
                         cV = nanmean(X(v, ind));
                         classVals(i,v) = cV;
-    %                     fprintf('%s = %f\n', varNames{v}, cV);
+                        %fprintf('%s = %f\n', varNames{v}, cV);
                     end
 
                     % generate the season name based on the pre-defined classes
@@ -328,6 +370,7 @@ for somRun = 1:numSomRuns
                         end
                     end
                     
+                    
                     % store characteristics for this trend, or average them
                     % if there is already a trend for this class
                     occClassInds = find(curTrendClasses(classInd, :) > 0);
@@ -342,8 +385,9 @@ for somRun = 1:numSomRuns
                     end
                     
                     % find number of occurence each year (52-week)
-                    occurrence = arrayfun(@(x) length(find((classes(x:x+52-1))==i)), 1:52:length(classes)-52+1)';
-
+                    numGroupsYear = floor(length(tmaxGroup)/yearN);
+                    occurrence = arrayfun(@(x) length(find((classes(x:x+numGroupsYear-1))==i)), 1:numGroupsYear:length(classes)-numGroupsYear+1)';
+                    
                     % this is a duplicate trend - add occurrences
                     if sum(curTrendOcr(classInd, :, period)) > 0
                         curTrendOcr(classInd, :, period) = squeeze(curTrendOcr(classInd, :, period))' + occurrence;
@@ -351,11 +395,26 @@ for somRun = 1:numSomRuns
                         curTrendOcr(classInd, :, period) = occurrence;
                         curTrendName(classInd, period) = seasonName;
                     end
+                    
+                    yearNodeCounts = {};
+                    for y = 1:max(yGroup)
+                        % all indices with this year
+                        yearInds = find(yGroup == y);
+                        
+                        % find only month counts that occured in this year
+                        annualMonthCounts = mGroup(intersect(ind, yearInds));
+                        
+                        yearNodeCounts{y} = annualMonthCounts;
+                    end       
+                    if length(classMonths) < classInd
+                        classMonths{classInd} = {};
+                    end
+                    classMonths{classInd} = {classMonths{classInd}{:}, yearNodeCounts};
 
                     f = fit((1:length(occurrence))', occurrence, 'poly1');
                     ci = confint(f, 0.95);
                     
-                    [h,p] = Mann_Kendall(occurrence, 0.1);
+                    [h,p] = Mann_Kendall(occurrence, 0.05);
                     curTrendSig(classInd, period) = h;
 %                     % decreasing trend
 %                     if (ci(2,1) < 0 && ci(1,1) < 0)
@@ -443,17 +502,58 @@ for somRun = 1:numSomRuns
                                     num2str(round(lon(round(nanmean(loc{1})), round(nanmean(loc{2}))))) ')']);
 
                 legend(legItems,seasonNames);
+                
+                export_fig(['trend-' num2str(t) '.png']);
             end
         end
-
     end
 end
 
 if plotMap
     result = {localLat, localLon, trendMap};
     plotModelData(result, 'north america', 'caxis', [0 4]);
+    export_fig(['trend-map.png']);
 end
 
+monthCounts = zeros(length(classMonths),yearN,12);
+
+% look at # trends per month/year
+for i = 1:length(classMonths)
+    figure;
+    hold on;
+    
+    for p = 1:length(classMonths{i})
+        for y = 1:length(classMonths{i}{p})
+            for m = 1:12
+                monthCounts(i, y, m) = monthCounts(i, y, m) + length(find(classMonths{i}{p}{y} == m));
+            end
+        end
+    end
+    
+    for m = 1:12
+        subplot(3,4,m)
+        hold on;
+        box on;
+        axis square;
+        d = squeeze(monthCounts(i,:,m));
+        plot(d)
+        
+        [h,p] = Mann_Kendall(d, 0.05);
+        if h
+            f = fit((1:size(monthCounts, 2))', d', 'poly1');
+            plot(1:size(monthCounts,2),f(1:size(monthCounts,2)));
+        end
+        title(['Month ' num2str(m)]);
+    end
+   
+    
+    c = seasonalTrends{1}('characteristics');
+    c = c{2};
+    names = seasonalTrends{1}('name');
+    suptitle(names{i,1});
+    %suptitle(['tmax = ' num2str(round(c(i,1))) ', var = ' num2str(round(c(i,2))), ', pr = ' num2str(round(c(i,3)))]);
+    
+end
 
 % result = {lat(regionLat,regionLon),lon(regionLat,regionLon),squeeze(m(k,c,:,:))'};
 % 

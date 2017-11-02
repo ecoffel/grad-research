@@ -109,6 +109,8 @@ baseLon = [];
 
 load('waterGrid');
 
+% load reanalysis/obs dataset - this uses a bunch of code specific to my data storage so will have to be modified to however you are storing reanalysis / obs
+
 % first load base dataset
 ['loading base dataset: ' baseDataset]
 for y = basePeriodYears(1):yearStep:basePeriodYears(end)
@@ -139,9 +141,13 @@ for y = basePeriodYears(1):yearStep:basePeriodYears(end)
 end
 
 baseDist = {};
+
 baseMeans = [];
+
+% the base period decile cutoffs - to be used in creating the bias correction
 baseCutoffs = [];
 
+% calculate decile cutoffs in base period data for each grid box
 for xlat = 1:size(baseData{1}, 1)
     if size(baseDist, 1) < xlat
         baseDist{xlat} = {};
@@ -155,10 +161,12 @@ for xlat = 1:size(baseData{1}, 1)
             continue;
         end
         
+		% for each gridbox, group all temperature values into one matrix
         for n = 1:length(baseData)
             baseDist{xlat}{ylon} = [baseDist{xlat}{ylon}(:); squeeze(baseData{n}(xlat, ylon, :))];
         end
         
+		% loop over deciles and calcualte cutoff for each and also the mean temperature value in each decile
         pIndex = 1;
         cutoffs = [];
         for p = percentiles
@@ -176,8 +184,10 @@ end
 
 clear baseDist baseData;
 
+% now load cmip data and create bias correction by comparing decile means to the historical ones
 testBiasCorrection = {};
 
+% loop over each model
 for m = 1:length(testModels)
     if strcmp(testModels{m}, '')
         curModel = testModels{m};
@@ -188,6 +198,8 @@ for m = 1:length(testModels)
     testData = {};
     testBiasCorrection{m} = {testModels{m}, []};
     
+	% my data loading stuff to load HISTORICAL PERIOD cmip5 data
+	% calculate decile cutoffs and mean differences (bias) between each decile & the obs/reanalysis deciles
     ['loading ' curModel ' base']
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
         ['year ' num2str(y) '...']
@@ -214,6 +226,7 @@ for m = 1:length(testModels)
         clear testDaily;
     end
     
+	% now load FUTURE cmip5 data - calculate decile cutoffs in each decade in the future
     ['loading future decades...']
     decadeCutoffs = {};
     for decade = 1:length(futureDecades)
