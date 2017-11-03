@@ -32,10 +32,10 @@ if length(dirNames) == 0
     dirNames(1) = '';
 end
 
-startMonth = -1;
-monthIndex = 1;
+yearInd = 1;
+lastYear = -1;
 
-monthlyData = {};
+monthlyData = {[],[],[]};
 lat = [];
 lon = [];
 
@@ -50,6 +50,7 @@ for d = 1:length(dirNames)
     cmip5 = false;
     narr = false;
     hadex2 = false;
+    gpcp = true;
     
     if strfind(curDir, 'cmip5') ~= 0
         cmip5 = true;
@@ -61,6 +62,8 @@ for d = 1:length(dirNames)
         narr = true;
     elseif strfind(curDir, 'hadex2') ~= 0
         hadex2 = true;
+    elseif strfind(curDir, 'gpcp') ~= 0
+        gpcp = true;
     end
 
     for k = 1:length(matFileNames)
@@ -104,6 +107,9 @@ for d = 1:length(dirNames)
             end
             
             dataMonth = str2num(matFileNameParts{2});
+        elseif gpcp
+            dataYear = str2num(matFileNameParts{2});
+            dataMonth = str2num(matFileNameParts{3});
         end
         
         if yearstart ~= -1 & dataYear < yearstart
@@ -112,12 +118,15 @@ for d = 1:length(dirNames)
             continue;
         end
         
-        if dataMonth == startMonth
-            monthIndex = monthIndex + 1;
+        % first year
+        if lastYear == -1
+            lastYear = dataYear;
         end
-
-        if startMonth == -1
-            startMonth = dataMonth;
+        
+        % new year
+        if dataYear ~= lastYear
+            lastYear = dataYear;
+            yearInd = yearInd + 1;
         end
 
         curFileName = [curDir, '/', matFileName];
@@ -126,9 +135,17 @@ for d = 1:length(dirNames)
         lat = double(eval([matFileNameNoExt, '{1}']));
         lon = double(eval([matFileNameNoExt, '{2}']));
         
+        % first file - set lat/lon
+        if length(monthlyData{1}) == 0
+            monthlyData{1} = lat;
+            monthlyData{2} = lon;
+        end
+        
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
-        if ~hadex2
+        if gpcp
+            monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
+        elseif ~hadex2
             if plev ~= -1
                 curMonthlyData = mean(squeeze(curMonthlyData(:,:,plev,:)), 3);
             else
@@ -142,7 +159,6 @@ for d = 1:length(dirNames)
             end
         end
         
-
         if length(lat) == 0
             lat = eval([matFileNameNoExt, '{1}']);
             lon = eval([matFileNameNoExt, '{2}']);

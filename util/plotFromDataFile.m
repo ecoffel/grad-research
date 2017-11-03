@@ -64,6 +64,11 @@ function [fg, cb] = plotFromDataFile(saveData)
         xticks = false;
     end
     
+    % add an extra col on to draw the last tile
+    saveData.data{2}(:,end+1)=saveData.data{2}(:,end)+(saveData.data{2}(:,end)-saveData.data{2}(:,end-1));
+    saveData.data{1}(:,end+1)=saveData.data{1}(:,end)+(saveData.data{1}(:,end)-saveData.data{1}(:,end-1));
+    saveData.data{3}(:,end+1)=saveData.data{3}(:,end);
+    
     [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
     
     %set(gca, 'DrawMode', 'childorder');
@@ -97,15 +102,25 @@ function [fg, cb] = plotFromDataFile(saveData)
        
         % neet to rotate these so the crossover from x > 0 to x < 0 occurs
         % at the first/last elements
-        xCoords = circshift(xCoords,-15,2);
-        yCoords = circshift(yCoords,-15,2);
-        statData = circshift(statData,-15,2);
-        
-        xCoords(end+1, :) = xCoords(1, :);
-        xCoords(:, end+1) = xCoords(:, 1);
-        yCoords(:, end+1) = yCoords(:, 1);
-        yCoords(end+1, :) = yCoords(1, :);
-        
+%         crossInd = find(diff(sign(xCoords(1,:))))+1;
+%         xCoords = circshift(xCoords,-(crossInd-1),2);
+%         yCoords = circshift(yCoords,-(crossInd-1),2);
+%         statData = circshift(statData,-(crossInd-1),2);
+
+            % ORIGINAL - not sure where the 15 came from
+        %xCoords = circshift(xCoords,-15,2);
+        %yCoords = circshift(yCoords,-15,2);
+        %statData = circshift(statData,-15,2);
+%         xCoords(end+1, :) = xCoords(1, :);
+%         xCoords(:, end+1) = xCoords(:, 1);
+%         yCoords(:, end+1) = yCoords(:, 1);
+%         yCoords(end+1, :) = yCoords(1, :);
+
+        % new, adding new col onto data and lat/lon
+        xCoords(end+1, :) = xCoords(end, :);
+        xCoords(:, end+1) = xCoords(:, end) + (xCoords(:, end)-xCoords(:, end-1));
+        yCoords(end+1, :) = yCoords(end, :);
+        yCoords(:, end+1) = yCoords(:, end) - (yCoords(:, end) - yCoords(:, end-1));
         for xlat = 1:size(statData, 1)
             for ylon = 1:size(statData, 2)
                 if statData(xlat, ylon)

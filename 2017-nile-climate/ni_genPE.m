@@ -5,10 +5,7 @@ basePeriod = 'past';
 
 % add in base models and add to the base loading loop
 
-dataset = 'era-interim';
-
-prVar = 'pr';
-lhtflVar = 'hfls';
+dataset = 'ncep-reanalysis';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -30,7 +27,11 @@ baseRegrid = true;
 futureRegrid = true;
 
 region = 'world';
-basePeriodYears = 1981:2004;
+basePeriodYears = 1980:2016;
+
+if strcmp(dataset, 'era-interim')
+    basePeriodYears = basePeriodYears + 1;
+end
 
 futurePeriods = [2060:2080];
 
@@ -50,6 +51,9 @@ waterGrid = logical(waterGrid);
 
 % temperature data (thresh, ann-max, or daily-max)
 basePE = [];
+baseP = [];
+baseE = [];
+baseT = [];
 
 ['loading base: ' dataset]
 for m = 1:length(models)
@@ -67,7 +71,7 @@ for m = 1:length(models)
             
             baseLhtfl = loadDailyData([baseDir '/' dataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' lhtflVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day (from W/m2)
-            baseLhtfl{3} = baseLhtfl{3} / 2.45e6 .* 3600 .* 24;
+            baseLhtfl{3} = baseLhtfl{3} ./ 2.45e6 .* 3600 .* 24;
         elseif strcmp(dataset, 'ncep-reanalysis')
             basePr = loadDailyData([baseDir '/ncep-reanalysis/output/prate/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day
@@ -75,122 +79,163 @@ for m = 1:length(models)
             
             baseLhtfl = loadDailyData([baseDir '/ncep-reanalysis/output/lhtfl/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day (from W/m2)
-            baseLhtfl{3} = baseLhtfl{3} / 2.45e6 .* 3600 .* 24;
-        elseif strcmp(dataset, 'era-interim')
-            basePr = loadDailyData([baseDir '/era-interim/output/prate/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            % convert to mm/day
-            basePr{3} = basePr{3} .* 3600 .* 24;
+            baseLhtfl{3} = baseLhtfl{3} ./ 2.45e6 .* 3600 .* 24;
             
-            baseLhtfl = loadDailyData([baseDir '/era-interim/output/slhf/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseTasmax = loadDailyData([baseDir '/ncep-reanalysis/output/tmax/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseTasmax{3} = baseTasmax{3} - 273.15;
+        elseif strcmp(dataset, 'era-interim')
+            basePr = loadDailyData([baseDir '/era-interim/output/tp/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            % convert to mm/day
+            basePr{3} = basePr{3} .* 1000;
+            
+            baseLhtfl = loadDailyData([baseDir '/era-interim/output/slhf/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day (from W/m2)
-            baseLhtfl{3} = baseLhtfl{3} / 2.45e6 .* 3600 .* 24;
+            baseLhtfl{3} = baseLhtfl{3} ./ 2.45e6;
+            
+            baseTasmax = loadDailyData([baseDir '/era-interim/output/mx2t/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseTasmax{3} = baseTasmax{3} - 273.15;
         end
         
         % remove lat/lon data (we loaded this earlier)
         basePr = basePr{3};
         baseLhtfl = baseLhtfl{3};
+        baseTasmax = baseTasmax{3};
         
         % calculate precip - evapotranspiration
-        PE = basePr - baseLhtfl;
-        
-        % set water grid cells to NaN
-        % include loops for month and day (5D) in case we are using
-        % seasonal change metric
-        for i = 1:size(PE, 3)
-            for j = 1:size(PE, 4)
-                for k = 1:size(PE, 5)
-                    curGrid = PE(:, :, i, j, k);
-                    curGrid(waterGrid) = NaN;
-                    PE(:, :, i, j, k) = curGrid;
-                end
-            end
+        if strcmp(dataset, 'era-interim')
+            PE = basePr + baseLhtfl;
+        elseif strcmp(dataset, 'ncep-reanalysis')
+            % lhtfl is positive here
+            PE = basePr - baseLhtfl;
         end
         
-            
         if strcmp(changeMetric, 'monthly-mean')
             % calculate the seasonal mean for each month
             
             % loop over months
             for month = 1:size(PE, 4)
-                basePE(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(PE(:, :, 1, month, :)), 3);
+                basePE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(PE(:, :, 1, month, :)), 3);
+                baseP(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(basePr(:, :, 1, month, :)), 3);
+                baseE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseLhtfl(:, :, 1, month, :)), 3);
+                baseT(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseTasmax(:, :, 1, month, :)), 3);
             end
         end
 
         clear basePr baseLhtfl;
     end
-end
-
-
-if strcmp(changeMetric, 'monthly-mean')
-    % if computing seasonal metrics, average over all the annual
-    % maximum or mean daily maximum, take the mean across all years
-    % (baseData now 4D: (x, y, model, month))
-    basePE = squeeze(nanmean(basePE, 4));
-end
-
-if strcmp(dataset, 'ncep-reanalysis')
-    PE = basePE;
-    save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-' changeMetric '-historical.mat'], 'PE');
-    return;
-elseif strcmp(dataset, 'era-interim')
-    PE = basePE;
-    save(['2017-nile-climate/data/pe/chgData-era-interim-' changeMetric '-historical.mat'], 'PE');
-    return;
-end
-
-% ------------ load future data -------------    
-
-for f = 1:size(futurePeriods, 1)
     
-    futurePeriodYears = futurePeriods(f, :);
+    % set water grid cells to NaN
+    % include loops for month and day (5D) in case we are using
+    % seasonal change metric
+    for i = 1:size(basePE, 3)
+        for j = 1:size(basePE, 4)
+            for k = 1:size(basePE, 5)
+                curGrid = basePE(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                basePE(:, :, i, j, k) = curGrid;
+                
+                curGrid = baseP(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                baseP(:, :, i, j, k) = curGrid;
+                
+                curGrid = baseE(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                baseE(:, :, i, j, k) = curGrid;
+                
+                curGrid = baseT(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                baseT(:, :, i, j, k) = curGrid;
+            end
+        end
+    end
 
-    ['loading future: ' futureDataset]
-    for m = 1:length(models)
-        curModel = models{m};
+    if strcmp(dataset, 'ncep-reanalysis')
+        PE = basePE;
+        save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-PE-' changeMetric '-historical.mat'], 'PE');
         
-        PE = [];
+        P = baseP;
+        save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-P-' changeMetric '-historical.mat'], 'P');
+        
+        E = baseE;
+        save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-E-' changeMetric '-historical.mat'], 'E');
+        
+        T = baseT;
+        save(['2017-nile-climate/data/pe/chgData-ncep-reanalysis-T-' changeMetric '-historical.mat'], 'T');
+        return;
+    elseif strcmp(dataset, 'era-interim')
+        PE = basePE;
+        save(['2017-nile-climate/data/pe/chgData-era-interim-PE-' changeMetric '-historical.mat'], 'PE');
+        
+        P = baseP;
+        save(['2017-nile-climate/data/pe/chgData-era-interim-P-' changeMetric '-historical.mat'], 'P');
+        
+        E = baseE;
+        save(['2017-nile-climate/data/pe/chgData-era-interim-E-' changeMetric '-historical.mat'], 'E');
+        
+        T = baseT;
+        save(['2017-nile-climate/data/pe/chgData-era-interim-T-' changeMetric '-historical.mat'], 'T');
+        return;
+    end
 
-        ['loading future model ' curModel '...']
+    
+end
 
-        for y = futurePeriodYears(1):yearStep:futurePeriodYears(end)
-            ['year ' num2str(y) '...']
-            
-            futurePr = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' prVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            % convert to mm/day
-            futurePr{3} = basePr{3} .* 3600 .* 24;
-            
-            futureLhtfl = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' lhtflVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
-            % convert to mm/day (from W/m2)
-            futureLhtfl{3} = futureLhtfl{3} / 2.45e6 .* 3600 .* 24;
 
-            % calculate future precip-evapotranspiration
-            futurePE = futurePr{3}-futureLhtfl{3};
+if strcmp(dataset, 'cmip5')
+    % ------------ load future data -------------    
 
-            % set water grid cells to NaN
-            % include loops for month and day (5D) in case we are using
-            % seasonal change metric
-            for i = 1:size(futurePE, 3)
-                for j = 1:size(futurePE, 4)
-                    for k = 1:size(futurePE, 5)
-                        curGrid = futurePE(:, :, i, j, k);
-                        curGrid(waterGrid) = NaN;
-                        futurePE(:, :, i, j, k) = curGrid;
+    for f = 1:size(futurePeriods, 1)
+
+        futurePeriodYears = futurePeriods(f, :);
+
+        ['loading future: ' futureDataset]
+        for m = 1:length(models)
+            curModel = models{m};
+
+            PE = [];
+
+            ['loading future model ' curModel '...']
+
+            for y = futurePeriodYears(1):yearStep:futurePeriodYears(end)
+                ['year ' num2str(y) '...']
+
+                futurePr = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' prVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                % convert to mm/day
+                futurePr{3} = basePr{3} .* 3600 .* 24;
+
+                futureLhtfl = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' lhtflVar '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                % convert to mm/day (from W/m2)
+                futureLhtfl{3} = futureLhtfl{3} / 2.45e6 .* 3600 .* 24;
+
+                % calculate future precip-evapotranspiration
+                futurePE = futurePr{3}-futureLhtfl{3};
+
+                % set water grid cells to NaN
+                % include loops for month and day (5D) in case we are using
+                % seasonal change metric
+                for i = 1:size(futurePE, 3)
+                    for j = 1:size(futurePE, 4)
+                        for k = 1:size(futurePE, 5)
+                            curGrid = futurePE(:, :, i, j, k);
+                            curGrid(waterGrid) = NaN;
+                            futurePE(:, :, i, j, k) = curGrid;
+                        end
+                    end
+                end
+
+                if strcmp(changeMetric, 'monthly-mean')
+                    % calculate the monthly-mean change
+
+                    % loop over months
+                    for month = 1:size(futurePE, 4)
+                        PE(:, :, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futurePE(:, :, 1, month, :)), 3);
                     end
                 end
             end
 
-            if strcmp(changeMetric, 'monthly-mean')
-                % calculate the monthly-mean change
+            chgPE = PE-basePE;
+            save(['2017-nile-climate/data/pe/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgPE');
 
-                % loop over months
-                for month = 1:size(futurePE, 4)
-                    PE(:, :, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futurePE(:, :, 1, month, :)), 3);
-                end
-            end
         end
-
-        chgPE = PE-basePE;
-        save(['2017-nile-climate/data/pe/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgPE');
-
     end
 end

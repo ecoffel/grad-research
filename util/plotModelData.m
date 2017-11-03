@@ -80,6 +80,7 @@ if ~noNewFig
     ylabel(fgYaxis);
 end
 
+
 if strcmp(region, 'world')
     worldmap world;
     
@@ -90,6 +91,7 @@ if strcmp(region, 'world')
         data{2}(:, end+1) = data{2}(:, 1);% + (data{2}(:, end)-data{2}(:, end-1));
         data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
     end
+    
     
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north atlantic')
@@ -163,6 +165,7 @@ if contour
         cb = contourcbar('Location', 'southoutside');
     end
 else
+
     pcolorm(data{1}, data{2}, data{3});
     
     if length(caxisRange) == 0
