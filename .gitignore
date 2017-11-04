@@ -56,3 +56,6 @@ unpop2012.csv
 *.pyc
 *.xlsm
 *.xml
+2017-nile-climate/data/*
+dbscan/*
+2015-weight-restriction-v2/airport-wx/*

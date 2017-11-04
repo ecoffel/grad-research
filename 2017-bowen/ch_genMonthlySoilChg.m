@@ -1,6 +1,4 @@
 
-
-
 baseDir = 'e:/data/cmip5/output';
                   
 soilVar = 'snw';

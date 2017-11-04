@@ -21,21 +21,6 @@ for k = 1:length(ncFileNames)
 
     yearStr = '';
     
-%     % pull data out of the nc file name
-%     parts = strsplit(ncFileName, '/');
-%     parts = parts(end);
-%     parts = strsplit(parts{1}, '.');
-% 
-%     %if length(parts) == 3
-%     
-%     varName = lower(parts{1});
-%     year = lower(parts{end-1});
-%     
-%     if weekly
-%         yearParts = strsplit(year, '-');
-%         year = yearParts{1};
-%     end
-    
     dimIdLat = -1;
     dimIdLon = -1;
     dimIdLev = -1;
@@ -123,26 +108,6 @@ for k = 1:length(ncFileNames)
         end
     end
     
-    % we are monthly
-%     if monthly
-%         deltaT = etime(datevec('1', 'mm'), datevec('00', 'mm'));
-%     elseif weekly
-%         deltaT = etime(datevec('07', 'dd'), datevec('00', 'dd'));
-%     else
-%         % either daily or 4x daily
-%         if length(findstr('4x', atts{attIdTitle}{2})) ~= 0
-%             % 6 hr timestep
-%             deltaT = etime(datevec('6', 'HH'), datevec('00', 'HH'));
-%             x4 = true;
-%         elseif length(findstr('daily', atts{attIdTitle}{2})) ~= 0
-%             deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
-%         else
-%             deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
-%         end
-%     end
-
-    
-    
     lat = double(netcdf.getVar(ncid, varIdLat-1, [0], [dims{dimIdLat}{2}]));
     lon = double(netcdf.getVar(ncid, varIdLon-1, [0], [dims{dimIdLon}{2}]));
     
@@ -150,7 +115,7 @@ for k = 1:length(ncFileNames)
     lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1901 01 00 00 00 00]);
+    starttime = datenum([1900 01 00 00 00 00]);
     time = [];
     
     % these are hours since 1900-01-01 01:01:01
@@ -164,7 +129,7 @@ for k = 1:length(ncFileNames)
     if monthly
         folDataTarget = [outputDir, '/', varName, '/monthly' num2str(year(time(1))) '-' num2str(year(time(end)))];
     else
-        folDataTarget = [outputDir, '/', varName, '/world/' num2str(year(time(1))) '-' num2str(year(time(end)))];
+        folDataTarget = [outputDir, '/', varName, '/' num2str(year(time(1))) '-' num2str(year(time(end)))];
     end
     
     if ~isdir(folDataTarget)

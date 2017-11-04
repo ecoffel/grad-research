@@ -1,9 +1,9 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
+dataset = 'reanalysis';
+
 tasmaxMetric = 'monthly-mean-max';
 tasminMetric = 'monthly-mean-min';
-showMaps = false;
-showMonthlyMaps = false;
 
 models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
                       'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -14,18 +14,10 @@ models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
 % show the percentage change in bowen ratio or the absolute change
 showPercentChange = true;
 
-% subtact the annual mean change?
-showChgAnomalies = false;
-
 showLegend = false;
 
 % show correlation between Tx and Bowen
 showCorr = true;
-
-anomalyStr = 'total';
-if showChgAnomalies
-    anomalyStr = 'anomaly';
-end
 
 load waterGrid;
 load lat;
@@ -39,12 +31,8 @@ tempBaseDir = 'e:\data\projects\bowen\temp-chg-data\';
 availModels = {};
 
 % dimensions: x, y, month, model
-bowenHistorical = [];
-bowenChg = [];
-tasmaxChg = [];
-txxChg = [];
-tasminChg = [];
-tnnChg = [];
+bowenCmip5 = [];
+tasmaxCmip5 = [];
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -76,178 +64,138 @@ regions = [[[-90 90], [0 360]]; ...             % world
 regionLatLonInd = {};
 
 % loop over all regions to find lat/lon indicies
+fprintf('loading reanalysis data...\n');
 for i = 1:size(regions, 1)
     [latIndexRange, lonIndexRange] = latLonIndexRange({lat, lon, []}, regions(i, 1:2), regions(i, 3:4));
     regionLatLonInd{i} = {latIndexRange, lonIndexRange};
 end
 
-for m = 1:length(models)
-    % load historical bowen ratio for this model if it exists
-    if exist([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat'], 'file')
-        load([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat']);
-        curBowenHistorical = monthlyMeans;
-    end
+% load ncep/era data if needed and conver to monthly mean
+if ~exist('tasmaxNcep', 'var')
+    tasmaxNcep = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
+    tasmaxNcep{3} = tasmaxNcep{3} - 273.15;
+    tasmaxNcep = dailyToMonthly(tasmaxNcep);
     
-    % load rcp85 bowen ratio for this model if it exists
-    if exist([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat'], 'file')
-        load([bowenBaseDir 'monthly-mean-rcp85-' models{m} '.mat']);
-        curBowenRcp85 = monthlyMeans;
-    end
+    bowenNcep = loadDailyData('e:/data/ncep-reanalysis/output/bowen/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
+    bowenNcep{3}(bowenNcep{3} > 50) = NaN;
+    bowenNcep{3}(bowenNcep{3} < 0) = NaN;
+    bowenNcep = dailyToMonthly(bowenNcep);
     
-    % load txx chg for this model if it exists
-    if exist([tempBaseDir 'chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat'], 'file')
-        load([tempBaseDir 'chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat']);
-        curTxxChg = chgData;
-    end
-    
-    % load tnn chg for this model if it exists
-    if exist([tempBaseDir 'chgData-cmip5-ann-min-' models{m} '-rcp85-2060-2080.mat'], 'file')
-        load([tempBaseDir 'chgData-cmip5-ann-min-' models{m} '-rcp85-2060-2080.mat']);
-        curTnnChg = chgData;
-    end
-    
-    % load pre-computed change data for tasmax under rcp85 in 2070-2080
-    if exist([tempBaseDir 'chgData-cmip5-seasonal-' tasmaxMetric '-' models{m} '-rcp85-2060-2080.mat'], 'file')
-        load([tempBaseDir 'chgData-cmip5-seasonal-' tasmaxMetric '-' models{m} '-rcp85-2060-2080.mat']);
-        curTasmaxRcp85 = chgData;
-    end
-    
-    % load pre-computed change data for tasmin under rcp85 in 2070-2080
-    if exist([tempBaseDir 'chgData-cmip5-seasonal-' tasminMetric '-' models{m} '-rcp85-2060-2080.mat'], 'file')
-        load([tempBaseDir 'chgData-cmip5-seasonal-' tasminMetric '-' models{m} '-rcp85-2060-2080.mat']);
-        curTasminRcp85 = chgData;
-    end
-    
-    % if both historical and rcp85 data exist and were loaded for this
-    % model, add them to the change data
-    if exist('curBowenHistorical') && exist('curBowenRcp85') && exist('curTasmaxRcp85') && exist('curTasminRcp85') && ...
-       exist('curTxxChg') && exist('curTnnChg')
-        availModels{end+1} = models{m};
-        
-        % NaN-out all water gridcells
-        for month = 1:size(curBowenHistorical, 3)
-            % bowen historical
-            curGrid = curBowenHistorical(:, :, month);
+    for year = 1:size(tasmaxNcep{3}, 3)
+        for month = 1:size(tasmaxNcep{3}, 4)
+            curGrid = tasmaxNcep{3}(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            % limit unreasonable bowens
-            curGrid(curGrid > 10) = NaN;
-            curBowenHistorical(:, :, month) = curGrid;
-
-            % bowen future
-            curGrid = curBowenRcp85(:, :, month);
-            curGrid(waterGrid) = NaN;
-            % limit unreasonable bowens
-            curGrid(curGrid > 10) = NaN;
-            curBowenRcp85(:, :, month) = curGrid;
-
-            % tasmax change
-            curGrid = curTasmaxRcp85(:, :, month);
-            curGrid(waterGrid) = NaN;
-            curTasmaxRcp85(:, :, month) = curGrid;
+            tasmaxNcep{3}(:, :, year, month) = curGrid;
             
-            % tasmin change
-            curGrid = curTasminRcp85(:, :, month);
+            curGrid = bowenNcep{3}(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            curTasminRcp85(:, :, month) = curGrid;
+            bowenNcep{3}(:, :, year, month) = curGrid;
         end
-                
-        % txx and tnn change
-        curTxxChg(waterGrid) = NaN;
-        curTnnChg(waterGrid) = NaN;
-        
-        % record txx and tnn chg
-        txxChg(:, :, length(availModels)) = curTxxChg;
-        tnnChg(:, :, length(availModels)) = curTnnChg;
-        
-        % record historical bowen
-        bowenHistorical(:, :, length(availModels), :) = curBowenHistorical;
-        
-        % take difference between rcp85 and historical
-        % dimensions: x, y, model, month
-        bowenChg(:, :, length(availModels), :) = (curBowenRcp85 - curBowenHistorical);
-        
-        tasmaxChg(:, :, length(availModels), :) = curTasmaxRcp85;
-        tasminChg(:, :, length(availModels), :) = curTasminRcp85;
     end
     
-    clear curBowenHistorical curBowenRcp85 curTasmaxRcp85 curTasminRcp85 curTxxChg curTnnChg;
+    % select data and average over years
+    tasmaxNcep = tasmaxNcep{3};
+    bowenNcep = bowenNcep{3};
     
+    %eraTmax = dailyToMonthly(loadDailyData('e:/data/era-interim/output/mx2t/world/regrid', 'yearStart', 1985, 'yearEnd', 2005));
+    %eraBowen = dailyToMonthly(loadDailyData('e:/data/era-interim/output/bowen/world/regrid', 'yearStart', 1985, 'yearEnd', 2005));
 end
 
+
+% load cmip5 historical data
+fprintf('loading cmip5 data...\n');
+for m = 1:length(models)
+   
+    load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '.mat']);
+    tasmaxCmip5(:, :, m, :) = monthlyMeans;
+    
+    load([bowenBaseDir 'monthly-mean-historical-' models{m} '.mat']);
+    bowenCmip5(:, :, m, :) = monthlyMeans;
+   
+end
+    
 % average bowen (absolute) and temperature change over each region
-bowenRegionsHistorical = {};
-bowenRegionsChange = {};
-tasmaxRegionsChange = {};
-tasminRegionsChange = {};
-txxRegionsChange = {};
-tnnRegionsChange = {};
+bowenRegionsNcep = {};
+tasmaxRegionsNcep = {};
+
+bowenRegionsCmip5 = {};
+tasmaxRegionsCmip5 = {};
+
 
 % loop over regions and extract bowen & tasmax change data
 for i = 1:length(regionNames)
     
     % calculate spatial mean historical bowen
-    bowenRegionsHistorical{i} = squeeze(nanmean(nanmean(bowenHistorical(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
-
-    bowenRegionsChange{i} = squeeze(nanmean(nanmean(bowenChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1)); 
-
-    tasmaxRegionsChange{i} = squeeze(nanmean(nanmean(tasmaxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
+    bowenRegionsNcep{i} = squeeze(bowenNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+    tasmaxRegionsNcep{i} = squeeze(tasmaxNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
     
-    tasminRegionsChange{i} = squeeze(nanmean(nanmean(tasminChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :), 2), 1));
-    
-    txxRegionsChange{i} = squeeze(nanmean(nanmean(txxChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :), 2), 1));
-    
-    tnnRegionsChange{i} = squeeze(nanmean(nanmean(tnnChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :), 2), 1));
+    bowenRegionsCmip5{i} = squeeze(bowenCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+    tasmaxRegionsCmip5{i} = squeeze(tasmaxCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
 end
 
 % plot ----------------------------------------------------
 
 % loop over all regions for plotting
 %for i = 1:length(regionNames)
-i = 4;
-
-    
-    % cancluate change anomalies if needed
-    annMeanBowen = nanmean(bowenRegionsChange{i}, 2);
-    annMeanTasmax = nanmean(tasmaxRegionsChange{i}, 2);
-    annMeanTasmin = nanmean(tasminRegionsChange{i}, 2);
-    if showChgAnomalies        
-        bowenRegionsChange{i} = bowenRegionsChange{i} - repmat(annMeanBowen, 1, 12);
-        tasmaxRegionsChange{i} = tasmaxRegionsChange{i} - repmat(annMeanTasmax, 1, 12);
-        tasminRegionsChange{i} = tasminRegionsChange{i} - repmat(annMeanTasmin, 1, 12);
-    end
-    
-    % mean temperature change across models
-    tasmaxChg = tasmaxRegionsChange{i};
-    bowenChg = bowenRegionsChange{i};
-    
-    seasonMonths = [12 1 2];
-    
-    cMod = [];
-    for model = 1:size(tasmaxChg,1)
-        cMod(model,1) = corr(tasmaxChg(model,[12 1 2])',bowenChg(model,[12 1 2])');
-        cMod(model,2) = corr(tasmaxChg(model,[3 4 5])',bowenChg(model,[3 4 5])');
-        cMod(model,3) = corr(tasmaxChg(model,[6 7 8])',bowenChg(model,[6 7 8])');
-        cMod(model,4) = corr(tasmaxChg(model,[9 10 11])',bowenChg(model,[9 10 11])');
-    end
-    
-    cMonth = [];
-    for month = 1:12
-        cMonth(month) = corr(tasmaxChg(:,month),bowenChg(:,month));
-    end
-    figure('Color', [1,1,1]);
+figure('Color', [1,1,1]);
+f = 1;
+for i = [1, 2, 4, 7]
+    subplot(2,2,f);
     hold on;
     axis square;
+    grid on;
     box on;
-    boxplot(cMod);
+    f = f+1;
+    
+    % mean temperature change across models
+    tasmaxNcep = tasmaxRegionsNcep{i};
+    bowenNcep = bowenRegionsNcep{i};
+    tasmaxCmip5 = tasmaxRegionsCmip5{i};
+    bowenCmip5 = bowenRegionsCmip5{i};
+    
+    seasons = [[12 1 2];
+               [3 4 5];
+               [6 7 8];
+               [9 10 11]];
+    
+    cmip5Corr = [];
+    ncepCorr = [];
+    % loop over all gridboxes
+    for xlat = 1:size(tasmaxNcep, 1)
+        for ylon = 1:size(tasmaxNcep, 2)
+            if waterGrid(xlat, ylon)
+                ncepCorr(xlat, ylon, 1:4) = NaN;
+                continue;
+            end
+            
+            % loop over all seasons
+            for season = 1:size(seasons, 2)
+                % list of seasonal mean bowen/temp values for each gridbox
+                % in region and for each year
+                curT = squeeze(nanmean(tasmaxNcep(xlat, ylon, :, seasons(season, :)), 4));
+                curB = squeeze(nanmean(bowenNcep(xlat, ylon, :, seasons(season, :)), 4));
+                
+                % calculate seasonal corr for each grid cell
+                ncepCorr(xlat, ylon, season) = corr(curT, curB);
+                
+                % same over all cmip5 models
+                for model = 1:length(models)
+                    curT = squeeze(nanmean(tasmaxCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
+                    curB = squeeze(nanmean(bowenCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
+                    cmip5Corr(xlat, ylon, model, season) = corr(curT, curB);
+                end
+            end
+            
+        end
+    end
+    
+    % plot area average seasonal temp-bowen correlations
+    plot(1:4, squeeze(nanmean(nanmean(ncepCorr, 2), 1)), 'ko', 'MarkerSize', 15, 'LineWidth', 2);
+    boxplot(cmip5Cor);
     set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
     ylabel('T_{max} - Bowen Correlation');
     ylim([-1 1])
+    title(regionNames{i});
     set(gca, 'FontSize', 24);
+end
     
-%     figure('Color', [1,1,1]);
-%     hold on;
-%     axis square;
-%     grid on;
-%     box on;
-%     
-%end

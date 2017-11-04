@@ -1,5 +1,5 @@
 
-dataset = 'ncep';
+dataset = 'era';
 
 if strcmp(dataset, 'cmip5')
     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -10,7 +10,7 @@ if strcmp(dataset, 'cmip5')
 
     rcps = {'historical', 'rcp85'};
     ensembles = 1;
-elseif strcmp(dataset, 'ncep')
+elseif strcmp(dataset, 'ncep') || strcmp(dataset, 'era')
     models = {''};
     rcps = {''};
     ensembles = {''};
@@ -20,9 +20,11 @@ for m = 1:length(models)
     for r = 1:length(rcps)
         for e = ensembles
             if strcmp(dataset, 'ncep')
-                ch_bowenRatio(['f:/data/ncep-reanalysis/output']);
+                ch_calcBowenRatio(['f:/data/ncep-reanalysis/output']);
+            elseif strcmp(dataset, 'era')
+                ch_calcBowenRatio(['e:/data/era-interim/output']);
             else
-                ch_bowenRatio(['f:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}]);
+                ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}]);
             end
         end
     end
