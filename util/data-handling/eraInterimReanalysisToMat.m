@@ -155,7 +155,8 @@ for k = 1:length(ncFileNames)
             lastDay = day(time(ind+1));
         end
         
-        data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
+        data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1]));
+        data = data .* scale_factor + add_offset;
         data = permute(data, [2 1]);
         
         curDay = day(time(ind+1));

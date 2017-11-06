@@ -6,6 +6,10 @@ server = ECMWFDataServer()
  
 files = ["201.128", "202.128", "228.128", "146.128", "147.128"]
 fileNames = ["mx2t", "mn2t", "tp", "sshf", "slhf"]
+
+files = ["202.128", "228.128", "146.128", "147.128"]
+fileNames = ["mn2t", "tp", "sshf", "slhf"]
+
 # 201.128 / mx2t
 # 202.128 / mn2t
 # 228.128 / tp
@@ -21,9 +25,9 @@ for f in range(len(files)):
         "grid": "2.00/2.00",
         "levtype": "sfc",
         "param": files[f],
-        "step": "12",
+        "step": "3/6/9/12",
         "stream": "oper",
-        "time": "00:00:00",
+        "time": "00:00:00/12:00:00",
         "type": "fc",
         "format": "netcdf",
         "target": fileNames[f] + "_1980_2016_2x2.nc",

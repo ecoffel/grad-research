@@ -20,11 +20,11 @@ for m = 1:length(models)
     for r = 1:length(rcps)
         for e = ensembles
             if strcmp(dataset, 'ncep')
-                ch_calcBowenRatio(['f:/data/ncep-reanalysis/output']);
+                ch_calcBowenRatio(['f:/data/ncep-reanalysis/output'], true);
             elseif strcmp(dataset, 'era')
-                ch_calcBowenRatio(['e:/data/era-interim/output']);
+                ch_calcBowenRatio(['e:/data/era-interim/output'], true);
             else
-                ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}]);
+                ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} '/r' num2str(e) 'i1p1/' rcps{r}], true);
             end
         end
     end
