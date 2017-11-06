@@ -72,7 +72,8 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]];                % central africa
 
-           
+historicalHottestMonth = [7 7 7 7 8 9 9 3];
+       
 regionLatLonInd = {};
 
 % loop over all regions to find lat/lon indicies
@@ -333,7 +334,7 @@ for i = 1:length(regionNames)
     % test for significant change in each month at 95th percentile
     bowenSig = [];
     for month = 1:12
-        bowenSig(month) = kstest(bowenRegionsChange{i}(:, month))
+        bowenSig(month) = ttest2(bowenRegionsChange{i}(:, month), zeros(size(bowenRegionsChange{i}(:, month))));
     end
 
     
@@ -383,6 +384,8 @@ for i = 1:length(regionNames)
     axis(ax(1), 'square');
     axis(ax(2), 'square');
     
+    % plot hottest month line
+    plot(ax(1), [historicalHottestMonth(i) historicalHottestMonth(i)], [-1 10], 'k--', 'LineWidth', 2);
     % plot txx chg
     plot(ax(1), 1:12, ones(1,12) .* nanmean(txxRegionsChange{i}), '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
     % and tnn chg
@@ -415,6 +418,8 @@ for i = 1:length(regionNames)
     % plot bowen zero line 
     %plot(ax(2), 1:12, zeros(1,12), '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
+    
+    
     if showLegend
         leg = legend([p1.mainLine, p3.mainLine, p2.mainLine], 'Tx', 'Tn', 'Bowen ratio');
         set(leg, 'location', 'northwest', 'FontSize', 32);
@@ -464,6 +469,7 @@ for i = 1:length(regionNames)
     
     title(regionNames{i}, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
+    
     if showPercentChange
         export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.png'], '-m4');
     else

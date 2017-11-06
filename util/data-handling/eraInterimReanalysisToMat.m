@@ -164,7 +164,13 @@ for k = 1:length(ncFileNames)
         
         % new day, average over previous days
         if curDay ~= lastDay
-            monthlyData(:, :, monthlyInd) = nanmean(dailyData, 3);
+            if strcmp(varName, 'mx2t')
+                monthlyData(:, :, monthlyInd) = nanmax(dailyData, [], 3);
+            elseif strcmp(varName, 'mn2t')
+                monthlyData(:, :, monthlyInd) = nanmin(dailyData, [], 3);
+            elseif strcmp(varName, 'sshf') || strcmp(varName, 'slhf') || strcmp(varName, 'tp')
+                monthlyData(:, :, monthlyInd) = nansum(dailyData, 3);
+            end
             dailyData = [];
             monthlyInd = monthlyInd + 1;
             lastDay = curDay;
