@@ -3,7 +3,7 @@ numYears = (timePeriod(end)-timePeriod(1)+1);
 
 if ~exist('tmaxNcepBase','var')
     tmaxNcepBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-    tmaxEraBase = loadDailyData('e:/data/era-interim/output/mx2t/world/regrid', 'yearStart', timePeriod(1)+1, 'yearEnd', timePeriod(end)+1);
+    tmaxEraBase = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
 end
 
 coordPairs = csvread('ni-region.txt');

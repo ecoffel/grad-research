@@ -1,16 +1,9 @@
 
+timePeriod = [1980 2016];
 
-yearN = 35;
-
-dataset = 'era-interim';
-
-if ~exist('tmaxBase','var')
-    if strcmp(dataset, 'ncep-reanalysis')
-        timePeriod = [1980 2016];
-
-        subPeriods = {[1980 2014],...
-                      [1981 2015],...
-                      [1982 2016]};
+subPeriods = {[1980 2014],...
+              [1981 2015],...
+              [1982 2016]};
 
 %         subPeriods = {[1980 2009],...
 %                       [1981 2010],...
@@ -20,29 +13,24 @@ if ~exist('tmaxBase','var')
 %                       [1985 2014],...
 %                       [1986 2015],...
 %                       [1987 2016]};
-        
+
+yearN = 35;
+
+dataset = 'era-interim';
+
+if ~exist('tmaxBase','var')
+    if strcmp(dataset, 'ncep-reanalysis')
+        fprintf('loading temp...\n');
         tmaxBase = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+        
+        fprintf('loading precip...\n');
         prBase = loadDailyData('e:/data/ncep-reanalysis/output/prate/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-        %qBase = loadDailyData('e:/data/ncep-reanalysis/output/shum/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
     elseif strcmp(dataset, 'era-interim')
-        timePeriod = [1980 2016]+1;
-
-        subPeriods = {[1980 2014]+1,...
-                      [1981 2015]+1,...
-                      [1982 2016]+1};
-
-%         subPeriods = {[1980 2009]+1,...
-%                       [1981 2010]+1,...
-%                       [1982 2011]+1,...
-%                       [1983 2012]+1,...
-%                       [1984 2013]+1,...
-%                       [1985 2014]+1,...
-%                       [1986 2015]+1,...
-%                       [1987 2016]+1};
-                  
-        tmaxBase = loadDailyData('e:/data/era-interim/output/mx2t/world/regrid', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-        prBase = loadDailyData('e:/data/era-interim/output/tp/world/regrid', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-        %qBase = loadDailyData('e:/data/era-interim/output/q/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+        fprintf('loading temp...\n');
+        tmaxBase = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+        
+        fprintf('loading precip...\n');
+        prBase = loadDailyData('e:/data/era-interim/output/tp/regrid/world', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
     end
     
     % kill off water now so it's not involved in any future calcs
@@ -63,12 +51,12 @@ end
 % select lat/lon
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [45 45], [9 9]); % milan
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [269 269]); % iowa
-%[latInd, lonInd] = latLonIndexRange(tmaxBase, [41 41], [285 285]); % nyc
+[latInd, lonInd] = latLonIndexRange(tmaxBase, [41 41], [285 285]); % nyc
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [34 34], [276 276]); % ATL
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [33 33], [247 247]); % phoenix
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [27 27], [281 281]); % miami
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [47 47], [238 238]); % seattle
-[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [255 255]); % denver
+%[latInd, lonInd] = latLonIndexRange(tmaxBase, [40 40], [255 255]); % denver
 
 %[latInd, lonInd] = latLonIndexRange(tmaxBase, [38 42], [278 282]); % central US
 
@@ -86,7 +74,7 @@ lon = tmaxBase{2};
 
 seasonalTrends = {};
 
-dims = [2 2];
+dims = [2 3];
 
 for somRun = 1:numSomRuns
 
@@ -140,7 +128,7 @@ for somRun = 1:numSomRuns
 
                 if percentile
                     seasonProperties('tmax') = {{'hot', 'warm', 'cool', 'cold'}, ...
-                                                 [90,    65,     45,    10]};
+                                                 [90,    65,     35,    10]};
                     seasonProperties('tmaxVar') = {{'stable', 'flux', 'var'}, ...
                                                    [10,        50,     90]};
                     seasonProperties('pr') = {{'dry', 'damp', 'wet'}, ...
@@ -185,31 +173,18 @@ for somRun = 1:numSomRuns
                     pr = detrend(pr);
                 end
                 
-                % daily difference in temperature
-                tmaxDiff = diff(tmax);
-
                 if strcmp(dataset, 'ncep-reanalysis')
                     pr = pr.*60.*60.*24; % mm/day
                 elseif strcmp(dataset, 'era-interim')
                     pr = pr .* 1000; % mm/day
                 end
 
-                %q = nanmean(nanmean(qBase{3}(xlat, ylon, startYear:endYear, :, :), 2), 1); % percent
-                %q = reshape(q, [numel(q), 1]);
-
-                % remove 1st element to harmonize lengths with difference array
-                tmax = tmax(2:end);
-                pr = pr(2:end);
-                %q = q(2:end);
-                monthList = monthList(2:end);
-
                 % how many days to group over (1 week now)
-                groupingN = 4;
+                groupingN = 5;
 
                 % now compute weekly metrics
                 tmaxGroup = arrayfun(@(i) nanmean(tmax(i:i+groupingN-1)),1:groupingN:length(tmax)-groupingN+1)'; 
                 tmaxVar = arrayfun(@(i) nanstd(tmax(i:i+groupingN-1)),1:groupingN:length(tmax)-groupingN+1)';
-                %qGroup = arrayfun(@(i) nanmean(q(i:i+groupingN-1)),1:groupingN:length(q)-groupingN+1)'; 
                 prGroup = arrayfun(@(i) nansum(pr(i:i+groupingN-1)),1:groupingN:length(pr)-groupingN+1)'; 
                 mGroup = arrayfun(@(i) round(nanmean(monthList(i:i+groupingN-1))),1:groupingN:length(monthList)-groupingN+1)'; 
                 yGroup = arrayfun(@(i) round(nanmean(yearList(i:i+groupingN-1))),1:groupingN:length(yearList)-groupingN+1)'; 
@@ -416,13 +391,6 @@ for somRun = 1:numSomRuns
                     
                     [h,p] = Mann_Kendall(occurrence, 0.05);
                     curTrendSig(classInd, period) = h;
-%                     % decreasing trend
-%                     if (ci(2,1) < 0 && ci(1,1) < 0)
-%                         curTrendSig(classInd, period) = -1;
-%                     % increasing trend
-%                     elseif (ci(2,1) > 0 && ci(1,1) > 0)
-%                         curTrendSig(classInd, period) = 1;
-%                     end
                 end
             end
 
@@ -474,6 +442,8 @@ for somRun = 1:numSomRuns
                 % only plot seasons that show up in each period...
                 plotInd = [];
                 seasonNames = {};
+                % change to not show plots for nodes that don't show up in
+                % all periods
                 for row = 1:size(name,1)
                     if length(find(name(row,:) ~= "")) == size(name, 2)
                         plotInd(end+1) = row;

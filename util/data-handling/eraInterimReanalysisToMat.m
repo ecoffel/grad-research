@@ -115,7 +115,7 @@ for k = 1:length(ncFileNames)
     lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1900 01 00 00 00 00]);
+    starttime = datenum([1900 01 01 00 00 00]);
     time = [];
     
     % these are hours since 1900-01-01 01:01:01
@@ -164,17 +164,27 @@ for k = 1:length(ncFileNames)
         
         % new day, average over previous days
         if curDay ~= lastDay
+            dailyData(:, :, dateInd) = data;
             if strcmp(varName, 'mx2t')
                 monthlyData(:, :, monthlyInd) = nanmax(dailyData, [], 3);
             elseif strcmp(varName, 'mn2t')
                 monthlyData(:, :, monthlyInd) = nanmin(dailyData, [], 3);
-            elseif strcmp(varName, 'sshf') || strcmp(varName, 'slhf') || strcmp(varName, 'tp')
-                monthlyData(:, :, monthlyInd) = nansum(dailyData, 3);
+            elseif strcmp(varName, 'tp') 
+                monthlyData(:, :, monthlyInd) = nansum(dailyData(:, :, [4 8]), 3);
+            elseif strcmp(varName, 'swvl1') || strcmp(varName, 'swvl2') || strcmp(varName, 'swvl3') || strcmp(varName, 'swvl4') || strcmp(varName, 'rsn') || strcmp(varName, 'sd')
+                % average over day's soil moisture or snow
+                monthlyData(:, :, monthlyInd) = nanmean(dailyData(:, :, :), 3);
+            elseif strcmp(varName, 'sshf') || strcmp(varName, 'slhf')
+                % sum and convert to W/m2
+                monthlyData(:, :, monthlyInd) = -nansum(dailyData(:, :, [4 8]), 3) ./ 24 ./ 3600;
             end
             dailyData = [];
             monthlyInd = monthlyInd + 1;
             lastDay = curDay;
             dateInd = 1;
+        else
+            dailyData(:, :, dateInd) = data;
+            dateInd = dateInd + 1;
         end
         
         % we're on a new month - save
@@ -204,11 +214,18 @@ for k = 1:length(ncFileNames)
             eval(['clear ' fileName ';']);
         end
         
-        dailyData(:, :, dateInd) = data;
         
-        dateInd = dateInd + 1;
         ind = ind + 1;
     end
+    
+    % save the final month
+    monthlyData = squeeze(monthlyData);
+    monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
+    fileName = [varName, '_', datestr(curStartDate, 'yyyy_mm_dd')];
+    eval([fileName ' = monthlyDataSet;']);
+    save([folDataTarget, '/', fileName, '.mat'], fileName);
+    clear monthlyDataSet;
+    eval(['clear ' fileName ';']);
     
  end
 

@@ -5,7 +5,7 @@ basePeriod = 'past';
 
 % add in base models and add to the base loading loop
 
-dataset = 'ncep-reanalysis';
+dataset = 'gldas';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -27,11 +27,7 @@ baseRegrid = true;
 futureRegrid = true;
 
 region = 'world';
-basePeriodYears = 1980:2016;
-
-if strcmp(dataset, 'era-interim')
-    basePeriodYears = basePeriodYears + 1;
-end
+basePeriodYears = 1980:2010;
 
 futurePeriods = [2060:2080];
 
@@ -84,15 +80,24 @@ for m = 1:length(models)
             baseTasmax = loadDailyData([baseDir '/ncep-reanalysis/output/tmax/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             baseTasmax{3} = baseTasmax{3} - 273.15;
         elseif strcmp(dataset, 'era-interim')
-            basePr = loadDailyData([baseDir '/era-interim/output/tp/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            basePr = loadDailyData([baseDir '/era-interim/output/tp/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day
             basePr{3} = basePr{3} .* 1000;
             
-            baseLhtfl = loadDailyData([baseDir '/era-interim/output/slhf/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseLhtfl = loadDailyData([baseDir '/era-interim/output/slhf/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             % convert to mm/day (from W/m2)
-            baseLhtfl{3} = baseLhtfl{3} ./ 2.45e6;
+            baseLhtfl{3} = (baseLhtfl{3} ./ 24 ./ 3600) ./ 2.45e6;
             
-            baseTasmax = loadDailyData([baseDir '/era-interim/output/mx2t/world/regrid'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseTasmax = loadDailyData([baseDir '/era-interim/output/mx2t/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseTasmax{3} = baseTasmax{3} - 273.15;
+        elseif strcmp(dataset, 'gldas')
+            basePr = loadMonthlyData([baseDir '/gldas-noah-v2/output/Rainf_f_tavg'], 'Rainf_f_tavg', 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            % convert to mm/day
+            basePr{3} = basePr{3} .* 3600 .* 24;
+            
+            baseLhtfl = loadMonthlyData([baseDir '/gldas-noah-v2/output/Qle_tavg'], 'Qle_tavg', 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            
+            baseTasmax = loadMonthlyData([baseDir '/gldas-noah-v2/output/Tair_f_inst'], 'Tair_f_inst', 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             baseTasmax{3} = baseTasmax{3} - 273.15;
         end
         
@@ -102,9 +107,9 @@ for m = 1:length(models)
         baseTasmax = baseTasmax{3};
         
         % calculate precip - evapotranspiration
-        if strcmp(dataset, 'era-interim')
+        if strcmp(dataset, 'era-interim') 
             PE = basePr + baseLhtfl;
-        elseif strcmp(dataset, 'ncep-reanalysis')
+        elseif strcmp(dataset, 'ncep-reanalysis') || strcmp(dataset, 'gldas')
             % lhtfl is positive here
             PE = basePr - baseLhtfl;
         end
@@ -114,10 +119,18 @@ for m = 1:length(models)
             
             % loop over months
             for month = 1:size(PE, 4)
-                basePE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(PE(:, :, 1, month, :)), 3);
-                baseP(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(basePr(:, :, 1, month, :)), 3);
-                baseE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseLhtfl(:, :, 1, month, :)), 3);
-                baseT(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseTasmax(:, :, 1, month, :)), 3);
+                if strcmp(dataset, 'gldas')
+                    % data is monthly already
+                    basePE(:, :, y-basePeriodYears(1)+1, month) = squeeze(PE(:, :, :, month));
+                    baseP(:, :, y-basePeriodYears(1)+1, month) = squeeze(basePr(:, :, :, month));
+                    baseE(:, :, y-basePeriodYears(1)+1, month) = squeeze(baseLhtfl(:, :, :, month));
+                    baseT(:, :, y-basePeriodYears(1)+1, month) = squeeze(baseTasmax(:, :, :, month));
+                else
+                    basePE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(PE(:, :, 1, month, :)), 3);
+                    baseP(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(basePr(:, :, 1, month, :)), 3);
+                    baseE(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseLhtfl(:, :, 1, month, :)), 3);
+                    baseT(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseTasmax(:, :, 1, month, :)), 3);
+                end
             end
         end
 
@@ -174,6 +187,19 @@ for m = 1:length(models)
         
         T = baseT;
         save(['2017-nile-climate/data/pe/chgData-era-interim-T-' changeMetric '-historical.mat'], 'T');
+        return;
+    elseif strcmp(dataset, 'gldas')
+        PE = basePE;
+        save(['2017-nile-climate/data/pe/chgData-gldas-PE-' changeMetric '-historical.mat'], 'PE');
+        
+        P = baseP;
+        save(['2017-nile-climate/data/pe/chgData-gldas-P-' changeMetric '-historical.mat'], 'P');
+        
+        E = baseE;
+        save(['2017-nile-climate/data/pe/chgData-gldas-E-' changeMetric '-historical.mat'], 'E');
+        
+        T = baseT;
+        save(['2017-nile-climate/data/pe/chgData-gldas-T-' changeMetric '-historical.mat'], 'T');
         return;
     end
 

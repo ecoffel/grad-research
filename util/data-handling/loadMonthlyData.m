@@ -50,7 +50,8 @@ for d = 1:length(dirNames)
     cmip5 = false;
     narr = false;
     hadex2 = false;
-    gpcp = true;
+    gpcp = false;
+    gldas = false;
     
     if strfind(curDir, 'cmip5') ~= 0
         cmip5 = true;
@@ -64,14 +65,17 @@ for d = 1:length(dirNames)
         hadex2 = true;
     elseif strfind(curDir, 'gpcp') ~= 0
         gpcp = true;
+    elseif strfind(curDir, 'gldas') ~= 0
+        gldas = true;
     end
+        
 
     for k = 1:length(matFileNames)
         matFileName = matFileNames{k};
 
         % check if this file contains the target variable
         matFileNameParts = strsplit(matFileName, '_');
-        if length(strfind(matFileNameParts{1}, varName)) == 0
+        if length(strfind(matFileName, varName)) == 0
             continue
         end
 
@@ -110,6 +114,9 @@ for d = 1:length(dirNames)
         elseif gpcp
             dataYear = str2num(matFileNameParts{2});
             dataMonth = str2num(matFileNameParts{3});
+        elseif gldas
+            dataYear = str2num(matFileNameParts{end-2});
+            dataMonth = str2num(matFileNameParts{end-1});
         end
         
         if yearstart ~= -1 & dataYear < yearstart
@@ -144,6 +151,8 @@ for d = 1:length(dirNames)
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
         if gpcp
+            monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
+        elseif gldas
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
         elseif ~hadex2
             if plev ~= -1

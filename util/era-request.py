@@ -2,20 +2,22 @@
 #!/usr/bin/env python
 import calendar
 from ecmwfapi import ECMWFDataServer
+import os.path
 server = ECMWFDataServer()
  
-files = ["201.128", "202.128", "228.128", "146.128", "147.128"]
-fileNames = ["mx2t", "mn2t", "tp", "sshf", "slhf"]
+files =     ["201.128", "202.128", "228.128", "146.128", "147.128"]
+fileNames = ["mx2t",    "mn2t",    "tp",      "sshf",    "slhf"]
 
-files = ["202.128", "228.128", "146.128", "147.128"]
-fileNames = ["mn2t", "tp", "sshf", "slhf"]
+files =     ["39.128", "40.128", "41.128", "42.128"]
+fileNames = ["swvl1",  "swvl2",  "swvl3",  "swvl4"]
 
-# 201.128 / mx2t
-# 202.128 / mn2t
-# 228.128 / tp
-# 146.128 / sshf
-# 147.128 / slhf
-# 
+files =     ["33.128", "141.128"]
+fileNames = ["rsn",    "sd"]
+
+
+baseDir = 'e:/data/era-interim/raw/land/snow/'
+
+useInterimLand = True;
 
 def interim_request(file, fileName, dates, target):
     server.retrieve({
@@ -32,6 +34,21 @@ def interim_request(file, fileName, dates, target):
         "type": "fc",
         "format": "netcdf",
         "target": target})
+
+def interim_land_request(file, fileName, dates, target):
+    server.retrieve({
+        "class": "ei",
+        "dataset": "interim_land",
+        "date": dates,
+        "expver": "2",
+        "grid": "2.00/2.00",
+        "levtype": "sfc",
+        "param": file,
+        "stream": "oper",
+        "time": "00:00:00/06:00:00/12:00:00/18:00:00",
+        "type": "an",
+        "format": "netcdf",
+        "target": target})
     
 
 yearStart = 1980
@@ -41,5 +58,11 @@ for f in range(len(files)):
         startDate = '%04d-01-01' % (year)
         lastDate = '%04d-12-31' % (year)
         requestDates = (startDate + "/to/" + lastDate)
-        print('requesting', fileNames[f] + "_" + str(year) + "_2x2.nc")
-        interim_request(files[f], fileNames[f], requestDates, fileNames[f] + "_" + str(year) + "_2x2.nc")
+        if os.path.isfile(baseDir + fileNames[f] + "_" + str(year) + "_2x2.nc"):
+            print('skipping', fileNames[f] + "_" + str(year) + "_2x2.nc")
+        else:
+            print('requesting', fileNames[f] + "_" + str(year) + "_2x2.nc")
+            if useInterimLand:
+                interim_land_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_2x2.nc')
+            else:
+                interim_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_2x2.nc')
