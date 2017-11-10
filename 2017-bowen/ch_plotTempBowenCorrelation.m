@@ -170,6 +170,11 @@ end
 % loop over all regions for plotting
 %for i = 1:length(regionNames)
 fprintf('processing correlations...\n');
+
+figure('Color', [1,1,1]);
+set(gcf, 'Position', get(0,'Screensize'));
+
+subploti = 1;
 for i = [1, 2, 4, 7]
     % mean temperature change across models
     tasmaxNcep = tasmaxRegionsNcep{i};
@@ -238,28 +243,42 @@ for i = [1, 2, 4, 7]
         end
     end
     
-    figure('Color', [1,1,1]);
+    h(subploti) = subplot(1,4,subploti);
     hold on;
     axis square;
     grid on;
     box on;
-    
     % plot area average seasonal temp-bowen correlations
+    b = boxplot(squeeze(nanmean(nanmean(cmip5Corr, 2), 1)));
     plot(1:4, squeeze(nanmean(nanmean(ncepCorr, 2), 1)), 'ko', 'MarkerSize', 15, 'LineWidth', 2);
     plot(1:4, squeeze(nanmean(nanmean(eraCorr, 2), 1)), 'kx', 'MarkerSize', 15, 'LineWidth', 2);
-    b = boxplot(squeeze(nanmean(nanmean(cmip5Corr, 2), 1)));
 
-    set(b,{'LineWidth', 'Color'},{3, [85/255.0, 158/255.0, 237/255.0]})
+    set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
     
     set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
-    ylabel('T_{max} - Bowen Correlation');
+    set(gca, 'FontSize', 24);
+    if subploti == 1
+        ylabel('T_{max} - Bowen Correlation', 'FontSize', 24);
+    end
     ylim([-1 1])
     title(regionNames{i});
-    set(gca, 'FontSize', 24);
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['temp-bowen-corr-' regionAb{i} '.eps']);
-    close all;
+    xtickangle(45);
+    subploti = subploti + 1;
 end
+
+spacing = .05;
+width = (1-(5*spacing))/4.0;
+
+for i = 1:length(h)
+    p(i,:) = get(h(i), 'position');
+end
+
+for i = 1:length(h)
+    set(h(i), 'position', [(i+.5)*spacing+(i-1)*width p(i,2) width nanmean(p(:,4))]);
+end
+
+export_fig(['temp-bowen-corr.eps']);
+close all;
     
