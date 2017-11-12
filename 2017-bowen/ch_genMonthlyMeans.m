@@ -3,7 +3,7 @@
 
 season = 'all';
 
-dataset = 'era-interim';
+dataset = 'cmip5';
 var = 'bowen';
 
 if strcmp(dataset, 'cmip5')
@@ -16,18 +16,18 @@ if strcmp(dataset, 'cmip5')
     rcp = 'historical';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
-    models = {'ncep-reanalysis'};
+    models = {''};
     rcp = 'historical';
     ensemble = '';
 elseif strcmp(dataset, 'era-interim')
-    models = {'era-interim'};
+    models = {''};
     rcp = 'historical';
     ensemble = '';
 end
 
 % mean for each year/month or for each month averaged over all years
-avgOverYears = false;
-avgOverYearsStr = '-all-years-';
+avgOverYears = true;
+avgOverYearsStr = '-all-years';
 if avgOverYears
     avgOverYearsStr = '';
 end
@@ -36,8 +36,8 @@ baseRegrid = true;
 futureRegrid = true;
 
 region = 'world';
-basePeriodYears = 1981:2004;
-futurePeriodYears = 2070:2080;
+basePeriodYears = 1985:2005;
+futurePeriodYears = 2060:2080;
 
 if strcmp(rcp, 'historical') || strcmp(dataset, 'ncep-reanalysis') || strcmp(dataset, 'era-interim')
     timePeriod = basePeriodYears;
@@ -46,7 +46,7 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/temp-chg-data';
+outputDir = 'e:/data/projects/bowen/bowen-chg-data';
 yearStep = 1;
 
 load lat;
@@ -56,9 +56,9 @@ load lon;
 for m = 1:length(models)
     curModel = models{m};
     
-    if exist([outputDir '/monthly-mean-' rcp '-' curModel '.mat'], 'file')
+    if exist([outputDir '/monthly-mean-' var '-' dataset '-' rcp '-' curModel avgOverYearsStr '.mat'], 'file')
         ['skipping ' curModel ', ' rcp '...']
-        continue;
+       %continue;
     end
     
     % monthly mean bowen ratios
@@ -90,7 +90,6 @@ for m = 1:length(models)
         if strcmp(var, 'bowen')
             % set overly large ratios to NaN
             baseDaily(baseDaily > 100) = NaN;
-            baseDaily(baseDaily < 0) = NaN;
         elseif strcmp(var, 'tasmax')
             if baseDaily(1,1,1,1,1) > 100
                 baseDaily = baseDaily - 273.15;
@@ -112,8 +111,8 @@ for m = 1:length(models)
                         for month = 1:size(baseDaily, 4)
 
                             if avgOverYears
-                                % calculate mean for this month
-                                if monthlyMeans(xlat, ylon, month) == NaN
+                                % calculate mean for this month6                                
+                                if isnan(monthlyMeans(xlat, ylon, month))
                                     % if nan, set it to current month's mean
                                     % directly
                                     monthlyMeans(xlat, ylon, month) = squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)));
@@ -133,11 +132,8 @@ for m = 1:length(models)
         clear baseDailyBowen;
     end
     
-    if strcmp(dataset, 'cmip5')
-        save([outputDir '/monthly-mean-' var '-' dataset '-' rcp '-' curModel avgOverYearsStr '.mat'], 'monthlyMeans');
-    else
-        save([outputDir '/monthly-mean-' var '-' dataset '-' rcp avgOverYearsStr '.mat'], 'monthlyMeans');
-    end
+	save([outputDir '/monthly-mean-' var '-' dataset '-' rcp '-' curModel avgOverYearsStr '.mat'], 'monthlyMeans');
+
 end
 
 
