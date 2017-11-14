@@ -1,5 +1,7 @@
 function ch_bowenRatio(dataDir, regrid)
 
+skipExisting = false;
+
 regridStr = '/';
 if regrid
     regridStr = '/regrid/';
@@ -241,7 +243,7 @@ while hfssStartInd <= hfssEndInd & hflsStartInd <= hflsEndInd
 
     fileName = ['bowen_', num2str(curYear), '_' monthStr, '_01'];
     
-    if exist([bowenCurDir '/' fileName '.mat'], 'file')
+    if skipExisting && exist([bowenCurDir '/' fileName '.mat'], 'file')
         ['skipping ' bowenCurDir '/' fileName '.mat']
         hfssStartInd = hfssStartInd + 1;
         hflsStartInd = hflsStartInd + 1;

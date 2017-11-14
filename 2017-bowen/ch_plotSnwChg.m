@@ -1,15 +1,15 @@
 
-baseDir = '2017-bowen/bowen';
+baseDir = 'e:/data/projects/bowen';
 SnwVar = 'snw';                  
 percentChange = true;
 
-models = {'access1-0', 'access1-3', 'bnu-esm', ...
-                  'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                  'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'mpi-esm-mr', 'mri-cgcm3'};
-maxVal = 1e7;
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-plotMap = false;
+plotMap = true;
 
 timePeriodHistorical = 1985:2005;
 timePeriodFuture = 2060:2080;
@@ -21,7 +21,7 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showMonths = [12 1 2 3];
-showRegions =  4;
+showRegions =  1;
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -62,6 +62,21 @@ if percentChange
     SnwVarStr = 'percent';
 end
 
+% load snow mask from ERA
+fprintf('building snow mask...\n');
+snowMask = zeros(size(lat));
+sdHistorical = loadDailyData('E:\data\era-interim\output\sd\regrid\world', 'yearStart', 1985, 'yearEnd', 2004);
+for xlat = 1:size(sdHistorical{1}, 1)
+    for ylon = 1:size(sdHistorical{1}, 2)
+        % get current time series for DJF
+        curSd = permute(squeeze(sdHistorical{3}(xlat, ylon, :, [12 1 2], :)), [3 2 1]);
+        if nanmedian(curSd) > 0
+            snowMask(xlat, ylon) = 1;
+        end
+    end
+end
+snowMask = logical(snowMask);
+
 for region = showRegions
     % historical and future monthly precip, mm/day
     % dims: (x, y, month, model)
@@ -71,93 +86,79 @@ for region = showRegions
     curLat = regionLatLonInd{region}{1};
     curLon = regionLatLonInd{region}{2};
     
+    fprintf('loading cmip5 data...\n');
     for model = 1:length(models)
         % load historical and future Snw data
-        load([baseDir '/monthly-soil/monthlySoilChg-cmip5-historical-' SnwVar '-' models{model} '-1985-2005.mat']);
+        load([baseDir '/snw-chg-data/monthly-mean-snw-cmip5-historical-' models{model} '.mat']);
         % rename variable from file
-        SnwHistorical = soilHistorical;
-        clear soilHistorical;
+        SnwHistorical = monthlyMeans;
+        clear monthlyMeans;
         
         % remove water tiles
         for month = 1:12
             curGrid = SnwHistorical(:, :, month);
             curGrid(waterGrid) = NaN;
+            % mask regions without historical snow
+            curGrid(~snowMask) = NaN;
             SnwHistorical(:, :, month) = curGrid;
         end
         
         % some partial water tiles have very large values - remove
-        SnwHistorical(SnwHistorical > maxVal) = NaN;
+        %SnwHistorical(SnwHistorical > maxVal) = NaN;
         
-        regionalSnwHistorical(:, :, :, model) = SnwHistorical(curLat, curLon, :);
+        regionalSnwHistorical(:, :, model) = nanmean(SnwHistorical(curLat, curLon, [12 1 2]), 3);
         
-        load([baseDir '/monthly-soil/monthlySoilChg-cmip5-future-' SnwVar '-' models{model} '-2060-2080.mat']);
+        load([baseDir '/snw-chg-data/monthly-mean-snw-cmip5-rcp85-' models{model} '.mat']);
         % rename variable from file
-        SnwFuture = soilFuture;
-        clear soilFuture;
+        SnwFuture = monthlyMeans;
+        clear monthlyMeans;
         
         % remove water tiles
         for month = 1:12
             curGrid = SnwFuture(:, :, month);
             curGrid(waterGrid) = NaN;
+            curGrid(~snowMask) = NaN;
             SnwFuture(:, :, month) = curGrid;
         end
         
-        % some partial water tiles have very large values - remove
-        SnwFuture(SnwFuture > maxVal) = NaN;
-        
-        regionalSnwFuture(:, :, :, model) = SnwFuture(curLat, curLon, :);
+        regionalSnwFuture(:, :, model) = nanmean(SnwFuture(curLat, curLon, [12 1 2]), 3);
 
     end
-    
-    % eliminate cells with little snow in historical
-	regionalSnwHistorical(regionalSnwHistorical < 1e5) = NaN;
-    
     
     % calculate snow change for each model
     chg = [];
-    for model = 1:size(regionalSnwHistorical, 4)
+    for model = 1:size(regionalSnwHistorical, 3)
         tmpHistorical = regionalSnwHistorical;
         tmpFuture = regionalSnwFuture;
         
-        chg(:, :, :, model) = (tmpFuture(:,:,showMonths,model)-tmpHistorical(:,:,showMonths,model)) ./ tmpHistorical(:,:,showMonths,model);
+        chg(:, :, model) = (tmpFuture(:,:,model)-tmpHistorical(:,:,model)) ./ tmpHistorical(:,:,model);
     end
-    
-    % exclude bad values and don't show zeros or increasing
-    chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
-    chg(chg >= 0) = NaN;
     
     if plotMap
         % find statistical significance of change over selected months across models
-        sigChg = zeros(size(lat,1), size(lat, 2), size(chg, 3));
+        sigChg = zeros(size(lat,1), size(lat, 2));
         for xlat = 1:size(chg, 1)
             for ylon = 1:size(chg, 2)
-                for month = 1:size(chg, 3)
 
-                    % select only non-nan items
-                    curChg = squeeze(chg(xlat, ylon, month, :));
-                    ind = find(~isnan(curChg) & ~isinf(curChg));
-                    curChg = curChg(ind);
+                % select only non-nan items
+                curChg = squeeze(chg(xlat, ylon, :));
+                ind = find(~isnan(curChg) & ~isinf(curChg));
+                curChg = curChg(ind);
 
-                    % for each grid cell and month, calculate sig across models
-                    % where there are at least 10 models
-                    if length(curChg) > 10
-                        if ttest(curChg, zeros(size(curChg)), 'alpha', 0.1)
-                            sigChg(xlat, ylon, month) = 1;
-                        end
-                    end
+                % at least 10 non-nan models
+                if length(curChg >= round(.75*length(models)))
+                    med = nanmedian(curChg);
+
+                    % where at least 75% models agree on sign
+                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) >= round(.75*length(models));
                 end
             end
         end
 
-        % average over months - will give the fraction of months that are
-        % signficant
-        sigChg = nanmean(sigChg, 3);
-
-        % with >= 1/4 of months sig, stipple it
-        sigChg(sigChg >= 0.25) = 1;
-        sigChg(sigChg < 0.25) = 0;
-
-        chg = nanmean(nanmean(chg, 4), 3);
+        sigChg(~snowMask) = 0;
+        chg(isinf(chg)) = NaN;
+        % median over models
+        chg = nanmedian(chg, 3);
         chg = chg .* 100;
         chg(:,1) = chg(:,end);
 
@@ -165,16 +166,18 @@ for region = showRegions
 
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-100 0], ...
-                          'cbXTicks', [-100 -75 -50 -25 0], ...
-                          'plotTitle', ['DJFM Snow mass change'], ...
+                          'plotRange', [-100 100], ...
+                          'cbXTicks', -100:50:100, ...
+                          'plotTitle', ['DJF Snow mass change'], ...
                           'fileTitle', ['snw-chg-' num2str(region) '.png'], ...
                           'plotXUnits', ['Percent'], ...
                           'blockWater', true, ...
-                          'colormap', cmocean('ice'), ...
+                          'colormap', brewermap([], 'BrBG'), ...
                           'statData', sigChg, ...
                           'stippleInterval', 5, ...
-                          'magnify', '2');
+                          'magnify', '3', ...
+                          'vector', true, ...
+                          'boxCoords', {regions([2,4,7], :)});
         plotFromDataFile(saveData);
     end
     

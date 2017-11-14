@@ -9,8 +9,30 @@ function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid, gridCor)
     data1_lon = dataOldGrid{2};
     data1_data = dataOldGrid{3};
     
+    % add in zero column 
+    if data1_lon(1,1) == 360
+        data1_lon = [data1_lon(:,1) zeros(size(data1_lon,1),1), data1_lon(:,2:end)];
+        data1_lat = [data1_lat(:,1) data1_lat(:,1) data1_lat(:,2:end)];
+        data1_data = [data1_data(:,1) data1_data(:,1) data1_data(:,2:end)];
+    elseif data1_lon(1,1) == 0
+        data1_lon = [data1_lon ones(size(data1_lon,1),1) .* 360];
+        data1_lat = [data1_lat data1_lat(:,1)];
+        data1_data = [data1_data data1_data(:,1)];
+    
+    % col lon 1 and end are centered around 0 but don't include it... add
+    % both a 0 and a 360 col and interpolate the data in between
+    else
+        data1_lon = [data1_lon(:,1) zeros(size(data1_lon,1),1), data1_lon(:,2:end)];
+        data1_lat = [data1_lat(:,1) data1_lat(:,1) data1_lat(:,2:end)];
+        data1_data = [(data1_data(:,1)+data1_data(:,1))./2 data1_data];
+        
+        data1_lon = [data1_lon ones(size(data1_lon,1),1) .* 360];
+        data1_lat = [data1_lat data1_lat(:,1)];
+        data1_data = [data1_data (data1_data(:,1)+data1_data(:,1))./2];
+    end
+    
     data2_lat = dataNewGrid{1};
-    data2_lon = dataNewGrid{2};
+    data2_lon = dataNewGrid{2}; 
     
     % extend the original grid so that its lat/lon points always cover the
     % new grid

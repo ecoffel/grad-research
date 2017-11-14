@@ -4,16 +4,18 @@
 season = 'all';
 
 dataset = 'cmip5';
-var = 'bowen';
+var = 'snw';
+
+isMonthly = true;
 
 if strcmp(dataset, 'cmip5')
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
+    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-    rcp = 'historical';
+    rcp = 'rcp85';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -36,8 +38,8 @@ baseRegrid = true;
 futureRegrid = true;
 
 region = 'world';
-basePeriodYears = 1985:2005;
-futurePeriodYears = 2060:2080;
+basePeriodYears = 1985:2004;
+futurePeriodYears = 2060:2079;
 
 if strcmp(rcp, 'historical') || strcmp(dataset, 'ncep-reanalysis') || strcmp(dataset, 'era-interim')
     timePeriod = basePeriodYears;
@@ -46,7 +48,7 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/bowen-chg-data';
+outputDir = 'e:/data/projects/bowen/snw-chg-data';
 yearStep = 1;
 
 load lat;
@@ -77,7 +79,11 @@ for m = 1:length(models)
 
         
         if strcmp(dataset, 'cmip5')
-            baseDaily = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            if isMonthly
+                baseDaily = loadMonthlyData([baseDir '/' dataset '/output/' curModel '/mon/' ensemble '/' rcp '/' var '/regrid/' region], var, 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            else
+                baseDaily = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            end
         elseif strcmp(dataset, 'ncep-reanalysis')
             baseDaily = loadDailyData([baseDir '/' dataset '/output/'  var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
         elseif strcmp(dataset, 'era-interim')

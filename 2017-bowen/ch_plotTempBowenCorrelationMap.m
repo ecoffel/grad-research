@@ -5,11 +5,11 @@ dataset = 'reanalysis';
 tasmaxMetric = 'monthly-mean-max';
 tasminMetric = 'monthly-mean-min';
 
-models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                      'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                      'mpi-esm-mr', 'mri-cgcm3'};
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 % show the percentage change in bowen ratio or the absolute change
 showPercentChange = true;
@@ -72,13 +72,13 @@ if ~exist('tasmaxCmip5', 'var')
 
     for m = 1:length(models)
 
-        load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '-all-years-.mat']);
+        load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '-all-years.mat']);
         tasmaxCmip5(:, :, m, :, :) = monthlyMeans;
 
-        load([bowenBaseDir 'monthly-mean-bowen-cmip5-historical-' models{m} '-all-years-.mat']);
-        bowenCmip5(:, :, m, :, :) = monthlyMeans;
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowe', 'yearStart', 1985, 'yearEnd', 2004);
+        bowenCmip5(:, :, m, :, :) = curBowen{3};
 
-        bowenCmip5(bowenCmip5 > 100) = NaN;
+        %bowenCmip5(bowenCmip5 > 100) = NaN;
         %bowenCmip5(bowenCmip5 < 0) = NaN;
 
     end
@@ -143,15 +143,10 @@ for xlat = 1:size(lat, 1)
 
         end
         
-        
-        
         med = median(squeeze(hottestSeasonCorr(xlat, ylon, :)));
         % where < 75% models agree on sign
         if ~isnan(med)
             hottestMonthCorrDisagree(xlat, ylon) = length(find(sign(squeeze(hottestSeasonCorr(xlat, ylon, :))) == sign(med))) < round(.75*length(models));
-            if ylon == 1
-                ['hi']
-            end
         end
         
     end
@@ -175,5 +170,7 @@ saveData = struct('data', {result}, ...
                   'colormap', brewermap([], '*RdBu'), ...
                   'statData', hottestMonthCorrDisagree, ...
                   'stippleInterval', 5, ...
-                  'magnify', '2');
+                  'magnify', 3, ...
+                  'vector', true, ...
+                  'boxCoords', {regions([2,4,7], :)});
 plotFromDataFile(saveData);

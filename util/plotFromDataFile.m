@@ -58,6 +58,12 @@ function [fg, cb] = plotFromDataFile(saveData)
         magnify = false;
     end
     
+    if isfield(saveData, 'vector')
+        vector = true;
+    else
+        vector = false;
+    end
+    
     if isfield(saveData, 'cbXTicks')
         xticks = saveData.cbXTicks;
     else
@@ -189,6 +195,13 @@ function [fg, cb] = plotFromDataFile(saveData)
     else
         eval(['export_fig ' saveData.fileTitle ' -painters;']);
     end
+    
+    if vector
+        p = strsplit(saveData.fileTitle, '.');
+        p = p{1};
+        eval(['export_fig ' p '.pdf;']);
+    end
+    
     fileNameParts = strsplit(saveData.fileTitle, '.');
     save([fileNameParts{1} '.mat'], 'saveData');
     close all;

@@ -16,6 +16,7 @@ elseif strcmp(dataset, 'ncep') || strcmp(dataset, 'era')
     ensembles = {''};
 end
 
+models = {'bnu-esm', 'canesm2', 'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'miroc-esm', 'noresm1-m'};
 
 isMonthly = true;
 monthlyStr = '/mon';

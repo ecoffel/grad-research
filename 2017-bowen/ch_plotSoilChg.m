@@ -1,23 +1,15 @@
 
-baseDir = '2017-bowen/bowen';
+baseDir = 'e:/data/projects/bowen';
 soilVar = 'mrso';                  
 percentChange = true;
 
-if strcmp(soilVar, 'mrso')
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                          'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-                          'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                          'hadgem2-es', 'ipsl-cm5a-mr', 'miroc-esm', ...
-                          'mpi-esm-mr', 'mri-cgcm3'};
-    maxVal = 1e9;
-elseif strcmp(soilVar, 'mrsos')
-    models = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
-                      'cnrm-cm5', 'csiro-mk3-6-0', ...
-                      'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                      'hadgem2-es', 'ipsl-cm5a-mr', ...
-                      'mri-cgcm3'};
-    maxVal = 1e9;
-end
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+
+plotMap = true;
 
 timePeriodHistorical = 1985:2005;
 timePeriodFuture = 2060:2080;
@@ -28,8 +20,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-showMonths = [7 8 9];
-showRegions = 1;
+showRegions =  1;
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -70,18 +61,32 @@ if percentChange
     soilVarStr = 'percent';
 end
 
+seasons = [[12 1 2];
+           [3 4 5];
+           [6 7 8];
+           [9 10 11]];
+
+% load hottest seasons for each grid cell
+load('2017-bowen/hottest-season.mat');
+
 for region = showRegions
-    % historical and future monthly precip, mm/day
-    % dims: (x, y, month, model)
-    regionalSoilHistorical = [];
-    regionalSoilFuture = [];
-    
     curLat = regionLatLonInd{region}{1};
     curLon = regionLatLonInd{region}{2};
     
+    % historical and future monthly precip, mm/day
+    % dims: (x, y, model)
+    regionalSoilHistorical = zeros(length(curLat), length(curLon), length(models));
+    regionalSoilHistorical(regionalSoilHistorical == 0) = NaN;
+    regionalSoilFuture = zeros(length(curLat), length(curLon), length(models));
+    regionalSoilFuture(regionalSoilFuture == 0) = NaN;
+    
+    fprintf('loading cmip5 data...\n');
     for model = 1:length(models)
-        % load historical and future soil data
-        load([baseDir '/monthly-soil/monthlySoilChg-cmip5-historical-' soilVar '-' models{model} '-1985-2005.mat']);
+        % load historical and future Snw data
+        load([baseDir '/mrso-chg-data/monthly-mean-mrso-cmip5-historical-' models{model} '.mat']);
+        % rename variable from file
+        soilHistorical = monthlyMeans;
+        clear monthlyMeans;
         
         % remove water tiles
         for month = 1:12
@@ -90,12 +95,20 @@ for region = showRegions
             soilHistorical(:, :, month) = curGrid;
         end
         
-        % some partial water tiles have very large values - remove
-        soilHistorical(soilHistorical > maxVal) = NaN;
+        % loop over all grid cells and select hottest month soil moisture
+        for xlat = 1:length(curLat)
+            for ylon = 1:length(curLon)
+                if waterGrid(curLat(xlat), curLon(ylon))
+                    continue;
+                end
+                regionalSoilHistorical(curLat(xlat), curLon(ylon), model) = nanmean(soilHistorical(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :)), 3);
+            end
+        end
         
-        regionalSoilHistorical(:, :, :, model) = soilHistorical(curLat, curLon, :);
-        
-        load([baseDir '/monthly-soil/monthlySoilChg-cmip5-future-' soilVar '-' models{model} '-2060-2080.mat']);
+        load([baseDir '/mrso-chg-data/monthly-mean-mrso-cmip5-rcp85-' models{model} '.mat']);
+        % rename variable from file
+        soilFuture = monthlyMeans;
+        clear monthlyMeans;
         
         % remove water tiles
         for month = 1:12
@@ -104,74 +117,72 @@ for region = showRegions
             soilFuture(:, :, month) = curGrid;
         end
         
-        % some partial water tiles have very large values - remove
-        soilFuture(soilFuture > maxVal) = NaN;
-        
-        regionalSoilFuture(:, :, :, model) = soilFuture(curLat, curLon, :);
+        % loop over all grid cells and select hottest month soil moisture
+        for xlat = 1:length(curLat)
+            for ylon = 1:length(curLon)
+                if waterGrid(curLat(xlat), curLon(ylon))
+                    continue;
+                end
+                regionalSoilFuture(curLat(xlat), curLon(ylon), model) = nanmean(soilFuture(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :)), 3);
+            end
+        end
 
     end
     
-    % calculate soil change for each model
+    % calculate snow change for each model
     chg = [];
-    for model = 1:size(regionalSoilHistorical, 4)
-        chg(:, :, :, model) = (regionalSoilFuture(:,:,showMonths,model)-regionalSoilHistorical(:,:,showMonths,model)) ./ regionalSoilHistorical(:,:,showMonths,model);
+    for model = 1:size(regionalSoilHistorical, 3)
+        tmpHistorical = regionalSoilHistorical;
+        tmpFuture = regionalSoilFuture;
+        
+        chg(:, :, model) = (tmpFuture(:,:,model)-tmpHistorical(:,:,model)) ./ tmpHistorical(:,:,model);
     end
     
-    % find statistical significance of change over selected months across models
-    sigChg = [];
-    for xlat = 1:size(chg, 1)
-        for ylon = 1:size(chg, 2)
-            for month = 1:size(chg, 3)
-                
+    if plotMap
+        % find statistical significance of change over selected months across models
+        sigChg = zeros(size(lat,1), size(lat, 2));
+        for xlat = 1:size(chg, 1)
+            for ylon = 1:size(chg, 2)
+
                 % select only non-nan items
-                curChg = squeeze(chg(xlat, ylon, month, :));
+                curChg = squeeze(chg(xlat, ylon, :));
                 ind = find(~isnan(curChg) & ~isinf(curChg));
                 curChg = curChg(ind);
-                
-                % for each grid cell and month, calculate sig across models
-                if length(curChg) > 5
-                    if ttest(curChg)
-                        sigChg(xlat, ylon, month) = 1;
-                    else
-                        sigChg(xlat, ylon, month) = 0;
-                    end
+
+                % at least 10 non-nan models
+                if length(curChg >= round(.75*length(models)))
+                    med = nanmedian(curChg);
+
+                    % where at least 75% models agree on sign
+                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) >= round(.75*length(models));
                 end
             end
         end
-    end
-    
-    % average over months - will give the fraction of months that are
-    % signficant
-    sigChg = nanmean(sigChg, 3);
-    
-    % with >= 2/3 of months sig, stipple it
-    sigChg(sigChg >= 0.66) = 1;
-    sigChg(sigChg < 0.66) = 0;
-    
-    % exclude bad values and don't show zeros or increasing
-    chg(chg < -1 | chg > 1 | isinf(chg)) = NaN;
-    chg = nanmean(nanmean(chg, 4), 3);
-    chg = chg .* 100;
-    chg(:,1) = chg(:,end);
-    
-    result = {lat, lon, chg};
 
-    saveData = struct('data', {result}, ...
-                      'plotRegion', 'world', ...
-                      'plotRange', [-25 0], ...
-                      'cbXTicks', -25:5:0, ...
-                      'plotTitle', ['SOND Soil moisture mass change'], ...
-                      'fileTitle', ['soil-chg-' num2str(region) '.png'], ...
-                      'plotXUnits', ['Percent'], ...
-                      'blockWater', true, ...
-                      'colormap', cmocean('-turbid'), ...
-                      'statData', sigChg, ...
-                      'stippleInterval', 5, ...
-                      'magnify', '2', ...
-                      'boxCoords', {regions([2,4,7], :)});
-    plotFromDataFile(saveData);
-    
-    
+        chg(isinf(chg)) = NaN;
+        % median over models
+        chg = nanmedian(chg, 3);
+        chg = chg .* 100;
+        chg(:,1) = chg(:,end);
+
+        result = {lat, lon, chg};
+
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'world', ...
+                          'plotRange', [-15 15], ...
+                          'cbXTicks', -15:5:15, ...
+                          'plotTitle', ['Warm-season soil moisture change'], ...
+                          'fileTitle', ['mrso-chg-' num2str(region) '.png'], ...
+                          'plotXUnits', ['Percent'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([], 'BrBG'), ...
+                          'statData', sigChg, ...
+                          'stippleInterval', 5, ...
+                          'magnify', '3', ...
+                          'vector', true, ...
+                          'boxCoords', {regions([2,4,7], :)});
+        plotFromDataFile(saveData);
+    end
     
     % spatial average
     regionalSoilHistorical = squeeze(nanmean(nanmean(regionalSoilHistorical, 2), 1));
@@ -206,7 +217,7 @@ for region = showRegions
     box on;
     axis square;
     
-    p1 = shadedErrorBar(1:12, regionSoilChgMean, regionalSoilChgStd, 'g', 1);
+    p1 = shadedErrorBar(1:length(showMonths), regionSoilChgMean(showMonths), regionalSoilChgStd(showMonths), 'g', 1);
     
     set(p1.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
     set(p1.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
@@ -215,41 +226,31 @@ for region = showRegions
     % plot bowen zero line 
     plot(1:12, zeros(1,12), '--', 'Color', 'k', 'LineWidth', 2);
 
-    xlabel('Month', 'FontSize', 24);
-    set(gca, 'XLim', [1 12], 'XTick', 1:12);
+    xlabel('Month', 'FontSize', 36);
+    set(gca, 'XLim', [1 length(showMonths)], 'XTick', 1:length(showMonths), 'XTickLabel', showMonths);
     
     if strcmp(soilVar, 'mrso')
         if percentChange
             set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
-            ylabel('Total soil moisture change (percent)', 'FontSize', 24);
+            ylabel('Total Snw moisture change (percent)', 'FontSize', 36);
         else
             set(gca, 'YLim', [-1e7 1e7]);
-            ylabel('Total soil moisture change', 'FontSize', 24);
+            ylabel('Total Snw moisture change', 'FontSize', 36);
         end
-    elseif strcmp(soilVar, 'mrsos')
-        if percentChange
-            set(gca, 'YLim', [-50 50], 'YTick', -50:20:50);
-            ylabel('Surface soil moisture change (percent)', 'FontSize', 24);
-        else
-            set(gca, 'YLim', [-1e6 1e6]);
-            ylabel('Surface soil moisture change', 'FontSize', 24);
-        end
-    elseif strcmp(soilVar, 'snw')
-        set(gca, 'YLim', [-100 50], 'YTick', -100:50:50);
-        ylabel('Snow mass change (percent)', 'FontSize', 24);
     end
-    set(gca, 'FontSize', 24);
+    set(gca, 'FontSize', 36);
     
-    title(regionNames{region}, 'FontSize', 24);
+    title(regionNames{region}, 'FontSize', 40);
     
-    for month = 1:12
-        p2 = plot(month, regionSoilChgMean(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-        if sigChg(month)
+    for month = 1:length(showMonths)
+        p2 = plot(month, regionSoilChgMean(showMonths(month)), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        if sigChg(showMonths(month))
             set(p2, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
         else
             set(p2, 'LineWidth', 3);
         end
     end
+    
     
     set(gcf, 'Position', get(0,'Screensize'));
     
