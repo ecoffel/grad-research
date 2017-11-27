@@ -123,29 +123,44 @@ function [fg, cb] = plotFromDataFile(saveData)
 %         yCoords(end+1, :) = yCoords(1, :);
 
         % new, adding new col onto data and lat/lon
-        xCoords(end+1, :) = xCoords(end, :);
+        %xCoords(end+1, :) = xCoords(end, :);
         xCoords(:, end+1) = xCoords(:, end) + (xCoords(:, end)-xCoords(:, end-1));
         yCoords(end+1, :) = yCoords(end, :);
         yCoords(:, end+1) = yCoords(:, end) - (yCoords(:, end) - yCoords(:, end-1));
-        for xlat = 1:size(statData, 1)
-            for ylon = 1:size(statData, 2)
-                if statData(xlat, ylon)
+        
+        % keep track of coords on map as well as in smaller statdata
+        mapx = 1;
+        for statx = 1:size(statData, 1)
+            mapy = 1;
+            for staty = 1:size(statData, 2)
+                
+                if statData(statx, staty)
                     
-                    tulX = xCoords(xlat, ylon);
-                    tulY = yCoords(xlat, ylon);
+                    % at the transition from pos to deg there is a repeated
+                    % column. skip it to prevent hatches crossing the whole
+                    % screen
+                    if xCoords(mapx, mapy) ~= 0 && (sign(xCoords(mapx, mapy)) ~= sign(xCoords(mapx, mapy+1)))
+                        mapy = mapy+1;
+                    end
                     
-                    turX = xCoords(xlat+1, ylon);
-                    turY = yCoords(xlat+1, ylon);
+                    tulX = xCoords(mapx, mapy);
+                    tulY = yCoords(mapx, mapy);
                     
-                    tblX = xCoords(xlat, ylon+1);
-                    tblY = yCoords(xlat, ylon+1);
+                    turX = xCoords(mapx+1, mapy);
+                    turY = yCoords(mapx+1, mapy);
                     
-                    tbrX = xCoords(xlat+1, ylon+1);
-                    tbrY = yCoords(xlat+1, ylon+1);
+                    tblX = xCoords(mapx, mapy+1);
+                    tblY = yCoords(mapx, mapy+1);
+                    
+                    tbrX = xCoords(mapx+1, mapy+1);
+                    tbrY = yCoords(mapx+1, mapy+1);
                     
                     p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
                     set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
                     h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'k', 'HatchSpacing', stippleInterval);
+                    
+                    
+                    
                     %h = hatchfill(p, 'single', 45, stippleInterval);
                     %uistack(h, 'bottom');
                     
@@ -159,7 +174,9 @@ function [fg, cb] = plotFromDataFile(saveData)
 %                         end
 %                     end
                 end
+                mapy = mapy+1;
             end
+            mapx = mapx+1;
         end
     end
     

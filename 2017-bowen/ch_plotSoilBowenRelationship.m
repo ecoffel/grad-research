@@ -184,35 +184,3 @@ ylim([-5 10]);
 set(gca, 'XTick', 1:12);
 
 legend(legItems, {'Eastern U.S.', 'Europe', 'Amazon'});
-
-
-
-% result = {lat, lon, slopes};
-% saveData = struct('data', {result}, ...
-%                   'plotRegion', 'world', ...
-%                   'plotRange', [-15 0], ...
-%                   'cbXTicks', -15:5:0, ...
-%                   'plotTitle', ['Soil moisture & Bowen ratio'], ...
-%                   'fileTitle', ['slope-soilw-bowen.png'], ...
-%                   'plotXUnits', ['Slope'], ...
-%                   'blockWater', true, ...
-%                   'colormap', cmocean('-turbid'), ...
-%                   'magnify', '2');
-% plotFromDataFile(saveData);
-
-% plotModelData({lat,lon,slopes},'world','caxis',[-50,0]);
-
-% select subset of data and reshape to 1D
-% soilDisp = reshape(soil(dispLatRange, dispLonRange, dispMonth, :), [numel(soil(dispLatRange, dispLonRange, dispMonth, :)), 1]);
-% bowenDisp = reshape(bowen(dispLatRange, dispLonRange, dispMonth, :), [numel(bowen(dispLatRange, dispLonRange, dispMonth, :)), 1]);
-% 
-% % remove zeros or nan
-% ind = find(~(soilDisp==0) & ~(bowenDisp==0) & ~isnan(soilDisp) & ~isnan(bowenDisp));
-% soilDisp = soilDisp(ind);
-% bowenDisp = bowenDisp(ind);
-% 
-% % normalize
-% soilDisp = soilDisp ./ norm(soilDisp);
-% bowenDisp = bowenDisp ./ norm(bowenDisp);
-% 
-% scatter(soilDisp,bowenDisp);

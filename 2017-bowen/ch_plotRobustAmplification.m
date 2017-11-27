@@ -13,7 +13,7 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-max';
+chgMetric = 'ann-min';
 
 modelSubset = 'all';
 
@@ -52,7 +52,16 @@ elseif strcmp(modelSubset, 'snow')
 elseif strcmp(modelSubset, 'all')
     models = modelsAll;
 end
-              
+            
+
+regions = [[[-90 90], [0 360]]; ...             % world
+           [[30 42], [-91 -75] + 360]; ...     % eastern us
+           [[30 41], [-95 -75] + 360]; ...      % southeast us
+           [[45, 55], [10, 35]]; ...            % Europe
+           [[36 45], [-5+360, 40]]; ...        % Med
+           [[5 20], [-90 -45]+360]; ...         % Northern SA
+           [[-10, 1], [-75, -53]+360]; ...      % Amazon
+           [[-10 10], [15, 30]]];                % central africa
                       
 % if monthly
 %     % monthly-mean-max or monthly-max
@@ -210,7 +219,8 @@ saveData = struct('data', {result}, ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...
-                  'statData', ampAgree);
+                  'statData', ampAgree, ...
+                  'boxCoords', {regions([2,4,7], :)});
 plotFromDataFile(saveData);
 %plotModelData({lat, lon, nanmean(amp, 3)}, 'world', 'caxis', [-4 4]);
 

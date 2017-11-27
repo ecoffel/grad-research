@@ -11,11 +11,6 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-% show the percentage change in bowen ratio or the absolute change
-showPercentChange = true;
-
-showLegend = false;
-
 % show correlation between Tx and Bowen
 showCorr = true;
 
@@ -24,13 +19,8 @@ load lat;
 load lon;
 waterGrid = logical(waterGrid);
 
-bowenBaseDir = 'e:\data\projects\bowen\temp-chg-data\';
-tempBaseDir = 'e:\data\projects\bowen\temp-chg-data\';
-
 % all available models for both bowen and tasmax
 availModels = {};
-
-
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -70,65 +60,70 @@ end
 % load ncep/era data if needed and conver to monthly mean
 if ~exist('tasmaxNcep', 'var')
     fprintf('loading reanalysis data...\n');
-    tasmaxNcep = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
-    tasmaxNcep{3} = tasmaxNcep{3} - 273.15;
-    tasmaxNcep = dailyToMonthly(tasmaxNcep);
+    mrsoNcep = loadDailyData('e:/data/ncep-reanalysis/output/soilw10/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
+    mrsoNcep = dailyToMonthly(mrsoNcep);
     
-    bowenNcep = loadDailyData('e:/data/ncep-reanalysis/output/bowen/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
-    bowenNcep{3}(bowenNcep{3} > 100) = NaN;
-    %bowenNcep{3}(bowenNcep{3} < 0) = NaN;
-    bowenNcep = dailyToMonthly(bowenNcep);
+    tempNcep = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
+    tempNcep{3} = tempNcep{3}-273.15;
+    tempNcep = dailyToMonthly(tempNcep);
     
-    tasmaxEra = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
-    tasmaxEra{3} = tasmaxEra{3} - 273.15;
-    tasmaxEra = dailyToMonthly(tasmaxEra);
+    mrsoEra = [];
+    % sum 4 levels in era data
+    for l = 1:4
+        curMrsoEra = loadDailyData(['e:/data/era-interim/output/swvl' num2str(l) '/regrid/world'], 'yearStart', 1985, 'yearEnd', 2004);
+        curMrsoEra = dailyToMonthly(curMrsoEra);
+        if l == 1
+            mrsoEra = curMrsoEra{3};
+        else
+            mrsoEra = mrsoEra + curMrsoEra{3};
+        end
+    end
     
-    bowenEra = loadDailyData('e:/data/era-interim/output/bowen/regrid/world', 'yearStart', 1985, 'yearEnd', 2005);
-    bowenEra{3}(bowenEra{3} > 100) = NaN;
-    %bowenEra{3}(bowenEra{3} < 0) = NaN;
-    bowenEra = dailyToMonthly(bowenEra);
+    tempEra = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
+    tempEra{3} = tempEra{3} - 273.15;
+    tempEra = dailyToMonthly(tempEra);
     
-    for year = 1:size(tasmaxNcep{3}, 3)
-        for month = 1:size(tasmaxNcep{3}, 4)
-            curGrid = tasmaxNcep{3}(:, :, year, month);
+    for year = 1:size(mrsoNcep{3}, 3)
+        for month = 1:size(mrsoNcep{3}, 4)
+            curGrid = mrsoNcep{3}(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            tasmaxNcep{3}(:, :, year, month) = curGrid;
+            mrsoNcep{3}(:, :, year, month) = curGrid;
             
-            curGrid = bowenNcep{3}(:, :, year, month);
+            curGrid = tempNcep{3}(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            bowenNcep{3}(:, :, year, month) = curGrid;
+            tempNcep{3}(:, :, year, month) = curGrid;
             
-            curGrid = tasmaxEra{3}(:, :, year, month);
+            curGrid = mrsoEra(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            tasmaxEra{3}(:, :, year, month) = curGrid;
+            mrsoEra(:, :, year, month) = curGrid;
             
-            curGrid = bowenEra{3}(:, :, year, month);
+            curGrid = tempEra{3}(:, :, year, month);
             curGrid(waterGrid) = NaN;
-            bowenEra{3}(:, :, year, month) = curGrid;
+            tempEra{3}(:, :, year, month) = curGrid;
         end
     end
     
     % select data and average over years
-    tasmaxNcep = tasmaxNcep{3};
-    bowenNcep = bowenNcep{3};
-    tasmaxEra = tasmaxEra{3};
-    bowenEra = bowenEra{3};
+    mrsoNcep = mrsoNcep{3};
+    tempNcep = tempNcep{3};
+    mrsoEra = mrsoEra;
+    tempEra = tempEra{3};
 
     % average bowen (absolute) and temperature change over each region
-    bowenRegionsNcep = {};
-    tasmaxRegionsNcep = {};
+    tempRegionsNcep = {};
+    mrsoRegionsNcep = {};
 
-    bowenRegionsEra = {};
-    tasmaxRegionsEra = {};
+    tempRegionsEra = {};
+    mrsoRegionsEra = {};
 
     for i = 1:length(regionNames)
 
         % calculate spatial mean historical bowen
-        bowenRegionsNcep{i} = squeeze(bowenNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
-        tasmaxRegionsNcep{i} = squeeze(tasmaxNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+        tempRegionsNcep{i} = squeeze(tempNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+        mrsoRegionsNcep{i} = squeeze(mrsoNcep(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
 
-        bowenRegionsEra{i} = squeeze(bowenEra(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
-        tasmaxRegionsEra{i} = squeeze(tasmaxEra(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+        tempRegionsEra{i} = squeeze(tempEra(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
+        mrsoRegionsEra{i} = squeeze(mrsoEra(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :)); 
         
     end
 end
@@ -138,31 +133,28 @@ if ~exist('tasmaxCmip5', 'var')
     fprintf('loading cmip5 data...\n');
     
     % dimensions: x, y, month, model
-    bowenCmip5 = [];
-    tasmaxCmip5 = [];
+    tempCmip5 = [];
+    mrsoCmip5 = [];
 
-    bowenRegionsCmip5 = {};
-    tasmaxRegionsCmip5 = {};
+    tempRegionsCmip5 = {};
+    mrsoRegionsCmip5 = {};
 
     for m = 1:length(models)
 
-        load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '-all-years.mat']);
-        tasmaxCmip5(:, :, m, :, :) = monthlyMeans;
+        curMrso = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/mrso/regrid/world'], 'mrso', 'yearStart', 1985, 'yearEnd', 2004);
+        mrsoCmip5(:, :, m, :, :) = curMrso{3};
 
-        %load([bowenBaseDir 'monthly-mean-bowen-cmip5-historical-' models{m} '-all-years-.mat']);
-        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowe', 'yearStart', 1985, 'yearEnd', 2004);
-        bowenCmip5(:, :, m, :, :) = curBowen{3};
-
-        %bowenCmip5(bowenCmip5 > 100) = NaN;
-        %bowenCmip5(bowenCmip5 < 0) = NaN;
+        curTemp = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'yearStart', 1985, 'yearEnd', 2004);
+        curTemp{3} = curTemp{3} - 273.15;
+        curTemp = dailyToMonthly(curTemp);
+        tempCmip5(:, :, m, :, :) = curTemp{3};
 
     end
 
     % loop over regions and extract bowen & tasmax change data
     for i = 1:length(regionNames)
-
-        bowenRegionsCmip5{i} = squeeze(bowenCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
-        tasmaxRegionsCmip5{i} = squeeze(tasmaxCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
+        tempRegionsCmip5{i} = squeeze(tempCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
+        mrsoRegionsCmip5{i} = squeeze(mrsoCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
     end
 end
 
@@ -186,28 +178,28 @@ for i = [1, 2, 4, 7]
                                 [numel(hottestSeason(regionLatLonInd{i}{1}, regionLatLonInd{i}{2})), 1]));
     
     % mean temperature change across models
-    tasmaxNcep = tasmaxRegionsNcep{i};
-    bowenNcep = bowenRegionsNcep{i};
-    tasmaxEra = tasmaxRegionsEra{i};
-    bowenEra = bowenRegionsEra{i};
-    tasmaxCmip5 = tasmaxRegionsCmip5{i};
-    bowenCmip5 = bowenRegionsCmip5{i};
+    mrsoNcep = mrsoRegionsNcep{i};
+    tempNcep = tempRegionsNcep{i};
+    mrsoEra = mrsoRegionsEra{i};
+    tempEra = tempRegionsEra{i};
+    mrsoCmip5 = mrsoRegionsCmip5{i};
+    tempCmip5 = tempRegionsCmip5{i};
     
     seasons = [[12 1 2];
                [3 4 5];
                [6 7 8];
                [9 10 11]];
     
-    cmip5Corr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), length(models), size(seasons, 1));
-    ncepCorr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), size(seasons, 1));
-    eraCorr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), size(seasons, 1));
+    cmip5Corr = zeros(size(mrsoNcep, 1), size(mrsoNcep, 2), length(models), size(seasons, 1));
+    ncepCorr = zeros(size(mrsoNcep, 1), size(mrsoNcep, 2), size(seasons, 1));
+    eraCorr = zeros(size(mrsoNcep, 1), size(mrsoNcep, 2), size(seasons, 1));
     
     cmip5Corr(cmip5Corr == 0) = NaN;
     ncepCorr(ncepCorr == 0) = NaN;
     eraCorr(eraCorr == 0) = NaN;
     % loop over all gridboxes
-    for xlat = 1:size(tasmaxNcep, 1)
-        for ylon = 1:size(tasmaxNcep, 2)
+    for xlat = 1:size(mrsoNcep, 1)
+        for ylon = 1:size(mrsoNcep, 2)
             if waterGrid(xlat, ylon)
                 ncepCorr(xlat, ylon, 1:4) = NaN;
                 continue;
@@ -217,35 +209,35 @@ for i = [1, 2, 4, 7]
             for season = 1:size(seasons, 1)
                 % list of seasonal mean bowen/temp values for each gridbox
                 % in region and for each year
-                curT = squeeze(nanmean(tasmaxNcep(xlat, ylon, :, seasons(season, :)), 4));
-                curB = squeeze(nanmean(bowenNcep(xlat, ylon, :, seasons(season, :)), 4));
+                curM = squeeze(nanmean(mrsoNcep(xlat, ylon, :, seasons(season, :)), 4));
+                curB = squeeze(nanmean(tempNcep(xlat, ylon, :, seasons(season, :)), 4));
                 
-                nn = find(~isnan(curT) & ~isnan(curB));
-                curT = curT(nn);
+                nn = find(~isnan(curM) & ~isnan(curB));
+                curM = curM(nn);
                 curB = curB(nn);
                 
                 % calculate seasonal corr for each grid cell
                 if length(curB) > 10
-                    ncepCorr(xlat, ylon, season) = corr(curT, curB);
+                    ncepCorr(xlat, ylon, season) = corr(curM, curB);
                 end
                 
-                curT = squeeze(nanmean(tasmaxEra(xlat, ylon, :, seasons(season, :)), 4));
-                curB = squeeze(nanmean(bowenEra(xlat, ylon, :, seasons(season, :)), 4));
+                curM = squeeze(nanmean(mrsoEra(xlat, ylon, :, seasons(season, :)), 4));
+                curB = squeeze(nanmean(tempEra(xlat, ylon, :, seasons(season, :)), 4));
                 
-                nn = find(~isnan(curT) & ~isnan(curB));
-                curT = curT(nn);
+                nn = find(~isnan(curM) & ~isnan(curB));
+                curM = curM(nn);
                 curB = curB(nn);
                 
                 % calculate seasonal corr for each grid cell
                 if length(curB) > 10
-                    eraCorr(xlat, ylon, season) = corr(curT, curB);
+                    eraCorr(xlat, ylon, season) = corr(curM, curB);
                 end
                 
                 % same over all cmip5 models
                 for model = 1:length(models)
-                    curT = squeeze(nanmean(tasmaxCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
-                    curB = squeeze(nanmean(bowenCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
-                    cmip5Corr(xlat, ylon, model, season) = corr(curT, curB);
+                    curM = squeeze(nanmean(mrsoCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
+                    curB = squeeze(nanmean(tempCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
+                    cmip5Corr(xlat, ylon, model, season) = corr(curM, curB);
                 end
             end
             
@@ -294,6 +286,6 @@ for i = 1:length(h)
     set(h(i), 'position', [(i+.5)*spacing+(i-1)*width p(i,2) width nanmean(p(:,4))]);
 end
 
-export_fig(['temp-bowen-corr.eps']);
+export_fig(['mrso-temp-corr.eps']);
 close all;
     

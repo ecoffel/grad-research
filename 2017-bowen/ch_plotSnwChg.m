@@ -20,7 +20,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-showMonths = [12 1 2 3];
+showMonths = [12 1 2];
 showRegions =  1;
 
 regionNames = {'World', ...
@@ -149,13 +149,15 @@ for region = showRegions
                 if length(curChg >= round(.75*length(models)))
                     med = nanmedian(curChg);
 
-                    % where at least 75% models agree on sign
-                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) >= round(.75*length(models));
+                    % where fewer 75% models agree on sign
+                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
                 end
             end
         end
 
         sigChg(~snowMask) = 0;
+        % kill off hatching in antarctica to speed rendering
+        sigChg(1:45, :) = 0;
         chg(isinf(chg)) = NaN;
         % median over models
         chg = nanmedian(chg, 3);
@@ -170,7 +172,7 @@ for region = showRegions
                           'cbXTicks', -100:50:100, ...
                           'plotTitle', ['DJF Snow mass change'], ...
                           'fileTitle', ['snw-chg-' num2str(region) '.png'], ...
-                          'plotXUnits', ['Percent'], ...
+                          'plotXUnits', ['%'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], 'BrBG'), ...
                           'statData', sigChg, ...

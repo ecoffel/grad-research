@@ -14,11 +14,14 @@ import sys
 import glob
 import numpy
 
-cropBaseDir = '2017-ag-precip/'
+cropBaseDir = 'e:/data/projects/ag/crop/'
 
 # percentile cutoffs
-tempPrc = 99.99
-precipPrc = 99.99
+tempPrc = 99.95
+precipPrc = 99.95
+
+tempAbs = 32
+precipAbs = 25
 
 # get all state wx
 fileList = glob.glob(cropBaseDir + '*.pgz')
@@ -49,7 +52,7 @@ for file in fileList:
         
         groupedData[state][county] = {'year':[], 'yield':[], 'isTempGroup':[], 'isPrecipGroup':[], \
                                       'meanTemp':[], 'totalPrecip':[], 'tempMissingFraction':[], \
-                                      'precipMissingFraction':[]}
+                                      'precipMissingFraction':[], 'isAbsTempGroup':[], 'isAbsPrecipGroup':[]}
         
         print('processing', state + '/' + county + '...')
         
@@ -106,13 +109,18 @@ for file in fileList:
                 else:
                     groupedData[state][county]['isTempGroup'].append(False)
                     
-                # and same for precip
-                if numpy.size(numpy.where(countyData['precip'][precipInd] >= precipThresh)) > 0:
-                    groupedData[state][county]['isPrecipGroup'].append(True)
+                if numpy.size(numpy.where(countyData['temp'][tempInd] >= tempAbs)) > 0:
+                    groupedData[state][county]['isAbsTempGroup'].append(True)
                 else:
-                    groupedData[state][county]['isPrecipGroup'].append(False)
+                    groupedData[state][county]['isAbsTempGroup'].append(False)
+                    
+                # and same for precip
+                if numpy.size(numpy.where(countyData['precip'][precipInd] >= precipAbs)) > 0:
+                    groupedData[state][county]['isAbsPrecipGroup'].append(True)
+                else:
+                    groupedData[state][county]['isAbsPrecipGroup'].append(False)
         
-f = open('grouped-data-999.dat', 'wb')
+f = open('grouped-data-995.dat', 'wb')
 pickle.dump(groupedData, f)
 f.close()
     

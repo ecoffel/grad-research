@@ -1,12 +1,14 @@
 tempVar = 'tmax';
 bowenVar = 'bowen';
 
-timePeriod = 1981:2009;
+timePeriod = 1980:2015;
 
 ncepBaseDir = 'e:/data/ncep-reanalysis/output';
 eraBaseDir = 'e:/data/era-interim/output';
 
-regionInd = 1;
+regionInd = 7;
+
+showLegend = false;
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -82,10 +84,8 @@ for y = timePeriod(1):timePeriod(end)
     
     % eliminate stray bowen values
     % global bowens can be much higher as considering desert regions
-    baseDailyBowenNcep(baseDailyBowenNcep > 50) = NaN;
-    baseDailyBowenNcep(baseDailyBowenNcep < 0) = NaN;
-    baseDailyBowenEra(baseDailyBowenEra > 50) = NaN;
-    baseDailyBowenEra(baseDailyBowenEra < 0) = NaN;
+    baseDailyBowenNcep(abs(baseDailyBowenNcep) > 100) = NaN;
+    baseDailyBowenEra(abs(baseDailyBowenEra) > 100) = NaN;
     
     % loop over months
     for month = 1:size(baseDailyTempNcep, 4)
@@ -101,8 +101,12 @@ for y = timePeriod(1):timePeriod(end)
     end
 end
 
+% normalize bowens to show percent changes
+mmBowenNcep = mmBowenNcep ./ nanmean(mmBowenNcep, 2);
+mmBowenEra = mmBowenEra ./ nanmean(mmBowenEra, 2);
+
 % confidence 
-ciThresh = 0.9;
+ciThresh = 0.95;
 
 slopeTmaxNcep = [];
 slopeBowenNcep = [];
@@ -113,64 +117,70 @@ CIBowenNcep = [];
 CITmaxEra = [];
 CIBowenEra = [];
 
-for month = 1:12
+ seasons = [[12 1 2];
+           [3 4 5];
+           [6 7 8];
+           [9 10 11]];
+
+for s = 1:size(seasons, 1)
+    months = seasons(s, :);
+    
     % linear fit for current month
-    f = fit((1:size(mmTempNcep, 2))', mmTempNcep(month, :)', 'poly1');
+    f = fit((1:size(mmTempNcep, 2))', nanmean(mmTempNcep(months, :), 1)', 'poly1');
     % get linear coefficient
-    slopeTmaxNcep(month) = f.p1;
+    slopeTmaxNcep(s) = f.p1;
     
     % get and store confidence intervals for linear coefficient
     c = confint(f, ciThresh);
-    CITmaxNcep(month, 1) = c(1,1);
-    CITmaxNcep(month, 2) = c(2,1);
+    CITmaxNcep(s, 1) = c(1,1);
+    CITmaxNcep(s, 2) = c(2,1);
     
     % and same for era
-    f = fit((1:size(mmTempEra, 2))', mmTempEra(month, :)', 'poly1');
+    f = fit((1:size(mmTempEra, 2))', nanmean(mmTempEra(months, :), 1)', 'poly1');
     % get linear coefficient
-    slopeTmaxEra(month) = f.p1;
+    slopeTmaxEra(s) = f.p1;
     
     % get and store confidence intervals for linear coefficient for era
     c = confint(f, ciThresh);
-    CITmaxEra(month, 1) = c(1,1);
-    CITmaxEra(month, 2) = c(2,1);
-    
+    CITmaxEra(s, 1) = c(1,1);
+    CITmaxEra(s, 2) = c(2,1);
     
     % and the same for bowen for ncep
-    curBowen = mmBowenNcep(month, :)';
+    curBowen = nanmean(mmBowenNcep(months, :), 1)';
     % elimnate nans
     curBowen(isnan(curBowen)) = [];
     if length(curBowen) > 4
-        f = fit((1:length(curBowen))',curBowen , 'poly1');
+        f = fit((1:length(curBowen))', curBowen , 'poly1');
         % get linear coefficient
-        slopeBowenNcep(month) = f.p1;
+        slopeBowenNcep(s) = f.p1;
 
         % get and store confidence intervals for linear coefficient for ncep
         c = confint(f, ciThresh);
-        CIBowenNcep(month, 1) = c(1,1);
-        CIBowenNcep(month, 2) = c(2,1);
+        CIBowenNcep(s, 1) = c(1,1);
+        CIBowenNcep(s, 2) = c(2,1);
     else
-        slopeBowenNcep(month) = NaN;
-        CIBowenNcep(month, 1) = NaN;
-        CIBowenNcep(month, 2) = NaN;
+        slopeBowenNcep(s) = NaN;
+        CIBowenNcep(s, 1) = NaN;
+        CIBowenNcep(s, 2) = NaN;
     end
     
     % and for era
-    curBowen = mmBowenEra(month, :)';
+    curBowen = nanmean(mmBowenEra(months, :), 1)';
     % elimnate nans
     curBowen(isnan(curBowen)) = [];
     if length(curBowen) > 4
-        f = fit((1:length(curBowen))',curBowen , 'poly1');
+        f = fit((1:length(curBowen))', curBowen , 'poly1');
         % get linear coefficient
-        slopeBowenEra(month) = f.p1;
+        slopeBowenEra(s) = f.p1;
 
         % get and store confidence intervals for linear coefficient for era
         c = confint(f, ciThresh);
-        CIBowenEra(month, 1) = c(1,1);
-        CIBowenEra(month, 2) = c(2,1);
+        CIBowenEra(s, 1) = c(1,1);
+        CIBowenEra(s, 2) = c(2,1);
     else
-        slopeBowenEra(month) = NaN;
-        CIBowenEra(month, 1) = NaN;
-        CIBowenEra(month, 2) = NaN;
+        slopeBowenEra(s) = NaN;
+        CIBowenEra(s, 1) = NaN;
+        CIBowenEra(s, 2) = NaN;
     end
     
 end
@@ -184,53 +194,53 @@ slopeBowenEra = slopeBowenEra .* 10;
 figure('Color', [1,1,1]);
 box on;
 
-[ax,p1,p2] = plotyy(1:12, slopeTmaxNcep, 1:12, slopeBowenNcep);
+[ax,p1,p2] = plotyy(1:4, slopeTmaxNcep, 1:4, slopeBowenNcep);
 
 hold(ax(1));
 hold(ax(2));
 
-p1Era = plot(ax(1), 1:12, slopeTmaxEra, 'LineStyle', '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 4);
-p2Era = plot(ax(2), 1:12, slopeBowenEra, 'LineStyle', '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
+p1Era = plot(ax(1), 1:4, slopeTmaxEra, 'LineStyle', '--', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
+p2Era = plot(ax(2), 1:4, slopeBowenEra, 'LineStyle', '--', 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
 grid(ax(1));
 
 axis(ax(1), 'square');
 axis(ax(2), 'square');
 
-set(p1, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 4);
+set(p1, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 2);
 set(p2, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 2);
 
 %plot(1:12, slopeTmax, 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
 %plot(1:12, slopeBowen, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
 
-for month = 1:12
-    p3 = plot(ax(1), month, slopeTmaxNcep(month), 'o', 'MarkerSize', 15, 'Color', [239/255.0, 71/255.0, 85/255.0], 'MarkerEdgeColor', 'k');
-    if (CITmaxNcep(month, 1) > 0 && CITmaxNcep(month, 2) > 0) || ...
-       (CITmaxNcep(month, 1) < 0 && CITmaxNcep(month, 2) < 0)
+for s = 1:size(seasons,1)
+    p3 = plot(ax(1), s, slopeTmaxNcep(s), 'o', 'MarkerSize', 15, 'Color', [239/255.0, 71/255.0, 85/255.0], 'MarkerEdgeColor', 'k');
+    if (CITmaxNcep(s, 1) > 0 && CITmaxNcep(s, 2) > 0) || ...
+       (CITmaxNcep(s, 1) < 0 && CITmaxNcep(s, 2) < 0)
         set(p3, 'LineWidth', 3, 'MarkerFaceColor', [239/255.0, 71/255.0, 85/255.0]);
     else
         set(p3, 'LineWidth', 3);
     end
     
-    p3 = plot(ax(1), month, slopeTmaxEra(month), 'o', 'MarkerSize', 15, 'Color', [239/255.0, 71/255.0, 85/255.0], 'MarkerEdgeColor', 'k');
-    if (CITmaxEra(month, 1) > 0 && CITmaxEra(month, 2) > 0) || ...
-       (CITmaxEra(month, 1) < 0 && CITmaxEra(month, 2) < 0)
+    p3 = plot(ax(1), s, slopeTmaxEra(s), 'o', 'MarkerSize', 15, 'Color', [239/255.0, 71/255.0, 85/255.0], 'MarkerEdgeColor', 'k');
+    if (CITmaxEra(s, 1) > 0 && CITmaxEra(s, 2) > 0) || ...
+       (CITmaxEra(s, 1) < 0 && CITmaxEra(s, 2) < 0)
         set(p3, 'LineWidth', 3, 'MarkerFaceColor', [239/255.0, 71/255.0, 85/255.0]);
     else
         set(p3, 'LineWidth', 3);
     end
     
-    p5 = plot(ax(2), month, slopeBowenNcep(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-    if (CIBowenNcep(month, 1) > 0 && CIBowenNcep(month, 2) > 0) || ...
-       (CIBowenNcep(month, 1) < 0 && CIBowenNcep(month, 2) < 0)
+    p5 = plot(ax(2), s, slopeBowenNcep(s), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+    if (CIBowenNcep(s, 1) > 0 && CIBowenNcep(s, 2) > 0) || ...
+       (CIBowenNcep(s, 1) < 0 && CIBowenNcep(s, 2) < 0)
         set(p5, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
     else
         set(p5, 'LineWidth', 3);
     end
     
-    p6 = plot(ax(2), month, slopeBowenEra(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-    if (CIBowenEra(month, 1) > 0 && CIBowenEra(month, 2) > 0) || ...
-       (CIBowenEra(month, 1) < 0 && CIBowenEra(month, 2) < 0)
+    p6 = plot(ax(2), s, slopeBowenEra(s), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+    if (CIBowenEra(s, 1) > 0 && CIBowenEra(s, 2) > 0) || ...
+       (CIBowenEra(s, 1) < 0 && CIBowenEra(s, 2) < 0)
         set(p6, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
     else
         set(p6, 'LineWidth', 3);
@@ -239,25 +249,29 @@ end
 
 plot(0:13, zeros(14,1), '--k', 'LineWidth', 2);
 
-xlabel('Month', 'FontSize', 36);
-ylabel(ax(1), ['Temperature slope (' char(176) '/decade)'], 'FontSize', 36);
-ylabel(ax(2), ['Bowen ratio slope (per decade)'], 'FontSize', 36);
-set(ax(1), 'FontSize', 36);
-set(ax(2), 'FontSize', 36);
+xlabel('Month', 'FontSize', 30);
+ylabel(ax(1), ['Temperature slope (' char(176) '/decade)'], 'FontSize', 30);
+ylabel(ax(2), ['Bowen ratio slope (%/decade)'], 'FontSize', 30);
+set(ax(1), 'FontSize', 30);
+set(ax(2), 'FontSize', 30);
 
-set(ax(1), 'XLim', [0.5 12.5], 'XTick', 1:12);
-set(ax(2), 'XLim', [0.5 12.5], 'XTick', []);
+set(ax(1), 'XLim', [0.5 4.5], 'XTick', 1:12);
+set(ax(2), 'XLim', [0.5 4.5], 'XTick', []);
+set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
+xtickangle(45);
 
 set(ax(1), 'YLim', [-1 1], 'YTick', -1:.25:1);
 set(ax(2), 'YLim', [-1 1], 'YTick', -1:.25:1);
 
 set(ax(1), 'YColor', 'k');
 set(ax(2), 'YColor', 'k');
-title(regionNames{regionInd}, 'FontSize', 40);
+title(regionNames{regionInd}, 'FontSize', 30);
 
-l = legend([p1 p1Era p2 p2Era], 'Temperature (NCEP)', 'Temperature (Era)', 'Bowen (NCEP)', 'Bowen (Era)');
-set(l, 'Location', 'northeastoutside');
+if showLegend
+    l = legend([p1 p1Era p2 p2Era], 'Temperature (NCEP)', 'Temperature (ERA)', 'Bowen (NCEP)', 'Bowen (ERA)');
+    set(l, 'Location', 'southeast');
+end
 
-%set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['reanalysisTrend-' regionAb{regionInd} '-.png'], '-m1');
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['reanalysisTrend-' regionAb{regionInd} '-.eps']);
 

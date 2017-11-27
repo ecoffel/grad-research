@@ -129,7 +129,7 @@ for region = showRegions
 
     end
     
-    % calculate snow change for each model
+    % calculate soil change for each model
     chg = [];
     for model = 1:size(regionalSoilHistorical, 3)
         tmpHistorical = regionalSoilHistorical;
@@ -153,8 +153,8 @@ for region = showRegions
                 if length(curChg >= round(.75*length(models)))
                     med = nanmedian(curChg);
 
-                    % where at least 75% models agree on sign
-                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) >= round(.75*length(models));
+                    % where < 75% models agree on sign
+                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
                 end
             end
         end
@@ -173,7 +173,7 @@ for region = showRegions
                           'cbXTicks', -15:5:15, ...
                           'plotTitle', ['Warm-season soil moisture change'], ...
                           'fileTitle', ['mrso-chg-' num2str(region) '.png'], ...
-                          'plotXUnits', ['Percent'], ...
+                          'plotXUnits', ['%'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], 'BrBG'), ...
                           'statData', sigChg, ...

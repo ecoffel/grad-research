@@ -65,13 +65,12 @@ if ~exist('bowenChg', 'var')
     for m = 1:length(models)
 
         curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowen', 'yearStart', 1985, 'yearEnd', 2004);
+        curBowen{3}(abs(curBowen{3}) > 100) = NaN;
         bowenHistorical = squeeze(nanmean(curBowen{3}, 3));
 
         curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/bowen/regrid/world'], 'bowen', 'yearStart', 2060, 'yearEnd', 2079);
+        curBowen{3}(abs(curBowen{3}) > 100) = NaN;
         bowenRcp85 = squeeze(nanmean(curBowen{3}, 3));
-
-        %bowenHistorical(bowenHistorical > 100) = NaN;
-        %bowenRcp85(bowenRcp85 > 100) = NaN;
         
         bowenChg(:, :, :, m) = (squeeze(bowenRcp85) - squeeze(bowenHistorical)) ./ squeeze(bowenHistorical) .* 100;
     end

@@ -4,9 +4,11 @@
 season = 'all';
 
 dataset = 'cmip5';
-var = 'snw';
+var = 'bowen';
 
 isMonthly = true;
+
+skipExisting = false;
 
 if strcmp(dataset, 'cmip5')
     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -48,7 +50,7 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/snw-chg-data';
+outputDir = 'e:/data/projects/bowen/bowen-chg-data';
 yearStep = 1;
 
 load lat;
@@ -58,9 +60,9 @@ load lon;
 for m = 1:length(models)
     curModel = models{m};
     
-    if exist([outputDir '/monthly-mean-' var '-' dataset '-' rcp '-' curModel avgOverYearsStr '.mat'], 'file')
+    if skipExisting && exist([outputDir '/monthly-mean-' var '-' dataset '-' rcp '-' curModel avgOverYearsStr '.mat'], 'file')
         ['skipping ' curModel ', ' rcp '...']
-       %continue;
+        continue;
     end
     
     % monthly mean bowen ratios
