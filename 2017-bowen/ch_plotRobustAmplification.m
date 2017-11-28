@@ -170,7 +170,7 @@ ampThresh = -1;
 prcAgree = 0.75;
 
 if strcmp(chgMetric, 'ann-max') || strcmp(chgMetric, 'ann-min') || strcmp(chgMetric, 'daily-max-min')
-    ampLevels = -3:0.5:3;
+    ampLevels = -6:0.5:6;
 elseif strcmp(chgMetric, 'ann-max-min')
     ampLevels = -10:2:10;
 end
@@ -219,7 +219,6 @@ saveData = struct('data', {result}, ...
                   'plotXUnits', ['Amplification (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...
-                  'statData', ampAgree, ...
                   'boxCoords', {regions([2,4,7], :)});
 plotFromDataFile(saveData);
 %plotModelData({lat, lon, nanmean(amp, 3)}, 'world', 'caxis', [-4 4]);

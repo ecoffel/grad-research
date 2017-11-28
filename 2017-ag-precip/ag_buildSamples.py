@@ -21,7 +21,7 @@ tempPrc = 99.95
 precipPrc = 99.95
 
 tempAbs = 32
-precipAbs = 25
+precipAbs = 30
 
 # get all state wx
 fileList = glob.glob(cropBaseDir + '*.pgz')
@@ -67,6 +67,9 @@ for file in fileList:
         tempThresh = numpy.nanpercentile(countyData['temp'], tempPrc)
         precipThresh = numpy.nanpercentile(countyData['precip'], precipPrc)
         
+        groupedData[state][county]['tempThresh'] = tempThresh
+        groupedData[state][county]['precipThresh'] = precipThresh
+        
         # get the available years for yield, temp, and precip
         agYears = list(countyData['yield'].keys())
         wxYears = list(numpy.unique(countyData['year']))
@@ -109,6 +112,12 @@ for file in fileList:
                 else:
                     groupedData[state][county]['isTempGroup'].append(False)
                     
+                # if we have a temp that passes threshold
+                if numpy.size(numpy.where(countyData['precip'][precipInd] >= precipThresh)) > 0:
+                    groupedData[state][county]['isPrecipGroup'].append(True)
+                else:
+                    groupedData[state][county]['isPrecipGroup'].append(False)
+                    
                 if numpy.size(numpy.where(countyData['temp'][tempInd] >= tempAbs)) > 0:
                     groupedData[state][county]['isAbsTempGroup'].append(True)
                 else:
@@ -119,8 +128,8 @@ for file in fileList:
                     groupedData[state][county]['isAbsPrecipGroup'].append(True)
                 else:
                     groupedData[state][county]['isAbsPrecipGroup'].append(False)
-        
-f = open('grouped-data-995.dat', 'wb')
+    
+f = open('grouped-data-9995.dat', 'wb')
 pickle.dump(groupedData, f)
 f.close()
     

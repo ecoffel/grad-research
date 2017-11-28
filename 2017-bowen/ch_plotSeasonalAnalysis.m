@@ -72,8 +72,6 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]];                % central africa
 
-historicalHottestMonth = [7 7 7 7 8 9 9 3];
-       
 regionLatLonInd = {};
 
 % load hottest seasons data...
@@ -271,13 +269,6 @@ for i = 1:length(regionNames)
         tasminErr = zeros(12, 1);
     end
 
-    % test for significant change in each month at 95th percentile
-    bowenSig = [];
-    for month = 1:12
-        bowenSig(month) = ttest2(bowenRegionsChange{i}(:, month), zeros(size(bowenRegionsChange{i}(:, month))));
-    end
-
-    
     if showPercentChange
         % average over models and then calculate total prc change
         bowenY = nanmedian(squeeze(bowenRegionsChange{i} ./ bowenRegionsHistorical{i}), 1) .* 100;
@@ -287,7 +278,7 @@ for i = 1:length(regionNames)
         % now sort by model
         bowenErr = sort(bowenErr, 1);
         % now find range across 25-75% models
-        bowenErr = squeeze(range(bowenErr(lowInd:highInd, :), 1) / 2.0);
+        bowenErr = squeeze(range(bowenErr(lowInd:highInd, :), 1) ./ 2.0);
     else
         % calculate mean change across models
         bowenY = squeeze(nanmean(bowenRegionsChange{i}, 1));
@@ -295,6 +286,16 @@ for i = 1:length(regionNames)
         % sort, and take range across 25-75%
         bowenRegionsChange{i} = sort(bowenRegionsChange{i}, 1);
         bowenErr = squeeze(range(bowenRegionsChange{i}(lowInd:highInd, :), 1)) ./ 2.0;
+    end
+    
+     % test for significant change in each month at 95th percentile
+    bowenSig = [];
+    % how many models agree on direction
+    bowenSigAgreement = [];
+    for month = 1:12
+        %bowenSig(month) = kstest2(bowenRegionsChange{i}(:, month), zeros(size(bowenRegionsChange{i}(:, month))));
+        bowenSig(month) = length(find(sign(bowenRegionsChange{i}(:, month) ./ bowenRegionsHistorical{i}(:, month)) == sign(bowenY(month)))) >= round(0.75*length(models));
+        bowenSigAgreement(month) = length(find(sign(bowenRegionsChange{i}(:, month) ./ bowenRegionsHistorical{i}(:, month)) == sign(bowenY(month))));
     end
     
     % if only one model, err will be 0 so generate an array of zeros
@@ -365,7 +366,7 @@ for i = 1:length(regionNames)
     
     % plot significance indicators
     for month = 1:12
-        p3 = plot(ax(2), month, bowenY(month), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
+        p3 = plot(ax(2), month, bowenY(month), 'o', 'MarkerSize', bowenSigAgreement(month), 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
         if bowenSig(month)
             set(p3, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
         else
@@ -420,7 +421,7 @@ for i = 1:length(regionNames)
         print(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-percent.eps'], '-depsc', '-r300');
     else
         %export_fig(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-m1');
-        print(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.png'], '-depsc', '-r300');
+        print(['seasonal-analysis-' regionAb{i} '-' tasmaxMetric '-' tasminMetric '-' anomalyStr '-absolute.eps'], '-depsc', '-r300');
     end
     close all;
 end
