@@ -1,5 +1,7 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
+% fgoals, hadgem-cc, hadgem-es with weird snow relationships
+
 dataset = 'reanalysis';
 
 tasmaxMetric = 'monthly-mean-max';
@@ -277,3 +279,14 @@ export_fig 'snw-temp-fit.pdf';
 
 print(['snw-temp-fit.eps'], '-depsc', '-r300');
 close all;
+
+for model = 1:length(cmip5AnomT)
+    % remove zero values
+    ind = find(cmip5AnomS{model} == 0 | cmip5AnomT{model} == 0);
+    cmip5AnomS{model}(ind) = [];
+    cmip5AnomT{model}(ind) = [];
+
+    figure;
+    f = fit(cmip5AnomT{model}, cmip5AnomS{model}, 'poly1');
+    p3 = plot([min(cmip5AnomT{model}) max(cmip5AnomT{model})], [f(min(cmip5AnomT{model})) f(max(cmip5AnomT{model}))], 'Color', [.5 .5 .5], 'LineWidth', 1);
+end

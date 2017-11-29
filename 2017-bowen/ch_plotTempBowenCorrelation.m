@@ -140,9 +140,15 @@ if ~exist('tasmaxCmip5', 'var')
     % dimensions: x, y, month, model
     bowenCmip5 = [];
     tasmaxCmip5 = [];
+    
+    bowenCmip5Future = [];
+    tasmaxCmip5Future = [];
 
     bowenRegionsCmip5 = {};
     tasmaxRegionsCmip5 = {};
+    
+    bowenRegionsCmip5Future = {};
+    tasmaxRegionsCmip5Future = {};
 
     for m = 1:length(models)
 
@@ -152,6 +158,13 @@ if ~exist('tasmaxCmip5', 'var')
         %load([bowenBaseDir 'monthly-mean-bowen-cmip5-historical-' models{m} '-all-years-.mat']);
         curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowe', 'yearStart', 1985, 'yearEnd', 2004);
         bowenCmip5(:, :, m, :, :) = curBowen{3};
+        
+        load([tempBaseDir 'monthly-mean-tasmax-cmip5-rcp85-' models{m} '-all-years.mat']);
+        tasmaxCmip5Future(:, :, m, :, :) = monthlyMeans;
+
+        %load([bowenBaseDir 'monthly-mean-bowen-cmip5-historical-' models{m} '-all-years-.mat']);
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/bowen/regrid/world'], 'bowe', 'yearStart', 2060, 'yearEnd', 2079);
+        bowenCmip5Future(:, :, m, :, :) = curBowen{3};
 
         %bowenCmip5(bowenCmip5 > 100) = NaN;
         %bowenCmip5(bowenCmip5 < 0) = NaN;
@@ -160,16 +173,18 @@ if ~exist('tasmaxCmip5', 'var')
 
     % loop over regions and extract bowen & tasmax change data
     for i = 1:length(regionNames)
-
         bowenRegionsCmip5{i} = squeeze(bowenCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
         tasmaxRegionsCmip5{i} = squeeze(tasmaxCmip5(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
+        
+        bowenRegionsCmip5Future{i} = squeeze(bowenCmip5Future(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
+        tasmaxRegionsCmip5Future{i} = squeeze(tasmaxCmip5Future(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :, :, :)); 
     end
 end
 
 % plot ----------------------------------------------------
 
 % load hottest months
-load('2017-bowen/hottest-season.mat');
+load('2017-bowen/hottest-season-ncep.mat');
 
 % loop over all regions for plotting
 %for i = 1:length(regionNames)
@@ -192,6 +207,8 @@ for i = [1, 2, 4, 7]
     bowenEra = bowenRegionsEra{i};
     tasmaxCmip5 = tasmaxRegionsCmip5{i};
     bowenCmip5 = bowenRegionsCmip5{i};
+    tasmaxCmip5Future = tasmaxRegionsCmip5Future{i};
+    bowenCmip5Future = bowenRegionsCmip5Future{i};
     
     seasons = [[12 1 2];
                [3 4 5];
@@ -199,10 +216,12 @@ for i = [1, 2, 4, 7]
                [9 10 11]];
     
     cmip5Corr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), length(models), size(seasons, 1));
+    cmip5CorrFuture = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), length(models), size(seasons, 1));
     ncepCorr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), size(seasons, 1));
     eraCorr = zeros(size(tasmaxNcep, 1), size(tasmaxNcep, 2), size(seasons, 1));
     
     cmip5Corr(cmip5Corr == 0) = NaN;
+    cmip5CorrFuture(cmip5CorrFuture == 0) = NaN;
     ncepCorr(ncepCorr == 0) = NaN;
     eraCorr(eraCorr == 0) = NaN;
     % loop over all gridboxes
@@ -246,26 +265,52 @@ for i = [1, 2, 4, 7]
                     curT = squeeze(nanmean(tasmaxCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
                     curB = squeeze(nanmean(bowenCmip5(xlat, ylon, model, :, seasons(season, :)), 5));
                     cmip5Corr(xlat, ylon, model, season) = corr(curT, curB);
+                    
+                    curT = squeeze(nanmean(tasmaxCmip5Future(xlat, ylon, model, :, seasons(season, :)), 5));
+                    curB = squeeze(nanmean(bowenCmip5Future(xlat, ylon, model, :, seasons(season, :)), 5));
+                    cmip5CorrFuture(xlat, ylon, model, season) = corr(curT, curB);
                 end
             end
             
         end
     end
     
+    cmip5Corr = squeeze(nanmean(nanmean(cmip5Corr, 2), 1));
+    cmip5CorrFuture = squeeze(nanmean(nanmean(cmip5CorrFuture, 2), 1));
+
+%    cmip5CorrGrouped = [cmip5Corr cmip5CorrFuture];
+    
+    cmip5CorrGrouped = [cmip5Corr(:,1) cmip5CorrFuture(:,1) ...
+                        cmip5Corr(:,2) cmip5CorrFuture(:,2) ...
+                        cmip5Corr(:,3) cmip5CorrFuture(:,3) ...
+                        cmip5Corr(:,4) cmip5CorrFuture(:,4)];
+
+                      
     h(subploti) = subplot(1,4,subploti);
     hold on;
     axis square;
     grid on;
     box on;
-    % plot area average seasonal temp-bowen correlations
-    b = boxplot(squeeze(nanmean(nanmean(cmip5Corr, 2), 1)));
-    plot(1:4, squeeze(nanmean(nanmean(ncepCorr, 2), 1)), 'ko', 'MarkerSize', 15, 'LineWidth', 2);
-    plot(1:4, squeeze(nanmean(nanmean(eraCorr, 2), 1)), 'kx', 'MarkerSize', 15, 'LineWidth', 2);
-
-    set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
-    lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
-    set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
     
+    b = boxplot(cmip5CorrGrouped, 'colors', repmat('br', 1, 4), 'positions', [.8 1.2 1.8 2.2 2.8 3.2 3.8 4.2]);
+    
+    for bind = 1:size(b, 2)
+        if mod(bind,2) ~= 0
+            set(b(:,bind), {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+            lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+            set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+        else
+            set(b(:, bind), {'LineWidth', 'Color'}, {2, [247, 92, 81]./255.0})
+            lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+            set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+        end
+    end
+    
+    % plot area average seasonal temp-bowen correlations
+    %b = boxplot(cmip5CorrGrouped, cmip5CorrGroupings);
+    plot([.8 1.8 2.8 3.8], squeeze(nanmean(nanmean(ncepCorr, 2), 1)), 'ko', 'MarkerSize', 15, 'LineWidth', 2);
+    plot([.8 1.8 2.8 3.8], squeeze(nanmean(nanmean(eraCorr, 2), 1)), 'kx', 'MarkerSize', 15, 'LineWidth', 2);
+
     set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
     set(gca, 'FontSize', 24);
     
@@ -278,6 +323,7 @@ for i = [1, 2, 4, 7]
         ylabel('Correlation', 'FontSize', 24);
     end
     ylim([-1 1])
+    xlim([.5 4.5]);
     title(regionNames{i});
     xtickangle(45);
     subploti = subploti + 1;

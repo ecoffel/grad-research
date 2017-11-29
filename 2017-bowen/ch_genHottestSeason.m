@@ -28,4 +28,4 @@ for xlat = 1:size(tasmaxNcep, 1)
     end
 end
 
-save('2017-bowen/hottestSeason.mat', 'hottestSeason');
+save('2017-bowen/hottest-season-ncep.mat', 'hottestSeason');
