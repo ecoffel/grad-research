@@ -42,14 +42,14 @@ if ~exist('snwNcep', 'var')
     snwNcep = loadDailyData('e:/data/ncep-reanalysis/output/weasd/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
     snwNcep = dailyToMonthly(snwNcep);
     
-    tempNcep = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
+    tempNcep = loadDailyData('e:/data/ncep-reanalysis/output/tmin/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
     tempNcep{3} = tempNcep{3}-273.15;
     tempNcep = dailyToMonthly(tempNcep);
     
     snwEra = loadDailyData(['e:/data/era-interim/output/sd/regrid/world'], 'yearStart', 1985, 'yearEnd', 2004);
     snwEra = dailyToMonthly(snwEra);
     
-    tempEra = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
+    tempEra = loadDailyData('e:/data/era-interim/output/mn2t/regrid/world', 'yearStart', 1985, 'yearEnd', 2004);
     tempEra{3} = tempEra{3} - 273.15;
     tempEra = dailyToMonthly(tempEra);
     
@@ -106,7 +106,7 @@ if ~exist('tempCmip5', 'var')
         
         snwCmip5(:, :, m, :, :) = curSnw{3};
 
-        curTemp = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'yearStart', 1985, 'yearEnd', 2004);
+        curTemp = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmin/regrid/world'], 'yearStart', 1985, 'yearEnd', 2004);
         
         if nanmean(nanmean(nanmean(nanmean(nanmean(curTemp{3}))))) > 100
             curTemp{3} = curTemp{3} - 273.15;
@@ -267,8 +267,8 @@ p2 = plot([min(eraAnomT) max(eraAnomT)], [f(min(eraAnomT)) f(max(eraAnomT))], 'L
 
 xlim([-1 1]);
 ylim([-1 1]);
-ylabel('Normalized snow anomaly', 'FontSize', 36, 'Color', [.1 .1 .1]);
-xlabel('Normalized temperature anomaly', 'FontSize', 36, 'Color', [.1 .1 .1]);
+ylabel('Normalized snow mass anomaly', 'FontSize', 36, 'Color', [.1 .1 .1]);
+xlabel('Normalized Tn anomaly', 'FontSize', 36, 'Color', [.1 .1 .1]);
 set(gca, 'FontSize', 36);
 leg = legend([p1 p2 p3], {'NCEP II', 'ERA-Interim', 'CMIP5'});
 set(leg, 'FontSize', 36, 'location', 'northeast');

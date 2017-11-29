@@ -6,7 +6,7 @@ timePeriod = 1981:2009;
 ncepBaseDir = 'e:/data/ncep-reanalysis/output';
 eraBaseDir = 'e:/data/era-interim/output';
 
-regionInds = [2 4 7];
+regionInds = [1 2 4 7];
 
 regionNames = {'World', ...
                 'Eastern U.S.', ...
@@ -63,20 +63,14 @@ if length(baseTempDataNcep) == 0
         ['year ' num2str(y) '...']
 
         % load ncep and era bowen/temp data
-        baseDailyTempNcep = loadDailyData([ncepBaseDir '/' tempVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+1)-1);
-        baseDailyTempEra = loadDailyData([eraBaseDir '/mx2t/regrid/world'], 'yearStart', y, 'yearEnd', (y+1)-1);
+        baseDailyTempNcep = loadDailyData([eraBaseDir '/mx2t/regrid/world'], 'yearStart', y, 'yearEnd', (y+1)-1);
 
         % remove lat/lon data (we loaded this earlier)
         baseDailyTempNcep = baseDailyTempNcep{3};
-        baseDailyTempEra = baseDailyTempEra{3};
 
         % convert K->C if needed
         if baseDailyTempNcep(1,1,1,1,1) > 100
             baseDailyTempNcep = baseDailyTempNcep - 273.15;
-        end
-
-        if baseDailyTempEra(1,1,1,1,1) > 100
-            baseDailyTempEra = baseDailyTempEra - 273.15;
         end
 
         % loop over regions to extract temps
@@ -130,7 +124,7 @@ for regionId = regionInds
     end
     
     % load warming files from seasonal analysis
-    load(['2017-bowen/warming/warming-' regionAb{regionId}]);
+    load(['warming-' regionAb{regionId}]);
     
     monthGroups = [[12 1 2];
                    [3 4 5];
@@ -178,9 +172,10 @@ for regionId = regionInds
     ylabel('Days per month', 'FontSize', 36);
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', 0:8);
-    legend(legItems, monthGroupNames);
-    ylim([0 35]);
+    leg = legend(legItems, monthGroupNames);
+    set(leg, 'location', 'northwest');
+    ylim([0 31]);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['recurrence-diff-' regionAb{regionId} '.png'], '-m1');
+    export_fig(['recurrence-diff-' regionAb{regionId} '.pdf']);
     close all;
 end

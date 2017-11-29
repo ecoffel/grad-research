@@ -13,7 +13,7 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-min';
+chgMetric = 'ann-max';
 
 modelSubset = 'all';
 
