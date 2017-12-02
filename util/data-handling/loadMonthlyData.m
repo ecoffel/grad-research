@@ -17,9 +17,9 @@ for i=1:2:length(varargin)
     switch key
         case 'plev'
             plev = val;
-        case 'yearStart'
+        case 'startYear'
             yearstart = val;
-        case 'yearEnd'
+        case 'endYear'
             yearend = val;
     end
 end

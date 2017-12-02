@@ -125,6 +125,7 @@ function [fg, cb] = plotFromDataFile(saveData)
         % new, adding new col onto data and lat/lon
         %xCoords(end+1, :) = xCoords(end, :);
         xCoords(:, end+1) = xCoords(:, end) + (xCoords(:, end)-xCoords(:, end-1));
+        xCoords(end+1, :) = xCoords(end, :);
         yCoords(end+1, :) = yCoords(end, :);
         yCoords(:, end+1) = yCoords(:, end) - (yCoords(:, end) - yCoords(:, end-1));
         

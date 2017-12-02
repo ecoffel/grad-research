@@ -27,9 +27,9 @@ for i=1:2:length(varargin)
     switch key
         case 'plev'
             plev = val;
-        case 'yearStart'
+        case 'startYear'
             curYear = val;
-        case 'yearEnd'
+        case 'endYear'
             yearEnd = val;
         case 'initSize'
             dailyData = nan(val);

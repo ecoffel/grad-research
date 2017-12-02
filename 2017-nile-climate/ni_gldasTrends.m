@@ -1,178 +1,216 @@
 timePeriod = [1960 2010];
 numYears = (timePeriod(end)-timePeriod(1)+1);
 
-fprintf('loading et...\n');
-et = loadMonthlyData('E:\data\gldas-noah-v2\output\Evap_tavg', 'Evap_tavg', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+% if ~exist('et', 'var')
+%     fprintf('loading et...\n');
+%     et = loadMonthlyData('E:\data\gldas-noah-v2\output\Evap_tavg', 'Evap_tavg', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+% end
 
-fprintf('loading p...\n');
-p = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-
-fprintf('loading t...\n');
-t = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
-
-regionBounds = [[2 32]; [25, 44]];
-[latInds, lonInds] = latLonIndexRange({et{1}, et{2}, []}, regionBounds(1,:), regionBounds(2,:));
-
-lat = et{1}(latInds, lonInds);
-lon = et{2}(latInds, lonInds);
-
-tdata = permute(squeeze(t{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) - 273.15;
-pdata = permute(squeeze(p{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) .* 3600 .* 24;
-etdata = permute(squeeze(et{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) .* 3600 .* 24;
-
-ttrendMap = [];
-ttrendSig = [];
-petrendMap = [];
-petrendSig = [];
-ptrendMap = [];
-ptrendSig = [];
-
-i = 1;
-total = numel(tdata(1,1,:,:));
-for xlat = 1:size(tdata, 3)
-    for ylon = 1:size(tdata, 4)
-        curt = reshape(squeeze(tdata(:, :, xlat, ylon)), [numel(squeeze(tdata(:, :, xlat, ylon))), 1]);
-        curp = reshape(squeeze(pdata(:, :, xlat, ylon)), [numel(squeeze(pdata(:, :, xlat, ylon))), 1]);
-        curet = reshape(squeeze(etdata(:, :, xlat, ylon)), [numel(squeeze(etdata(:, :, xlat, ylon))), 1]);
-        
-        curpe = curp - curet;
-        
-        nn = find(~isnan(curt) & ~isnan(curp) & ~isnan(curpe));
-        
-        curt = curt(nn);
-        curp = curp(nn);
-        curpe = curpe(nn);
-        
-        if length(curt) < 300 || length(curp) < 300 || length(curpe) < 300
-            ttrendMap(xlat, ylon) = NaN;
-            ptrendMap(xlat, ylon) = NaN;
-            petrendMap(xlat, ylon) = NaN;
-            continue;
-        end
-        
-        ft = fit((1:length(curt))', curt, 'poly1');
-        fp = fit((1:length(curp))', curp, 'poly1');
-        fpe = fit((1:length(curpe))', curpe, 'poly1');
-        
-        ttrendMap(xlat, ylon) = ft.p1;
-        ptrendMap(xlat, ylon) = fp.p1;
-        petrendMap(xlat, ylon) = fpe.p1;
-        
-        ttrendSig(xlat, ylon) = Mann_Kendall(curt, 0.05);
-        ptrendSig(xlat, ylon) = Mann_Kendall(curp, 0.05);
-        petrendSig(xlat, ylon) = Mann_Kendall(curpe, 0.05);
-        
-        if mod(i,100) == 0
-            fprintf('%d / %d\n', i, total);
-        end
-        
-        i = i+1;
-    end
+if ~exist('p', 'var')
+    fprintf('loading p...\n');
+    p = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
 end
 
-% trend per decade
-ttrendMap = ttrendMap .* 10;
-ptrendMap = ptrendMap .* 10;
-petrendMap = petrendMap .* 10;
+% if ~exist('t', 'var')
+%     fprintf('loading t...\n');
+%     t = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'yearStart', timePeriod(1), 'yearEnd', timePeriod(end));
+% end
 
-result = {lat, lon, ttrendMap};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'nile', ...
-                  'plotRange', [-.05 .05], ...
-                  'cbXTicks', -.05:.025:.05, ...
-                  'plotTitle', ['T trend'], ...
-                  'fileTitle', ['gldas-t-trend.png'], ...
-                  'plotXUnits', ['C'], ...
-                  'blockWater', true, ...
-                  'colormap', brewermap([],'*RdBu'), ...
-                  'plotCountries', true);
-plotFromDataFile(saveData);
 
-result = {lat, lon, ptrendMap};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'nile', ...
-                  'plotRange', [-.025 .025], ...
-                  'cbXTicks', -.025:.025:.025, ...
-                  'plotTitle', ['P trend'], ...
-                  'fileTitle', ['gldas-p-trend.png'], ...
-                  'plotXUnits', ['mm/day/dec'], ...
-                  'blockWater', true, ...
-                  'colormap', brewermap([],'RdBu'), ...
-                  'statData', ptrendSig,...
-                  'plotCountries', true);
-plotFromDataFile(saveData);
+lat = p{1};
+lon = p{2};
 
-result = {lat, lon, petrendMap};
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'nile', ...
-                  'plotRange', [-.002 .002], ...
-                  'cbXTicks', [-.002 .002], ...
-                  'plotTitle', ['PE trend'], ...
-                  'fileTitle', ['gldas-pe-trend.png'], ...
-                  'plotXUnits', ['mm/day/dec'], ...
-                  'blockWater', true, ...
-                  'colormap', brewermap([],'RdBu'), ...
-                  'statData', petrendSig,...
-                  'plotCountries', true);
-plotFromDataFile(saveData);
+regionBoundsNorth = [[13 32]; [29, 34]];
+[latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 
-tdata = squeeze(nanmean(nanmean(tdata, 4), 3));
-pdata = squeeze(nanmean(nanmean(pdata, 4), 3));
-etdata = squeeze(nanmean(nanmean(etdata, 4), 3));
+regionBoundsSouth = [[2 13]; [25, 42]];
+[latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+
+plotMap = false;
+
+seasons = [[12 1 2]; 
+           [3 4 5];
+           [6 7 8];
+           [9 10 11]];
+
+%tdata = t{3} - 273.15;
+pdata = p{3} .* 3600 .* 24;
+%etdata = et{3} .* 3600 .* 24;
 
 figure('Color', [1,1,1]);
-for month = 1:12
-    curT = squeeze(tdata(month, :));
-    curP = squeeze(pdata(month, :));
-    cureET = squeeze(etdata(month, :));
+for season = 1:size(seasons, 1)
+    regionTotalP = squeeze(nanmean(nanmean(nanmean(pdata(latIndsSouth, lonIndsSouth, :, seasons(season, :)), 4), 2), 1));
     
-    subplot(3,4,month);
+    subplot(2,2,season);
     hold on;
-    axis square
+    axis square;
     grid on;
     box on;
-    
-    yyaxis left;
-    plot(curT);
-    if Mann_Kendall(curT, 0.05)
-        f = fit((1:length(curT))', curT', 'poly1');
-        plot(1:length(curT), f(1:length(curT)), '--');
+    plot(regionTotalP, 'LineWidth', 2);
+    if Mann_Kendall(regionTotalP, 0.05)
+        f = fit((1:length(regionTotalP))', regionTotalP, 'poly1');
+        plot(1:length(regionTotalP), f(1:length(regionTotalP)), '--');
     end
-    
-    ylabel([char(176) 'C']);
-    
-    yyaxis right;
-    plot(curP);
-    if Mann_Kendall(curT, 0.05)
-        f = fit((1:length(curP))', curP', 'poly1');
-        plot(1:length(curP), f(1:length(curP)), '--');
-    end
-    
+    title(['Season ' num2str(season)]);
+    ylim([0 6]);
+    xlim([0 52]);
     ylabel('mm/day');
-    xlabel('Year');
-    title(['Month ' num2str(month)]);
+    xlabel('year');
 end
-suptitle('P and T');
-
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig pr-chg-gldas-south.eps;
+close all;
 
 figure('Color', [1,1,1]);
-for month = 1:12
-    pe = squeeze(pdata(month, :) - etdata(month, :));
+for season = 1:size(seasons, 1)
+    regionTotalP = squeeze(nanmean(nanmean(nanmean(pdata(latIndsNorth, lonIndsNorth, :, seasons(season, :)), 4), 2), 1));
     
-    subplot(3,4,month);
+    subplot(2,2,season);
     hold on;
-    axis square
+    axis square;
     grid on;
     box on;
-    
-    plot(pe);
-    if Mann_Kendall(pe, 0.05)
-        f = fit((1:length(pe))', pe', 'poly1');
-        plot(1:length(pe), f(1:length(pe)), '--');
+    plot(regionTotalP, 'LineWidth', 2);
+    if Mann_Kendall(regionTotalP, 0.05)
+        f = fit((1:length(regionTotalP))', regionTotalP, 'poly1');
+        plot(1:length(regionTotalP), f(1:length(regionTotalP)), '--');
     end
-    
+    title(['Season ' num2str(season)]);
+    ylim([0 6]);
+    xlim([0 52]);
     ylabel('mm/day');
-    xlabel('Year');
-    title(['Month ' num2str(month)]);
+    xlabel('year');
 end
-suptitle('P - E');
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig pr-chg-gldas-north.eps;
+close all;
+
+
+if plotMap
+
+    
+    tdata = permute(squeeze(t{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) - 273.15;
+    pdata = permute(squeeze(p{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) .* 3600 .* 24;
+    etdata = permute(squeeze(et{3}(latInds, lonInds, :, :)), [4, 3, 1, 2]) .* 3600 .* 24;
+
+    
+    ttrendMap = [];
+    ttrendSig = [];
+    petrendMap = [];
+    petrendSig = [];
+    ptrendMap = [];
+    ptrendSig = [];
+
+    i = 1;
+    total = size(tdata, 3)*size(tdata, 4);
+    for xlat = 1:size(tdata, 3)
+        for ylon = 1:size(tdata, 4)
+            for season = 1:size(seasons, 1)
+                curt = squeeze(nanmean(tdata(seasons(season,:), :, xlat, ylon), 1));
+                curp = squeeze(nanmean(pdata(seasons(season,:), :, xlat, ylon), 1));
+                curet = squeeze(nanmean(etdata(seasons(season,:), :, xlat, ylon), 1));
+
+                curt = reshape(curt, [numel(curt), 1]);
+                curp = reshape(curp, [numel(curp), 1]);
+                curet = reshape(curet, [numel(curet), 1]);
+
+                curpe = curp - curet;
+
+                % convert to percent change
+                curp = curp ./ nanmean(curp) .* 100;
+                curpe = curpe ./ nanmean(curpe) .* 100;
+
+                nn = find(~isnan(curt) & ~isnan(curp) & ~isnan(curpe));
+
+                curt = curt(nn);
+                curp = curp(nn);
+                curpe = curpe(nn);
+
+                if length(curt) < 10 || length(curp) < 10 || length(curpe) < 10
+                    ttrendMap(xlat, ylon, season) = NaN;
+                    ptrendMap(xlat, ylon, season) = NaN;
+                    petrendMap(xlat, ylon, season) = NaN;
+                    continue;
+                end
+
+                ttrendSig(xlat, ylon, season) = Mann_Kendall(curt, 0.05);
+                ptrendSig(xlat, ylon, season) = Mann_Kendall(curp, 0.05);
+                petrendSig(xlat, ylon, season) = Mann_Kendall(curpe, 0.05);
+
+                if ttrendSig(xlat, ylon, season)
+                    ft = fit((1:length(curt))', curt, 'poly1');
+                    ttrendMap(xlat, ylon, season) = ft.p1;
+                else
+                    ttrendMap(xlat, ylon, season) = NaN;
+                end
+
+                if ptrendSig(xlat, ylon, season)
+                    fp = fit((1:length(curp))', curp, 'poly1');
+                    ptrendMap(xlat, ylon, season) = fp.p1;
+                else
+                    ptrendMap(xlat, ylon, season) = NaN;
+                end
+
+                if petrendSig(xlat, ylon, season)
+                    fpe = fit((1:length(curpe))', curpe, 'poly1');
+                    petrendMap(xlat, ylon, season) = fpe.p1;
+                else
+                    petrendMap(xlat, ylon, season) = NaN;
+                end 
+            end
+
+            if mod(i,100) == 0
+                fprintf('%d / %d\n', i, total);
+            end
+
+            i = i+1;
+        end
+    end
+
+    % trend per decade
+    ttrendMap = ttrendMap .* 10;
+    ptrendMap = ptrendMap .* 10;
+    petrendMap = petrendMap .* 10;
+
+    for season = 1:size(seasons, 1)
+    %     result = {lat, lon, ttrendMap(:, :, season)};
+    %     saveData = struct('data', {result}, ...
+    %                       'plotRegion', 'nile', ...
+    %                       'plotRange', [-1 1], ...
+    %                       'cbXTicks', -1:.5:1, ...
+    %                       'plotTitle', ['T trend'], ...
+    %                       'fileTitle', ['gldas-t-trend-' num2str(season) '.png'], ...
+    %                       'plotXUnits', ['C'], ...
+    %                       'blockWater', true, ...
+    %                       'colormap', brewermap([],'*RdBu'), ...
+    %                       'plotCountries', true);
+    %     plotFromDataFile(saveData);
+
+        result = {lat, lon, ptrendMap(:, :, season)};
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'nile', ...
+                          'plotRange', [-20 20], ...
+                          'cbXTicks', -20:10:20, ...
+                          'plotTitle', ['P trend'], ...
+                          'fileTitle', ['gldas-p-trend-' num2str(season) '.png'], ...
+                          'plotXUnits', ['%/dec'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([],'RdBu'), ...
+                          'plotCountries', true);
+        plotFromDataFile(saveData);
+
+        result = {lat, lon, petrendMap(:, :, season)};
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'nile', ...
+                          'plotRange', [-20 20], ...
+                          'cbXTicks', -20:10:20, ...
+                          'plotTitle', ['PE trend'], ...
+                          'fileTitle', ['gldas-pe-trend-' num2str(season) '.png'], ...
+                          'plotXUnits', ['%/dec'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([],'RdBu'), ...
+                          'plotCountries', true);
+        plotFromDataFile(saveData);
+
+    end
+end
