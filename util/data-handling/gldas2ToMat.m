@@ -1,6 +1,6 @@
 function gpcpToMat(rawNcDir, outputDir, maxNum)
 
-varNames = ["Evap_tavg", "Qair_f_inst", "Qh_tavg", "Qle_tavg", "Rainf_f_tavg", "SoilMoi0_10cm_inst", ...
+varNames = ["Rainf_f_tavg", "Evap_tavg", "Qair_f_inst", "Qh_tavg", "Qle_tavg", "SoilMoi0_10cm_inst", ...
             "SoilMoi10_40cm_inst", "SoilMoi100_200cm_inst", "SWE_inst", "Tair_f_inst"];
 varIds = ones(size(varNames)) .* -1;
 
@@ -23,7 +23,7 @@ for k = 1:length(ncFileNames)
     
     dimIdLat = -1;
     dimIdLon = -1;
-    dimIdLev = -1;
+    dimIdLev = -1;  
     dimIdTime = -1;
     
     dims = {};
@@ -131,8 +131,8 @@ for k = 1:length(ncFileNames)
         if ~isdir(folDataTarget)
             mkdir(folDataTarget);
         elseif exist([folDataTarget '/' fileName '.mat'], 'file')
-            ['skipping ' folDataTarget '/' fileName '.mat']
-            continue;
+            %['skipping ' folDataTarget '/' fileName '.mat']
+            %continue;
         end
         
         data = double(netcdf.getVar(ncid, varIds(v)-1, [0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;

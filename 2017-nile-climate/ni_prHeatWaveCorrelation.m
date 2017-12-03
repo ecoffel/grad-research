@@ -31,7 +31,7 @@ prNcep = pr;
 load lat;
 load lon;
 
-% find bounds of whole region and north/south subregions
+find bounds of whole region and north/south subregions
 regionBounds = [[2 32]; [25, 44]];
 [latInds, lonInds] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
 
@@ -45,7 +45,7 @@ load 2017-nile-climate\hottest-season-ncep.mat;
 hottestNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
 hottestSouth = mode(reshape(hottestSeason(latIndsSouth, lonIndsSouth), [numel(hottestSeason(latIndsSouth, lonIndsSouth)), 1]));
 
-% find relative indicies of north/south
+find relative indicies of north/south
 latIndsSouth = latIndsSouth-latInds(1)+1;
 latIndsNorth = latIndsNorth-latInds(1)+1;
 lonIndsSouth = lonIndsSouth-lonInds(1)+1;
@@ -68,17 +68,17 @@ heatNorthCorrCmip5 = [];
 heatSouthCorrCmip5 = [];
 for s = 1:size(seasons, 1)
     
-    % calculate grid-box specific corr over region
+    calculate grid-box specific corr over region
     for xlat = 1:size(prEra{1}, 1)
         for ylon = 1:size(prEra{1}, 2)
             
-            % get heat time series
+            get heat time series
             heat = squeeze(nansum(heatProbNcep(xlat, ylon, :, seasons(s,:)), 4));
-            % and precip
+            and precip
             pr = squeeze(prNcep{s}(xlat, ylon, :));
-            % remove nans
+            remove nans
             nn = find(~isnan(heat) & ~isnan(pr));
-            % and compute correlation
+            and compute correlation
             heatCorrNcep(xlat, ylon, s) = corr(heat(nn), pr(nn));
             
             heat = squeeze(nansum(heatProbEra(xlat, ylon, :, seasons(s,:)), 4));
@@ -86,7 +86,7 @@ for s = 1:size(seasons, 1)
             nn = find(~isnan(heat) & ~isnan(pr));
             heatCorrEra(xlat, ylon, s) = corr(heat(nn), pr(nn));
             
-            % loop over all models and do the same
+            loop over all models and do the same
             for model = 1:length(models)
                 heat = squeeze(nansum(heatProbCmip5(xlat, ylon, :, seasons(s,:), model), 4));
                 pr = squeeze(prCmip5{s}(xlat, ylon, :, model));
@@ -96,8 +96,8 @@ for s = 1:size(seasons, 1)
         end
     end
     
-    % calculate mean correlation for north/south regions
-    % NCEP
+    calculate mean correlation for north/south regions
+    NCEP
     heatSouth = squeeze(nansum(nansum(nansum(heatProbNcep(latIndsSouth, lonIndsSouth, :, seasons(s,:)), 4), 2), 1));
     prSouth = squeeze(nanmean(nanmean(prNcep{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
     heatSouthCorrNcep(s) = corr(detrend(heatSouth), detrend(prSouth));
@@ -106,7 +106,7 @@ for s = 1:size(seasons, 1)
     prNorth = squeeze(nanmean(nanmean(prNcep{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
     heatNorthCorrNcep(s) = corr(detrend(heatNorth), detrend(prNorth));
 
-    % ERA
+    ERA
     heatSouth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, seasons(s,:)), 4), 2), 1));
     prSouth = squeeze(nanmean(nanmean(prEra{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
     heatSouthCorrEra(s) = corr(detrend(heatSouth), detrend(prSouth));
@@ -115,7 +115,7 @@ for s = 1:size(seasons, 1)
     prNorth = squeeze(nanmean(nanmean(prNcep{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
     heatNorthCorrEra(s) = corr(detrend(heatNorth), detrend(prNorth));
     
-    % and for models
+    and for models
     for model = 1:length(models)
         heatSouth = squeeze(nansum(nansum(nansum(heatProbCmip5(latIndsSouth, lonIndsSouth, :, seasons(s,:), model), 4), 2), 1));
         prSouth = squeeze(nanmean(nanmean(prCmip5{s}(latIndsSouth, lonIndsSouth, :, model), 2), 1));
@@ -146,7 +146,7 @@ if plotCorr
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
-    % set hottest season xtick label red
+    set hottest season xtick label red
     ax = gca;
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestNorth} = ['\color{red} ' ax.XTickLabels{hottestNorth}];
@@ -175,7 +175,7 @@ if plotCorr
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
-    % set hottest season xtick label red
+    set hottest season xtick label red
     ax = gca;
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestSouth} = ['\color{red} ' ax.XTickLabels{hottestSouth}];
@@ -192,7 +192,7 @@ if plotCorr
 end
 
 
-% plot PR/heat time series in the hottest season for each region from ERA
+plot PR/heat time series in the hottest season for each region from ERA
 heatSouth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, seasons(hottestSouth,:)), 4), 2), 1));
 prSouth = squeeze(nanmean(nanmean(prEra{hottestSouth}(latIndsSouth, lonIndsSouth, :), 2), 1));
 fPrSouth = fit((1:length(prSouth))', prSouth, 'poly1');

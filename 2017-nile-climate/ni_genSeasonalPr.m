@@ -1,5 +1,4 @@
-dataset = 'cmip5';
-var = 'pr';
+dataset = 'gldas';
 
 switch (dataset)
     case 'cmip5'
@@ -11,18 +10,21 @@ switch (dataset)
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
-        pr = loadDailyData(['E:\data\' dataset '\output\' var '\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        pr = loadDailyData(['E:\data\' dataset '\output\tp\regrid\world'], 'startYear', 1980, 'endYear', 2016);
         pr{3} = pr{3} .* 1000;
         pr = dailyToMonthly(pr);
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        pr = loadDailyData(['E:\data\' dataset '\output\' var '\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        pr = loadDailyData(['E:\data\' dataset '\output\pr\regrid\world'], 'startYear', 1980, 'endYear', 2016);
         pr{3} = pr{3} .* 3600 .* 24;
         pr = dailyToMonthly(pr);
+    case 'gldas'
+        fprintf('loading GLDAS...\n');
+        models = {''};
+        pr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1980, 'endYear', 2010);
+        pr{3} = pr{3} .* 3600 .* 24;
 end
-
-
 
 plotMap = false;
 
