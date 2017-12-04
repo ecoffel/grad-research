@@ -1,4 +1,4 @@
-dataset = 'gldas';
+dataset = 'era-interim';
 
 switch (dataset)
     case 'cmip5'
@@ -7,6 +7,8 @@ switch (dataset)
                       'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+        rcp = 'historical';
+        timePeriod = [1980 2004];
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
@@ -16,7 +18,7 @@ switch (dataset)
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        pr = loadDailyData(['E:\data\' dataset '\output\pr\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        pr = loadDailyData(['E:\data\' dataset '\output\prate\regrid\world'], 'startYear', 1980, 'endYear', 2016);
         pr{3} = pr{3} .* 3600 .* 24;
         pr = dailyToMonthly(pr);
     case 'gldas'
@@ -45,7 +47,7 @@ for model = 1:length(models)
 
     if strcmp(dataset, 'cmip5')
         fprintf('loading %s...\n', models{model});
-        pr = loadMonthlyData(['E:\data\cmip5\output\' models{model} '\mon\r1i1p1\historical\pr\regrid\world'], 'pr', 'startYear', 1980, 'endYear', 2004);
+        pr = loadMonthlyData(['E:\data\cmip5\output\' models{model} '\mon\r1i1p1\' rcp '\pr\regrid\world'], 'pr', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
         pr{3} = pr{3} .* 3600 .* 24;
         pr = dailyToMonthly(pr);
     end
@@ -64,9 +66,9 @@ for model = 1:length(models)
     end
     
     if strcmp(dataset, 'cmip5')
-        save(['2017-nile-climate/output/pr-' dataset '-historical-' models{model} '.mat'], 'prSeasonal');
+        save(['2017-nile-climate/output/pr-seasonal-' dataset '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'prSeasonal');
     else
-        save(['2017-nile-climate/output/pr-' dataset '.mat'], 'prSeasonal');
+        save(['2017-nile-climate/output/pr-seasonal-' dataset '.mat'], 'prSeasonal');
     end
     clear pr data prSeasonal;
 end

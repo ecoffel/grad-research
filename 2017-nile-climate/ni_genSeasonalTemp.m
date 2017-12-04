@@ -1,4 +1,4 @@
-dataset = 'gldas';
+dataset = 'cmip5';
 
 switch (dataset)
     case 'cmip5'
@@ -7,6 +7,8 @@ switch (dataset)
                       'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+        timePeriod = [1980 2004];
+        rcp = 'historical';
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
@@ -34,11 +36,11 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 for model = 1:length(models)
-    TSeasonal = {};
+    tempSeasonal = {};
 
     if strcmp(dataset, 'cmip5')
         fprintf('loading %s...\n', models{model});
-        tmax = loadDailyData(['E:\data\cmip5\output\' models{model} '\r1i1p1\historical\tasmax\regrid\world'], 'startYear', 1980, 'endYear', 2004);
+        tmax = loadDailyData(['E:\data\cmip5\output\' models{model} '\r1i1p1\' rcp '\tasmax\regrid\world'], 'startYear', timePeriod(1), 'endYear', timePeriod(end));
         if nanmean(nanmean(nanmean(nanmean(nanmean(tmax{3}))))) > 100
             tmax{3} = tmax{3} - 273.15;
         end
@@ -55,13 +57,13 @@ for model = 1:length(models)
     
     for season = 1:size(seasons, 1)
         regionT = squeeze(nanmean(data(latInds, lonInds, :, seasons(season, :)), 4));
-        TSeasonal{season} = regionT;
+        tempSeasonal{season} = regionT;
     end
     
     if strcmp(dataset, 'cmip5')
-        save(['2017-nile-climate/output/temp-' dataset '-historical-' models{model} '.mat'], 'TSeasonal');
+        save(['2017-nile-climate/output/temp-seasonal-' dataset '-historical-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempSeasonal');
     else
-        save(['2017-nile-climate/output/temp-' dataset '.mat'], 'TSeasonal');
+        save(['2017-nile-climate/output/temp-seasonal-' dataset '.mat'], 'tempSeasonal');
     end
     clear tmax data TSeasonal;
 end

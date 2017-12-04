@@ -241,77 +241,77 @@ if plotCorr
     export_fig pr-temp-corr-south.eps;
 end
 
-% 
-% % plot PR/heat time series in the hottest season for each region from ERA
-% tempSouth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, seasons(hottestSouth,:)), 4), 2), 1));
-% prSouth = squeeze(nanmean(nanmean(tempEra{hottestSouth}(latIndsSouth, lonIndsSouth, :), 2), 1));
-% fPrSouth = fit((1:length(prSouth))', prSouth, 'poly1');
-% fHeatSouth = fit((1:length(tempSouth))', tempSouth, 'poly1');
-% 
-% tempNorth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsNorth, lonIndsNorth, :, seasons(hottestNorth,:)), 4), 2), 1));
-% prNorth = squeeze(nanmean(nanmean(tempEra{hottestNorth}(latIndsNorth, lonIndsNorth, :), 2), 1));
-% fPrNorth = fit((1:length(prNorth))', prNorth, 'poly1');
-% fHeatNorth = fit((1:length(tempNorth))', tempNorth, 'poly1');
-% 
-% f = figure('Color', [1,1,1]);
-% 
-% set(gcf, 'defaultAxesColorOrder', [[0.8500 0.3250 0.0980];
-%                                    [0 0.4470 0.7410]]);
-% 
-% hold on;
-% box on;
-% grid on;
-% axis square;
-% yyaxis left;
-% plot(tempNorth, 'LineWidth', 2);
-% if Mann_Kendall(tempNorth, 0.05)
-%     plot(1:length(tempNorth), fHeatNorth(1:length(tempNorth)), '--');
-% end
-% ylim([0 150]);
-% ylabel('# heat waves');
-% 
-% yyaxis right;
-% plot(prNorth, 'LineWidth', 2);
-% if Mann_Kendall(prNorth, 0.05)
-%     plot(1:length(prNorth), fPrNorth(1:length(prNorth)), '--');
-% end
-% ylim([0 5]);
-% ylabel('Precipitation (mm/day)');
-% 
-% set(gca, 'FontSize', 40);
-% set(gca, 'XTick', 5:10:length(tempSouth), 'XTickLabels', 1985:10:2016);
-% title('North: JJA');
-% 
-% export_fig temp-pr-timeseries-north.eps;
-% 
-% figure('Color', [1,1,1]);
-% set(gcf, 'defaultAxesColorOrder', [[0.8500 0.3250 0.0980];
-%                                    [0 0.4470 0.7410]]);
-%                     
-% hold on;
-% box on;
-% grid on;
-% axis square;
-% 
-% yyaxis left;
-% plot(tempSouth, 'LineWidth', 2);
-% if Mann_Kendall(tempSouth, 0.05)
-%     plot(1:length(tempSouth), fHeatSouth(1:length(tempSouth)), '--');
-% end
-% ylim([0 150]);
-% ylabel('# heat waves');
-% 
-% yyaxis right;
-% plot(prSouth, 'LineWidth', 2);
-% if Mann_Kendall(prSouth, 0.05)
-%     plot(1:length(prSouth), fPrSouth(1:length(prSouth)), '--');
-% end
-% ylim([0 5]);
-% ylabel('Precipitation (mm/day)');
-% 
-% set(gca, 'FontSize', 40);
-% set(gca, 'XTick', 5:10:length(tempSouth), 'XTickLabels', 1985:10:2016);
-% title('South: MAM');
-% 
-% export_fig temp-pr-timeseries-south.eps;
-% 
+
+% plot PR/heat time series in the hottest season for each region from ERA
+tempSouth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, seasons(hottestSouth,:)), 4), 2), 1));
+prSouth = squeeze(nanmean(nanmean(tempEra{hottestSouth}(latIndsSouth, lonIndsSouth, :), 2), 1));
+fPrSouth = fit((1:length(prSouth))', prSouth, 'poly1');
+fHeatSouth = fit((1:length(tempSouth))', tempSouth, 'poly1');
+
+tempNorth = squeeze(nansum(nansum(nansum(heatProbEra(latIndsNorth, lonIndsNorth, :, seasons(hottestNorth,:)), 4), 2), 1));
+prNorth = squeeze(nanmean(nanmean(tempEra{hottestNorth}(latIndsNorth, lonIndsNorth, :), 2), 1));
+fPrNorth = fit((1:length(prNorth))', prNorth, 'poly1');
+fHeatNorth = fit((1:length(tempNorth))', tempNorth, 'poly1');
+
+f = figure('Color', [1,1,1]);
+
+set(gcf, 'defaultAxesColorOrder', [[0.8500 0.3250 0.0980];
+                                   [0 0.4470 0.7410]]);
+
+hold on;
+box on;
+grid on;
+axis square;
+yyaxis left;
+plot(tempNorth, 'LineWidth', 2);
+if Mann_Kendall(tempNorth, 0.05)
+    plot(1:length(tempNorth), fHeatNorth(1:length(tempNorth)), '--');
+end
+ylim([0 150]);
+ylabel('# heat waves');
+
+yyaxis right;
+plot(prNorth, 'LineWidth', 2);
+if Mann_Kendall(prNorth, 0.05)
+    plot(1:length(prNorth), fPrNorth(1:length(prNorth)), '--');
+end
+ylim([0 5]);
+ylabel('Precipitation (mm/day)');
+
+set(gca, 'FontSize', 40);
+set(gca, 'XTick', 5:10:length(tempSouth), 'XTickLabels', 1985:10:2016);
+title('North: JJA');
+
+export_fig temp-pr-timeseries-north.eps;
+
+figure('Color', [1,1,1]);
+set(gcf, 'defaultAxesColorOrder', [[0.8500 0.3250 0.0980];
+                                   [0 0.4470 0.7410]]);
+                    
+hold on;
+box on;
+grid on;
+axis square;
+
+yyaxis left;
+plot(tempSouth, 'LineWidth', 2);
+if Mann_Kendall(tempSouth, 0.05)
+    plot(1:length(tempSouth), fHeatSouth(1:length(tempSouth)), '--');
+end
+ylim([0 150]);
+ylabel('# heat waves');
+
+yyaxis right;
+plot(prSouth, 'LineWidth', 2);
+if Mann_Kendall(prSouth, 0.05)
+    plot(1:length(prSouth), fPrSouth(1:length(prSouth)), '--');
+end
+ylim([0 5]);
+ylabel('Precipitation (mm/day)');
+
+set(gca, 'FontSize', 40);
+set(gca, 'XTick', 5:10:length(tempSouth), 'XTickLabels', 1985:10:2016);
+title('South: MAM');
+
+export_fig temp-pr-timeseries-south.eps;
+

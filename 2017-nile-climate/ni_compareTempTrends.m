@@ -1,36 +1,26 @@
 
-if ~exist('gpcp', 'var')
-    fprintf('loading GPCP...\n');
-    gpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\1979-2017', 'precip', 'startYear', 1980, 'endYear', 2016);
-end
-
 if ~exist('era', 'var')
     fprintf('loading ERA...\n');
-    era = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', 1980, 'endYear', 2016);
-    era{3} = era{3} .* 1000;
+    era = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', 1980, 'endYear', 2016);
+    era{3} = era{3} - 273.15;
     era = dailyToMonthly(era);
 end
 
 if ~exist('ncep', 'var')
     fprintf('loading NCEP...\n');
-    ncep = loadDailyData('E:\data\ncep-reanalysis\output\prate\regrid\world', 'startYear', 1980, 'endYear', 2016);
-    ncep{3} = ncep{3} .* 3600 .* 24;
+    ncep = loadDailyData('E:\data\ncep-reanalysis\output\tmax\regrid\world', 'startYear', 1980, 'endYear', 2016);
+    ncep{3} = ncep{3} - 273.15;
     ncep = dailyToMonthly(ncep);
 end
 
 if ~exist('gldas', 'var')
     fprintf('loading GLDAS...\n');
-    gldas = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1980, 'endYear', 2010);
-    gldas{3} = gldas{3} .* 3600 .* 24;
+    gldas = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', 1980, 'endYear', 2010);
+    gldas{3} = gldas{3} - 273.15;
 end
 
 regionBoundsSouth = [[2 13]; [25, 42]];
 regionBoundsNorth = [[13 32]; [29, 34]];
-
-latGpcp = gpcp{1};
-lonGpcp = gpcp{2};
-[latIndsNorthGpcp, lonIndsNorthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouthGpcp, lonIndsSouthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
 
 latGldas = gldas{1};
 lonGldas = gldas{2};
@@ -48,20 +38,19 @@ seasons = [[12 1 2];
            [3 4 5];
            [6 7 8];
            [9 10 11]];
-       
-load wettest-season-ncep;
-wettestSeasonNorth = mode(reshape(wettestSeason(latIndsNorth, lonIndsNorth), [numel(wettestSeason(latIndsNorth, lonIndsNorth)), 1]));
-wettestSeasonSouth = mode(reshape(wettestSeason(latIndsSouth, lonIndsSouth), [numel(wettestSeason(latIndsSouth, lonIndsSouth)), 1]));
 
-southTrends = zeros(4, 4);
-southSig = zeros(4, 4);
-southConfint = zeros(4, 4, 2);
+load('hottest-season-ncep.mat');
+hottestSeasonNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
+hottestSeasonSouth = mode(reshape(hottestSeason(latIndsSouth, lonIndsSouth), [numel(hottestSeason(latIndsSouth, lonIndsSouth)), 1]));
+       
+southTrends = zeros(4, 3);
+southSig = zeros(4, 3);
+southConfint = zeros(4, 3, 2);
        
 for season = 1:size(seasons, 1)
     figure('Color', [1,1,1]);
     colors = get(gca, 'colororder');
 
-    regionalPGpcp = squeeze(nanmean(nanmean(nanmean(gpcp{3}(latIndsSouthGpcp, lonIndsSouthGpcp, :, seasons(season, :)), 4), 2), 1));
     regionalPEra = squeeze(nanmean(nanmean(nanmean(era{3}(latIndsSouth, lonIndsSouth, :, seasons(season, :)), 4), 2), 1));
     regionalPNcep = squeeze(nanmean(nanmean(nanmean(ncep{3}(latIndsSouth, lonIndsSouth, :, seasons(season, :)), 4), 2), 1));
     regionalPGldas = squeeze(nanmean(nanmean(nanmean(gldas{3}(latIndsSouthGldas, lonIndsSouthGldas, :, seasons(season, :)), 4), 2), 1));
@@ -70,17 +59,8 @@ for season = 1:size(seasons, 1)
     axis square;
     grid on;
     box on;
-    p1 = plot(regionalPGpcp, 'LineWidth', 2, 'Color', colors(4,:));
-    f = fit((1:length(regionalPGpcp))', regionalPGpcp, 'poly1');
-    if Mann_Kendall(regionalPGpcp, 0.05)
-        plot(1:length(regionalPGpcp), f(1:length(regionalPGpcp)), '--', 'Color', colors(4,:));
-        southSig(season, 4) = 1;
-    end
-    southTrends(season, 4) = f.p1;
-    c = confint(f);
-    southConfint(season, 4, :) = c(:,1);
     
-    p2 = plot(regionalPEra, 'LineWidth', 2, 'Color', colors(1,:));
+    p1 = plot(regionalPEra, 'LineWidth', 2, 'Color', colors(1,:));
     f = fit((1:length(regionalPEra))', regionalPEra, 'poly1');
     if Mann_Kendall(regionalPEra, 0.05)
         plot(1:length(regionalPEra), f(1:length(regionalPEra)), '--', 'Color', colors(1,:));
@@ -90,7 +70,7 @@ for season = 1:size(seasons, 1)
     c = confint(f);
     southConfint(season, 1, :) = c(:,1);
     
-    p3 = plot(regionalPNcep, 'LineWidth', 2, 'Color', colors(2,:));
+    p2 = plot(regionalPNcep, 'LineWidth', 2, 'Color', colors(2,:));
     f = fit((1:length(regionalPNcep))', regionalPNcep, 'poly1');
     if Mann_Kendall(regionalPNcep, 0.05)
         plot(1:length(regionalPNcep), f(1:length(regionalPNcep)), '--', 'Color', colors(2,:));
@@ -100,7 +80,7 @@ for season = 1:size(seasons, 1)
     c = confint(f);
     southConfint(season, 2, :) = c(:,1);
     
-    p4 = plot(regionalPGldas, 'LineWidth', 2, 'Color', colors(3,:));
+    p3 = plot(regionalPGldas, 'LineWidth', 2, 'Color', colors(3,:));
     f = fit((1:length(regionalPGldas))', regionalPGldas, 'poly1');
     if Mann_Kendall(regionalPGldas, 0.05)
         plot(1:length(regionalPGldas), f(1:length(regionalPGldas)), '--', 'Color', colors(3,:));
@@ -112,18 +92,18 @@ for season = 1:size(seasons, 1)
     
     set(gca, 'FontSize', 40);
     title(['South, season ' num2str(season)]);
-    ylim([0 10]);
-    ylabel('mm/day');
+    ylim([20 35]);
+    ylabel([char(176) 'C']);
     xlabel('year');
     % calculate correlation across 4 datasets
-    maxlen = min([length(regionalPGpcp) length(regionalPEra) length(regionalPNcep) length(regionalPGldas)]);
-    X = [regionalPGpcp(1:maxlen) regionalPEra(1:maxlen) regionalPNcep(1:maxlen) regionalPGldas(1:maxlen)];
+    maxlen = min([length(regionalPEra) length(regionalPNcep) length(regionalPGldas)]);
+    X = [regionalPEra(1:maxlen) regionalPNcep(1:maxlen) regionalPGldas(1:maxlen)];
     corr(X)
     
     set(gcf, 'Position', get(0,'Screensize'));
-    leg = legend([p1 p2 p3 p4], {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'});
+    leg = legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'});
     set(leg, 'location', 'northeast');
-    export_fig(['pr-trends-' num2str(season) '-south.eps']);
+    export_fig(['temp-trends-' num2str(season) '-south.eps']);
     close all;
 end
 
@@ -138,7 +118,7 @@ hold on;
 box on;
 axis square;
 grid on;
-displace = [-.25 -.1 .05 .2];
+displace = [-.1 0 .1];
 for d = 1:size(southSig, 2)
     for s = 1:size(southSig, 1)
         e = errorbar(s+displace(d), southTrends(s, d), southTrends(s,d)-southConfint(s,d,1), southConfint(s,d,2)-southTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
@@ -156,28 +136,27 @@ set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', [-1 -.75 -.5 -.25 0 .25 .5 .75 1]);
 xlim([.5 4.5]);
 ylim([-1 1]);
-ylabel('Trend (mm/day/decade)');
-legend(legItems, {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
-title('South');
 
-% set wettest season xtick label blue
+% set hottest season xtick label red
 ax = gca;
 ax.TickLabelInterpreter = 'tex';
-ax.XTickLabels{wettestSeasonSouth} = ['\color{blue} ' ax.XTickLabels{wettestSeasonSouth}];
+ax.XTickLabels{hottestSeasonSouth} = ['\color{red} ' ax.XTickLabels{hottestSeasonSouth}];
 
+ylabel(['Trend (' char(176) 'C/decade)']);
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northeast');
+title('South');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig('pr-trends-south.eps');
+export_fig('temp-trends-south.eps');
 close all;
 
-northTrends = zeros(4, 4);
-northSig = zeros(4, 4);
-northConfint = zeros(4, 4, 2);
+northTrends = zeros(4, 3);
+northSig = zeros(4, 3);
+northConfint = zeros(4, 3, 2);
 
 for season = 1:size(seasons, 1)
     figure('Color', [1,1,1]);
     colors = get(gca, 'colororder');
 
-    regionalPGpcp = squeeze(nanmean(nanmean(nanmean(gpcp{3}(latIndsNorthGpcp, lonIndsNorthGpcp, :, seasons(season, :)), 4), 2), 1));
     regionalPEra = squeeze(nanmean(nanmean(nanmean(era{3}(latIndsNorth, lonIndsNorth, :, seasons(season, :)), 4), 2), 1));
     regionalPNcep = squeeze(nanmean(nanmean(nanmean(ncep{3}(latIndsNorth, lonIndsNorth, :, seasons(season, :)), 4), 2), 1));
     regionalPGldas = squeeze(nanmean(nanmean(nanmean(gldas{3}(latIndsNorthGldas, lonIndsNorthGldas, :, seasons(season, :)), 4), 2), 1));
@@ -186,17 +165,7 @@ for season = 1:size(seasons, 1)
     axis square;
     grid on;
     box on;
-    p1 = plot(regionalPGpcp, 'LineWidth', 2, 'Color', colors(4,:));
-    f = fit((1:length(regionalPGpcp))', regionalPGpcp, 'poly1');
-    if Mann_Kendall(regionalPGpcp, 0.05)
-        plot(1:length(regionalPGpcp), f(1:length(regionalPGpcp)), '--', 'Color', colors(4,:));
-        northSig(season, 4) = 1;
-    end
-    northTrends(season, 4) = f.p1;
-    c = confint(f);
-    northConfint(season, 4, :) = c(:,1);
-    
-    p2 = plot(regionalPEra, 'LineWidth', 2, 'Color', colors(1,:));
+    p1 = plot(regionalPEra, 'LineWidth', 2, 'Color', colors(1,:));
     f = fit((1:length(regionalPEra))', regionalPEra, 'poly1');
     if Mann_Kendall(regionalPEra, 0.05)
         plot(1:length(regionalPEra), f(1:length(regionalPEra)), '--', 'Color', colors(1,:));
@@ -206,7 +175,7 @@ for season = 1:size(seasons, 1)
     c = confint(f);
     northConfint(season, 1, :) = c(:,1);
     
-    p3 = plot(regionalPNcep, 'LineWidth', 2, 'Color', colors(2,:));
+    p2 = plot(regionalPNcep, 'LineWidth', 2, 'Color', colors(2,:));
     f = fit((1:length(regionalPNcep))', regionalPNcep, 'poly1');
     if Mann_Kendall(regionalPNcep, 0.05)
         plot(1:length(regionalPNcep), f(1:length(regionalPNcep)), '--', 'Color', colors(2,:));
@@ -216,7 +185,7 @@ for season = 1:size(seasons, 1)
     c = confint(f);
     northConfint(season, 2, :) = c(:,1);
     
-    p4 = plot(regionalPGldas, 'LineWidth', 2, 'Color', colors(3,:));
+    p3 = plot(regionalPGldas, 'LineWidth', 2, 'Color', colors(3,:));
     f = fit((1:length(regionalPGldas))', regionalPGldas, 'poly1');
     if Mann_Kendall(regionalPGldas, 0.05)
         plot(1:length(regionalPGldas), f(1:length(regionalPGldas)), '--', 'Color', colors(3,:));
@@ -228,18 +197,18 @@ for season = 1:size(seasons, 1)
     
     set(gca, 'FontSize', 40);
     title(['North, season ' num2str(season)]);
-    ylim([0 10]);
-    ylabel('mm/day');
+    ylim([10 40]);
+    ylabel([char(176) 'C']);
     xlabel('year');
     % calculate correlation across 4 datasets
-    maxlen = min([length(regionalPGpcp) length(regionalPEra) length(regionalPNcep) length(regionalPGldas)]);
-    X = [regionalPGpcp(1:maxlen) regionalPEra(1:maxlen) regionalPNcep(1:maxlen) regionalPGldas(1:maxlen)];
+    maxlen = min([length(regionalPEra) length(regionalPNcep) length(regionalPGldas)]);
+    X = [regionalPEra(1:maxlen) regionalPNcep(1:maxlen) regionalPGldas(1:maxlen)];
     corr(X)
     
     set(gcf, 'Position', get(0,'Screensize'));
-    leg = legend([p1 p2 p3 p4], {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'});
+    leg = legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'});
     set(leg, 'location', 'northeast');
-    export_fig(['pr-trends-' num2str(season) '-north.eps']);
+    export_fig(['temp-trends-' num2str(season) '-north.eps']);
     close all;
 end
 
@@ -254,7 +223,7 @@ hold on;
 box on;
 axis square;
 grid on;
-displace = [-.25 -.1 .05 .2];
+displace = [-.1 0 .1];
 for d = 1:size(northSig, 2)
     for s = 1:size(northSig, 1)
         e = errorbar(s+displace(d), northTrends(s, d), northTrends(s,d)-northConfint(s,d,1), northConfint(s,d,2)-northTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
@@ -273,16 +242,16 @@ set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', [-1
 xlim([.5 4.5]);
 ylim([-1 1]);
 
-% set wettest season xtick label blue
+% set hottest season xtick label red
 ax = gca;
 ax.TickLabelInterpreter = 'tex';
-ax.XTickLabels{wettestSeasonNorth} = ['\color{blue} ' ax.XTickLabels{wettestSeasonNorth}];
+ax.XTickLabels{hottestSeasonNorth} = ['\color{red} ' ax.XTickLabels{hottestSeasonNorth}];
 
-ylabel('Trend (mm/day/decade)');
-legend(legItems, {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
+ylabel(['Trend (' char(176) 'C/decade)']);
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
 title('North');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig pr-trends-north.eps;
+export_fig temp-trends-north.eps;
 close all;
 
 if plotMap

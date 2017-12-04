@@ -20,7 +20,7 @@ cropBaseDir = 'e:/data/projects/ag/crop/'
 tempPrc = 99.95
 precipPrc = 99.95
 
-tempAbs = 32
+tempAbs = 33
 precipAbs = 30
 
 # get all state wx
@@ -129,7 +129,7 @@ for file in fileList:
                 else:
                     groupedData[state][county]['isAbsPrecipGroup'].append(False)
     
-f = open('grouped-data-9995.dat', 'wb')
+f = open('grouped-data-9995-' + str(tempAbs) + 'C-' + str(precipAbs) + 'mm.dat', 'wb')
 pickle.dump(groupedData, f)
 f.close()
     
