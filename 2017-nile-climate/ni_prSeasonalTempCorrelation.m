@@ -9,36 +9,36 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 tempCmip5 = {};
 prCmip5 = {};
 for model = 1:length(models)
-    load(['2017-nile-climate/output/temp-cmip5-historical-' models{model} '.mat']);
-    load(['2017-nile-climate/output/pr-cmip5-historical-' models{model} '.mat']);
+    load(['2017-nile-climate/output/temp-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
+    load(['2017-nile-climate/output/pr-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
     for s = 1:length(prSeasonal)
         prCmip5{s}(:, :, :, model) = prSeasonal{s};
-        tempCmip5{s}(:, :, :, model) = TSeasonal{s};
+        tempCmip5{s}(:, :, :, model) = tempSeasonal{s};
     end
 end
        
-load 2017-nile-climate/output/temp-era-interim.mat;
-load 2017-nile-climate/output/pr-era-interim.mat;
+load 2017-nile-climate/output/temp-seasonal-era-interim.mat;
+load 2017-nile-climate/output/pr-seasonal-era-interim.mat;
 
-tempEra = TSeasonal;
-prEra = pr;
+tempEra = tempSeasonal;
+prEra = prSeasonal;
 
-load 2017-nile-climate/output/temp-ncep-reanalysis.mat;
-load 2017-nile-climate/output/pr-ncep-reanalysis.mat;
+load 2017-nile-climate/output/temp-seasonal-ncep-reanalysis.mat;
+load 2017-nile-climate/output/pr-seasonal-ncep-reanalysis.mat;
 
-tempNcep = TSeasonal;
-prNcep = pr;
+tempNcep = tempSeasonal;
+prNcep = prSeasonal;
 
-% load 2017-nile-climate/output/temp-gldas.mat;
-% load 2017-nile-climate/output/pr-gldas.mat;
+load 2017-nile-climate/output/temp-seasonal-gldas.mat;
+load 2017-nile-climate/output/pr-seasonal-gldas.mat;
 
-% tempGldas = TSeasonal;
-% prGldas = prSeasonal;
-% 
-% load('lat-gldas');
-% load('lon-gldas');
-% latGldas = lat;
-% lonGldas = lon;
+tempGldas = tempSeasonal;
+prGldas = prSeasonal;
+
+load('lat-gldas');
+load('lon-gldas');
+latGldas = lat;
+lonGldas = lon;
 
 load lat;
 load lon;
@@ -52,9 +52,9 @@ regionBoundsSouth = [[2 13]; [25, 42]];
 [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
 
-% [latIndsGldas, lonIndsGldas] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
-% [latIndsNorthGldas, lonIndsNorthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-% [latIndsSouthGldas, lonIndsSouthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+[latIndsGldas, lonIndsGldas] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
+[latIndsNorthGldas, lonIndsNorthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
+[latIndsSouthGldas, lonIndsSouthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
 
 load 2017-nile-climate\hottest-season-ncep.mat;
 hottestNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
@@ -66,10 +66,10 @@ latIndsNorth = latIndsNorth-latInds(1)+1;
 lonIndsSouth = lonIndsSouth-lonInds(1)+1;
 lonIndsNorth = lonIndsNorth-lonInds(1)+1;
 
-% latIndsSouthGldas = latIndsSouthGldas-latInds(1)+1;
-% latIndsNorthGldas = latIndsNorthGldas-latInds(1)+1;
-% lonIndsSouthGldas = lonIndsSouthGldas-lonInds(1)+1;
-% lonIndsNorthGldas = lonIndsNorthGldas-lonInds(1)+1;
+latIndsSouthGldas = latIndsSouthGldas-latInds(1)+1;
+latIndsNorthGldas = latIndsNorthGldas-latInds(1)+1;
+lonIndsSouthGldas = lonIndsSouthGldas-lonInds(1)+1;
+lonIndsNorthGldas = lonIndsNorthGldas-lonInds(1)+1;
 
 seasons = [[12 1 2]; 
            [3 4 5];
@@ -78,33 +78,33 @@ seasons = [[12 1 2];
 
 tempPrCorrNcep = [];
 tempPrCorrEra = [];
-% tempPrCorrGldas = [];
+tempPrCorrGldas = [];
 tempPrCorrCmip5 = [];
 
 tempPrSouthCorrNcep = [];
 tempPrNorthCorrNcep = [];
 tempPrSouthCorrEra = [];
 tempPrNorthCorrEra = [];
-% tempPrSouthCorrGldas = [];
-% tempPrNorthCorrGldas = [];
+tempPrSouthCorrGldas = [];
+tempPrNorthCorrGldas = [];
 tempPrNorthCorrCmip5 = [];
 tempPrSouthCorrCmip5 = [];
 for s = 1:size(seasons, 1)
     
     % process GLDAS (on a different grid so needs its own xlat/ylon loop)
-%     for xlat = 1:size(tempGldas{s}, 1)
-%         for ylon = 1:size(tempGldas{s}, 2)
-%             % for GLDAS
-%             temp = squeeze(tempGldas{s}(xlat, ylon, :));
-%             pr = squeeze(prGldas{s}(xlat, ylon, :));
-%             nn = find(~isnan(temp) & ~isnan(pr));
-%             if length(nn) > .5*length(temp)
-%                 tempPrCorrGldas(xlat, ylon, s) = corr(temp(nn), pr(nn));
-%             else
-%                 tempPrCorrGldas(xlat, ylon, s) = NaN;
-%             end
-%         end
-%     end
+    for xlat = 1:size(tempGldas{s}, 1)
+        for ylon = 1:size(tempGldas{s}, 2)
+            % for GLDAS
+            temp = squeeze(tempGldas{s}(xlat, ylon, :));
+            pr = squeeze(prGldas{s}(xlat, ylon, :));
+            nn = find(~isnan(temp) & ~isnan(pr));
+            if length(nn) > .5*length(temp)
+                tempPrCorrGldas(xlat, ylon, s) = corr(temp(nn), pr(nn));
+            else
+                tempPrCorrGldas(xlat, ylon, s) = NaN;
+            end
+        end
+    end
     
     % calculate grid-box specific corr over region
     for xlat = 1:size(tempEra{1}, 1)
@@ -155,13 +155,13 @@ for s = 1:size(seasons, 1)
     tempPrNorthCorrEra(s) = corr(detrend(tempNorth), detrend(prNorth));
     
     % GLDAS
-%     tempSouth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsSouthGldas, lonIndsSouthGldas, :), 2), 1));
-%     prSouth = squeeze(nanmean(nanmean(prGldas{s}(latIndsSouthGldas, lonIndsSouthGldas, :), 2), 1));
-%     tempPrSouthCorrGldas(s) = corr(detrend(tempSouth), detrend(prSouth));
-% 
-%     tempNorth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
-%     prNorth = squeeze(nanmean(nanmean(prGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
-%     tempPrNorthCorrGldas(s) = corr(detrend(tempNorth), detrend(prNorth));
+    tempSouth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsSouthGldas, lonIndsSouthGldas, :), 2), 1));
+    prSouth = squeeze(nanmean(nanmean(prGldas{s}(latIndsSouthGldas, lonIndsSouthGldas, :), 2), 1));
+    tempPrSouthCorrGldas(s) = corr(detrend(tempSouth), detrend(prSouth));
+
+    tempNorth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
+    prNorth = squeeze(nanmean(nanmean(prGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
+    tempPrNorthCorrGldas(s) = corr(detrend(tempNorth), detrend(prNorth));
     
     % and for models
     for model = 1:length(models)
@@ -206,7 +206,8 @@ if plotCorr
     xlim([.5 4.5]);
     ylabel('Correlation');
     set(gca, 'FontSize', 40);
-    title('North');
+    %title('North');
+    set(gcf, 'Position', get(0,'Screensize'));
     export_fig pr-temp-corr-north.eps;
 
     figure('Color',[1,1,1]);
@@ -236,8 +237,8 @@ if plotCorr
     xlim([.5 4.5]);
     ylabel('Correlation');
     set(gca, 'FontSize', 40);
-    title('South');
-
+    %title('South');
+    set(gcf, 'Position', get(0,'Screensize'));
     export_fig pr-temp-corr-south.eps;
 end
 

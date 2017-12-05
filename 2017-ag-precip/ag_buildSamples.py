@@ -20,8 +20,9 @@ cropBaseDir = 'e:/data/projects/ag/crop/'
 tempPrc = 99.95
 precipPrc = 99.95
 
-tempAbs = 33
-precipAbs = 30
+# absolute thresholds
+tempAbs = 34 #C
+precipAbs = 30 #mm/hr
 
 # get all state wx
 fileList = glob.glob(cropBaseDir + '*.pgz')

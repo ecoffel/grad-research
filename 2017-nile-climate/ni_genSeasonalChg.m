@@ -4,9 +4,9 @@
                   'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-    rcp = 'rcp85';
-    var = 'pr';
-    monthly = true;
+    rcp = 'rcp45';
+    var = 'tasmax';
+    monthly = false;
     timePeriodBase = [1980 2004];
     timePeriodFuture = [2021 2050];
 

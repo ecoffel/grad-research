@@ -1,3 +1,6 @@
+plotSeasonalAnnualData = false;
+north = true;
+
 coordPairs = csvread('ni-region.txt');
 
 timePeriod = [1980 2016];
@@ -75,8 +78,6 @@ if ~exist('tmaxGldasRaw', 'var')
     tmaxGldasRaw{3} = tmaxGldasRaw{3} - 273.15;
 end
 
-north = true;
-
 if north
     tmaxEra = tmaxEraRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     tmaxNcep = tmaxNcepRaw{3}(latIndsNorth, lonIndsNorth, :, :);
@@ -99,6 +100,14 @@ end
 
 numYears = (timePeriod(end)-timePeriod(1)+1);
 
+load wettest-season-ncep;
+wettestSeasonNorth = mode(reshape(wettestSeason(latIndsNorth, lonIndsNorth), [numel(wettestSeason(latIndsNorth, lonIndsNorth)), 1]));
+wettestSeasonSouth = mode(reshape(wettestSeason(latIndsSouth, lonIndsSouth), [numel(wettestSeason(latIndsSouth, lonIndsSouth)), 1]));
+
+load('hottest-season-ncep.mat');
+hottestSeasonNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
+hottestSeasonSouth = mode(reshape(hottestSeason(latIndsSouth, lonIndsSouth), [numel(hottestSeason(latIndsSouth, lonIndsSouth)), 1]));
+
 seasonNames = {'DJF', 'MAM', 'JJA', 'SON'};
 seasons = [[12 1 2]; 
            [3 4 5];
@@ -107,7 +116,17 @@ seasons = [[12 1 2];
 
 prcTmax = 75;
 prcPr = 25;
-       
+
+hotTrends = zeros(4, 3);
+hotCI = zeros(4, 3, 2);
+hotSig = zeros(4, 3);
+dryTrends = zeros(4, 4);
+dryCI = zeros(4, 4, 2);
+drySig = zeros(4, 4);
+hotDryTrends = zeros(4, 3);
+hotDryCI = zeros(4, 3, 2);
+hotDrySig = zeros(4, 3);
+
 figure('Color', [1,1,1]);
 colors = get(gca, 'colororder');
 i = 1;
@@ -149,142 +168,323 @@ for s = 1:size(seasons, 1)
         end
     end
     
+    % normalize all counts to account for different grids
     dryEra = normr(dryEra);
     dryNcep = normr(dryNcep);
     dryGpcp = normr(dryGpcp);
     dryGldas = normr(dryGldas);
-    
     hotEra = normr(hotEra);
     hotNcep = normr(hotNcep);
     hotGldas = normr(hotGldas);
-    
     hotdryEra = normr(hotdryEra);
     hotdryNcep = normr(hotdryNcep);
     hotdryGldas = normr(hotdryGldas);
     
-    figure('Color', [1,1,1]);
-    hold on;
-    axis square;
-    box on;
-    grid on;
-    ylim([0 125]);
-    p1 = plot(hotEra, 'Color', colors(1,:), 'LineWidth', 2);
-    if Mann_Kendall(hotEra, 0.05)
-        f = fit((1:length(hotEra))', hotEra', 'poly1');
-        plot(1:length(hotEra), f(1:length(hotEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
-    end
-    p2 = plot(hotNcep, 'Color', colors(2,:), 'LineWidth', 2);
-    if Mann_Kendall(hotNcep, 0.05)
-        f = fit((1:length(hotNcep))', hotNcep', 'poly1');
-        plot(1:length(hotNcep), f(1:length(hotNcep)), '--', 'Color', colors(3,:), 'LineWidth', 2);
-    end
-    p3 = plot(hotGldas, 'Color', colors(3,:), 'LineWidth', 2);
-    if Mann_Kendall(hotGldas, 0.05)
-        f = fit((1:length(hotGldas))', hotGldas', 'poly1');
-        plot(1:length(hotGldas), f(1:length(hotGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
-    end
-    set(gca, 'FontSize', 40);
-    set(gca, 'XTick', 6:10:length(hotEra), 'XTickLabels', [1985 1995 2005 2015]);
-    ylim([0 1]);
-    ylabel([seasonNames{s} ' hot seasons']);
-    set(gcf, 'Position', get(0,'Screensize'));
-    legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
-    if north
-        export_fig(['hot-season-' num2str(s) '-north.eps']);
-    else
-        export_fig(['hot-season-' num2str(s) '-south.eps']);
-    end
-    i = i+1;
-    close all;
+    % compute trends for datasets
+    fHotEra = fit((1:length(hotEra))', hotEra', 'poly1');
+    fHotNcep = fit((1:length(hotNcep))', hotNcep', 'poly1');
+    fHotGldas = fit((1:length(hotGldas))', hotGldas', 'poly1');
     
-    figure('Color', [1,1,1]);
-    hold on;
-    axis square;
-    box on;
-    grid on;
-    p1 = plot(dryEra, 'Color', colors(1,:), 'LineWidth', 2);
-    if Mann_Kendall(dryEra, 0.05)
-        f = fit((1:length(dryEra))', dryEra', 'poly1');
-        plot(1:length(dryEra), f(1:length(dryEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
-    end
-    p2 = plot(dryNcep, 'Color', colors(2,:), 'LineWidth', 2);
-    if Mann_Kendall(dryNcep, 0.05)
-        f = fit((1:length(dryNcep))', dryNcep', 'poly1');
-        plot(1:length(dryNcep), f(1:length(dryNcep)), '--', 'Color', colors(2,:), 'LineWidth', 2);
-    end
-    p3 = plot(dryGpcp, 'Color', colors(4,:), 'LineWidth', 2);
-    if Mann_Kendall(dryGpcp, 0.05)
-        f = fit((1:length(dryGpcp))', dryGpcp', 'poly1');
-        plot(1:length(dryGpcp), f(1:length(dryGpcp)), '--', 'Color', colors(4,:), 'LineWidth', 2);
-    end
-    p4 = plot(dryGldas, 'Color', colors(3,:), 'LineWidth', 2);
-    if Mann_Kendall(dryGldas, 0.05)
-        f = fit((1:length(dryGldas))', dryGldas', 'poly1');
-        plot(1:length(dryGldas), f(1:length(dryGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
-    end
-    set(gca, 'FontSize', 40);
-    ylabel([seasonNames{s} ' dry seasons']);
-    set(gcf, 'Position', get(0,'Screensize'));
-    legend([p1 p2 p3 p4], {'ERA-Interim', 'NCEP II', 'GPCP', 'GLDAS'}, 'location', 'northwest');
-    ylim([0 1]);
-    set(gca, 'XTick', 6:10:length(dryEra), 'XTickLabels', [1985 1995 2005 2015]);
-    if north
-        export_fig(['dry-season-' num2str(s) '-north.eps']);
-    else
-        export_fig(['dry-season-' num2str(s) '-south.eps']);
-    end
-    close all;
+    hotTrends(s, 1) = fHotEra.p1;
+    hotTrends(s, 2) = fHotNcep.p1;
+    hotTrends(s, 3) = fHotGldas.p1;
     
-    figure('Color', [1,1,1]);
-    hold on;
-    axis square;
-    box on;
-    grid on;
-    ylim([0 125]);
-    p1 = plot(hotdryEra, 'Color', colors(1,:), 'LineWidth', 2);
-    if Mann_Kendall(hotdryEra, 0.05)
-        f = fit((1:length(hotdryEra))', hotdryEra', 'poly1');
-        plot(1:length(hotdryEra), f(1:length(hotdryEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
-    end
-    p2 = plot(hotdryNcep, 'Color', colors(2,:), 'LineWidth', 2);
-    if Mann_Kendall(hotdryNcep, 0.05)
-        f = fit((1:length(hotdryNcep))', hotdryNcep', 'poly1');
-        plot(1:length(hotdryNcep), f(1:length(hotdryNcep)), '--', 'Color', colors(2,:), 'LineWidth', 2);
-    end
-    p3 = plot(hotdryGldas, 'Color', colors(3,:), 'LineWidth', 2);
-    if Mann_Kendall(hotdryGldas, 0.05)
-        f = fit((1:length(hotdryGldas))', hotdryGldas', 'poly1');
-        plot(1:length(hotdryGldas), f(1:length(hotdryGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
-    end
-    set(gca, 'FontSize', 40);
-    set(gca, 'XTick', 6:10:length(hotdryEra), 'XTickLabels', [1985 1995 2005 2015]);
-    ylim([0 1]);
-    ylabel([seasonNames{s} ' hot & dry seasons']);
-    set(gcf, 'Position', get(0,'Screensize'));
-    legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
-    if north
-        export_fig(['hotdry-season-' num2str(s) '-north.eps']);
-    else
-        export_fig(['hotdry-season-' num2str(s) '-south.eps']);
-    end
-    i = i+1;
-    close all;
+    % and get CI
+    c = confint(fHotEra);
+    hotCI(s, 1, :) = c(:,1);
+    c = confint(fHotNcep);
+    hotCI(s, 2, :) = c(:,1);
+    c = confint(fHotGldas);
+    hotCI(s, 3, :) = c(:,1);
     
-%     subplot(4,3,i);
-%     hold on;
-%     axis square;
-%     box on;
-%     grid on;
-%     plot(hotdryEra, 'Color', colors(2,:));
-%     if Mann_Kendall(hotdryEra, 0.05)
-%         f = fit((1:length(hotdryEra))', hotdryEra', 'poly1');
-%         plot(1:length(hotdryEra), f(1:length(hotdryEra)), '--', 'Color', colors(2,:));
-%     end
-%     plot(hotdryNcep, 'Color', colors(1,:));
-%     if Mann_Kendall(hotdryNcep, 0.05)
-%         f = fit((1:length(hotdryNcep))', hotdryNcep', 'poly1');
-%         plot(1:length(hotdryNcep), f(1:length(hotdryNcep)), '--', 'Color', colors(1,:));
-%     end
-%     ylim([0 125]);
-%     i = i+1;
+    hotSig(s, 1) = Mann_Kendall(hotEra, .05);
+    hotSig(s, 2) = Mann_Kendall(hotNcep, .05);
+    hotSig(s, 3) = Mann_Kendall(hotGldas, .05);
+    
+    fDryEra = fit((1:length(dryEra))', dryEra', 'poly1');
+    fDryNcep = fit((1:length(dryNcep))', dryNcep', 'poly1');
+    fDryGldas = fit((1:length(dryGldas))', dryGldas', 'poly1');
+    fDryGpcp = fit((1:length(dryGpcp))', dryGpcp', 'poly1');
+    
+    dryTrends(s, 1) = fDryEra.p1;
+    dryTrends(s, 2) = fDryNcep.p1;
+    dryTrends(s, 3) = fDryGldas.p1;
+    dryTrends(s, 4) = fDryGpcp.p1;
+    
+    c = confint(fDryEra);
+    dryCI(s, 1, :) = c(:,1);
+    c = confint(fDryNcep);
+    dryCI(s, 2, :) = c(:,1);
+    c = confint(fDryGldas);
+    dryCI(s, 3, :) = c(:,1);
+    c = confint(fDryGpcp);
+    dryCI(s, 4, :) = c(:,1);
+    
+    drySig(s, 1) = Mann_Kendall(dryEra, .05);
+    drySig(s, 2) = Mann_Kendall(dryNcep, .05);
+    drySig(s, 3) = Mann_Kendall(dryGldas, .05);
+    drySig(s, 4) = Mann_Kendall(dryGpcp, .05);
+    
+    fHotDryEra = fit((1:length(hotdryEra))', hotdryEra', 'poly1');
+    fHotDryNcep = fit((1:length(hotdryNcep))', hotdryNcep', 'poly1');
+    fHotDryGldas = fit((1:length(hotdryGldas))', hotdryGldas', 'poly1');
+    
+    hotDryTrends(s, 1) = fHotDryEra.p1;
+    hotDryTrends(s, 2) = fHotDryNcep.p1;
+    hotDryTrends(s, 3) = fHotDryGldas.p1;
+    
+    c = confint(fHotDryEra);
+    hotDryCI(s, 1, :) = c(:,1);
+    c = confint(fHotDryNcep);
+    hotDryCI(s, 2, :) = c(:,1);
+    c = confint(fHotDryGldas);
+    hotDryCI(s, 3, :) = c(:,1);
+    
+    hotDrySig(s, 1) = Mann_Kendall(hotdryEra, .05);
+    hotDrySig(s, 2) = Mann_Kendall(hotdryNcep, .05);
+    hotDrySig(s, 3) = Mann_Kendall(hotdryGldas, .05);
+    
+    if plotSeasonalAnnualData
+        figure('Color', [1,1,1]);
+        hold on;
+        axis square;
+        box on;
+        grid on;
+        ylim([0 125]);
+        p1 = plot(hotEra, 'Color', colors(1,:), 'LineWidth', 2);
+        if Mann_Kendall(hotEra, 0.05)
+            plot(1:length(hotEra), fHotEra(1:length(hotEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
+        end
+        p2 = plot(hotNcep, 'Color', colors(2,:), 'LineWidth', 2);
+        if Mann_Kendall(hotNcep, 0.05)
+            plot(1:length(hotNcep), fHotNcep(1:length(hotNcep)), '--', 'Color', colors(3,:), 'LineWidth', 2);
+        end
+        p3 = plot(hotGldas, 'Color', colors(3,:), 'LineWidth', 2);
+        if Mann_Kendall(hotGldas, 0.05)
+            plot(1:length(hotGldas), fHotGldas(1:length(hotGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
+        end
+        set(gca, 'FontSize', 40);
+        set(gca, 'XTick', 6:10:length(hotEra), 'XTickLabels', [1985 1995 2005 2015]);
+        ylim([0 1]);
+        ylabel([seasonNames{s} ' hot seasons']);
+        set(gcf, 'Position', get(0,'Screensize'));
+        legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
+        if north
+            export_fig(['hot-season-' num2str(s) '-north.eps']);
+        else
+            export_fig(['hot-season-' num2str(s) '-south.eps']);
+        end
+        close all;
+
+        figure('Color', [1,1,1]);
+        hold on;
+        axis square;
+        box on;
+        grid on;
+        p1 = plot(dryEra, 'Color', colors(1,:), 'LineWidth', 2);
+        if Mann_Kendall(dryEra, 0.05)            
+            plot(1:length(dryEra), fDryEra(1:length(dryEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
+        end
+        p2 = plot(dryNcep, 'Color', colors(2,:), 'LineWidth', 2);
+        if Mann_Kendall(dryNcep, 0.05)
+            plot(1:length(dryNcep), fDryNcep(1:length(dryNcep)), '--', 'Color', colors(2,:), 'LineWidth', 2);
+        end
+        p3 = plot(dryGpcp, 'Color', colors(4,:), 'LineWidth', 2);
+        if Mann_Kendall(dryGpcp, 0.05)
+            plot(1:length(dryGpcp), fDryGpcp(1:length(dryGpcp)), '--', 'Color', colors(4,:), 'LineWidth', 2);
+        end
+        p4 = plot(dryGldas, 'Color', colors(3,:), 'LineWidth', 2);
+        if Mann_Kendall(dryGldas, 0.05)
+            plot(1:length(dryGldas), fDryGldas(1:length(dryGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
+        end
+        set(gca, 'FontSize', 40);
+        ylabel([seasonNames{s} ' dry seasons']);
+        set(gcf, 'Position', get(0,'Screensize'));
+        legend([p1 p2 p3 p4], {'ERA-Interim', 'NCEP II', 'GPCP', 'GLDAS'}, 'location', 'northwest');
+        ylim([0 1]);
+        set(gca, 'XTick', 6:10:length(dryEra), 'XTickLabels', [1985 1995 2005 2015]);
+        if north
+            export_fig(['dry-season-' num2str(s) '-north.eps']);
+        else
+            export_fig(['dry-season-' num2str(s) '-south.eps']);
+        end
+        close all;
+
+        figure('Color', [1,1,1]);
+        hold on;
+        axis square;
+        box on;
+        grid on;
+        ylim([0 125]);
+        p1 = plot(hotdryEra, 'Color', colors(1,:), 'LineWidth', 2);
+        if Mann_Kendall(hotdryEra, 0.05)
+            plot(1:length(hotdryEra), fHotDryEra(1:length(hotdryEra)), '--', 'Color', colors(1,:), 'LineWidth', 2);
+        end
+        p2 = plot(hotdryNcep, 'Color', colors(2,:), 'LineWidth', 2);
+        if Mann_Kendall(hotdryNcep, 0.05)
+            plot(1:length(hotdryNcep), fHotDryNcep(1:length(hotdryNcep)), '--', 'Color', colors(2,:), 'LineWidth', 2);
+        end
+        p3 = plot(hotdryGldas, 'Color', colors(3,:), 'LineWidth', 2);
+        if Mann_Kendall(hotdryGldas, 0.05)
+            plot(1:length(hotdryGldas), fHotDryGldas(1:length(hotdryGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
+        end
+        set(gca, 'FontSize', 40);
+        set(gca, 'XTick', 6:10:length(hotdryEra), 'XTickLabels', [1985 1995 2005 2015]);
+        ylim([0 1]);
+        ylabel([seasonNames{s} ' hot & dry seasons']);
+        set(gcf, 'Position', get(0,'Screensize'));
+        legend([p1 p2 p3], {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
+        if north
+            export_fig(['hotdry-season-' num2str(s) '-north.eps']);
+        else
+            export_fig(['hotdry-season-' num2str(s) '-south.eps']);
+        end
+        close all;
+    end
 end
+
+dryTrends = dryTrends .* 10;
+hotTrends = hotTrends .* 10;
+hotDryTrends = hotDryTrends .* 10;
+
+figure('Color',[1,1,1]);
+colors = get(gca, 'colororder');
+legItems = [];
+hold on;
+box on;
+axis square;
+grid on;
+displace = [-.25 -.1 .05 .2];
+for d = 1:size(dryTrends, 2)
+    for s = 1:size(dryTrends, 1)
+        e = errorbar(s+displace(d), dryTrends(s, d), dryTrends(s,d)-dryCI(s,d,1), dryCI(s,d,2)-dryTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
+        p = plot(s+displace(d), dryTrends(s, d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
+        if s == 1
+            legItems(end+1) = p;
+        end
+        if drySig(s, d)
+            plot(s+displace(d), dryTrends(s, d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+        end
+    end
+end
+plot([0 5], [0 0], 'k--');
+set(gca, 'FontSize', 40);
+set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
+xlim([.5 4.5]);
+ylim([-.25 .25]);
+
+% set wettest season xtick label blue
+ax = gca;
+ax.TickLabelInterpreter = 'tex';
+if north
+    ax.XTickLabels{wettestSeasonNorth} = ['\color{blue} ' ax.XTickLabels{wettestSeasonNorth}];
+else
+    ax.XTickLabels{wettestSeasonSouth} = ['\color{blue} ' ax.XTickLabels{wettestSeasonSouth}];
+end
+
+ylabel('Dry season trend');
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'GPCP'}, 'location', 'southeast');
+set(gcf, 'Position', get(0,'Screensize'));
+if north
+    export_fig dry-trends-north.eps;
+else
+    export_fig dry-trends-south.eps;
+end
+close all;
+
+
+
+
+
+figure('Color',[1,1,1]);
+colors = get(gca, 'colororder');
+legItems = [];
+hold on;
+box on;
+axis square;
+grid on;
+displace = [-.1 0 .1];
+for d = 1:size(hotTrends, 2)
+    for s = 1:size(hotTrends, 1)
+        e = errorbar(s+displace(d), hotTrends(s, d), hotTrends(s,d)-hotCI(s,d,1), hotCI(s,d,2)-hotTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
+        p = plot(s+displace(d), hotTrends(s, d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
+        if s == 1
+            legItems(end+1) = p;
+        end
+        if hotSig(s, d)
+            plot(s+displace(d), hotTrends(s, d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+        end
+    end
+end
+plot([0 5], [0 0], 'k--');
+set(gca, 'FontSize', 40);
+set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
+xlim([.5 4.5]);
+ylim([-.25 .25]);
+
+% set wettest season xtick label blue
+ax = gca;
+ax.TickLabelInterpreter = 'tex';
+if north
+    ax.XTickLabels{hottestSeasonNorth} = ['\color{red} ' ax.XTickLabels{hottestSeasonNorth}];
+else
+    ax.XTickLabels{hottestSeasonSouth} = ['\color{red} ' ax.XTickLabels{hottestSeasonSouth}];
+end
+
+ylabel('Hot season trend');
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
+set(gcf, 'Position', get(0,'Screensize'));
+if north
+    export_fig hot-trends-north.eps;
+else
+    export_fig hot-trends-south.eps;
+end
+close all;
+
+
+
+
+figure('Color',[1,1,1]);
+colors = get(gca, 'colororder');
+legItems = [];
+hold on;
+box on;
+axis square;
+grid on;
+displace = [-.1 0 .1];
+for d = 1:size(hotDryTrends, 2)
+    for s = 1:size(hotDryTrends, 1)
+        e = errorbar(s+displace(d), hotDryTrends(s, d), hotDryTrends(s,d)-hotDryCI(s,d,1), hotDryCI(s,d,2)-hotDryTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
+        p = plot(s+displace(d), hotDryTrends(s, d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
+        if s == 1
+            legItems(end+1) = p;
+        end
+        if hotDrySig(s, d)
+            plot(s+displace(d), hotDryTrends(s, d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+        end
+    end
+end
+plot([0 5], [0 0], 'k--');
+set(gca, 'FontSize', 40);
+set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
+xlim([.5 4.5]);
+ylim([-.25 .25]);
+
+% set wettest season xtick label blue
+ax = gca;
+ax.TickLabelInterpreter = 'tex';
+if north
+    ax.XTickLabels{hottestSeasonNorth} = ['\color{red} ' ax.XTickLabels{hottestSeasonNorth}];
+else
+    ax.XTickLabels{hottestSeasonSouth} = ['\color{red} ' ax.XTickLabels{hottestSeasonSouth}];
+end
+
+ylabel('Hot & dry season trend');
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
+set(gcf, 'Position', get(0,'Screensize'));
+if north
+    export_fig hot-dry-trends-north.eps;
+else
+    export_fig hot-dry-trends-south.eps;
+end
+close all;

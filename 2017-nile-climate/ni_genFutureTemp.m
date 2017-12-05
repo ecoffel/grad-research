@@ -1,4 +1,4 @@
-baseDataset = 'ncep-reanalysis';
+baseDataset = 'era-interim';
 baseDir = '2017-nile-climate/output';
 
 load lat;
@@ -28,12 +28,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-rcp = 'rcp85';
+rcp = 'rcp45';
 timePeriod = [2021 2050];
 
 for m = 1:length(models)
     fprintf('processing %s...\n', models{m});
-    load([baseDir '/temp-monthly-chg-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
+    load([baseDir '/tasmax-monthly-chg-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
 
     tempFuture = tempBase;
     

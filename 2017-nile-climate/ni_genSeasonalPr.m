@@ -1,4 +1,4 @@
-dataset = 'era-interim';
+dataset = 'cmip5';
 
 switch (dataset)
     case 'cmip5'
@@ -7,8 +7,8 @@ switch (dataset)
                       'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-        rcp = 'historical';
-        timePeriod = [1980 2004];
+        rcp = 'rcp45';
+        timePeriod = [2021 2050];
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};

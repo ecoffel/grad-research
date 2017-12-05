@@ -157,7 +157,7 @@ set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', [-1
 xlim([.5 4.5]);
 ylim([-1 1]);
 ylabel('Trend (mm/day/decade)');
-legend(legItems, {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'GPCP'}, 'location', 'northwest');
 title('South');
 
 % set wettest season xtick label blue
@@ -279,7 +279,7 @@ ax.TickLabelInterpreter = 'tex';
 ax.XTickLabels{wettestSeasonNorth} = ['\color{blue} ' ax.XTickLabels{wettestSeasonNorth}];
 
 ylabel('Trend (mm/day/decade)');
-legend(legItems, {'GPCP', 'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'northwest');
+legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'GPCP'}, 'location', 'northwest');
 title('North');
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig pr-trends-north.eps;
