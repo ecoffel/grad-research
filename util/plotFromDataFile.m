@@ -70,6 +70,12 @@ function [fg, cb] = plotFromDataFile(saveData)
         xticks = false;
     end
     
+    if isfield(saveData, 'skipStatSignTransition')
+        skipStatSignTransition = true;
+    else
+        skipStatSignTransition = false;
+    end
+    
     % add an extra col on to draw the last tile
     saveData.data{2}(:,end+1)=saveData.data{2}(:,end)+(saveData.data{2}(:,end)-saveData.data{2}(:,end-1));
     saveData.data{1}(:,end+1)=saveData.data{1}(:,end)+(saveData.data{1}(:,end)-saveData.data{1}(:,end-1));
@@ -137,11 +143,13 @@ function [fg, cb] = plotFromDataFile(saveData)
                 
                 if statData(statx, staty)
                     
-                    % at the transition from pos to deg there is a repeated
-                    % column. skip it to prevent hatches crossing the whole
-                    % screen
-                    if xCoords(mapx, mapy) ~= 0 && (sign(xCoords(mapx, mapy)) ~= sign(xCoords(mapx, mapy+1)))
-                        mapy = mapy+1;
+                    if skipStatSignTransition
+                        % at the transition from pos to deg there is a repeated
+                        % column. skip it to prevent hatches crossing the whole
+                        % screen
+                        if xCoords(mapx, mapy) ~= 0 && (sign(xCoords(mapx, mapy)) ~= sign(xCoords(mapx, mapy+1)))
+                            mapy = mapy+1;
+                        end
                     end
                     
                     tulX = xCoords(mapx, mapy);

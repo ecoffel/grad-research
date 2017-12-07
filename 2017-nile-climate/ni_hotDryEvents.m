@@ -1,6 +1,9 @@
 plotSeasonalAnnualData = false;
 north = true;
 
+% save historical percentiles for use in future projections?
+computeHistoricalDist = true;
+
 coordPairs = csvread('ni-region.txt');
 
 timePeriod = [1980 2016];
@@ -126,6 +129,54 @@ drySig = zeros(4, 4);
 hotDryTrends = zeros(4, 3);
 hotDryCI = zeros(4, 3, 2);
 hotDrySig = zeros(4, 3);
+
+if computeHistoricalDist
+    % compute historical percentiles in tmax/pr for each month
+    historicalTemp = [];
+    historicalPr = [];
+    percentiles = 10:10:90;
+    for p = 1:length(percentiles)
+        for month = 1:12
+            % compute percentile for current month
+            historicalTemp(:, :, month, p) = prctile(squeeze(tmaxEraRaw{3}(latInds, lonInds, :, month)), percentiles(p), 3);
+            historicalPr(:, :, month, p) = prctile(squeeze(prEraRaw{3}(latInds, lonInds, :, month)), percentiles(p), 3);
+        end
+    end
+    
+    save(['2017-nile-climate/output/historical-temp-percentiles-era-interim.mat'], 'historicalTemp');
+    save(['2017-nile-climate/output/historical-pr-percentiles-era-interim.mat'], 'historicalPr');
+    
+    % for NCEP
+    historicalTemp = [];
+    historicalPr = [];
+    percentiles = 10:10:90;
+    for p = 1:length(percentiles)
+        for month = 1:12
+            % compute percentile for current month
+            historicalTemp(:, :, month, p) = prctile(squeeze(tmaxNcepRaw{3}(latInds, lonInds, :, month)), percentiles(p), 3);
+            historicalPr(:, :, month, p) = prctile(squeeze(prNcepRaw{3}(latInds, lonInds, :, month)), percentiles(p), 3);
+        end
+    end
+    
+    save(['2017-nile-climate/output/historical-temp-percentiles-ncep-reanalysis.mat'], 'historicalTemp');
+    save(['2017-nile-climate/output/historical-pr-percentiles-ncep-reanalysis.mat'], 'historicalPr');
+    
+    % and for GLDAS
+    historicalTemp = [];
+    historicalPr = [];
+    percentiles = 10:10:90;
+    for p = 1:length(percentiles)
+        for month = 1:12
+            % compute percentile for current month
+            historicalTemp(:, :, month, p) = prctile(squeeze(tmaxGldasRaw{3}(latIndsGldas, lonIndsGldas, :, month)), percentiles(p), 3);
+            historicalPr(:, :, month, p) = prctile(squeeze(prGldasRaw{3}(latIndsGldas, lonIndsGldas, :, month)), percentiles(p), 3);
+        end
+    end
+    
+    save(['2017-nile-climate/output/historical-temp-percentiles-gldas.mat'], 'historicalTemp');
+    save(['2017-nile-climate/output/historical-pr-percentiles-gldas.mat'], 'historicalPr');
+end
+
 
 figure('Color', [1,1,1]);
 colors = get(gca, 'colororder');

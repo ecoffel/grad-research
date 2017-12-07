@@ -62,14 +62,22 @@ for file in fileList:
         
         # find indices of missing data
         notNanIndTemp = numpy.where(~numpy.isnan(countyData['temp']))[0]
-        notNanIndPrecip = numpy.where(~numpy.isnan(countyData['precip']))[0]
+        notNanIndPrecip = numpy.where(~numpy.isnan(countyData['precip']) & (countyData['precip'] > 0) & (countyData['precip'] < 150) & (countyData['precip'] != 100))[0]
         
         # get percentile thresholds
-        tempThresh = numpy.nanpercentile(countyData['temp'], tempPrc)
-        precipThresh = numpy.nanpercentile(countyData['precip'], precipPrc)
+        tempThresh = -1
+        if numpy.size(notNanIndTemp) > 0:
+            tempThresh = numpy.nanpercentile(countyData['temp'][notNanIndTemp], tempPrc)
+        precipThresh = -1
+        if numpy.size(notNanIndPrecip) > 0:
+            precipThresh = numpy.nanpercentile(countyData['precip'][notNanIndPrecip], precipPrc)
         
         groupedData[state][county]['tempThresh'] = tempThresh
         groupedData[state][county]['precipThresh'] = precipThresh
+
+        groupedData[state][county]['distance'] = countyData['distance']
+        
+        print(countyData['distance'], precipThresh)
         
         # get the available years for yield, temp, and precip
         agYears = list(countyData['yield'].keys())

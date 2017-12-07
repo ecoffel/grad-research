@@ -5,10 +5,10 @@
                   'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
     rcp = 'rcp45';
-    var = 'tasmax';
-    monthly = false;
+    var = 'pr';
+    monthly = true;
     timePeriodBase = [1980 2004];
-    timePeriodFuture = [2021 2050];
+    timePeriodFuture = [2051 2080];
 
 for model = 1:length(models)
     monthlyBase = {};
