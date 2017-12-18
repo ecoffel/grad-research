@@ -10,7 +10,7 @@ switch (dataset)
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
         timePeriod = [2051 2080];
-        rcp = 'rcp85';
+        rcp = 'rcp45';
         
     case 'era-interim'
         timePeriod = [1980 2016];

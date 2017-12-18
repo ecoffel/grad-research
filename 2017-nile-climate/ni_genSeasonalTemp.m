@@ -1,4 +1,4 @@
-dataset = 'cmip5';
+dataset = 'ncep-reanalysis';
 
 switch (dataset)
     case 'cmip5'
@@ -12,19 +12,19 @@ switch (dataset)
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
-        tmax = loadDailyData(['E:\data\' dataset '\output\mx2t\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        tmax = loadDailyData(['E:\data\' dataset '\output\mx2t\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         tmax{3} = tmax{3} - 273.15;
         tmax = dailyToMonthly(tmax);
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        tmax = loadDailyData(['E:\data\' dataset '\output\tmax\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        tmax = loadDailyData(['E:\data\' dataset '\output\tmax\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         tmax{3} = tmax{3} - 273.15;
         tmax = dailyToMonthly(tmax);
     case 'gldas'
         fprintf('loading GLDAS...\n');
         models = {''};
-        tmax = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', 1980, 'endYear', 2010);
+        tmax = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', 1981, 'endYear', 2010);
         tmax{3} = tmax{3} - 273.15;
 end
 

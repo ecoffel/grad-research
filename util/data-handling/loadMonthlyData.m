@@ -53,6 +53,7 @@ for d = 1:length(dirNames)
     gpcp = false;
     gldas = false;
     era = false;
+    chirps = false;
     
     if strfind(curDir, 'cmip5') ~= 0
         cmip5 = true;
@@ -70,6 +71,8 @@ for d = 1:length(dirNames)
         gldas = true;
     elseif strfind(curDir, 'era-interim') ~= 0
         era = true;
+    elseif strfind(curDir, 'chirps') ~= 0
+        chirps = true;
     end
         
 
@@ -123,6 +126,9 @@ for d = 1:length(dirNames)
         elseif gldas
             dataYear = str2num(matFileNameParts{end-2});
             dataMonth = str2num(matFileNameParts{end-1});
+        elseif chirps
+            dataYear = str2num(matFileNameParts{end-2});
+            dataMonth = str2num(matFileNameParts{end-1});
         end
         
         if yearstart ~= -1 & dataYear < yearstart
@@ -158,7 +164,7 @@ for d = 1:length(dirNames)
         
         if gpcp
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
-        elseif gldas
+        elseif gldas || chirps
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
         elseif cmip5 || era
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);

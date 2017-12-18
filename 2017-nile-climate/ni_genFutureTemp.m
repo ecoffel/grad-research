@@ -11,13 +11,13 @@ switch (baseDataset)
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
-        tempBase = loadDailyData(['E:\data\era-interim\output\mx2t\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        tempBase = loadDailyData(['E:\data\era-interim\output\mx2t\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         tempBase = dailyToMonthly(tempBase);
         tempBase = tempBase{3}(latInds, lonInds, :, :, :) - 273.15;
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        tempBase = loadDailyData(['E:\data\ncep-reanalysis\output\tmax\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        tempBase = loadDailyData(['E:\data\ncep-reanalysis\output\tmax\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         tempBase = dailyToMonthly(tempBase);
         tempBase = tempBase{3}(latInds, lonInds, :, :, :) - 273.15;
         

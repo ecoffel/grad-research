@@ -10,7 +10,7 @@ reanalysisBase = true;
 
 if reanalysisBase
     load(['2017-nile-climate/output/historical-temp-percentiles-era-interim.mat']);
-    load(['2017-nile-climate/output/historical-pr-percentiles-era-interim.mat']);
+    load(['2017-nile-climate/output/historical-pr-percentiles-chirps.mat']);
 else
     historicalTemp = [];
     historicalPr = [];
@@ -52,7 +52,7 @@ for m = 1:length(models)
         load(['2017-nile-climate/output/projections/temp-monthly-future-era-interim-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
         curTempFuture = tempFuture;
 
-        load(['2017-nile-climate/output/projections/pr-monthly-future-era-interim-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
+        load(['2017-nile-climate/output/projections/pr-monthly-future-chirps-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
         curPrFuture = prFuture;
     else
         fprintf('loading historical %s...\n', models{m});
@@ -111,9 +111,9 @@ for m = 1:length(models)
 end
 
 if reanalysisBase
-    save(['2017-nile-climate/output/hotFuture-era-interim-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotFuture');
-    save(['2017-nile-climate/output/dryFuture-era-interim-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dryFuture');
-    save(['2017-nile-climate/output/hotDryFuture-era-interim-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotDryFuture');
+    save(['2017-nile-climate/output/hotFuture-era-interim-chirps-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotFuture');
+    save(['2017-nile-climate/output/dryFuture-era-interim-chirps-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dryFuture');
+    save(['2017-nile-climate/output/hotDryFuture-era-interim-chirps-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotDryFuture');
 else
     save(['2017-nile-climate/output/hotFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotFuture');
     save(['2017-nile-climate/output/dryFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dryFuture');

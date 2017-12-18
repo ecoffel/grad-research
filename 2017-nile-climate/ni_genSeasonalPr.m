@@ -1,4 +1,4 @@
-dataset = 'cmip5';
+dataset = 'ncep-reanalysis';
 
 switch (dataset)
     case 'cmip5'
@@ -12,24 +12,28 @@ switch (dataset)
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
-        pr = loadDailyData(['E:\data\' dataset '\output\tp\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        pr = loadDailyData(['E:\data\' dataset '\output\tp\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         pr{3} = pr{3} .* 1000;
         pr = dailyToMonthly(pr);
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        pr = loadDailyData(['E:\data\' dataset '\output\prate\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        pr = loadDailyData(['E:\data\' dataset '\output\prate\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         pr{3} = pr{3} .* 3600 .* 24;
         pr = dailyToMonthly(pr);
     case 'gldas'
         fprintf('loading GLDAS...\n');
         models = {''};
-        pr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1980, 'endYear', 2010);
+        pr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1981, 'endYear', 2010);
         pr{3} = pr{3} .* 3600 .* 24;
+    case 'chirps'
+        fprintf('loading CHIRPS...\n');
+        models = {''};
+        load('C:\git-ecoffel\grad-research\2017-nile-climate\output\pr-monthly-chirps-regrid.mat');
+        pr = prChirps;
 end
 
 plotMap = false;
-
 
 % regionBoundsNorth = [[13 32]; [29, 34]];
 % [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
@@ -52,16 +56,26 @@ for model = 1:length(models)
         pr = dailyToMonthly(pr);
     end
     
-    lat = pr{1};
-    lon = pr{2};
-    data = pr{3};
+    if strcmp(dataset, 'chirps')
+        load lat;
+        load lon;
+        data = pr;
+    else
+        lat = pr{1};
+        lon = pr{2};
+        data = pr{3};
+    end
     
     % whole nile region
     regionBounds = [[2 32]; [25, 44]];
     [latInds, lonInds] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
     
     for season = 1:size(seasons, 1)
-        regionP = squeeze(nanmean(data(latInds, lonInds, :, seasons(season, :)), 4));
+        if strcmp(dataset, 'chirps')
+            regionP = squeeze(nanmean(data(:, :, :, seasons(season, :)), 4));
+        else
+            regionP = squeeze(nanmean(data(latInds, lonInds, :, seasons(season, :)), 4));
+        end
         prSeasonal{season} = regionP;
     end
     

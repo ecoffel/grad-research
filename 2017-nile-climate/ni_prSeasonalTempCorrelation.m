@@ -40,6 +40,9 @@ load('lon-gldas');
 latGldas = lat;
 lonGldas = lon;
 
+load 2017-nile-climate/output/pr-seasonal-chirps.mat;
+prChirps = prSeasonal;
+
 load lat;
 load lon;
 
@@ -146,13 +149,13 @@ for s = 1:size(seasons, 1)
     tempPrNorthCorrNcep(s) = corr(detrend(tempNorth), detrend(prNorth));
 
     % ERA
-    tempSouth = squeeze(nanmean(nanmean(tempEra{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
+    tempSouthEra = squeeze(nanmean(nanmean(tempEra{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
     prSouth = squeeze(nanmean(nanmean(prEra{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
-    tempPrSouthCorrEra(s) = corr(detrend(tempSouth), detrend(prSouth));
+    tempPrSouthCorrEra(s) = corr(detrend(tempSouthEra), detrend(prSouth));
 
-    tempNorth = squeeze(nanmean(nanmean(tempEra{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
+    tempNorthEra = squeeze(nanmean(nanmean(tempEra{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
     prNorth = squeeze(nanmean(nanmean(prEra{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
-    tempPrNorthCorrEra(s) = corr(detrend(tempNorth), detrend(prNorth));
+    tempPrNorthCorrEra(s) = corr(detrend(tempNorthEra), detrend(prNorth));
     
     % GLDAS
     tempSouth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsSouthGldas, lonIndsSouthGldas, :), 2), 1));
@@ -162,6 +165,13 @@ for s = 1:size(seasons, 1)
     tempNorth = squeeze(nanmean(nanmean(tempGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
     prNorth = squeeze(nanmean(nanmean(prGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
     tempPrNorthCorrGldas(s) = corr(detrend(tempNorth), detrend(prNorth));
+    
+    % CHIRPS - ERA
+    prSouth = squeeze(nanmean(nanmean(prChirps{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
+    tempPrSouthCorrChirpsEra(s) = corr(detrend(tempSouthEra), detrend(prSouth));
+
+    prNorth = squeeze(nanmean(nanmean(prChirps{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
+    tempPrNorthCorrChirpsEra(s) = corr(detrend(tempNorthEra), detrend(prNorth));
     
     % and for models
     for model = 1:length(models)
@@ -191,7 +201,8 @@ if plotCorr
     
     plot(tempPrNorthCorrNcep, 'o', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrNorthCorrEra, 'x', 'Color', 'k','MarkerSize', 30, 'LineWidth', 2);
-    %plot(tempPrNorthCorrGldas, 'd', 'Color', 'k','MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrNorthCorrGldas, 'd', 'Color', 'k','MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrNorthCorrChirpsEra, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
@@ -200,7 +211,7 @@ if plotCorr
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestNorth} = ['\color{red} ' ax.XTickLabels{hottestNorth}];
 
-    leg = legend(' NCEP II', ' ERA-Interim');
+    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CHIRPS-ERA');
     set(leg, 'location', 'northwest');
     ylim([-1 1]);
     xlim([.5 4.5]);
@@ -209,6 +220,7 @@ if plotCorr
     %title('North');
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig pr-temp-corr-north.eps;
+    close all;
 
     figure('Color',[1,1,1]);
     hold on;
@@ -222,7 +234,8 @@ if plotCorr
 
     plot(tempPrSouthCorrNcep, 'o', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrSouthCorrEra, 'x', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
-    %plot(tempPrSouthCorrGldas, 'd', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrSouthCorrGldas, 'd', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrSouthCorrChirpsEra, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
@@ -231,7 +244,7 @@ if plotCorr
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestSouth} = ['\color{red} ' ax.XTickLabels{hottestSouth}];
 
-    leg = legend(' NCEP II', ' ERA-Interim');
+    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CHIRPS-ERA');
     set(leg, 'location', 'northwest');
     ylim([-1 1]);
     xlim([.5 4.5]);
@@ -240,6 +253,7 @@ if plotCorr
     %title('South');
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig pr-temp-corr-south.eps;
+    close all;
 end
 
 

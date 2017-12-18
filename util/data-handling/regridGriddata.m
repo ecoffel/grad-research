@@ -3,7 +3,7 @@
 % lon
 
 % regridds data1 to be along data2's grid
-function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid, gridCor)
+function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid, gridCor, zeroCentered)
     
     data1_lat = dataOldGrid{1};
     data1_lon = dataOldGrid{2};
@@ -21,7 +21,7 @@ function [data1_regridded] = regridGriddata(dataOldGrid, dataNewGrid, gridCor)
     
     % col lon 1 and end are centered around 0 but don't include it... add
     % both a 0 and a 360 col and interpolate the data in between
-    else
+    elseif zeroCentered
         data1_lon = [data1_lon(:,1) zeros(size(data1_lon,1),1), data1_lon(:,2:end)];
         data1_lat = [data1_lat(:,1) data1_lat(:,1) data1_lat(:,2:end)];
         data1_data = [(data1_data(:,1)+data1_data(:,1))./2 data1_data];

@@ -117,6 +117,14 @@ for d = 1:length(dirNames)
         lon = double(eval([matFileNameNoExt, '{2}']));        
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
+        % if it is a -180 to +180 grid, convert to 0 - 360
+        if lon(1) < 0
+            % adjust lon
+            lon = lon + 180;
+            % and shift data by 180 degrees to align with new lon grid
+            curMonthlyData = circshift(curMonthlyData, size(curMonthlyData, 2), 2);
+        end
+        
         if ~tosMod
             if length(latLonBounds) > 0
                 if latLonBounds(2, 1) < 0

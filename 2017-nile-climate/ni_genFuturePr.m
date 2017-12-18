@@ -1,4 +1,4 @@
-baseDataset = 'era-interim';
+baseDataset = 'chirps';
 baseDir = '2017-nile-climate/output';
 
 load lat;
@@ -11,16 +11,19 @@ switch (baseDataset)
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
-        prBase = loadDailyData(['E:\data\era-interim\output\tp\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        prBase = loadDailyData(['E:\data\era-interim\output\tp\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         prBase = dailyToMonthly(prBase);
         prBase = prBase{3}(latInds, lonInds, :, :, :) .* 1000;
     case 'ncep-reanalysis'
         fprintf('loading NCEP...\n');
         models = {''};
-        prBase = loadDailyData(['E:\data\ncep-reanalysis\output\prate\regrid\world'], 'startYear', 1980, 'endYear', 2016);
+        prBase = loadDailyData(['E:\data\ncep-reanalysis\output\prate\regrid\world'], 'startYear', 1981, 'endYear', 2016);
         prBase = dailyToMonthly(prBase);
         prBase = prBase{3}(latInds, lonInds, :, :, :) .* 3600 .* 24;
-        
+    case 'chirps'
+        fprintf('loading CHIRPS...\n');
+        load('C:\git-ecoffel\grad-research\2017-nile-climate\output\pr-monthly-chirps-regrid.mat');
+        prBase = prChirps;
 end
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
