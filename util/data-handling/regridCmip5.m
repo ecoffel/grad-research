@@ -1,4 +1,4 @@
-regridVars = {'pr'};%, 'huss', 'psl'};
+regridVars = {'clt', 'rsds', 'rsus'};%, 'huss', 'psl'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';

@@ -75,7 +75,7 @@ if ~exist('tasmaxCmip5', 'var')
         load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '-all-years.mat']);
         tasmaxCmip5(:, :, m, :, :) = monthlyMeans;
 
-        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowe', 'yearStart', 1985, 'yearEnd', 2004);
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowen', 'startYear', 1985, 'endYear', 2004);
         bowenCmip5(:, :, m, :, :) = curBowen{3};
 
         %bowenCmip5(bowenCmip5 > 100) = NaN;
@@ -151,6 +151,9 @@ for xlat = 1:size(lat, 1)
         
     end
 end
+
+bowenTxCorr = hottestSeasonCorr;
+save('2017-bowen/bowen-tx-corr.mat', 'bowenTxCorr');
 
 % save hottest season
 save('2017-bowen/hottest-season.mat', 'hottestSeason');

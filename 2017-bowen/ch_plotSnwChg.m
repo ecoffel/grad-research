@@ -2,12 +2,20 @@
 baseDir = 'e:/data/projects/bowen';
 SnwVar = 'snw';                  
 percentChange = true;
+warmSeason = false;
 
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+          
+% for mrsos
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+              'mri-cgcm3', 'noresm1-m'};
 
 plotMap = true;
 
@@ -106,7 +114,7 @@ for region = showRegions
         % some partial water tiles have very large values - remove
         %SnwHistorical(SnwHistorical > maxVal) = NaN;
         
-        regionalSnwHistorical(:, :, model) = nanmean(SnwHistorical(curLat, curLon, [12 1 2]), 3);
+        regionalSnwHistorical(:, :, model, :) = SnwHistorical(curLat, curLon, :);
         
         load([baseDir '/snw-chg-data/monthly-mean-snw-cmip5-rcp85-' models{model} '.mat']);
         % rename variable from file
@@ -121,7 +129,7 @@ for region = showRegions
             SnwFuture(:, :, month) = curGrid;
         end
         
-        regionalSnwFuture(:, :, model) = nanmean(SnwFuture(curLat, curLon, [12 1 2]), 3);
+        regionalSnwFuture(:, :, model, :) = SnwFuture(curLat, curLon, :);
 
     end
     
@@ -131,7 +139,7 @@ for region = showRegions
         tmpHistorical = regionalSnwHistorical;
         tmpFuture = regionalSnwFuture;
         
-        chg(:, :, model) = (tmpFuture(:,:,model)-tmpHistorical(:,:,model)) ./ tmpHistorical(:,:,model);
+        chg(:, :, model, :) = (tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:);
     end
     
     if plotMap
@@ -141,7 +149,7 @@ for region = showRegions
             for ylon = 1:size(chg, 2)
 
                 % select only non-nan items
-                curChg = squeeze(chg(xlat, ylon, :));
+                curChg = squeeze(nanmean(chg(xlat, ylon, :, [12 1 2]), 4));
                 ind = find(~isnan(curChg) & ~isinf(curChg));
                 curChg = curChg(ind);
 
@@ -159,9 +167,14 @@ for region = showRegions
         % kill off hatching in antarctica to speed rendering
         sigChg(1:45, :) = 0;
         chg(isinf(chg)) = NaN;
+        
+        chg = chg .* 100;
+        
+        snwChg = chg;
+        save('e:/data/projects/bowen/derived-chg/snw-chg-all.mat', 'snwChg');
+        
         % median over models
         chg = nanmedian(chg, 3);
-        chg = chg .* 100;
         chg(:,1) = chg(:,end);
 
         result = {lat, lon, chg};

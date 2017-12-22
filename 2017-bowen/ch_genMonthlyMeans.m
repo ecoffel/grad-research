@@ -4,20 +4,28 @@
 season = 'all';
 
 dataset = 'cmip5';
-var = 'bowen';
+var = 'mrsos';
 
 isMonthly = true;
 
-skipExisting = false;
+skipExisting = true;
 
 if strcmp(dataset, 'cmip5')
-    models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+    if strcmp(var, 'mrsos')
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+                  'mri-cgcm3', 'noresm1-m'};
+    else
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+                  'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+    end
 
-    rcp = 'rcp85';
+    rcp = 'historical';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -50,11 +58,13 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/bowen-chg-data';
+outputDir = 'e:/data/projects/bowen/mrso-chg-data';
 yearStep = 1;
 
 load lat;
 load lon;
+load waterGrid;
+waterGrid = logical(waterGrid);
 
 ['loading base: ' dataset]
 for m = 1:length(models)
@@ -82,14 +92,14 @@ for m = 1:length(models)
         
         if strcmp(dataset, 'cmip5')
             if isMonthly
-                baseDaily = loadMonthlyData([baseDir '/' dataset '/output/' curModel '/mon/' ensemble '/' rcp '/' var '/regrid/' region], var, 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                baseDaily = loadMonthlyData([baseDir '/' dataset '/output/' curModel '/mon/' ensemble '/' rcp '/' var '/regrid/' region], var, 'startYear', y, 'endYear', (y+yearStep)-1);
             else
-                baseDaily = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                baseDaily = loadDailyData([baseDir '/' dataset '/output/' curModel '/' ensemble '/' rcp '/' var '/regrid/' region], 'startYear', y, 'endYear', (y+yearStep)-1);
             end
         elseif strcmp(dataset, 'ncep-reanalysis')
-            baseDaily = loadDailyData([baseDir '/' dataset '/output/'  var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir '/' dataset '/output/'  var '/regrid/' region], 'startYear', y, 'endYear', (y+yearStep)-1);
         elseif strcmp(dataset, 'era-interim')
-            baseDaily = loadDailyData([baseDir '/' dataset '/output/'  var '/regrid/' region], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+            baseDaily = loadDailyData([baseDir '/' dataset '/output/'  var '/regrid/' region], 'startYear', y, 'endYear', (y+yearStep)-1);
         end
         
         % remove lat/lon data (we loaded this earlier)
@@ -111,30 +121,33 @@ for m = 1:length(models)
             % loop over lon
             for ylon = 1:size(baseDaily, 2)
                 
+                if waterGrid(xlat, ylon)
+                    continue
+                end
                 
-                    % loop over years
-                    for year = 1:size(baseDaily, 3)
+                % loop over years
+                for year = 1:size(baseDaily, 3)
 
-                        % and over months
-                        for month = 1:size(baseDaily, 4)
+                    % and over months
+                    for month = 1:size(baseDaily, 4)
 
-                            if avgOverYears
-                                % calculate mean for this month6                                
-                                if isnan(monthlyMeans(xlat, ylon, month))
-                                    % if nan, set it to current month's mean
-                                    % directly
-                                    monthlyMeans(xlat, ylon, month) = squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)));
-                                else
-                                    % otherwise, take mean of current monthly mean
-                                    % and existing mean
-                                    monthlyMeans(xlat, ylon, month) = nanmean([monthlyMeans(xlat, ylon, month), squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)))]);
-                                end
+                        if avgOverYears
+                            % calculate mean for this month6                                
+                            if isnan(monthlyMeans(xlat, ylon, month))
+                                % if nan, set it to current month's mean
+                                % directly
+                                monthlyMeans(xlat, ylon, month) = squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)));
                             else
-                                % store the mean for this month & year
-                                monthlyMeans(xlat, ylon, y-timePeriod(1)+1, month) = squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)));
+                                % otherwise, take mean of current monthly mean
+                                % and existing mean
+                                monthlyMeans(xlat, ylon, month) = nanmean([monthlyMeans(xlat, ylon, month), squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)))]);
                             end
+                        else
+                            % store the mean for this month & year
+                            monthlyMeans(xlat, ylon, y-timePeriod(1)+1, month) = squeeze(nanmean(baseDaily(xlat, ylon, year, month, :)));
                         end
                     end
+                end
             end
         end        
         clear baseDailyBowen;

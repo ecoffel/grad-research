@@ -1,10 +1,5 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
-dataset = 'reanalysis';
-
-tasmaxMetric = 'monthly-mean-max';
-tasminMetric = 'monthly-mean-min';
-
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -64,12 +59,12 @@ if ~exist('bowenChg', 'var')
 
     for m = 1:length(models)
 
-        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowen', 'yearStart', 1985, 'yearEnd', 2004);
-        curBowen{3}(abs(curBowen{3}) > 100) = NaN;
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/ef/regrid/world'], 'ef', 'startYear', 1985, 'endYear', 2004);
+        %curBowen{3}(abs(curBowen{3}) > 100) = NaN;
         bowenHistorical = squeeze(nanmean(curBowen{3}, 3));
 
-        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/bowen/regrid/world'], 'bowen', 'yearStart', 2060, 'yearEnd', 2079);
-        curBowen{3}(abs(curBowen{3}) > 100) = NaN;
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/ef/regrid/world'], 'ef', 'startYear', 2060, 'endYear', 2079);
+        %curBowen{3}(abs(curBowen{3}) > 100) = NaN;
         bowenRcp85 = squeeze(nanmean(curBowen{3}, 3));
         
         bowenChg(:, :, :, m) = (squeeze(bowenRcp85) - squeeze(bowenHistorical)) ./ squeeze(bowenHistorical) .* 100;
@@ -84,7 +79,7 @@ seasons = [[12 1 2];
 
 
 % load hottest seasons
-load('2017-bowen/hottest-season.mat');
+load('2017-bowen/hottest-season-models.mat');
 
 hotSeasonBowenChg = zeros(size(bowenChg, 1), size(bowenChg, 2), length(models));
 hotSeasonBowenChg(hotSeasonBowenChg == 0) = NaN;
@@ -115,19 +110,26 @@ for xlat = 1:size(bowenChg, 1)
     end
 end
 
+bowenChg = hotSeasonBowenChg;
+efChg = bowenChg;
+save('2017-bowen/ef-chg.mat', 'efChg');
+
 % plot ----------------------------------------------------
-    
+
+hotSeasonBowenChgDisagree(1:15,:) = 0;
+hotSeasonBowenChgDisagree(75:90,:) = 0;
+
 result = {lat, lon, nanmedian(hotSeasonBowenChg, 3)};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-100 100], ...
-                  'cbXTicks', -100:25:100, ...
-                  'plotTitle', ['Bowen ratio change'], ...
-                  'fileTitle', ['bowen-chg-hottest-cmip5.pdf'], ...
+                  'plotRange', [-25 25], ...
+                  'cbXTicks', -25:10:25, ...
+                  'plotTitle', ['EF ratio change'], ...
+                  'fileTitle', ['ef-chg-hottest-cmip5.pdf'], ...
                   'plotXUnits', ['%'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([], '*BrBG'), ...
+                  'colormap', brewermap([], 'BrBG'), ...
                   'statData', hotSeasonBowenChgDisagree, ...
                   'stippleInterval', 5, ...
                   'boxCoords', {regions([2,4,7], :)});

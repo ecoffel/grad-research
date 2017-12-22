@@ -4,12 +4,20 @@ tasmaxMetric = 'monthly-mean-max';
 tasminMetric = 'monthly-mean-min';
 showMaps = false;
 showMonthlyMaps = false;
+% 
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+% for mrsos
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+              'mri-cgcm3', 'noresm1-m'};
+          
 
 % show the percentage change in bowen ratio or the absolute change
 showPercentChange = true;
@@ -79,7 +87,7 @@ seasons = [[12 1 2];
                [3 4 5];
                [6 7 8];
                [9 10 11]];
-load('2017-bowen/hottest-season.mat');
+load('2017-bowen/hottest-season-ncep.mat');
 
 % loop over all regions to find lat/lon indicies
 for i = 1:size(regions, 1)
@@ -203,6 +211,16 @@ for i = 1:length(regionNames)
     tnnRegionsChange{i} = squeeze(nanmean(nanmean(tnnChg(regionLatLonInd{i}{1}, regionLatLonInd{i}{2}, :), 2), 1));
 end
 
+% save seasonal amplification
+seasonalAmp = zeros(size(lat,1), size(lat,2), size(tasmaxChg,3));
+seasonalAmp(seasonalAmp == 0) = NaN;
+for xlat = 1:size(tasmaxChg, 1)
+    for ylon = 1:size(tasmaxChg, 2)
+        seasonalAmp(xlat, ylon, :) = squeeze(nanmean(tasmaxChg(xlat,ylon,:,seasons(hottestSeason(xlat, ylon), :)), 4)) - squeeze(nanmean(tasmaxChg(xlat, ylon, :, :), 4));
+    end
+end
+
+save('e:/data/projects/bowen/derived-chg/seasonal-amp.mat', 'seasonalAmp');
 
 % plot ----------------------------------------------------
 

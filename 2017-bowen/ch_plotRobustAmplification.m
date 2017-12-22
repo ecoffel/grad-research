@@ -13,19 +13,28 @@ waterGrid = logical(waterGrid);
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
-chgMetric = 'ann-max';
+% warm-season-anom: warm season Tx change minus annual Tx change
+chgMetric = 'warm-season-anom';
 
 modelSubset = 'all';
 
 rcp = 'rcp85';
 timePeriod = '2060-2080';
+% 
+% modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+% for mrsos
 modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
+              'mri-cgcm3', 'noresm1-m'};
+          
+          
 % modelsBowen = {'access1-0', 'access1-3', 'bnu-esm', 'canesm2', ...
 %               'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
 %               'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -116,6 +125,9 @@ for m = 1:length(models)
     elseif strcmp(chgMetric, 'daily-max-min')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
+    elseif strcmp(chgMetric, 'warm-season-anom')
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' models{m} '-' rcp '-' timePeriod '.mat']);
+        curChg = chgData;        
     end
 
     % NaN-out all water gridcells
@@ -144,6 +156,9 @@ for m = 1:length(models)
     elseif strcmp(chgMetric, 'daily-max-min')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
+    elseif strcmp(chgMetric, 'warm-season-anom')
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        curChg = chgData;
     end
 
     % NaN-out all water gridcells
@@ -160,7 +175,12 @@ for m = 1:length(models)
 end
 
 amp = chg1 - chg2;
-% end
+
+if strcmp(chgMetric, 'ann-max')
+    save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
+elseif strcmp(chgMetric, 'ann-min')
+    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
 % max threshold that still allows for specified level of model agreement

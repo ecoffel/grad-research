@@ -8,15 +8,13 @@ if strcmp(dataset, 'cmip5')
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-    rcps = {'historical', 'rcp85'};
+    rcps = {'historical'};
     ensembles = 1;
 elseif strcmp(dataset, 'ncep') || strcmp(dataset, 'era')
     models = {''};
     rcps = {''};
     ensembles = {''};
 end
-
-models = {'bnu-esm', 'canesm2', 'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'miroc-esm', 'noresm1-m'};
 
 isMonthly = true;
 monthlyStr = '/mon';
@@ -32,7 +30,8 @@ for m = 1:length(models)
             elseif strcmp(dataset, 'era')
                 ch_calcBowenRatio(['e:/data/era-interim/output'], true);
             else
-                ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
+                ch_calcEF(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
+                %ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
             end
         end
     end
