@@ -1,8 +1,9 @@
 
 baseDir = 'e:/data';
-var = 'hfss';                  
+var = 'rsus';                  
 percentChange = true;
-warmSeason = false;
+warmSeason = true;
+warmSeasonAnom = false;
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -15,6 +16,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mri-cgcm3', 'noresm1-m'};
+          
+          models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'ccsm4', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+                  'mri-cgcm3', 'noresm1-m'};
           
 plotMap = true;
 
@@ -100,13 +107,18 @@ for region = showRegions
                 if waterGrid(curLat(xlat), curLon(ylon))
                     continue;
                 end
-                % select hottest months if needed...
-                if warmSeason
-                    regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
-                % otherwise the whole year
-                else
-                    regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
-                end
+                
+                regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
+                
+%                 % select hottest months if needed...
+%                 if warmSeason
+%                     regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
+%                 % otherwise the whole year
+%                 elseif warmSeasonAnom
+%                     regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
+%                 else
+%                     regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
+%                 end
             end
         end
         
@@ -129,11 +141,15 @@ for region = showRegions
                 if waterGrid(curLat(xlat), curLon(ylon))
                     continue;
                 end
-                if warmSeason
-                    regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
-                else
-                    regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
-                end
+                
+                regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
+                
+                
+%                 if warmSeason
+%                     regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
+%                 else
+%                     regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
+%                 end
             end
         end
     end
@@ -144,7 +160,26 @@ for region = showRegions
         tmpHistorical = regionalFluxHistorical;
         tmpFuture = regionalFluxFuture;
         
-        chg(:, :, model, :) = (tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:);
+        if warmSeason
+            % change in warm season
+            for xlat = 1:size(lat, 1)
+                for ylon = 1:size(lat, 2)
+                    chg(xlat, ylon, model) = squeeze((nanmean(tmpFuture(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4)-nanmean(tmpHistorical(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4)) ./ nanmean(tmpHistorical(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4));
+                end
+            end
+            
+        elseif warmSeasonAnom
+            % change in warm season - change in all seasons
+            for xlat = 1:size(lat, 1)
+                for ylon = 1:size(lat, 2)
+                    chg(xlat, ylon, model) = squeeze(((nanmean(tmpFuture(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4)-nanmean(tmpHistorical(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4)) ./ nanmean(tmpHistorical(xlat, ylon,model,seasons(hottestSeason(xlat, ylon))), 4)) - ...
+                                                ((nanmean(tmpFuture(xlat, ylon,model,:), 4)-nanmean(tmpHistorical(xlat, ylon,model,:), 4)) ./ nanmean(tmpHistorical(xlat, ylon,model,:), 4)));
+                end
+            end
+        else
+            % change in all seasons
+            chg(:, :, model) = squeeze((nanmean(tmpFuture(:,:,model,:), 4)-nanmean(tmpHistorical(:,:,model,:), 4)) ./ nanmean(tmpHistorical(:,:,model,:), 4));
+        end
     end
     
     if plotMap
@@ -173,11 +208,11 @@ for region = showRegions
         chg = chg .* 100;
         
         if ~warmSeason
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
+            %eval([var 'Chg = chg;']);
+            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
         end
         
-        chg = nanmedian(nanmean(chg, 4), 3);
+        chg = nanmedian(chg, 3);
         chg(:,1) = chg(:,end);
 
         result = {lat, lon, chg};
@@ -192,10 +227,10 @@ for region = showRegions
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-50 50], ...
-                          'cbXTicks', -50:25:50, ...
-                          'plotTitle', ['Warm-season ' var ' change'], ...
-                          'fileTitle', [var '-chg-' num2str(region) '.eps'], ...
+                          'plotRange', [-15 15], ...
+                          'cbXTicks', -15:5:15, ...
+                          'plotTitle', ['Warm season ' var ' change'], ...
+                          'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
                           'plotXUnits', ['%'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...

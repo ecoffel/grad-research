@@ -164,7 +164,7 @@ for region = showRegions
         end
 
         sigChg(~snowMask) = 0;
-        % kill off hatching in antarctica to speed rendering
+        % kill off hatching in southern hemisphere to speed rendering
         sigChg(1:45, :) = 0;
         chg(isinf(chg)) = NaN;
         

@@ -59,9 +59,10 @@ load lon;
 % seasonal-monthly-min = monthly minimum temperature
 % seasonal-monthly-mean-max = mean daily maximum temperature for each month
 % seasonal-monthly-mean-min = mean daily minimum temperature for each month
-% warm-season-tx = change in Tx in local warm season minus Tx change over year
+% warm-season-tx-anom = change in Tx in local warm season minus Tx change over year
+% warm-season-tx = change in Tx in local warm season
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'warm-season-tx';
+changeMetric = 'ann-max';
 
 load 2017-bowen/hottest-season-models;
 
@@ -81,12 +82,12 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-% temperature data (thresh, ann-max, or daily-max)
-baseData = [];
-
 ['loading base: ' baseDataset]
 for m = 1:length(models)
     curModel = models{m};
+    
+    % temperature data (thresh, ann-max, or daily-max)
+    baseData = [];
 
     ['loading base model ' curModel '...']
 
@@ -106,7 +107,7 @@ for m = 1:length(models)
         % if we are not using a seasonal metric
         if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
            ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
-           ~strcmp(changeMetric, 'warm-season-tx')
+           ~strcmp(changeMetric, 'warm-season-tx-anom') && ~strcmp(changeMetric, 'warm-season-tx')
             % reshape to be 3D (x, y, day)
             baseDaily = reshape(baseDaily, [size(baseDaily, 1), size(baseDaily, 2), ...
                                                  size(baseDaily, 3)*size(baseDaily, 4)*size(baseDaily, 5)]);
@@ -126,7 +127,6 @@ for m = 1:length(models)
             end
         end
         
-
         if strcmp(changeMetric, 'thresh')
             % calculate base period thresholds
 
@@ -144,7 +144,7 @@ for m = 1:length(models)
 
                         % calculate threshold at current (x,y) and
                         % percentile 
-                        baseData(xlat, ylon, m, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily(xlat, ylon, :)), thresh(t));
+                        baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily(xlat, ylon, :)), thresh(t));
                     end
                 end
             end
@@ -154,14 +154,14 @@ for m = 1:length(models)
             
             % loop over months
             for month = 1:size(baseDaily, 4)
-                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmax(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
+                baseData(:, :, y-basePeriodYears(1)+1, month) = nanmax(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
             end
         elseif strcmp(changeMetric, 'seasonal-monthly-min')
             % calculate the seasonal minimum for each month
             
             % loop over months
             for month = 1:size(baseDaily, 4)
-                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmin(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
+                baseData(:, :, y-basePeriodYears(1)+1, month) = nanmin(squeeze(baseDaily(:, :, 1, month, :)), [], 3);
             end
             
         elseif strcmp(changeMetric, 'seasonal-monthly-mean-max') 
@@ -169,69 +169,71 @@ for m = 1:length(models)
             
             % loop over months
             for month = 1:size(baseDaily, 4)
-                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
+                baseData(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
             end
         elseif strcmp(changeMetric, 'seasonal-monthly-mean-min') 
             % calculate the seasonal mean daily minimum for each month
             
             % loop over months
             for month = 1:size(baseDaily, 4)
-                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
+                baseData(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
             end
             
-        elseif strcmp(changeMetric, 'warm-season-tx') 
+        elseif strcmp(changeMetric, 'warm-season-tx-anom') || strcmp(changeMetric, 'warm-season-tx')
             % calculate the seasonal mean daily minimum for each month
             
             % loop over months
             for month = 1:size(baseDaily, 4)
-                baseData(:, :, m, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
+                baseData(:, :, y-basePeriodYears(1)+1, month) = nanmean(squeeze(baseDaily(:, :, 1, month, :)), 3);
             end
                 
         elseif strcmp(changeMetric, 'ann-max')
 
             % store annual max temperature at each gridbox for this year
-            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily), [], 3);
+            baseData(:, :, y-basePeriodYears(1)+1) = nanmax(squeeze(baseDaily), [], 3);
             
         elseif strcmp(changeMetric, 'ann-min')
 
             % store annual min temperature at each gridbox for this year
-            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmin(squeeze(baseDaily), [], 3);
+            baseData(:, :, y-basePeriodYears(1)+1) = nanmin(squeeze(baseDaily), [], 3);
 
         elseif strcmp(changeMetric, 'daily-max') || strcmp(changeMetric, 'daily-min')
 
             % store mean daily max temperature at each gridbox for this year
-            baseData(:, :, m, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily), 3);
+            baseData(:, :, y-basePeriodYears(1)+1) = nanmean(squeeze(baseDaily), 3);
 
         end
         
 
         clear baseDaily baseDaily3d;
     end
-end
 
+    if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max') || ...
+       strcmp(changeMetric, 'ann-min') || strcmp(changeMetric, 'daily-min')
+        % if computing annual maximum or mean daily maximum, take the mean across all base period
+        % years (baseData now 3D: (x, y, year))
+        baseData = nanmean(baseData, 3);
 
-if strcmp(changeMetric, 'ann-max') || strcmp(changeMetric, 'daily-max') || ...
-   strcmp(changeMetric, 'ann-min') || strcmp(changeMetric, 'daily-min')
-    % if computing annual maximum or mean daily maximum, take the mean across all base period
-    % years (baseData now 3D: (x, y, model))
-    baseData = nanmean(baseData, 4);
-elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
-       strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min') || ...
-       strcmp(changeMetric, 'warm-season-tx')
-    % if computing seasonal metrics, average over all the annual
-    % maximum or mean daily maximum, take the mean across all years
-    % (baseData now 4D: (x, y, model, month))
-    baseData = squeeze(nanmean(baseData, 4));
-end
+    %     if strcmp(changeMetric, 'ann-max')
+    %         save(['e:/data/projects/bowen/temp-chg-data/ann-max-historical.mat']);
+    %     end
+    elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
+           strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min') || ...
+           strcmp(changeMetric, 'warm-season-tx') || strcmp(changeMetric, 'warm-season-tx-anom')
+        % if computing seasonal metrics, average over all the annual
+        % maximum or mean daily maximum, take the mean across all years
+        % (baseData now 3D: (x, y, year, month))
+        baseData = squeeze(nanmean(baseData, 3));
+    end
 
-% ------------ load future data -------------    
+    % ------------ load future data -------------    
 
-for f = 1:size(futurePeriods, 1)
-    
-    futurePeriodYears = futurePeriods(f, :);
+    for f = 1:size(futurePeriods, 1)
 
-    ['loading future: ' futureDataset]
-    for m = 1:length(models)
+        futurePeriodYears = futurePeriods(f, :);
+
+        ['loading future: ' futureDataset]
+
         curModel = models{m};
         
         futureData = [];
@@ -253,7 +255,7 @@ for f = 1:size(futurePeriods, 1)
             % if we are not using a seasonal metric
             if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
                ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
-               ~strcmp(changeMetric, 'warm-season-tx')
+               ~strcmp(changeMetric, 'warm-season-tx') && ~strcmp(changeMetric, 'warm-season-tx-anom')
                 % reshape to 3D (x, y, day)
                 futureDaily = reshape(futureDaily, [size(futureDaily, 1), size(futureDaily, 2), ...
                                                          size(futureDaily, 3)*size(futureDaily, 4)*size(futureDaily, 5)]);
@@ -320,7 +322,7 @@ for f = 1:size(futurePeriods, 1)
                     futureData(:, :, y-futurePeriodYears(1)+1, month) = nanmean(squeeze(futureDaily(:, :, 1, month, :)), 3);
                 end
                 
-            elseif strcmp(changeMetric, 'warm-season-tx') 
+            elseif strcmp(changeMetric, 'warm-season-tx') || strcmp(changeMetric, 'warm-season-tx-anom') 
                 % calculate the seasonal mean daily minimum for each month
 
                 % loop over months
@@ -355,7 +357,7 @@ for f = 1:size(futurePeriods, 1)
             futureData = nanmean(futureData, 3);
             
             % calculate change for the current base period model:
-            chgData = futureData - baseData(:, :, m);
+            chgData = futureData - baseData;
 
         elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
                strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min')
@@ -365,21 +367,21 @@ for f = 1:size(futurePeriods, 1)
             futureData = squeeze(nanmean(futureData, 3));
             
             % calculate change for the current base period model, average over base models:
-            chgData = futureData - squeeze(baseData(:, :, m, :));
-        elseif strcmp(changeMetric, 'warm-season-tx')
+            chgData = futureData - baseData;
+        elseif strcmp(changeMetric, 'warm-season-tx-anom')
             % take mean across all months & years
-            baseAnnTx = squeeze(nanmean(baseData, 4));
+            baseAnnTx = squeeze(nanmean(baseData, 3));
             futureAnnTx = squeeze(nanmean(nanmean(futureData, 4), 3));
             
             % annual Tx change for this model
-            annualTxChg = futureAnnTx - baseAnnTx(:, :, m);
+            annualTxChg = futureAnnTx - baseAnnTx;
             
             baseWarmSeasonTx = [];
             futureWarmSeasonTx = [];
             for xlat = 1:size(baseData, 1)
                 for ylon = 1:size(baseData, 2)
                     % average over hottest months for current model
-                    baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, m, seasons(hottestSeason(xlat, ylon), :)), 4));
+                    baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, seasons(hottestSeason(xlat, ylon), :)), 3));
                     % average over all years & hottest months
                     futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4), 3));
                 end
@@ -387,10 +389,29 @@ for f = 1:size(futurePeriods, 1)
             
             % change in warm season Tx minus annual Tx
             chgData = (futureWarmSeasonTx - baseWarmSeasonTx) - annualTxChg;
+        elseif  strcmp(changeMetric, 'warm-season-tx')
+            
+            % take mean across all months & years
+            baseAnnTx = squeeze(nanmean(baseData, 3));
+            futureAnnTx = squeeze(nanmean(nanmean(futureData, 4), 3));
+            
+            baseWarmSeasonTx = [];
+            futureWarmSeasonTx = [];
+            for xlat = 1:size(baseData, 1)
+                for ylon = 1:size(baseData, 2)
+                    % average over hottest months for current model
+                    baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, seasons(hottestSeason(xlat, ylon), :)), 3));
+                    % average over all years & hottest months
+                    futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4), 3));
+                end
+            end
+            
+            % change in warm season Tx 
+            chgData = (futureWarmSeasonTx - baseWarmSeasonTx);
             
         end
 
-        save(['2017-concurrent-heat/tasmax/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
 
     end
 end

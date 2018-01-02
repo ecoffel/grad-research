@@ -7,9 +7,9 @@ showOutliers = true;
 
 var1 = 'mrsos';
 var1Months = [6 7 8];
-v1XStr = 'JJA mrsos change (%)';
-v1XLim = [-75 25];
-v1XTick = -75:25:25;%[-25 0 25 50 75 100];
+v1XStr = 'JJA pr change (%)';
+v1XLim = [-50 50];
+v1XTick = -50:25:50; %[-25 0 25 50 75 100];
 v1FileStr = [var1 '-JJA'];
 
 var2 = 'hfss';
@@ -19,7 +19,7 @@ v2YLim = [-25 125];
 v2YTick = -25:25:125;
 v2FileStr = [var2 '-JJA'];
 
-regionIds = [4];
+regionIds = [2];
 
 scatterPlots = true;
 saveScatter = true;
@@ -64,7 +64,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
-           [[36 45], [-5+360, 40]]; ...        % Med
+           [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa

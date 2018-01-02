@@ -1,10 +1,7 @@
-% For each grid cell, find the mean Bowen ratio at each 1-deg daily maximum temperature
-% increment
-
 season = 'all';
 
 dataset = 'cmip5';
-var = 'mrsos';
+var = 'rsus';
 
 isMonthly = true;
 
@@ -15,6 +12,12 @@ if strcmp(dataset, 'cmip5')
         models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
                   'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+                  'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+                  'mri-cgcm3', 'noresm1-m'};
+    elseif strcmp(var, 'clt') | strcmp(var, 'rsds') | strcmp(var, 'rsus')
+        models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+                  'ccsm4', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                  'hadgem2-cc', ...
                   'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                   'mri-cgcm3', 'noresm1-m'};
     else
@@ -58,7 +61,7 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/mrso-chg-data';
+outputDir = 'e:/data/projects/bowen/rad-chg-data';
 yearStep = 1;
 
 load lat;

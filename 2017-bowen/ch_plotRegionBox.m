@@ -21,12 +21,12 @@ regionAb = {'us-east', ...
 
 regions = [[[30 42 42 30], [-91 -91 -75 -75] + 360]; ...     % eastern us
            [[45 55 55 45], [10 10 35 35]]; ...            % Europe
-           [[36 45 45 36], [-5+360 -5+360 40 40]]; ...        % Med
+           [[35 50 50 35], [-10+360 -10+360 45 45]]; ...        % Med
            [[5 20 20 5], [-90 -90 -45 -45]+360]; ...         % Northern SA
            [[-10 1 1 -10], [-75 -75 -53 -53]+360]; ...      % Amazon
            [[-10 10 10 -10], [15 15 30 30]]];                % central africa
 
-regionInds = [1 2 3 5];
+regionInds = [3];
        
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
 countries = shaperead('countries', 'UseGeoCoords', true);
@@ -42,4 +42,4 @@ for regionInd = regionInds
 end
 
 
-set(gcf, 'Position', get(0,'Screensize'));
+%set(gcf, 'Position', get(0,'Screensize'));

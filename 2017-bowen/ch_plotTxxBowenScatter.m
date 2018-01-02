@@ -6,13 +6,16 @@ waterGrid = logical(waterGrid);
 showOutliers = true;
 plotModels = false;
 useSeasonalAmp = false;
-useTxxSeasonalAmp = false;
+useTxxSeasonalAmp = true;
+
 useMrsos = false;
 useHfss = false;
 useHfls = false;
 useEF = false;
 usePr = false;
-warmSeason = true;
+
+warmSeason = true; 
+warmSeasonAnom = false;
 
 scatterPlots = true;
 globalCorrMap = false;
@@ -32,7 +35,6 @@ else
     ampVar = amp;
 end
 
-% load snow change map
 if useMrsos
     load e:/data/projects/bowen/derived-chg/mrsos-chg-all;
     driverVar = mrsosChg;
@@ -43,6 +45,7 @@ elseif useHfss
 elseif useHfls
     load e:/data/projects/bowen/derived-chg/hfls-chg-all;
     driverVar = hflsChg;
+    driverVar(driverVar>1000 | driverVar<-1000) = NaN;
 elseif usePr
     load e:/data/projects/bowen/derived-chg/pr-chg-all;
     driverVar = prChg;
@@ -50,11 +53,13 @@ elseif useEF
     load 2017-bowen/ef-chg;
     driverVar = efChg;
 else
-    load e:/data/projects/bowen/derived-chg/bowen-chg;
-    driverVar = bowenChg;
-    driverVar(driverVar > 1000) = NaN;
-    driverVar(driverVar < -100) = NaN;
-    driverVar(isinf(driverVar)) = NaN;
+    load e:/data/projects/bowen/derived-chg/hfss-chg-all;
+    hfssChg(hfssChg>1000 | hfssChg<-1000) = NaN;
+    
+    load e:/data/projects/bowen/derived-chg/hfls-chg-all;
+    hflsChg(hflsChg>1000 | hflsChg<-1000) = NaN;
+    
+    driverVar = hfssChg ./ hflsChg;
 end
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -86,7 +91,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
-           [[36 45], [-5+360, 40]]; ...        % Med
+           [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
@@ -116,7 +121,7 @@ load('2017-bowen/hottest-season-ncep.mat');
 
 if scatterPlots
     % loop over regions
-    for region = 4
+    for region = 8
         % select lat lon coords for region
         [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
@@ -128,13 +133,21 @@ if scatterPlots
         if warmSeason
             hotSeason = mode(reshape(hottestSeason(latInds, lonInds), [length(latInds)*length(lonInds),1]));
             driverMonths = seasons(hotSeason,:);
+            regionDriverChg = squeeze(nanmean(nanmean(nanmean(driverVar(latInds, lonInds, :, driverMonths), 4), 2), 1));
+        elseif warmSeasonAnom
+            hotSeason = mode(reshape(hottestSeason(latInds, lonInds), [length(latInds)*length(lonInds),1]));
+            driverMonths = seasons(hotSeason,:);
+            
+            % and driver in selected months compared to all
+            regionDriverChg = squeeze(nanmean(nanmean(nanmean(driverVar(latInds, lonInds, :, driverMonths), 4), 2), 1)) - ...
+                              squeeze(nanmean(nanmean(nanmean(driverVar(latInds, lonInds, :, :), 4), 2), 1));
         else
             driverMonths = 1:12;
+            
+            % and driver
+            regionDriverChg = squeeze(nanmean(nanmean(nanmean(driverVar(latInds, lonInds, :, driverMonths), 4), 2), 1));
         end
         
-        % and driver
-        regionDriverChg = squeeze(nanmean(nanmean(nanmean(driverVar(latInds, lonInds, :, driverMonths), 4), 2), 1));
-
         nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp));
         regionAmp = regionAmp(nn);
         regionDriverChg = regionDriverChg(nn);
@@ -195,7 +208,9 @@ if scatterPlots
         end
 
         warmStr = 'Warm season';
-        if ~warmSeason
+        if warmSeasonAnom
+            warmStr = 'Warm season anom';
+        elseif ~warmSeason 
             warmStr = 'All season';
         end
         
@@ -263,10 +278,14 @@ if scatterPlots
             compVar = 'hfls';
         elseif useEF
             compVar = 'ef';
+        elseif usePr
+            compVar = 'pr';
         end
 
         warmStr = 'warm-';
-        if ~warmSeason
+        if warmSeasonAnom
+            warmStr = 'warm-anom-';
+        elseif ~warmSeason
             warmStr = 'all-';
         end
         
@@ -288,10 +307,10 @@ if globalCorrMap
                 continue;
             end
             
-            % select txx/bowen for region for all models
+            select txx/bowen for region for all models
             regionAmp = squeeze(ampVar(xlat, ylon, :));
 
-            % and bowen
+            and bowen
             regionDriverChg = squeeze(driverVar(xlat, ylon, :));
 
             nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp));
@@ -331,11 +350,11 @@ if globalCorrMap
             corrMap(xlat, ylon) = f.p1;
             corrSig(xlat, ylon) = sign(c(1,1)) == sign(c(2,1));
             
-%             if showOutliers
-%                 corrMap(xlat, ylon) = corr(regionTxxNoOutliers, regionBowenChgNoOutliers);
-%             else
-%                 corrMap(xlat, ylon) = corr(regionTxx, regionBowenChg);
-%             end
+            if showOutliers
+                corrMap(xlat, ylon) = corr(regionTxxNoOutliers, regionBowenChgNoOutliers);
+            else
+                corrMap(xlat, ylon) = corr(regionTxx, regionBowenChg);
+            end
         end
     end
     
@@ -362,9 +381,9 @@ if globalCorrMap
         file = [tempVar '-bowen-chg-corr.eps'];
     end
     
-%     sigChg = txxAmp < 0.5;
-%     sigChg(1:15,:) = 0;
-%     sigChg(80:90,:) = 0;
+    sigChg = txxAmp < 0.5;
+    sigChg(1:15,:) = 0;
+    sigChg(80:90,:) = 0;
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
