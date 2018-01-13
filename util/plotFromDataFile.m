@@ -22,6 +22,12 @@ function [fg, cb] = plotFromDataFile(saveData)
         colorMap = [];
     end
     
+    if isfield(saveData, 'showColorbar')
+        showColorbar = saveData.showColorbar;
+    else
+        showColorbar = true;
+    end
+    
     if isfield(saveData, 'vectorData')
         vectorData = saveData.vectorData;
     else
@@ -81,21 +87,25 @@ function [fg, cb] = plotFromDataFile(saveData)
     saveData.data{1}(:,end+1)=saveData.data{1}(:,end)+(saveData.data{1}(:,end)-saveData.data{1}(:,end-1));
     saveData.data{3}(:,end+1)=saveData.data{3}(:,end);
     
-    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates);
+    [fg,cb] = plotModelData(saveData.data, saveData.plotRegion, 'caxis', saveData.plotRange, 'colormap', colorMap, 'vectorData', vectorData, 'countries', plotCountries, 'states', plotStates, 'showColorbar', showColorbar);
     
     %set(gca, 'DrawMode', 'childorder');
     %set(gca, 'SortMethod', 'childorder');
     
     set(gca, 'Color', 'none');
     set(gca, 'FontSize', 40);
-    xlabel(cb, saveData.plotXUnits, 'FontSize', 40);
-    set(cb, 'XTick', xticks);
-    cbPos = get(cb, 'Position');
+    if showColorbar
+        xlabel(cb, saveData.plotXUnits, 'FontSize', 40);
+        set(cb, 'XTick', xticks);
+        cbPos = get(cb, 'Position');
+    end
     title(saveData.plotTitle, 'FontSize', 30);
     
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');
-    set(gca,'Position', [ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
+    if showColorbar
+        set(gca,'Position', [ti(1) cbPos(2) 1-ti(3)-ti(1) 1-ti(4)-cbPos(2)-cbPos(4)]);
+    end
 	tightmap;
     
     if statDataExists

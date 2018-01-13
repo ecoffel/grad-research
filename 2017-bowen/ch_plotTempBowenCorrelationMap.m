@@ -1,9 +1,6 @@
 % plot monthly max temperature change alongside mean monthly bowen ratio changes
 
-dataset = 'reanalysis';
-
-tasmaxMetric = 'monthly-mean-max';
-tasminMetric = 'monthly-mean-min';
+dataset = 'cmip5';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -11,20 +8,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-% show the percentage change in bowen ratio or the absolute change
-showPercentChange = true;
-
-showLegend = false;
-
-% show correlation between Tx and Bowen
-showCorr = true;
-
 load waterGrid;
 load lat;
 load lon;
 waterGrid = logical(waterGrid);
 
-bowenBaseDir = 'e:\data\projects\bowen\temp-chg-data\';
+bowenBaseDir = 'e:\data\projects\bowen\flux-chg-data\';
 tempBaseDir = 'e:\data\projects\bowen\temp-chg-data\';
 
 % all available models for both bowen and tasmax
@@ -75,7 +64,7 @@ if ~exist('tasmaxCmip5', 'var')
         load([tempBaseDir 'monthly-mean-tasmax-cmip5-historical-' models{m} '-all-years.mat']);
         tasmaxCmip5(:, :, m, :, :) = monthlyMeans;
 
-        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/bowen/regrid/world'], 'bowen', 'startYear', 1985, 'endYear', 2004);
+        curBowen = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfss/regrid/world'], 'bowen', 'startYear', 1985, 'endYear', 2004);
         bowenCmip5(:, :, m, :, :) = curBowen{3};
 
         %bowenCmip5(bowenCmip5 > 100) = NaN;

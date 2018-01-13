@@ -11,8 +11,8 @@ if mod(length(varargin), 2) ~= 0
 end
 
 plev = -1;
-yearstart = -1;
-yearend = -1;
+startyear = -1;
+endyear = -1;
 skipExisting = true;
 latLonBounds = [];
 v7 = false;
@@ -27,10 +27,10 @@ for i=1:2:length(varargin)
     switch key
         case 'plev'
             plev = val;
-        case 'yearStart'
-            yearstart = val;
-        case 'yearEnd'
-            yearend = val;
+        case 'startYear'
+            startyear = val;
+        case 'endYear'
+            endyear = val;
         case 'skipexisting'
             skipExisting = val;
         case 'latLonBounds'
@@ -94,6 +94,12 @@ for d = 1:length(dirNames)
         matFileNameNoExt = matFileNameParts{1};
         matFileNameParts = strsplit(matFileNameNoExt, '_');
 
+        year = str2num(matFileNameParts{2});
+        if year < startyear || year > endyear
+            ['skipping ' matFileName '...']
+            continue;
+        end
+        
         if plev == -1
             newFileName = [regridDir '/' matFileName]
         else
@@ -170,7 +176,15 @@ for d = 1:length(dirNames)
             end
             
             eval([matFileNameNoExt ' = {regridLat, regridLon, regridData};']);
-            save([regridDir, '/', matFileNameNoExt, '.mat'], matFileNameNoExt, '-v7.3');
+            saved = false;
+            while ~saved
+                try
+                    save([regridDir, '/', matFileNameNoExt, '.mat'], matFileNameNoExt, '-v7.3');
+                    saved = true;
+                catch
+                    saved = false;
+                end
+            end
             eval(['clear ' matFileNameNoExt ';']);
             clear curData regridData;
         else

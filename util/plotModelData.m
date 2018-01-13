@@ -18,6 +18,7 @@ vectorData = {};
 plotCountries = false;
 plotStates = false;
 correctLon0 = false;
+showColorbar = true;
 
 if mod(length(varargin), 2) ~= 0
     'error: must have an even # of arguments.'
@@ -44,6 +45,8 @@ else
                 noNewFig = val;
             case 'colormap'
                 colormapVal = val;
+            case 'showColorbar'
+                showColorbar = val;
             case 'vectorData'
                 vectorData = val;
             case 'countries'
@@ -161,7 +164,7 @@ if contour
         caxis(caxisRange);
     end
     
-    if ~noNewFig
+    if ~noNewFig && showColorbar
         cb = contourcbar('Location', 'southoutside');
     end
 else
@@ -174,7 +177,7 @@ else
         caxis(caxisRange);
     end
     
-    if ~noNewFig
+    if ~noNewFig && showColorbar
         cb = colorbar('Location', 'southoutside');
     end
 end

@@ -4,36 +4,57 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showOutliers = true;
+v1AbsoluteStr = '-absolute';
+v2AbsoluteStr = '-absolute';
+v3AbsoluteStr = '';
 
-var1 = 'mrsos';
+var1 = 'cltChg';
 var1Months = [6 7 8];
-v1XStr = 'JJA pr change (%)';
-v1XLim = [-50 50];
-v1XTick = -50:25:50; %[-25 0 25 50 75 100];
-v1FileStr = [var1 '-JJA'];
+v1XStr = 'JJA historical hfss (W/m^2)';
+v1XLim = [0 60];
+v1XTick = 0:10:60;
+v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
-var2 = 'hfss';
+var2 = 'netRadChg';
 var2Months = [6 7 8];
-v2YStr = 'JJA hfss change (%)';
-v2YLim = [-25 125];
-v2YTick = -25:25:125;
-v2FileStr = [var2 '-JJA'];
+v2YStr = 'JJA hfss change (W/m^2)';
+v2YLim = [-10 40];
+v2YTick = -10:10:40;
+v2FileStr = [var2 v2AbsoluteStr '-JJA'];
 
-regionIds = [2];
+showVar3 = false;
+% shown in colors
+var3 = 'mrsoChg';
+var3Months = [6 7 8];
+v3YLim = [0 40];
+v3YTicks = 0:10:40;
+v3FileStr = [var3 v3AbsoluteStr '-JJA'];
+v3ColorOffset = 0;
+v3Color = brewermap(v3ColorOffset + 25, 'BrBG');
 
-scatterPlots = true;
-saveScatter = true;
-globalCorrMap = false;
+regionIds = [2 4 10];
+
+scatterPlots = false;
+saveScatter = false;
+showFit = true;
+
+globalCorrMap = true;
 plotModels = false;
 
-
 % load selected variables
-load(['e:/data/projects/bowen/derived-chg/' var1 '-chg-all']);
-eval(['v1 = ' var1 'Chg;']);
+load(['e:/data/projects/bowen/derived-chg/' var1 v1AbsoluteStr '']);
+eval(['v1 = ' var1 ';']);
 
-load(['e:/data/projects/bowen/derived-chg/' var2 '-chg-all']);
-eval(['v2 = ' var2 'Chg;']);
+load(['e:/data/projects/bowen/derived-chg/' var2 v2AbsoluteStr '']);
+eval(['v2 = ' var2 ';']);
 v2(v2>1000 | v2<-1000) = NaN;
+
+load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);
+eval(['v3 = ' var3 ';']);
+v3(v3>1000 | v3 < -1000) = NaN;
+
+load e:/data/projects/bowen/derived-chg/txxAmp.mat;
+txxAmp = amp;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -49,7 +70,8 @@ regionNames = {'World', ...
                 'Northern SA', ...
                 'Amazon', ...
                 'Central Africa', ...
-                'North Africa'};
+                'North Africa', ...
+                'China'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -58,7 +80,8 @@ regionAb = {'world', ...
             'sa-n', ...
             'amazon', ...
             'africa-cent', ...
-            'n-africa'};
+            'n-africa', ...
+            'china'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
@@ -68,8 +91,14 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[5 20], [-90 -45]+360]; ...         % Northern SA
            [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
-           [[15 30], [-4 29]]];                 % north africa
+           [[15 30], [-4 29]]; ...              % north africa
+           [[22 40], [105 122]]];               % china
 
+load('2017-bowen/hottest-season-ncep.mat');
+seasons = [[12 1 2];
+           [3 4 5];
+           [6 7 8];
+           [9 10 11]];
        
 if plotModels
     modelLeg = {};
@@ -96,10 +125,17 @@ if scatterPlots
 
         % and bowen
         v2Chg = squeeze(nanmean(nanmean(nanmean(v2(latInds, lonInds, :, var2Months), 4), 2), 1));
+        
+        if showVar3
+            v3Chg = squeeze(nanmean(nanmean(nanmean(v3(latInds, lonInds, :, var3Months), 4), 2), 1));
+        else
+            v3Chg = ones(size(v2Chg));
+        end
 
-        nn = find(~isnan(v2Chg) & ~isnan(v1Chg));
+        nn = find(~isnan(v3Chg) & ~isnan(v2Chg) & ~isnan(v1Chg));
         v1Chg = v1Chg(nn);
         v2Chg = v2Chg(nn);
+        v3Chg = v3Chg(nn);
 
         if showOutliers
             v1OutlierStdMult = 2;
@@ -123,39 +159,62 @@ if scatterPlots
         axis square;
         grid on;
 
+        v3ChgSort = sort(v3Chg);
+        
         % loop over all models
         for m = 1:length(v1Chg)
+            
+            color = v3Color(v3ColorOffset+find(v3ChgSort == v3Chg(m)), :);
+            
             %plot(regionTxx(m), regionBowenChg(m), 'o', 'MarkerSize', 2 + abs(20*regionBowenTxCorr(m)), 'LineWidth', 2);
             if showOutliers && length(find(v1Outliers == m)) > 0
-                t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'r');
+                if showVar3
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                else
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'r');
+                end
             elseif showOutliers && length(find(v2Outliers == m)) > 0
-                t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', [67, 186, 86]./255.0);
+                if showVar3
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                else
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', [67, 186, 86]./255.0);
+                end
             elseif showOutliers && length(find(v2Outliers == m)) > 0 && length(find(v1Outliers == m)) > 0
-                t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'm');
+                if showVar3
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                else
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'm');
+                end
             else
-                t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                if showVar3
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                else
+                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                end
             end
             t.FontSize = 18;
         end
 
-        if showOutliers
-            f = fit(regionV1NoOutliers, regionV2ChgNoOutliers, 'poly1');
-            pNoOutliers = plot([min(regionV1NoOutliers) max(regionV1NoOutliers)], [f(min(regionV1NoOutliers)) f(max(regionV1NoOutliers))], '--b', 'LineWidth', 2);
-            cNoOutliers = confint(f);
-            cOutlierSigStr = 'Not sig';
-            if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
-                cOutlierSigStr = 'Sig';
+        if showFit
+            if showOutliers
+                f = fit(regionV1NoOutliers, regionV2ChgNoOutliers, 'poly1');
+                pNoOutliers = plot([min(regionV1NoOutliers) max(regionV1NoOutliers)], [f(min(regionV1NoOutliers)) f(max(regionV1NoOutliers))], '--b', 'LineWidth', 2);
+                cNoOutliers = confint(f);
+                cOutlierSigStr = 'Not sig';
+                if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
+                    cOutlierSigStr = 'Sig';
+                end
+            end
+
+            f = fit(v1Chg, v2Chg, 'poly1');
+            pAll = plot([min(v1Chg) max(v1Chg)], [f(min(v1Chg)) f(max(v1Chg))], '--', 'Color', [.6 .6 .6], 'LineWidth', 2);
+            cAll = confint(f);
+            cAllSigStr = 'Not sig';
+            if sign(cAll(1,1)) == sign(cAll(2,1))
+                cAllSigStr = 'Sig';
             end
         end
-
-        f = fit(v1Chg, v2Chg, 'poly1');
-        pAll = plot([min(v1Chg) max(v1Chg)], [f(min(v1Chg)) f(max(v1Chg))], '--', 'Color', [.6 .6 .6], 'LineWidth', 2);
-        cAll = confint(f);
-        cAllSigStr = 'Not sig';
-        if sign(cAll(1,1)) == sign(cAll(2,1))
-            cAllSigStr = 'Sig';
-        end
-
+        
         set(gca, 'FontSize', 40);
         
         ylabel(v2YStr);
@@ -167,7 +226,9 @@ if scatterPlots
         set(gca, 'XTick', v1XTick);
 
         title([regionNames{region}]);
-        legend([pAll pNoOutliers], {['All: (' cAllSigStr ')'], ['No outliers: (' cOutlierSigStr ')']});
+        if showFit
+            legend([pAll pNoOutliers], {['All: (' cAllSigStr ')'], ['No outliers: (' cOutlierSigStr ')']});
+        end
         set(gcf, 'Position', get(0,'Screensize'));
         
         if saveScatter
@@ -190,17 +251,16 @@ if globalCorrMap
                 continue;
             end
             
-            % select txx/bowen for region for all models
-            v1Chg = squeeze(txxAmp(xlat, ylon, :));
+            v1Chg = squeeze(nanmean(v1(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4));
 
-            % and bowen
-            v2Chg = squeeze(bowenChg(xlat, ylon, :));
+            v2Chg = squeeze(nanmean(v2(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4));
 
-            nn = find(~isnan(v2Chg) & ~isnan(v1Chg));
+            nn = find(~isnan(v2Chg) & ~isnan(v1Chg) & ~isinf(v2Chg) & ~isinf(v1Chg));
             v1Chg = v1Chg(nn);
             v2Chg = v2Chg(nn);
 
-            if length(nn) < 10
+            % not all models present... skip
+            if length(nn) < size(v1, 3)
                 corrMap(xlat, ylon) = NaN;
                 corrSig(xlat, ylon) = 0;
                 continue;
@@ -241,37 +301,23 @@ if globalCorrMap
         end
     end
     
+    
     corrSig(1:15,:) = 0;
     corrSig(75:90,:) = 0;
     
     result = {lat, lon, corrMap};
 
     
-    tempVar = 'txx';
-    if useSeasonalAmp
-        tempVar = 'tx-seasonal';
-    end
-
-    
-    if useHfss
-        title = ['TXx chg - hfss chg corr'];
-        file = [tempVar '-hfss-chg-corr.eps'];
-    elseif useHfls
-        title = ['TXx chg - hfls chg corr'];
-        file = [tempVar '-hfls-chg-corr.eps'];
-    else
-        title = ['TXx chg - Bowen chg corr'];
-        file = [tempVar '-bowen-chg-corr.eps'];
-    end
-    
+    title = 'clt chg - net rad chg';
+    file = 'corr-clt-chg-rad-net-warm.eps';
 %     sigChg = txxAmp < 0.5;
 %     sigChg(1:15,:) = 0;
 %     sigChg(80:90,:) = 0;
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
-                      'plotRange', [-20 20], ...
-                      'cbXTicks', -20:5:20, ...
+                      'plotRange', [-5 5], ...
+                      'cbXTicks', -5:1:5, ...
                       'plotTitle', title, ...
                       'fileTitle', file, ...
                       'plotXUnits', ['Slope'], ...

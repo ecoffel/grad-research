@@ -4,10 +4,10 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-load e:/data/projects/bowen/derived-chg/hfss-chg-all;
+load e:/data/projects/bowen/derived-chg/hfss-absolute-chg-all;
 hfssChg(hfssChg>1000 | hfssChg<-1000) = NaN;
 
-load e:/data/projects/bowen/derived-chg/hfls-chg-all;
+load e:/data/projects/bowen/derived-chg/hfls-absolute-chg-all;
 hflsChg(hflsChg>1000 | hflsChg<-1000) = NaN;
 
 regions = [[[-90 90], [0 360]]; ...             % world

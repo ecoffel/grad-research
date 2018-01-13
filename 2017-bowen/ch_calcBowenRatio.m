@@ -1,6 +1,6 @@
 function ch_bowenRatio(dataDir, regrid)
 
-skipExisting = false;
+skipExisting = true;
 
 regridStr = '/';
 if regrid

@@ -1,8 +1,9 @@
 
 baseDir = 'e:/data';
 var = 'pr';                  
-percentChange = true;
+percentChange = false;
 warmSeason = true;
+warmSeasonAnom = false;
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -11,10 +12,10 @@ warmSeason = true;
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mri-cgcm3', 'noresm1-m'};
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
           
 plotMap = true;
 
@@ -75,16 +76,11 @@ for region = showRegions
     curLat = regionLatLonInd{region}{1};
     curLon = regionLatLonInd{region}{2};
     
-    numMonths = 12;
-    if warmSeason
-        numMonths = 3;
-    end
-    
     % historical and future monthly precip, mm/day
     % dims: (x, y, model)
-    regionalPrHistorical = zeros(length(curLat), length(curLon), length(models), numMonths);
+    regionalPrHistorical = zeros(length(curLat), length(curLon), length(models), 12);
     regionalPrHistorical(regionalPrHistorical == 0) = NaN;
-    regionalPrFuture = zeros(length(curLat), length(curLon), length(models), numMonths);
+    regionalPrFuture = zeros(length(curLat), length(curLon), length(models), 12);
     regionalPrFuture(regionalPrFuture == 0) = NaN;
     
     for model = 1:length(models)
@@ -105,13 +101,8 @@ for region = showRegions
                 if waterGrid(curLat(xlat), curLon(ylon))
                     continue;
                 end
-                % select hottest months if needed...
-                if warmSeason
-                    regionalPrHistorical(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
-                % otherwise the whole year
-                else
-                    regionalPrHistorical(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), :);
-                end
+                
+                regionalPrHistorical(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), :);
             end
         end
         
@@ -134,11 +125,9 @@ for region = showRegions
                 if waterGrid(curLat(xlat), curLon(ylon))
                     continue;
                 end
-                if warmSeason
-                    regionalPrFuture(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), seasons(hottestSeason(curLat(xlat), curLon(ylon)), :));
-                else
-                    regionalPrFuture(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), :);
-                end
+                
+                regionalPrFuture(curLat(xlat), curLon(ylon), model, :) = pr{3}(curLat(xlat), curLon(ylon), :);
+
             end
         end
     end
@@ -149,23 +138,40 @@ for region = showRegions
         tmpHistorical = regionalPrHistorical;
         tmpFuture = regionalPrFuture;
         
-        chg(:, :, model, :) = (tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:);
+        % change in all seasons
+        if percentChange
+            chg(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
+        else
+            % in w/m2
+            chg(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
+        end
+        
     end
     
     if plotMap
+        plotChg = zeros(size(lat,1), size(lat,2), size(chg, 3));
+        plotChg(plotChg == 0) = NaN;
+        
         % find statistical significance of change over selected months across models
         sigChg = zeros(size(lat,1), size(lat, 2));
         for xlat = 1:size(chg, 1)
             for ylon = 1:size(chg, 2)
-
+                
+                months = 1:12;
+                
+                if warmSeason 
+                    months = seasons(hottestSeason(xlat, ylon), :);
+                end
+                
                 % select only non-nan items
-                curChg = squeeze(nanmean(chg(xlat, ylon, :, :), 4));
+                curChg = squeeze(nanmean(chg(xlat, ylon, :, months), 4));
                 ind = find(~isnan(curChg) & ~isinf(curChg));
                 curChg = curChg(ind);
 
                 % at least 10 non-nan models
-                if length(curChg >= round(.75*length(models)))
+                if length(curChg) == length(models)
                     med = nanmedian(curChg);
+                    plotChg(xlat, ylon, :) = curChg;
 
                     % where < 75% models agree on sign
                     sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
@@ -173,32 +179,45 @@ for region = showRegions
             end
         end
 
-        chg(isinf(chg)) = NaN;
+        plotChg(isinf(plotChg)) = NaN;
         % median over models
-        chg = chg .* 100;
+        if percentChange
+            chg = chg .* 100;
+            plotChg = plotChg .* 100;
+            
+            eval([var 'Chg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'Chg.mat'], [var 'Chg']);
+        else
+            eval([var 'Chg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute.mat'], [var 'Chg']);
+        end
         
-%         if ~warmSeason
-%             eval([var 'Chg = chg;']);
-%             save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
-%         end
+        prHistorical = regionalPrHistorical;
+        save(['e:/data/projects/bowen/derived-chg/prHistorical-absolute.mat'], 'prHistorical');
         
-        chg = nanmedian(nanmean(chg, 4), 3);
-        chg(:,1) = chg(:,end);
+        prFuture = regionalPrFuture;
+        save(['e:/data/projects/bowen/derived-chg/prFuture-absolute.mat'], 'prFuture');
 
-        result = {lat, lon, chg};
+        plotChg = nanmedian(plotChg, 3);
+        plotChg(:,1) = plotChg(:,end);
+
+        result = {lat, lon, plotChg};
         
         sigChg(1:15,:) = 0;
         sigChg(75:90,:) = 0;
 
-        colorScheme = 'RdBu';
+        colorScheme = '*RdBu';
+        if strcmp(var, 'hfls')
+            colorScheme = 'RdBu';
+        end
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-50 50], ...
-                          'cbXTicks', -50:25:50, ...
-                          'plotTitle', ['Warm-season ' var ' change'], ...
-                          'fileTitle', [var '-chg-' num2str(region) '.eps'], ...
-                          'plotXUnits', ['%'], ...
+                          'plotRange', [-25 25], ...
+                          'cbXTicks', -25:10:25, ...
+                          'plotTitle', ['Warm season ' var ' change'], ...
+                          'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
+                          'plotXUnits', ['W/m^2'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...
