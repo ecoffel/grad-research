@@ -44,4 +44,5 @@ for regionInd = regionInds
 end
 
 
-%set(gcf, 'Position', get(0,'Screensize'));
+set(gcf, 'Position', get(0,'Screensize'));
+print('regions.eps', '-depsc', '-r300');

@@ -18,13 +18,19 @@ waterGrid = logical(waterGrid);
 % warm-season-anom: warm season Tx change minus annual Tx change
 chgMetric = 'ann-max';
 
-modelSubset = 'all';
+modelSubset = 'clouds';
 
 rcp = 'rcp85';
 timePeriod = '2060-2080';
 % 
 modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+          
+modelsClouds = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
@@ -54,12 +60,9 @@ modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %                   'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
 %                   'hadgem2-es', 'mpi-esm-mr', 'mri-cgcm3'};
 
-if strcmp(modelSubset, 'bowen')
-    models = modelsBowen;
-elseif strcmp(modelSubset, 'soil')
-    models = modelsSoil;
-elseif strcmp(modelSubset, 'snow')
-    models = modelsSnow;
+
+if strcmp(modelSubset, 'clouds')
+    models = modelsClouds;
 elseif strcmp(modelSubset, 'all')
     models = modelsAll;
 end
@@ -200,11 +203,11 @@ end
 
 amp = chg1 - chg2;
 
-% if strcmp(chgMetric, 'ann-max')
-%     save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
-% elseif strcmp(chgMetric, 'ann-min')
-%     save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
-% end
+if strcmp(chgMetric, 'ann-max')
+    save('e:/data/projects/bowen/derived-chg/txxAmp-clouds.mat', 'amp');
+elseif strcmp(chgMetric, 'ann-min')
+    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
 % max threshold that still allows for specified level of model agreement

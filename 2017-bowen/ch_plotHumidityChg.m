@@ -1,31 +1,23 @@
 
 baseDir = 'e:/data';
-var = 'clt';                  
+var = 'huss';                  
 percentChange = false;
 warmSeason = true;
 warmSeasonAnom = false;
 
-
+% 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
 %               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
 %               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
+%           
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-          
-modelsHumidity = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mri-cgcm3', 'noresm1-m'};
           
-models = modelsHumidity;
-
 plotMap = true;
 
 timePeriodHistorical = 1985:2005;
@@ -87,21 +79,21 @@ for region = showRegions
     
     % historical and future monthly precip, mm/day
     % dims: (x, y, model)
-    regionalCltHistorical = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalCltHistorical(regionalCltHistorical == 0) = NaN;
-    regionalCltFuture = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalCltFuture(regionalCltFuture == 0) = NaN;
+    regionalHumHistorical = zeros(length(curLat), length(curLon), length(models), 12);
+    regionalHumHistorical(regionalHumHistorical == 0) = NaN;
+    regionalHumFuture = zeros(length(curLat), length(curLon), length(models), 12);
+    regionalHumFuture(regionalHumFuture == 0) = NaN;
     
     for model = 1:length(models)
         fprintf('loading %s historical...\n', models{model});
-        clt = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
-        clt{3} = squeeze(nanmean(clt{3}, 3));
+        hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
+        hum{3} = squeeze(nanmean(hum{3}, 3));
         
         % remove water tiles
-        for month = 1:size(clt{3}, 4)
-            curGrid = clt{3}(:, :, month);
+        for month = 1:size(hum{3}, 4)
+            curGrid = hum{3}(:, :, month);
             curGrid(waterGrid) = NaN;
-            clt{3}(:, :, month) = curGrid;
+            hum{3}(:, :, month) = curGrid;
         end
         
         % loop over all grid cells and select hottest season flux
@@ -111,21 +103,21 @@ for region = showRegions
                     continue;
                 end
                 
-                regionalCltHistorical(curLat(xlat), curLon(ylon), model, :) = clt{3}(curLat(xlat), curLon(ylon), :);
+                regionalHumHistorical(curLat(xlat), curLon(ylon), model, :) = hum{3}(curLat(xlat), curLon(ylon), :);
             end
         end
         
         clear flux;
         
         fprintf('loading %s future...\n', models{model});
-        clt = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
-        clt{3} = squeeze(nanmean(clt{3}, 3));
+        hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
+        hum{3} = squeeze(nanmean(hum{3}, 3));
         
         % remove water tiles
-        for month = 1:size(clt{3}, 4)
-            curGrid = clt{3}(:, :, month);
+        for month = 1:size(hum{3}, 4)
+            curGrid = hum{3}(:, :, month);
             curGrid(waterGrid) = NaN;
-            clt{3}(:, :, month) = curGrid;
+            hum{3}(:, :, month) = curGrid;
         end
         
         % loop over all grid cells and select hottest season flux
@@ -135,7 +127,7 @@ for region = showRegions
                     continue;
                 end
                 
-                regionalCltFuture(curLat(xlat), curLon(ylon), model, :) = clt{3}(curLat(xlat), curLon(ylon), :);
+                regionalHumFuture(curLat(xlat), curLon(ylon), model, :) = hum{3}(curLat(xlat), curLon(ylon), :);
 
             end
         end
@@ -143,9 +135,9 @@ for region = showRegions
     
     % calculate soil change for each model
     chg = [];
-    for model = 1:size(regionalCltHistorical, 3)
-        tmpHistorical = regionalCltHistorical;
-        tmpFuture = regionalCltFuture;
+    for model = 1:size(regionalHumHistorical, 3)
+        tmpHistorical = regionalHumHistorical;
+        tmpFuture = regionalHumFuture;
         
         % change in all seasons
         if percentChange
@@ -194,15 +186,15 @@ for region = showRegions
             chg = chg .* 100;
             plotChg = plotChg .* 100;
             
-%            eval([var 'Chg = chg;']);
- %           save(['e:/data/projects/bowen/derived-chg/' var '-Chg.mat'], [var 'Chg']);
+            %eval([var 'Chg = chg;']);
+            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
         else
-            eval([var 'HumidityChg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'HumidityChg-absolute.mat'], [var 'HumidityChg']);
+            eval([var 'HumChg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'HumChg-absolute.mat'], [var 'HumChg']);
         end
         
-    %    cltHistorical = regionalCltHistorical;
-     %   save(['e:/data/projects/bowen/derived-chg/cltHistorical-absolute.mat'], 'cltHistorical');
+        hussHistorical = regionalHumHistorical;
+        save(['e:/data/projects/bowen/derived-chg/hussHistorical-absolute.mat'], 'hussHistorical');
 
         plotChg = nanmedian(plotChg, 3);
         plotChg(:,1) = plotChg(:,end);
@@ -212,15 +204,18 @@ for region = showRegions
         sigChg(1:15,:) = 0;
         sigChg(75:90,:) = 0;
 
-        colorScheme = 'RdBu';
+        colorScheme = 'Blues';
+        if strcmp(var, 'hfls')
+            colorScheme = 'RdBu';
+        end
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-10 10], ...
-                          'cbXTicks', -10:2:10, ...
+                          'plotRange', [0 5e-3], ...
+                          'cbXTicks', 0:1e-3:5e-3, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
                           'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
-                          'plotXUnits', ['Fraction'], ...
+                          'plotXUnits', ['kg/m^2'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...
@@ -231,23 +226,23 @@ for region = showRegions
     end
     
     % spatial average
-    regionalCltHistorical = squeeze(nanmean(nanmean(regionalCltHistorical, 2), 1));
-    regionalCltFuture = squeeze(nanmean(nanmean(regionalCltFuture, 2), 1));
+    regionalHumHistorical = squeeze(nanmean(nanmean(regionalHumHistorical, 2), 1));
+    regionalHumFuture = squeeze(nanmean(nanmean(regionalHumFuture, 2), 1));
     
     % average over models
-    regionalSoilHistoricalMean = nanmean(regionalCltHistorical, 2);
-    regionalSoilFutureMean = nanmean(regionalCltFuture, 2);
+    regionalSoilHistoricalMean = nanmean(regionalHumHistorical, 2);
+    regionalSoilFutureMean = nanmean(regionalHumFuture, 2);
     
     if percentChange
         % percentage change
-        regionalSoilChgStd = nanstd((regionalCltFuture - regionalCltHistorical) ./ regionalCltHistorical .* 100, [], 2);
-        regionSoilChg = regionalCltFuture - regionalCltHistorical;
+        regionalSoilChgStd = nanstd((regionalHumFuture - regionalHumHistorical) ./ regionalHumHistorical .* 100, [], 2);
+        regionSoilChg = regionalHumFuture - regionalHumHistorical;
         regionSoilChgMean = (regionalSoilFutureMean - regionalSoilHistoricalMean) ./ regionalSoilHistoricalMean .* 100;
     else
         % absolute change
         % std over models
-        regionalSoilChgStd = nanstd(regionalCltFuture - regionalCltHistorical, [], 2);
-        regionSoilChg = regionalCltFuture - regionalCltHistorical;
+        regionalSoilChgStd = nanstd(regionalHumFuture - regionalHumHistorical, [], 2);
+        regionSoilChg = regionalHumFuture - regionalHumHistorical;
         regionSoilChgMean = regionalSoilFutureMean - regionalSoilHistoricalMean;
     end
     

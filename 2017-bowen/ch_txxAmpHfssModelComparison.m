@@ -2,12 +2,12 @@
 load e:/data/projects/bowen/derived-chg/txxAmp.mat;
 
 % loads into hfssChg
-load e:/data/projects/bowen/derived-chg/hfss-absolute-chg-all;
+load e:/data/projects/bowen/derived-chg/hfssChg-absolute;
 
 % loads into hflsChg
-load e:/data/projects/bowen/derived-chg/hfls-absolute-chg-all;
+load e:/data/projects/bowen/derived-chg/hflsChg-absolute;
 
-useHfss = true;
+useHfss = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -74,16 +74,20 @@ for model = 1:size(amp, 3)
     f = fit(curFlux, curAmp, 'poly1');
     c = confint(f);
     if sign(c(1,1)) == sign(c(2,1))
-        plot([min(curFlux) max(curFlux)], f([min(curFlux) max(curFlux)]), 'LineWidth', 2);
+        plot([min(curFlux) max(curFlux)], f([min(curFlux) max(curFlux)]), 'LineWidth', 1);
         
         if sign(c(1,1)) < 0
             fprintf('model: %s\n', models{model});
         end
     else
-        plot([min(curFlux) max(curFlux)], f([min(curFlux) max(curFlux)]), '--', 'LineWidth', 2);
+        plot([min(curFlux) max(curFlux)], f([min(curFlux) max(curFlux)]), '--', 'LineWidth', 1);
     end
     
-    xlabel('SH change (W/m^2)');
+    if useHfss
+        xlabel('SH change (W/m^2)');
+    else
+        xlabel('LH change (W/m^2)');
+    end
     ylabel(['TXx amplification (' char(176) 'C)']);
     xlim([-100 100]);
     ylim([-6 6]);

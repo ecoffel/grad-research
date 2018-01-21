@@ -6,44 +6,45 @@ waterGrid = logical(waterGrid);
 showOutliers = true;
 v1AbsoluteStr = '-absolute';
 v2AbsoluteStr = '-absolute';
-v3AbsoluteStr = '';
+v3AbsoluteStr = '-absolute';
 
-var1 = 'cltChg';
+var1 = 'cltHumidityChg';
 var1Months = [6 7 8];
-v1XStr = 'JJA historical hfss (W/m^2)';
-v1XLim = [0 60];
-v1XTick = 0:10:60;
+v1XStr = 'JJA cloud SW forcing chg (W/m^2)';
+v1XLim = [-20 50];
+v1XTick = -20:10:50;
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
-var2 = 'netRadChg';
+var2 = 'hussHumChg';
 var2Months = [6 7 8];
-v2YStr = 'JJA hfss change (W/m^2)';
-v2YLim = [-10 40];
-v2YTick = -10:10:40;
+v2YStr = 'JJA hfss chg (W/m^2)';
+v2YLim = [-20 50];
+v2YTick = -20:10:50;
 v2FileStr = [var2 v2AbsoluteStr '-JJA'];
 
 showVar3 = false;
 % shown in colors
-var3 = 'mrsoChg';
+var3 = 'prChg';
 var3Months = [6 7 8];
 v3YLim = [0 40];
 v3YTicks = 0:10:40;
 v3FileStr = [var3 v3AbsoluteStr '-JJA'];
 v3ColorOffset = 0;
-v3Color = brewermap(v3ColorOffset + 25, 'BrBG');
+v3Color = brewermap(v3ColorOffset + 25, 'BrBG') .* .8;
 
 regionIds = [2 4 10];
 
-scatterPlots = false;
+scatterPlots = true;
 saveScatter = false;
 showFit = true;
 
-globalCorrMap = true;
+globalCorrMap = false;
 plotModels = false;
 
 % load selected variables
 load(['e:/data/projects/bowen/derived-chg/' var1 v1AbsoluteStr '']);
 eval(['v1 = ' var1 ';']);
+
 
 load(['e:/data/projects/bowen/derived-chg/' var2 v2AbsoluteStr '']);
 eval(['v2 = ' var2 ';']);
@@ -308,7 +309,7 @@ if globalCorrMap
     result = {lat, lon, corrMap};
 
     
-    title = 'clt chg - net rad chg';
+    title = 'clt chg - hfls chg';
     file = 'corr-clt-chg-rad-net-warm.eps';
 %     sigChg = txxAmp < 0.5;
 %     sigChg(1:15,:) = 0;

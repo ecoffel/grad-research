@@ -30,8 +30,8 @@ for m = 1:length(models)
             elseif strcmp(dataset, 'era')
                 ch_calcBowenRatio(['e:/data/era-interim/output'], true);
             else
-                %ch_calcEF(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
-                ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
+                ch_calcEF(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
+                %ch_calcBowenRatio(['e:/data/cmip5/output/' models{m} monthlyStr '/r' num2str(e) 'i1p1/' rcps{r}], true);
             end
         end
     end

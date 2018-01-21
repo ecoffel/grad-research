@@ -2,13 +2,14 @@
     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
                   'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                   'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-                  'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+                  'hadgem2-es', 'ipsl-cm5a-mr', 'inmcm4', 'miroc5', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-    rcp = 'rcp45';
+
+    rcp = 'rcp85';
     var = 'pr';
     monthly = true;
     timePeriodBase = [1980 2004];
-    timePeriodFuture = [2051 2080];
+    timePeriodFuture = [2056 2080];
 
 for model = 1:length(models)
     monthlyBase = {};

@@ -1,7 +1,7 @@
 
 baseDir = 'e:/data';
 var = 'mrso';                  
-percentChange = false;
+percentChange = true;
 warmSeason = true;
 warmSeasonAnom = false;
 
@@ -180,11 +180,11 @@ for region = showRegions
             chg = chg .* 100;
             plotChg = plotChg .* 100;
             
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'Chg.mat'], [var 'Chg']);
+            %eval([var 'Chg = chg;']);
+            %save(['e:/data/projects/bowen/derived-chg/' var 'Chg.mat'], [var 'Chg']);
         else
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute.mat'], [var 'Chg']);
+            %eval([var 'Chg = chg;']);
+            %save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute.mat'], [var 'Chg']);
         end
         
         plotChg = nanmedian(plotChg, 3);
@@ -195,7 +195,7 @@ for region = showRegions
         sigChg(1:15,:) = 0;
         sigChg(75:90,:) = 0;
 
-        colorScheme = '*RdBu';
+        colorScheme = 'BrBG';
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
@@ -203,7 +203,7 @@ for region = showRegions
                           'cbXTicks', -25:10:25, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
                           'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
-                          'plotXUnits', ['W/m^2'], ...
+                          'plotXUnits', ['%'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...

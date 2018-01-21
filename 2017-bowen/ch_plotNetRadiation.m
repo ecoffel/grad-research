@@ -19,13 +19,15 @@ load e:/data/projects/bowen/derived-chg/rsusChg-absolute;
 load e:/data/projects/bowen/derived-chg/rldsChg-absolute;
 load e:/data/projects/bowen/derived-chg/rlusChg-absolute;
 
-%load e:/data/projects/bowen/derived-chg/rsdt-absolute-chg-all;
-%load e:/data/projects/bowen/derived-chg/rsut-absolute-chg-all;
+load e:/data/projects/bowen/derived-chg/rsdsChg-clouds-absolute;
+load e:/data/projects/bowen/derived-chg/rsdscsChg-clouds-absolute;
 
 rsdsChg(isinf(rsdsChg) | abs(rsdsChg) > 1000) = NaN;
 rsusChg(isinf(rsusChg) | abs(rsusChg) > 1000) = NaN;
 rlusChg(isinf(rlusChg) | abs(rlusChg) > 1000) = NaN;
 rldsChg(isinf(rldsChg) | abs(rldsChg) > 1000) = NaN;
+rldsChg(isinf(rsdscsChg) | abs(rsdscsChg) > 1000) = NaN;
+
 
 %load e:/data/projects/bowen/derived-chg/hfss-absolute-chg-all;
 %load e:/data/projects/bowen/derived-chg/hfls-absolute-chg-all;
@@ -37,12 +39,15 @@ seasons = [[12 1 2];
            [6 7 8];
            [9 10 11]];
 
-surfSwNetChg = squeeze(rsdsChg - rsusChg);
-surfLwNetChg = squeeze(rldsChg - rlusChg);
+%surfSwNetChg = squeeze(rsdsChg - rsusChg);
+%surfLwNetChg = squeeze(rldsChg - rlusChg);
+
+cloudSWChg = rsdsChg - rsdscsChg;
+save('e:/data/projects/bowen/derived-chg/cloudSWChg-absolute.mat', 'cloudSWChg');
 
 %heatFluxChg = squeeze(hfssChg+hflsChg);
 
-net = surfSwNetChg;
+net = cloudSWChg;
 
 %topSwNetChg = net;
 %save('e:/data/projects/bowen/derived-chg/topSwNet-absolute-chg-all.mat', 'topSwNetChg');
@@ -71,13 +76,13 @@ sigChg(75:90, :) = 0;
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [0 20], ...
-                  'cbXTicks', 0:5:20, ...
-                  'plotTitle', ['Net warm season surface SW radiation'], ...
-                  'fileTitle', ['net-surf-sw-rad-rcp85-' num2str(size(net, 3)) '-cmip5-warm.eps'], ...
+                  'plotRange', [-15 15], ...
+                  'cbXTicks', -15:5:15, ...
+                  'plotTitle', ['Cloud SW forcing'], ...
+                  'fileTitle', ['cloud-surf-sw-rcp85-' num2str(size(net, 3)) '-cmip5-warm.eps'], ...
                   'plotXUnits', ['W/m^2'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'Reds'), ...
+                  'colormap', brewermap([],'*RdBu'), ...
                   'statData', sigChg, ...
                   'stippleInterval', 5, ...
                   'boxCoords', {regions([2,4,7], :)});

@@ -5,7 +5,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 warmSeason = false;
-months = [3 4 5];
+months = [6 7 8];
 
 baseDir = 'e:/data/projects/bowen/mrso-chg-data/';
 
@@ -28,7 +28,7 @@ for m = 1:length(models)
     
     fprintf('loading %s...\n', models{m});
     mrsoHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/mrso/regrid/world'], 'mrso', 'startYear', 1980, 'endYear', 2004);
-    hfssHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfss/regrid/world'], 'hfss', 'startYear', 1980, 'endYear', 2004);
+    hflsHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfls/regrid/world'], 'hfls', 'startYear', 1980, 'endYear', 2004);
     
     fprintf('calculating TC for %s...\n', models{m});
     for xlat = 15:75
@@ -42,17 +42,17 @@ for m = 1:length(models)
             end
             
             mrso = squeeze(nanmean(mrsoHistorical{3}(xlat, ylon, :, months), 4));
-            hfss = squeeze(nanmean(hfssHistorical{3}(xlat, ylon, :, months), 4));
+            hfls = squeeze(nanmean(hflsHistorical{3}(xlat, ylon, :, months), 4));
             
             % skip all zero tiles or those with nan or those all the
             % same...
             if length(find(mrso==0)) > 0 || length(find(isnan(mrso))) > 0 || length(find(mrso==median(mrso))) == length(mrso) || ...
-               length(find(isnan(hfss))) > 0 || length(find(hfss == 0)) > 0
+               length(find(isnan(hfls))) > 0 || length(find(hfls == 0)) > 0
                 continue;
             end
             
             mrsoStd = nanstd(mrso);
-            slope = fit(mrso, hfss, 'poly1');
+            slope = fit(mrso, hfls, 'poly1');
             slope = slope.p1;
             TC(xlat, ylon, m) = mrsoStd * slope;
  
@@ -61,4 +61,5 @@ for m = 1:length(models)
     
 end
 
-save('e:/data/projects/bowen/derived-chg/TC-hfss-MAM.mat', 'TC');
+TCHflsJJA = TC;
+save('e:/data/projects/bowen/derived-chg/TCHflsJJA.mat', 'TCHflsJJA');

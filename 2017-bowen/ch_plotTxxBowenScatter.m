@@ -8,11 +8,11 @@ plotModels = false;
 useSeasonalAmp = false;
 useTxxSeasonalAmp = false;
 
-var1 = 'hflsChg';
+var1 = 'cloudSWChg';
 var1Months = [6 7 8];
-v1XStr = 'JJA hfls chg (W/m^2)';
-v1XLim = [-20 40];
-v1XTick = -20:10:40;
+v1XStr = 'JJA cloud SW chg (W/m^2)';
+v1XLim = [-20 20];
+v1XTick = -20:5:20;
 v1AbsoluteStr = '-absolute';
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
@@ -32,7 +32,7 @@ saveScatter = false;
 globalCorrMap = false;
 
 % txx amp
-load e:/data/projects/bowen/derived-chg/txxAmp.mat;
+load e:/data/projects/bowen/derived-chg/txxAmp-clouds.mat;
 ampVar = amp;
 
 load(['e:/data/projects/bowen/derived-chg/' var1 v1AbsoluteStr '']);
@@ -196,8 +196,10 @@ if scatterPlots
 
         tempVar = 'txx';
         
-        export_fig(['txx-amp-' v1FileStr '-scatter-' num2str(region) '.eps']);
-        close all;
+        if saveScatter
+            export_fig(['txx-amp-' v1FileStr '-scatter-' num2str(region) '.eps']);
+            close all;
+        end
     end
 end
 
