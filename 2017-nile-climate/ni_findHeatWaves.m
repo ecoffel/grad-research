@@ -1,4 +1,4 @@
-dataset = 'cmip5';
+dataset = 'ncep-reanalysis';
 
 coordPairs = csvread('ni-region.txt');
 
@@ -9,8 +9,8 @@ switch (dataset)
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-        timePeriod = [2051 2080];
-        rcp = 'rcp45';
+        timePeriod = [2056 2080];
+        rcp = 'rcp85';
         
     case 'era-interim'
         timePeriod = [1980 2016];
@@ -48,7 +48,7 @@ drawMaps = false;
 drawLines = false;
 
 % temperature: 
-threshPrc = 90;
+threshPrc = 95;
 % duration (days)
 threshDur = 5;
 % look for heat waves relative to each month's climatology or the whole
@@ -80,7 +80,7 @@ for model = 1:length(models)
         
         heatWaves = findHeatWaves(tmaxHistorical, tmaxFuture, threshPrc, threshDur, monthlyHeat);
     else
-        heatWaves = findHeatWaves(tmaxHistorical, threshPrc, threshDur, monthlyHeat);
+        heatWaves = findHeatWaves(tmaxHistorical{3}, [], threshPrc, threshDur, monthlyHeat);
     end
     
 %     for xlat = 1:length(latInds)
@@ -131,7 +131,7 @@ for model = 1:length(models)
             save(['2017-nile-climate/nile-heat-waves-90-5day-' rcp '-' models{model} '-annual-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'heatWaves');
         end
     else
-        save(['2017-nile-climate/nile-heat-waves-90-5day-' dataset '-annual.mat'], 'heatProb');
+        save(['2017-nile-climate/nile-heat-waves-95-5day-' dataset '-annual.mat'], 'heatProb');
     end
     clear tmaxHistorical tmaxFuture heatWaves;
 end
@@ -181,8 +181,8 @@ function heatWaves = findHeatWaves(dataBase, data, percentile, duration, monthly
     % defined characteristics...
     
     % loop over all gridcells
-    for xlat = 1:size(data, 1)
-        for ylon = 1:size(data, 2)
+    for xlat = 1:size(dataBase, 1)
+        for ylon = 1:size(dataBase, 2)
             
             % calculate threshold relative to whole gridcell climatology
             if ~monthly
@@ -195,7 +195,7 @@ function heatWaves = findHeatWaves(dataBase, data, percentile, duration, monthly
                     threshTemp = prctile(reshape(dataBase(xlat,ylon,:,month,:), [numel(dataBase(xlat,ylon,:,month,:)),1]), percentile);
                 end
 
-                for year = 1:size(data, 3)
+                for year = 1:size(dataBase, 3)
                     % convert to 1D for current gridcell
                     % if there is no future data provided, look at
                     % historical data

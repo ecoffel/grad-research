@@ -1,6 +1,6 @@
 function ch_calcEF(dataDir, regrid)
 
-skipExisting = false;
+skipExisting = true;
 
 regridStr = '/';
 if regrid

@@ -1,13 +1,16 @@
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
           
-rcp = 'rcp85';
-timePeriod = [2031 2055];
+rcp = 'historical';
+timePeriod = [1980 2004];
 
 reanalysisBase = false;
+
+% should we save each year's grid separately
+eachYear = true;
 
 if reanalysisBase
     load(['2017-nile-climate/output/historical-temp-percentiles-era-interim.mat']);
@@ -35,14 +38,26 @@ seasons = [[12 1 2];
 
 tempFutureCmip5 = [];
 prFutureCmip5 = [];
-hotFuture = zeros(length(latInds), length(lonInds), 12, length(models));
-hotFutureSig = zeros(length(latInds), length(lonInds), 12);
-dryFuture = zeros(length(latInds), length(lonInds), 12, length(models));
-dryFutureSig = zeros(length(latInds), length(lonInds), 12);
-wetFuture = zeros(length(latInds), length(lonInds), 12, length(models));
-wetFutureSig = zeros(length(latInds), length(lonInds), 12);
-hotDryFuture = zeros(length(latInds), length(lonInds), 12, length(models));
-hotDryFutureSig = zeros(length(latInds), length(lonInds), 12);
+if eachYear
+    hotFuture = zeros(length(latInds), length(lonInds), timePeriod(end)-timePeriod(1)+1, 12, length(models));
+    hotFutureSig = zeros(length(latInds), length(lonInds), 12);
+    dryFuture = zeros(length(latInds), length(lonInds), timePeriod(end)-timePeriod(1)+1, 12, length(models));
+    dryFutureSig = zeros(length(latInds), length(lonInds), 12);
+    wetFuture = zeros(length(latInds), length(lonInds), timePeriod(end)-timePeriod(1)+1, 12, length(models));
+    wetFutureSig = zeros(length(latInds), length(lonInds), 12);
+    hotDryFuture = zeros(length(latInds), length(lonInds), timePeriod(end)-timePeriod(1)+1, 12, length(models));
+    hotDryFutureSig = zeros(length(latInds), length(lonInds), 12);
+else
+    hotFuture = zeros(length(latInds), length(lonInds), 12, length(models));
+    hotFutureSig = zeros(length(latInds), length(lonInds), 12);
+    dryFuture = zeros(length(latInds), length(lonInds), 12, length(models));
+    dryFutureSig = zeros(length(latInds), length(lonInds), 12);
+    wetFuture = zeros(length(latInds), length(lonInds), 12, length(models));
+    wetFutureSig = zeros(length(latInds), length(lonInds), 12);
+    hotDryFuture = zeros(length(latInds), length(lonInds), 12, length(models));
+    hotDryFutureSig = zeros(length(latInds), length(lonInds), 12);
+end
+
 for m = 1:length(models)
     if reanalysisBase
         load(['2017-nile-climate/output/projections/temp-monthly-future-era-interim-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{m} '.mat']);
@@ -76,33 +91,49 @@ for m = 1:length(models)
             end
         end
         
-        clear curPrHistorical curTempHistorical;
-        
-        fprintf('loading future %s...\n', models{m});
-        curPrFuture = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/' rcp '/pr/regrid/world'], 'pr', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
-        curPrFuture = curPrFuture{3}(latInds, lonInds, :, :) .* 3600 .* 24;
-        
-        curTempFuture = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/' rcp '/tasmax/regrid/world'], 'startYear', timePeriod(1), 'endYear', timePeriod(end));
-        curTempFuture = dailyToMonthly(curTempFuture);
-        curTempFuture = curTempFuture{3}(latInds, lonInds, :, :);
-        if nanmean(nanmean(nanmean(nanmean(curTempFuture)))) > 100
-            curTempFuture = curTempFuture - 273.15;
+        % not finding historical trends
+        if ~strcmp(rcp, 'historical')
+
+            fprintf('loading future %s...\n', models{m});
+            curPrFuture = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/' rcp '/pr/regrid/world'], 'pr', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
+            curPrFuture = curPrFuture{3}(latInds, lonInds, :, :) .* 3600 .* 24;
+
+            curTempFuture = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/' rcp '/tasmax/regrid/world'], 'startYear', timePeriod(1), 'endYear', timePeriod(end));
+            curTempFuture = dailyToMonthly(curTempFuture);
+            curTempFuture = curTempFuture{3}(latInds, lonInds, :, :);
+            if nanmean(nanmean(nanmean(nanmean(curTempFuture)))) > 100
+                curTempFuture = curTempFuture - 273.15;
+            end
+        else
+            curPrFuture = curPrHistorical;
+            curTempFuture = curTempHistorical;
         end
+        
+        clear curPrHistorical curTempHistorical;
     end
     
     for month = 1:12
         for year = 1:size(curTempFuture, 3)
-            hotFuture(:, :, month, m) = hotFuture(:, :, month, m) + (squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
-            dryFuture(:, :, month, m) = dryFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)));
-            wetFuture(:, :, month, m) = wetFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) > squeeze(historicalPr(:, :, month, 9)));
-            hotDryFuture(:, :, month, m) = hotDryFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)) & squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
+            if eachYear
+                hotFuture(:, :, year, month, m) = (squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
+                dryFuture(:, :, year, month, m) = (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)));
+                wetFuture(:, :, year, month, m) = (squeeze(curPrFuture(:, :, year, month)) > squeeze(historicalPr(:, :, month, 9)));
+                hotDryFuture(:, :, year, month, m) = (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)) & squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
+            else
+                hotFuture(:, :, month, m) = hotFuture(:, :, month, m) + (squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
+                dryFuture(:, :, month, m) = dryFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)));
+                wetFuture(:, :, month, m) = wetFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) > squeeze(historicalPr(:, :, month, 9)));
+                hotDryFuture(:, :, month, m) = hotDryFuture(:, :, month, m) + (squeeze(curPrFuture(:, :, year, month)) < squeeze(historicalPr(:, :, month, 1)) & squeeze(curTempFuture(:, :, year, month)) > squeeze(historicalTemp(:, :, month, 9)));
+            end
         end
         
-        % convert to fraction of years
-        hotFuture(:, :, month, m) = hotFuture(:, :, month, m)  ./ size(curTempFuture, 3);
-        dryFuture(:, :, month, m) = dryFuture(:, :, month, m)  ./ size(curTempFuture, 3);
-        wetFuture(:, :, month, m) = wetFuture(:, :, month, m)  ./ size(curTempFuture, 3);
-        hotDryFuture(:, :, month, m) = hotDryFuture(:, :, month, m)  ./ size(curTempFuture, 3);
+        if ~eachYear
+            % convert to fraction of years
+            hotFuture(:, :, month, m) = hotFuture(:, :, month, m)  ./ size(curTempFuture, 3);
+            dryFuture(:, :, month, m) = dryFuture(:, :, month, m)  ./ size(curTempFuture, 3);
+            wetFuture(:, :, month, m) = wetFuture(:, :, month, m)  ./ size(curTempFuture, 3);
+            hotDryFuture(:, :, month, m) = hotDryFuture(:, :, month, m)  ./ size(curTempFuture, 3);
+        end
     end
     
     clear curTempFuture curPrFuture;
@@ -114,8 +145,13 @@ if reanalysisBase
     save(['2017-nile-climate/output/wetFuture-era-interim-chirps-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'wetFuture');
     save(['2017-nile-climate/output/hotDryFuture-era-interim-chirps-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotDryFuture');
 else
-    save(['2017-nile-climate/output/hotFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotFuture');
-    save(['2017-nile-climate/output/dryFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'dryFuture');
-    save(['2017-nile-climate/output/wetFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'wetFuture');
-    save(['2017-nile-climate/output/hotDryFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '.mat'], 'hotDryFuture');
+    eachYearStr = '';
+    if eachYear
+        eachYearStr = '-each-year';
+    end
+    
+    save(['2017-nile-climate/output/hotFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) eachYearStr '.mat'], 'hotFuture');
+    save(['2017-nile-climate/output/dryFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) eachYearStr '.mat'], 'dryFuture');
+    save(['2017-nile-climate/output/wetFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) eachYearStr '.mat'], 'wetFuture');
+    save(['2017-nile-climate/output/hotDryFuture-cmip5-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) eachYearStr '.mat'], 'hotDryFuture');
 end

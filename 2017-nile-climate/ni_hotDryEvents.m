@@ -1,5 +1,12 @@
 plotSeasonalAnnualData = false;
 north = true;
+compareCmip5Trends = true;
+
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 % save historical percentiles for use in future projections?
 computeHistoricalDist = false;
@@ -163,12 +170,15 @@ prcPr = 10;
 hotTrends = zeros(4, 3);
 hotCI = zeros(4, 3, 2);
 hotSig = zeros(4, 3);
+hotTrendsCmip5 = zeros(4, length(models));
 dryTrends = zeros(4, 5);
 dryCI = zeros(4, 5, 2);
 drySig = zeros(4, 5);
+dryTrendsCmip5 = zeros(4, length(models));
 hotDryTrends = zeros(4, 3);
 hotDryCI = zeros(4, 3, 2);
 hotDrySig = zeros(4, 3);
+hotDryTrendsCmip5 = zeros(4, length(models));
 
 if computeHistoricalDist
     % compute historical percentiles in tmax/pr for each month
@@ -278,7 +288,29 @@ for s = 1:size(seasons, 1)
         hotdryEraChirps(year) = numel(find(curTmaxEra(:, :, year) > curTmaxThreshEra & curPrChirps(:, :, year) < curPrThreshChirps));
     end
     
+    % load pre-processed cmip5 hot/dry counts
+    load(['2017-nile-climate/output/hotDryFuture-cmip5-historical-1980-2004-each-year']);
+    hotDryCmip5 = hotDryFuture;
+    load(['2017-nile-climate/output/dryFuture-cmip5-historical-1980-2004-each-year']);
+    dryCmip5 = dryFuture;
+    load(['2017-nile-climate/output/hotFuture-cmip5-historical-1980-2004-each-year']);
+    hotCmip5 = hotFuture;
+    
+    % average over area & season
+    if north
+        hotDryCmip5 = squeeze(nansum(nansum(nanmean(hotDryCmip5(latIndsNorth - latInds(1) + 1, lonIndsNorth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+        dryCmip5 = squeeze(nansum(nansum(nanmean(dryCmip5(latIndsNorth - latInds(1) + 1, lonIndsNorth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+        hotCmip5 = squeeze(nansum(nansum(nanmean(hotCmip5(latIndsNorth - latInds(1) + 1, lonIndsNorth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+    else
+        hotDryCmip5 = squeeze(nansum(nansum(nanmean(hotDryCmip5(latIndsSouth - latInds(1) + 1, lonIndsSouth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+        dryCmip5 = squeeze(nansum(nansum(nanmean(dryCmip5(latIndsSouth - latInds(1) + 1, lonIndsSouth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+        hotCmip5 = squeeze(nansum(nansum(nanmean(hotCmip5(latIndsSouth - latInds(1) + 1, lonIndsSouth - lonInds(1) + 1, :, seasons(s, :), :), 4), 2), 1));
+    end
+    
     % normalize all counts to account for different grids
+    dryCmip5 = normr(dryCmip5');
+    hotCmip5 = normr(hotCmip5');
+    hotDryCmip5 = normr(hotDryCmip5');
     dryEra = normr(dryEra);
     dryNcep = normr(dryNcep);
     dryGpcp = normr(dryGpcp);
@@ -300,6 +332,17 @@ for s = 1:size(seasons, 1)
     hotTrends(s, 1) = fHotEra.p1;
     hotTrends(s, 2) = fHotNcep.p1;
     hotTrends(s, 3) = fHotGldas.p1;
+    
+    for m = 1:size(hotCmip5, 2)
+        f = fit((1:size(hotCmip5, 1))', squeeze(hotCmip5(:, m)), 'poly1');
+        hotTrendsCmip5(s, m) = f.p1;
+        
+        f = fit((1:size(dryCmip5, 1))', squeeze(dryCmip5(:, m)), 'poly1');
+        dryTrendsCmip5(s, m) = f.p1;
+        
+        f = fit((1:size(hotDryCmip5, 1))', squeeze(hotDryCmip5(:, m)), 'poly1');
+        hotDryTrendsCmip5(s, m) = f.p1;
+    end
     
     % and get CI
     c = confint(fHotEra);
@@ -477,6 +520,52 @@ dryTrends = dryTrends .* 10;
 hotTrends = hotTrends .* 10;
 hotDryTrends = hotDryTrends .* 10;
 
+hotTrendsCmip5 = hotTrendsCmip5 .* 10;
+dryTrendsCmip5 = dryTrendsCmip5 .* 10;
+hotDryTrendsCmip5 = hotDryTrendsCmip5 .* 10;
+
+if compareCmip5Trends
+    figure('Color', [1,1,1]);
+    hold on;
+    axis square;
+    grid on;
+    box on;
+    
+    pdt = plot([nanmean(nanmean(hotTrends)) nanmean(nanmean(hotTrends))], [-1 1], '-', 'Color', [247, 92, 81]./255.0, 'LineWidth', 2);
+    pdd = plot([-1 1], [nanmean(nanmean(dryTrends)) nanmean(nanmean(dryTrends))], '-', 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+    
+    for m = 1:size(hotTrendsCmip5, 2)
+        t = text(nanmean(hotTrendsCmip5(:,m),1), nanmean(dryTrendsCmip5(:,m),1), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+        t.FontSize = 18;
+    end
+    
+    dt = (squeeze(nanmean(hotTrendsCmip5,1)))';
+    dd = (squeeze(nanmean(dryTrendsCmip5,1)))';
+    f = fit(dt, dd, 'poly1');
+    cint = confint(f);
+    if sign(cint(1,1)) == sign(cint(2,1))
+        plot([min(dt) max(dt)], [f(min(dt)) f(max(dt))], '--b', 'LineWidth', 2);
+    end
+    
+    xlim([-.1 .1]);
+    set(gca, 'XTick', [-.1:.05:.1]);
+    xlabel('Hot season trend')
+    ylim([-.1 .1]);
+    set(gca, 'YTick', [-.1:.05:.1]);
+    ylabel('Dry season trend');
+    set(gca, 'FontSize', 36);
+    legend([pdt pdd], {'Obs hot season trend', 'Obs dry season trend'});
+    
+    set(gcf, 'Position', get(0,'Screensize'));
+    if north
+        export_fig trend-comparison-north.eps;
+    else
+        export_fig trend-comparison-south.eps;
+    end
+end
+
+
+
 figure('Color',[1,1,1]);
 colors = get(gca, 'colororder');
 legItems = [];
@@ -497,6 +586,14 @@ for d = 1:size(dryTrends, 2)
         end
     end
 end
+
+b = boxplot([dryTrendsCmip5(1,:)' dryTrendsCmip5(2,:)' dryTrendsCmip5(3,:)' dryTrendsCmip5(4,:)'], ...
+                     'positions', [1.35 2.35 3.35 4.35], 'widths', [.1 .1 .1 .1]);
+
+set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+                
 plot([0 5], [0 0], 'k--');
 set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
@@ -513,7 +610,8 @@ else
 end
 
 ylabel('Dry season trend');
-legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'GPCP', 'CHIRPS-v2'}, 'location', 'southwest');
+l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'GPCP', 'CHIRPS-v2'}, 'location', 'southwest');
+set(l, 'FontSize', 30);
 set(gcf, 'Position', get(0,'Screensize'));
 if north
     export_fig dry-trends-north.eps;
@@ -546,6 +644,14 @@ for d = 1:size(hotTrends, 2)
         end
     end
 end
+
+b = boxplot([hotTrendsCmip5(1,:)' hotTrendsCmip5(2,:)' hotTrendsCmip5(3,:)' hotTrendsCmip5(4,:)'], ...
+                     'positions', [1.25 2.25 3.25 4.25], 'widths', [.1 .1 .1 .1]);
+
+set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+
 plot([0 5], [0 0], 'k--');
 set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
@@ -562,7 +668,8 @@ else
 end
 
 ylabel('Hot season trend');
-legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
+l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
+set(l, 'FontSize', 30);
 set(gcf, 'Position', get(0,'Screensize'));
 if north
     export_fig hot-trends-north.eps;
@@ -594,6 +701,14 @@ for d = 1:size(hotDryTrends, 2)
         end
     end
 end
+
+b = boxplot([hotDryTrendsCmip5(1,:)' hotDryTrendsCmip5(2,:)' hotDryTrendsCmip5(3,:)' hotDryTrendsCmip5(4,:)'], ...
+                     'positions', [1.3 2.3 3.3 4.3], 'widths', [.1 .1 .1 .1]);
+
+set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+
 plot([0 5], [0 0], 'k--');
 set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'}, 'YTick', -.25:.1:.25);
@@ -610,7 +725,8 @@ else
 end
 
 ylabel('Hot & dry season trend');
-legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'CHIRPS-ERA'}, 'location', 'southeast');
+l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'CHIRPS-ERA'}, 'location', 'southeast');
+set(l, 'FontSize', 30);
 set(gcf, 'Position', get(0,'Screensize'));
 if north
     export_fig hot-dry-trends-north.eps;

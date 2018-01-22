@@ -1,27 +1,27 @@
 base = 'cmip5';
 
 % late period
-load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2051-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2051-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2051-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2051-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 % early period
-load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2021-2050.mat']);
+load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2031-2055.mat']);
 dryFutureEarly = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2021-2050.mat']);
+load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2031-2055.mat']);
 wetFutureEarly = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2021-2050.mat']);
+load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2031-2055.mat']);
 hotFutureEarly = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2021-2050.mat']);
+load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2031-2055.mat']);
 hotDryFutureEarly = hotDryFuture;
 
-drawScatter = true;
-drawMaps = false;
+drawScatter = false;
+drawMaps = true;
 north = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -174,13 +174,13 @@ if drawMaps
     for s = 1:size(seasons,1)
         hotFutureFrac = squeeze(nanmedian(nanmean(hotFutureLate(:, :, seasons(s,:), :),3),4));
         dryFutureFrac = squeeze(nanmedian(nanmean(dryFutureLate(:, :, seasons(s,:), :),3),4));
-        hotDryFutureFrac = squeeze(nanmedian(nanmean(hotDryFutureLate(:, :, seasons(s,:), :),3),4));
+        hotDryFutureFrac = squeeze(nanmedian(nanmean(hotDryFutureLate(:, :, :, :),3),4));
 
         sig = [];
 
         for xlat = 1:size(dryFutureLate,1)
             for ylon = 1:size(dryFutureLate,2)
-                sig(xlat, ylon) = length(find(sign(nanmean(dryFutureLate(xlat, ylon, seasons(s,:), :),3)-.1) == sign(dryFutureFrac(xlat, ylon)-.1)));
+                sig(xlat, ylon) = length(find(sign(nanmean(hotDryFutureLate(xlat, ylon, :, :),3)-.1) == sign(hotDryFutureFrac(xlat, ylon)-.1)));
             end
         end
     %     
@@ -191,15 +191,15 @@ if drawMaps
         %plotModelData({lat(latInds,lonInds),lon(latInds,lonInds),dryFutureFrac},'nile','caxis',[-.5 .5], 'colormap', brewermap([],'RdBu'));
         %plotModelData({lat(latInds,lonInds),lon(latInds,lonInds),hotDryFutureFrac},'nile','caxis',[-.5 .5], 'colormap', brewermap([],'RdBu'));
 
-        result = {lat(latInds,lonInds), lon(latInds,lonInds), hotDryFutureFrac};
+        result = {lat(latInds,lonInds), lon(latInds,lonInds), hotDryFutureFrac - .1};
 
         saveData = struct('data', {result}, ...
                           'plotRegion', 'nile', ...
                           'plotRange', [0 .2], ...
                           'cbXTicks', 0:.05:.2, ...
-                          'plotTitle', ['Hot & dry months'], ...
-                          'fileTitle', ['hot-dry-months-' num2str(s) '.png'], ...
-                          'plotXUnits', ['Percent difference'], ...
+                          'plotTitle', [''], ...
+                          'fileTitle', ['hot-dry-years-annual.eps'], ...
+                          'plotXUnits', ['Fraction'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], '*RdBu'), ...
                           'plotCountries', true, ...

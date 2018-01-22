@@ -13,21 +13,23 @@ for model = 1:length(models)
     load(['2017-nile-climate/output/nile-heat-waves-90-5day-' models{model} '-annual.mat']);
     heatProbCmip5(:, :, :, :, model) = heatProb;
     
-    load(['2017-nile-climate/output/pr-cmip5-historical-' models{model} '.mat']);
-    for s = 1:length(prSeasonal)
-        prCmip5{s}(:, :, :, model) = prSeasonal{s};
+    if plotCorr
+        load(['2017-nile-climate/output/pr-cmip5-historical-' models{model} '.mat']);
+        for s = 1:length(prSeasonal)
+            prCmip5{s}(:, :, :, model) = prSeasonal{s};
+        end
     end
 end
        
-load 2017-nile-climate/output/nile-heat-waves-90-5day-era-annual.mat;
-load 2017-nile-climate/output/pr-era-interim.mat;
+load 2017-nile-climate/output/nile-heat-waves-95-5day-era-interim-annual.mat;
+load 2017-nile-climate/output/nile-heat-waves-95-5day-ncep-reanalysis-annual.mat;
 
-prEra = pr;
-
-load 2017-nile-climate/output/nile-heat-waves-90-5day-ncep-annual.mat;
-load 2017-nile-climate/output/pr-ncep-reanalysis.mat;
-
-prNcep = pr;
+if plotCorr
+    load 2017-nile-climate/output/pr-era-interim.mat;
+    prEra = pr;
+    load 2017-nile-climate/output/pr-ncep-reanalysis.mat;
+    prNcep = pr;
+end
 
 load lat;
 load lon;
@@ -57,6 +59,7 @@ seasons = [[12 1 2];
            [6 7 8];
            [9 10 11]];
 
+if plotCorr
 heatCorrNcep = [];
 heatCorrEra = [];
 heatCorrCmip5 = [];
@@ -129,7 +132,7 @@ for s = 1:size(seasons, 1)
 
 end
 
-if plotCorr
+
     figure('Color', [1,1,1]);
     colors = get(gca, 'colororder');
     hold on;
@@ -186,7 +189,7 @@ if plotCorr
     ylim([-1 1]);
     xlim([.5 4.5]);
     ylabel('Correlation');
-    set(gca, 'FontSize', 40);
+    set(gca, 'FontSize', 36);
     title('South');
 
     export_fig pr-heat-corr-south.eps;
@@ -194,16 +197,16 @@ end
 
 if plotHeatWaves
     %plot PR/heat time series in the hottest season for each region from ERA
-    heatSouthEra = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, seasons(hottestSouth,:)), 4), 2), 1));
+    heatSouthEra = squeeze(nansum(nansum(nansum(heatProbEra(latIndsSouth, lonIndsSouth, :, :), 4), 2), 1));
     fHeatSouthEra = fit((1:length(heatSouthEra))', heatSouthEra, 'poly1');
     
-    heatSouthNcep = squeeze(nansum(nansum(nansum(heatProbNcep(latIndsSouth, lonIndsSouth, :, seasons(hottestSouth,:)), 4), 2), 1));
+    heatSouthNcep = squeeze(nansum(nansum(nansum(heatProbNcep(latIndsSouth, lonIndsSouth, :, :), 4), 2), 1));
     fHeatSouthNcep = fit((1:length(heatSouthNcep))', heatSouthNcep, 'poly1');
     
-    heatNorthEra = squeeze(nansum(nansum(nansum(heatProbEra(latIndsNorth, lonIndsNorth, :, seasons(hottestNorth,:)), 4), 2), 1));
+    heatNorthEra = squeeze(nansum(nansum(nansum(heatProbEra(latIndsNorth, lonIndsNorth, :, :), 4), 2), 1));
     fHeatNorthEra = fit((1:length(heatNorthEra))', heatNorthEra, 'poly1');
     
-    heatNorthNcep = squeeze(nansum(nansum(nansum(heatProbNcep(latIndsNorth, lonIndsNorth, :, seasons(hottestNorth,:)), 4), 2), 1));
+    heatNorthNcep = squeeze(nansum(nansum(nansum(heatProbNcep(latIndsNorth, lonIndsNorth, :, :), 4), 2), 1));
     fHeatNorthNcep = fit((1:length(heatNorthNcep))', heatNorthNcep, 'poly1');
 
     colors = get(gca, 'colororder');
@@ -226,13 +229,13 @@ if plotHeatWaves
     if Mann_Kendall(heatNorthNcep, 0.05)
         plot(1:length(heatNorthNcep), fHeatNorthEra(1:length(heatNorthNcep)), '--', 'Color', colors(3,:));
     end
-    ylim([0 150]);
-    ylabel('JJA # Heat waves');
+    ylim([0 250 ]);
+    ylabel('# Heat waves');
 
-    set(gca, 'FontSize', 40);
+    set(gca, 'FontSize', 36);
     set(gca, 'XTick', 5:10:length(heatSouthEra), 'XTickLabels', 1985:10:2016);
-    title('North: JJA');
     legend([p1 p2], 'ERA-Interim', 'NCEP II', 'location', 'northwest');
+    set(gcf, 'Position', get(0,'Screensize'));
     export_fig heat-wave-timeseries-north.eps;
     close all;
     
@@ -254,13 +257,13 @@ if plotHeatWaves
         plot(1:length(heatNorthNcep), fHeatNorthEra(1:length(heatNorthNcep)), '--', 'Color', colors(3,:));
     end
     
-    ylim([0 150]);
-    ylabel('MAM # Heat waves');
+    ylim([0 250]);
+    ylabel('# Heat waves');
 
     set(gca, 'FontSize', 40);
     set(gca, 'XTick', 5:10:length(heatSouthEra), 'XTickLabels', 1985:10:2016);
-    title('South: MAM');
-    legend([p1 p2], 'ERA-Interim', 'NCEP II', 'location', 'northwest');
+    %legend([p1 p2], 'ERA-Interim', 'NCEP II', 'location', 'northwest');
+    set(gcf, 'Position', get(0,'Screensize'));
     export_fig heat-wave-timeseries-south.eps;
     close all;
 end

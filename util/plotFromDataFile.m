@@ -93,13 +93,13 @@ function [fg, cb] = plotFromDataFile(saveData)
     %set(gca, 'SortMethod', 'childorder');
     
     set(gca, 'Color', 'none');
-    set(gca, 'FontSize', 40);
+    set(gca, 'FontSize', 36);
     if showColorbar
-        xlabel(cb, saveData.plotXUnits, 'FontSize', 40);
+        xlabel(cb, saveData.plotXUnits, 'FontSize', 36);
         set(cb, 'XTick', xticks);
         cbPos = get(cb, 'Position');
     end
-    title(saveData.plotTitle, 'FontSize', 30);
+    title(saveData.plotTitle, 'FontSize', 36);
     
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');

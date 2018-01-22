@@ -1,15 +1,15 @@
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'ipsl-cm5a-mr', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 rcp = 'rcp85';
 timePeriodBase = [1980 2004];
 timePeriodFuture = [2056 2080];
 
-plotScatter = true;
-plotMap = false;
+plotScatter = false;
+plotMap = true;
 
 load lat;
 load lon;
@@ -29,21 +29,21 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 if ~exist('tempChgCmip5', 'var')
-tempChgCmip5 = [];
-prHistCmip5 = [];
-prFutCmip5 = [];
-for m = 1:length(models)
-    
-    load(['2017-nile-climate/output/tasmax-monthly-chg-cmip5-' rcp '-' num2str(timePeriodFuture(1)) '-' num2str(timePeriodFuture(end)) '-' models{m} '.mat']);
-    tempChgCmip5(:, :, :, m) = monthlyChg;
-    
-    fprintf('loading pr: %s...\n', models{m});
-    prHist = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/pr/regrid/world'], 'pr', 'startYear', timePeriodBase(1), 'endYear', timePeriodBase(end));
-    prHistCmip5(:, :, :, :, m) = prHist{3} .* 3600 .* 24;
-    prFut = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/pr/regrid/world'], 'pr', 'startYear', timePeriodFuture(1), 'endYear', timePeriodFuture(end));    
-    prFutCmip5(:, :, :, :, m) = prFut{3} .* 3600 .* 24;
+    tempChgCmip5 = [];
+    prHistCmip5 = [];
+    prFutCmip5 = [];
+    for m = 1:length(models)
 
-end
+        load(['2017-nile-climate/output/tasmax-monthly-chg-cmip5-' rcp '-' num2str(timePeriodFuture(1)) '-' num2str(timePeriodFuture(end)) '-' models{m} '.mat']);
+        tempChgCmip5(:, :, :, m) = monthlyChg;
+
+        fprintf('loading pr: %s...\n', models{m});
+        prHist = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/pr/regrid/world'], 'pr', 'startYear', timePeriodBase(1), 'endYear', timePeriodBase(end));
+        prHistCmip5(:, :, :, :, m) = prHist{3} .* 3600 .* 24;
+        prFut = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/pr/regrid/world'], 'pr', 'startYear', timePeriodFuture(1), 'endYear', timePeriodFuture(end));    
+        prFutCmip5(:, :, :, :, m) = prFut{3} .* 3600 .* 24;
+
+    end
 end
 
 prChg = [];
@@ -55,7 +55,7 @@ for s = 1:size(seasons, 1)
     latIndsRegion = curInds{1};
     lonIndsRegion = curInds{2};
     
-    curInds = regionInds('nile-south');
+    curInds = regionInds('nile-north');
     latInds = curInds{1};
     lonInds = curInds{2};
     prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, seasons(s, :), :), 4), 2), 1));
@@ -66,8 +66,8 @@ for s = 1:size(seasons, 1)
         curInds = regionInds('nile');
         latInds = curInds{1};
         lonInds = curInds{2};
-        chg = squeeze(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, seasons(s, :), :), 4), 3)) - ...
-              squeeze(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, seasons(s, :), :), 4), 3));
+        chg = squeeze(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, :, :), 4), 3)) - ...
+              squeeze(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, :, :), 4), 3));
         result = {lat(latInds,lonInds), lon(latInds,lonInds), nanmedian(chg, 3)}; 
         sig = [];
         for xlat = 1:size(chg, 1)
@@ -78,15 +78,15 @@ for s = 1:size(seasons, 1)
 
         saveData = struct('data', {result}, ...
                           'plotRegion', 'nile', ...
-                          'plotRange', [-1 1], ...
-                          'cbXTicks', -1:.5:1, ...
-                          'plotTitle', [seasonNames{s}], ...
-                          'fileTitle', ['pr-chg-' seasonNames{s} '.eps'], ...
-                          'plotXUnits', ['Precipitation change (mm/day)'], ...
+                          'plotRange', [-.5 .5], ...
+                          'cbXTicks', -.5:.25:.5, ...
+                          'plotTitle', [''], ...
+                          'fileTitle', ['pr-chg-annual.eps'], ...
+                          'plotXUnits', ['mm/day'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], 'BrBG'), ...
                           'plotCountries', true, ...
-                          'statData', sig <= .75*length(models), ...
+                          'statData', sig <= .67*length(models), ...
                           'boxCoords', {[[13 32], [29, 34];
                                          [2 13], [25 42]]});
         plotFromDataFile(saveData);
@@ -126,7 +126,7 @@ for s = 1:size(seasons, 1)
         set(gca, 'FontSize', 36);
         title([seasonNames{s}]);
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['temp-pr-chg-south-' seasonNames{s} '.eps']);
+        export_fig(['temp-pr-chg-north-' seasonNames{s} '.eps']);
         close all;
     end
 end

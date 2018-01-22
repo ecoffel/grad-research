@@ -157,7 +157,11 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
         timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]);
         
         % add on time offset to this file
-        starttime = addtodate(starttime, timestep(1)*24, 'hour');
+        if length(findstr(rawNcDir, 'hadgem2')) > 0
+            starttime = addtodate(starttime, floor(timestep(1) / 30), 'month');
+        else
+            starttime = addtodate(starttime, timestep(1)*24, 'hour');
+        end
         
         % timestamps for all files (1 month apart)
         for t = 1:length(timestep)
