@@ -1,9 +1,9 @@
 season = 'all';
 
 dataset = 'cmip5';
-var = 'mrso';
+var = 'tasmax';
 
-isMonthly = true;
+isMonthly = false;
 
 skipExisting = true;
 
@@ -28,7 +28,7 @@ if strcmp(dataset, 'cmip5')
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 %     end
 
-    rcp = 'historical';
+    rcp = 'rcp85';
     ensemble = 'r1i1p1';
 elseif strcmp(dataset, 'ncep-reanalysis')
     models = {''};
@@ -41,7 +41,7 @@ elseif strcmp(dataset, 'era-interim')
 end
 
 % mean for each year/month or for each month averaged over all years
-avgOverYears = false;
+avgOverYears = true;
 avgOverYearsStr = '-all-years';
 if avgOverYears
     avgOverYearsStr = '';
@@ -61,7 +61,7 @@ elseif strcmp(rcp, 'rcp45') || strcmp(rcp, 'rcp85')
 end
 
 baseDir = 'e:/data';
-outputDir = 'e:/data/projects/bowen/huss-chg-data';
+outputDir = 'e:/data/projects/bowen/temp-chg-data';
 yearStep = 1;
 
 load lat;

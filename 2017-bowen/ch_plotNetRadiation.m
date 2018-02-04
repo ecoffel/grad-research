@@ -9,8 +9,10 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[45, 55], [10, 35]]; ...            % Europe
            [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
-           [[-10, 1], [-75, -53]+360]; ...      % Amazon
-           [[-10 10], [15, 30]]];                % central africa
+           [[-10, 7], [-75, -62]+360]; ...      % Amazon
+           [[-10 10], [15, 30]]; ...            % central africa
+           [[15 30], [-4 29]]; ...              % north africa
+           [[22 40], [105 122]]];               % china
                       
 sigChg = [];
 
@@ -19,14 +21,10 @@ load e:/data/projects/bowen/derived-chg/rsusChg-absolute;
 load e:/data/projects/bowen/derived-chg/rldsChg-absolute;
 load e:/data/projects/bowen/derived-chg/rlusChg-absolute;
 
-load e:/data/projects/bowen/derived-chg/rsdsChg-clouds-absolute;
-load e:/data/projects/bowen/derived-chg/rsdscsChg-clouds-absolute;
-
 rsdsChg(isinf(rsdsChg) | abs(rsdsChg) > 1000) = NaN;
 rsusChg(isinf(rsusChg) | abs(rsusChg) > 1000) = NaN;
 rlusChg(isinf(rlusChg) | abs(rlusChg) > 1000) = NaN;
 rldsChg(isinf(rldsChg) | abs(rldsChg) > 1000) = NaN;
-rldsChg(isinf(rsdscsChg) | abs(rsdscsChg) > 1000) = NaN;
 
 
 %load e:/data/projects/bowen/derived-chg/hfss-absolute-chg-all;
@@ -42,12 +40,12 @@ seasons = [[12 1 2];
 %surfSwNetChg = squeeze(rsdsChg - rsusChg);
 %surfLwNetChg = squeeze(rldsChg - rlusChg);
 
-cloudSWChg = rsdsChg - rsdscsChg;
-save('e:/data/projects/bowen/derived-chg/cloudSWChg-absolute.mat', 'cloudSWChg');
+surfAbChg = rsdsChg - rlusChg;
+save('e:/data/projects/bowen/derived-chg/surfAbChg-absolute.mat', 'surfAbChg');
 
 %heatFluxChg = squeeze(hfssChg+hflsChg);
 
-net = cloudSWChg;
+net = rsdsChg-rsusChg;
 
 %topSwNetChg = net;
 %save('e:/data/projects/bowen/derived-chg/topSwNet-absolute-chg-all.mat', 'topSwNetChg');
@@ -76,14 +74,14 @@ sigChg(75:90, :) = 0;
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-15 15], ...
-                  'cbXTicks', -15:5:15, ...
-                  'plotTitle', ['Cloud SW forcing'], ...
-                  'fileTitle', ['cloud-surf-sw-rcp85-' num2str(size(net, 3)) '-cmip5-warm.eps'], ...
+                  'plotRange', [0 25], ...
+                  'cbXTicks', 0:5:25, ...
+                  'plotTitle', ['Surface SW change'], ...
+                  'fileTitle', ['surf-sw-rcp85-' num2str(size(net, 3)) '-cmip5-warm.eps'], ...
                   'plotXUnits', ['W/m^2'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'*RdBu'), ...
+                  'colormap', brewermap([],'Reds'), ...
                   'statData', sigChg, ...
                   'stippleInterval', 5, ...
-                  'boxCoords', {regions([2,4,7], :)});
+                  'boxCoords', {regions([2,4,7,10], :)});
 plotFromDataFile(saveData);

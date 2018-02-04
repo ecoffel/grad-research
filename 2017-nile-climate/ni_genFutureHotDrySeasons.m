@@ -10,7 +10,7 @@ timePeriod = [1980 2004];
 reanalysisBase = false;
 
 % should we save each year's grid separately
-eachYear = true;
+eachYear = false;
 
 if reanalysisBase
     load(['2017-nile-climate/output/historical-temp-percentiles-era-interim.mat']);

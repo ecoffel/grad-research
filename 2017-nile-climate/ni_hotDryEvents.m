@@ -1,5 +1,5 @@
 plotSeasonalAnnualData = false;
-north = true;
+north = false;
 compareCmip5Trends = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -333,14 +333,14 @@ for s = 1:size(seasons, 1)
     hotTrends(s, 2) = fHotNcep.p1;
     hotTrends(s, 3) = fHotGldas.p1;
     
-    for m = 1:size(hotCmip5, 2)
-        f = fit((1:size(hotCmip5, 1))', squeeze(hotCmip5(:, m)), 'poly1');
+    for m = 1:size(hotCmip5, 1)
+        f = fit((1:size(hotCmip5, 2))', (squeeze(hotCmip5(m, :)))', 'poly1');
         hotTrendsCmip5(s, m) = f.p1;
         
-        f = fit((1:size(dryCmip5, 1))', squeeze(dryCmip5(:, m)), 'poly1');
+        f = fit((1:size(dryCmip5, 2))', (squeeze(dryCmip5(m, :)))', 'poly1');
         dryTrendsCmip5(s, m) = f.p1;
         
-        f = fit((1:size(hotDryCmip5, 1))', squeeze(hotDryCmip5(:, m)), 'poly1');
+        f = fit((1:size(hotDryCmip5, 2))', (squeeze(hotDryCmip5(m, :)))', 'poly1');
         hotDryTrendsCmip5(s, m) = f.p1;
     end
     
@@ -547,14 +547,14 @@ if compareCmip5Trends
         plot([min(dt) max(dt)], [f(min(dt)) f(max(dt))], '--b', 'LineWidth', 2);
     end
     
-    xlim([-.1 .1]);
-    set(gca, 'XTick', [-.1:.05:.1]);
+    xlim([-.1 .15]);
+    set(gca, 'XTick', [-.1:.05:.15]);
     xlabel('Hot season trend')
     ylim([-.1 .1]);
     set(gca, 'YTick', [-.1:.05:.1]);
     ylabel('Dry season trend');
     set(gca, 'FontSize', 36);
-    legend([pdt pdd], {'Obs hot season trend', 'Obs dry season trend'});
+    %legend([pdt pdd], {'Obs hot season trend', 'Obs dry season trend'});
     
     set(gcf, 'Position', get(0,'Screensize'));
     if north

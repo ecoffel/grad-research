@@ -5,18 +5,13 @@ percentChange = false;
 warmSeason = true;
 warmSeasonAnom = false;
 
-% 
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%           
+
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-              'mri-cgcm3', 'noresm1-m'};
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+          
           
 plotMap = true;
 
@@ -86,7 +81,11 @@ for region = showRegions
     
     for model = 1:length(models)
         fprintf('loading %s historical...\n', models{model});
-        hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
+        try
+            hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
+        catch
+            regionalHumHistorical(:,:,model,:) = NaN;
+        end
         hum{3} = squeeze(nanmean(hum{3}, 3));
         
         % remove water tiles
@@ -110,7 +109,11 @@ for region = showRegions
         clear flux;
         
         fprintf('loading %s future...\n', models{model});
-        hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
+        try
+            hum = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
+        catch
+            regionalHumFuture(:,:,model,:) = NaN;
+        end
         hum{3} = squeeze(nanmean(hum{3}, 3));
         
         % remove water tiles
@@ -189,8 +192,8 @@ for region = showRegions
             %eval([var 'Chg = chg;']);
             %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
         else
-            eval([var 'HumChg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'HumChg-absolute.mat'], [var 'HumChg']);
+            eval([var 'Chg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute.mat'], [var 'Chg']);
         end
         
         hussHistorical = regionalHumHistorical;

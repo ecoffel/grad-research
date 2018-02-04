@@ -8,34 +8,34 @@ v1AbsoluteStr = '-absolute';
 v2AbsoluteStr = '-absolute';
 v3AbsoluteStr = '-absolute';
 
-var1 = 'cltHumidityChg';
-var1Months = [6 7 8];
-v1XStr = 'JJA cloud SW forcing chg (W/m^2)';
-v1XLim = [-20 50];
-v1XTick = -20:10:50;
+var1 = '    cltChg';
+var1Months = [9 10 11];
+v1XStr = 'SON cloud change (Fraction)';
+v1XLim = [-20 5];
+v1XTick = -20:5:5;
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
-var2 = 'hussHumChg';
-var2Months = [6 7 8];
-v2YStr = 'JJA hfss chg (W/m^2)';
-v2YLim = [-20 50];
-v2YTick = -20:10:50;
+var2 = 'rsdsNetChg';
+var2Months = [9 10 11];
+v2YStr = 'SON net SW change (W/m^2)';
+v2YLim = [-20 30];
+v2YTick = -20:10:30;
 v2FileStr = [var2 v2AbsoluteStr '-JJA'];
 
 showVar3 = false;
 % shown in colors
-var3 = 'prChg';
+var3 = 'cltChg';
 var3Months = [6 7 8];
-v3YLim = [0 40];
-v3YTicks = 0:10:40;
+v3YLim = [-20 50];
+v3YTicks = -20:10:50;
 v3FileStr = [var3 v3AbsoluteStr '-JJA'];
 v3ColorOffset = 0;
 v3Color = brewermap(v3ColorOffset + 25, 'BrBG') .* .8;
 
-regionIds = [2 4 10];
+regionIds = [7];
 
 scatterPlots = true;
-saveScatter = false;
+saveScatter = true;
 showFit = true;
 
 globalCorrMap = false;
@@ -49,6 +49,7 @@ eval(['v1 = ' var1 ';']);
 load(['e:/data/projects/bowen/derived-chg/' var2 v2AbsoluteStr '']);
 eval(['v2 = ' var2 ';']);
 v2(v2>1000 | v2<-1000) = NaN;
+%v2 = v2 .* 3600 .* 24;
 
 load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);
 eval(['v3 = ' var3 ';']);
@@ -90,7 +91,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[45, 55], [10, 35]]; ...            % Europe
            [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
-           [[-10, 1], [-75, -53]+360]; ...      % Amazon
+           [[-10, 7], [-75, -62]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]];               % china
@@ -198,21 +199,9 @@ if scatterPlots
 
         if showFit
             if showOutliers
-                f = fit(regionV1NoOutliers, regionV2ChgNoOutliers, 'poly1');
+                [f,gof,out] = fit(regionV1NoOutliers, regionV2ChgNoOutliers, 'poly1');
                 pNoOutliers = plot([min(regionV1NoOutliers) max(regionV1NoOutliers)], [f(min(regionV1NoOutliers)) f(max(regionV1NoOutliers))], '--b', 'LineWidth', 2);
-                cNoOutliers = confint(f);
-                cOutlierSigStr = 'Not sig';
-                if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
-                    cOutlierSigStr = 'Sig';
-                end
-            end
-
-            f = fit(v1Chg, v2Chg, 'poly1');
-            pAll = plot([min(v1Chg) max(v1Chg)], [f(min(v1Chg)) f(max(v1Chg))], '--', 'Color', [.6 .6 .6], 'LineWidth', 2);
-            cAll = confint(f);
-            cAllSigStr = 'Not sig';
-            if sign(cAll(1,1)) == sign(cAll(2,1))
-                cAllSigStr = 'Sig';
+                legText = sprintf('R^2 = %.2f\n', gof.rsquare);
             end
         end
         
@@ -226,9 +215,9 @@ if scatterPlots
         xlim(v1XLim);
         set(gca, 'XTick', v1XTick);
 
-        title([regionNames{region}]);
+        %title([regionNames{region}]);
         if showFit
-            legend([pAll pNoOutliers], {['All: (' cAllSigStr ')'], ['No outliers: (' cOutlierSigStr ')']});
+            legend([pNoOutliers], {legText});
         end
         set(gcf, 'Position', get(0,'Screensize'));
         

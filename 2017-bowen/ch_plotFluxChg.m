@@ -1,6 +1,6 @@
 
 baseDir = 'e:/data';
-var = 'hfls';                  
+var = 'rsdsNetChg';                  
 percentChange = false;
 warmSeason = true;
 warmSeasonAnom = false;
@@ -16,20 +16,6 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-%           
-modelsClouds = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-          
-modelsHumidity = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-              'mri-cgcm3', 'noresm1-m'};
-
-models = modelsHumidity;
 
 plotMap = true;
 
@@ -44,6 +30,7 @@ waterGrid = logical(waterGrid);
 
 showRegions =  1;
 
+
 regionNames = {'World', ...
                 'Eastern U.S.', ...
                 'Southeast U.S.', ...
@@ -51,7 +38,9 @@ regionNames = {'World', ...
                 'Mediterranean', ...
                 'Northern SA', ...
                 'Amazon', ...
-                'Central Africa'};
+                'Central Africa', ...
+                'North Africa', ...
+                'China'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -59,17 +48,21 @@ regionAb = {'world', ...
             'med', ...
             'sa-n', ...
             'amazon', ...
-            'africa-cent'};
+            'africa-cent', ...
+            'n-africa', ...
+            'china'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
            [[30 41], [-95 -75] + 360]; ...      % southeast us
            [[45, 55], [10, 35]]; ...            % Europe
-           [[36 45], [-5+360, 40]]; ...        % Med
+           [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
-           [[-10, 1], [-75, -53]+360]; ...      % Amazon
-           [[-10 10], [15, 30]]];                % central africa
-
+           [[-10, 7], [-75, -62]+360]; ...      % Amazon
+           [[-10 10], [15, 30]]; ...            % central africa
+           [[15 30], [-4 29]]; ...              % north africa
+           [[22 40], [105 122]]];               % china
+       
 regionLatLonInd = {};
 
 % loop over all regions to find lat/lon indicies
@@ -195,22 +188,22 @@ for region = showRegions
 
         plotChg(isinf(plotChg)) = NaN;
         % median over models
-        if percentChange
-            chg = chg .* 100;
-            plotChg = plotChg .* 100;
-            
-            %eval([var 'Chg = chg;']);
-            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
-        else
-            eval([var 'HumidityChg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'HumidityChg-absolute.mat'], [var 'HumidityChg']);
-        end
-        
-        hflsHistorical = regionalFluxHistorical;
-        save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
-        
-        hflsFuture = regionalFluxFuture;
-        save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
+%         if percentChange
+%             chg = chg .* 100;
+%             plotChg = plotChg .* 100;
+%             
+%             %eval([var 'Chg = chg;']);
+%             %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
+%         else
+%             eval([var 'Chg = chg;']);
+%             save(['e:/data/projects/bowen/derived-chg/' var 'HumidityChg-absolute.mat'], [var 'HumidityChg']);
+%         end
+%         
+%         hflsHistorical = regionalFluxHistorical;
+%         save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
+%         
+%         hflsFuture = regionalFluxFuture;
+%         save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
 
         plotChg = nanmedian(plotChg, 3);
         plotChg(:,1) = plotChg(:,end);
@@ -220,15 +213,15 @@ for region = showRegions
         sigChg(1:15,:) = 0;
         sigChg(75:90,:) = 0;
 
-        colorScheme = '*RdBu';
+        colorScheme = 'Reds';
         if strcmp(var, 'hfls')
             colorScheme = 'RdBu';
         end
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-25 25], ...
-                          'cbXTicks', -25:10:25, ...
+                          'plotRange', [0 25], ...
+                          'cbXTicks', 0:5:25, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
                           'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
                           'plotXUnits', ['W/m^2'], ...
@@ -236,7 +229,7 @@ for region = showRegions
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...
                           'stippleInterval', 5, ...
-                          'boxCoords', {regions([2,4,7], :)});
+                          'boxCoords', {regions([2,4,7,10], :)});
                       
         plotFromDataFile(saveData);
     end

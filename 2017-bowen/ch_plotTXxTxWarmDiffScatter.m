@@ -6,22 +6,21 @@ waterGrid = logical(waterGrid);
 showOutliers = true;
 plotModels = false;
 useTxxSeasonalAmp = false;
-useTxxChg = false;
-useTxChg = true;
+useTxxChg = true;
 
-var1 = 'rlusChg';
-var1Months = [6 7 8];
-v1XStr = ['JJA SH change (W/m^2)'];
-v1XLim = [-20 40];
-v1XTick = -20:10:40;
-v1AbsoluteStr = '-absolute';
+var1 = 'txChgWarm';
+var1Months = [1];
+v1XStr = ['Warm season Tx change (' char(176) 'C)'];
+v1XLim = [-2 12];
+v1XTick = -2:2:12;
+v1AbsoluteStr = '';
 v1Subset = '';
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
 showVar3 = false;
 % shown in colors
-var3 = 'efChg';
-var3Months = [1];
+var3 = 'hflsChg';
+var3Months = [6 7 8];
 v3YLim = [0 40];
 v3YTicks = 0:10:40;
 v3AbsoluteStr = '-absolute';
@@ -30,11 +29,11 @@ v3ColorOffset = 15;
 v3Color = brewermap(v3ColorOffset + 25, 'Reds');
 
 scatterPlots = true;
-saveScatter = false;
+saveScatter = true;
 globalCorrMap = false;
-oneToOne = false;
+oneToOne = true;
 
-selRegions = [4];
+selRegions = [2 4 7 10];
 
 % txx amp
 if useTxxSeasonalAmp
@@ -43,9 +42,6 @@ if useTxxSeasonalAmp
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
     ampVar = txxChg;
-elseif useTxChg
-    load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
-    ampVar = txChgWarm;
 else
     load e:/data/projects/bowen/derived-chg/txxAmp.mat;
     ampVar = amp;
@@ -93,7 +89,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[45, 55], [10, 35]]; ...            % Europe
            [[35 50], [-10+360 45]]; ...        % Med
            [[5 20], [-90 -45]+360]; ...         % Northern SA
-           [[-10, 7], [-75, -62]+360]; ...      % Amazon
+           [[-10, 1], [-75, -53]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]];               % china
@@ -184,13 +180,12 @@ if scatterPlots
         end
         
         if showOutliers
-            [f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
+            [f,gof] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
             cNoOutliers = confint(f);
 %            if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
                 pNoOutliers = plot([min(v1ChgNoOutliers) max(v1ChgNoOutliers)], [f(min(v1ChgNoOutliers)) f(max(v1ChgNoOutliers))], '--b', 'LineWidth', 2);
  %           end
-            %legText = sprintf('Slope = %.2f, R^2 = %.2f\n', f.p1, gof.rsquare);
-            legText = sprintf('R^2 = %.2f\n', gof.rsquare);
+            legText = sprintf('Slope = %.2f, R^2 = %.2f\n', f.p1, gof.rsquare);
 %             if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
 %                 sigOutliers = 'Sig';
 %             end
@@ -215,11 +210,7 @@ if scatterPlots
             ylim([-2 3]);
             set(gca, 'YTick', -2:3);
         elseif useTxxChg
-            ylabel(['TXx chg (' char(176) 'C)']);
-            ylim([-2 12]);
-            set(gca, 'YTick', -2:2:12);
-        elseif useTxChg
-            ylabel(['Warm season Tx chg (' char(176) 'C)']);
+            ylabel(['TXx change (' char(176) 'C)']);
             ylim([-2 12]);
             set(gca, 'YTick', -2:2:12);
         else
@@ -246,9 +237,6 @@ if scatterPlots
         end
     end
 end
-
-
-
 
 if globalCorrMap
     

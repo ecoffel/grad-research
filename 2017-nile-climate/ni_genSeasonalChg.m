@@ -4,12 +4,12 @@
                   'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                   'hadgem2-es', 'ipsl-cm5a-mr', 'inmcm4', 'miroc5', 'miroc-esm', ...
                   'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-    models = {'cmcc-cesm'};
+    models = {'bnu-esm', 'canesm2'};
     rcp = 'rcp85';
     var = 'tasmax';
     monthly = false;
     timePeriodBase = [1980 2004];
-    timePeriodFuture = [2056 2080];
+    timePeriodFuture = [2031 2055];
 
 for model = 1:length(models)
     monthlyBase = {};

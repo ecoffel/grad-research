@@ -20,12 +20,13 @@ hotFutureEarly = hotFuture;
 load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2031-2055.mat']);
 hotDryFutureEarly = hotDryFuture;
 
-drawScatter = false;
-drawMaps = true;
+drawScatter = true;
+drawMaps = false;
 north = false;
+annual = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
@@ -63,34 +64,80 @@ if drawScatter
     end
     
     for s = 1:size(seasons, 1)
-        hotEarly = squeeze(nanmean(hotFutureEarly(:,:,seasons(s,:),:),3));
+        if annual
+            months = 1:12;
+            if s > 1
+                break;
+            end
+        else
+            months = seasons(s,:);
+        end
+        
+        hotEarly = squeeze(nanmean(hotFutureEarly(:,:,months,:),3));
         hotEarly = hotEarly(curLatInds, curLonInds, :);
         hotEarly = squeeze(nanmean(nanmean(hotEarly,2),1));
-        hotLate = squeeze(nanmean(hotFutureLate(:,:,seasons(s,:),:),3));
+        hotLate = squeeze(nanmean(hotFutureLate(:,:,months,:),3));
         hotLate = hotLate(curLatInds, curLonInds, :);
         hotLate = squeeze(nanmean(nanmean(hotLate,2),1));
 
-        dryEarly = squeeze(nanmean(dryFutureEarly(:,:,seasons(s,:),:),3));
+        dryEarly = squeeze(nanmean(dryFutureEarly(:,:,months,:),3));
         dryEarly = dryEarly(curLatInds, curLonInds, :);
         dryEarly = squeeze(nanmean(nanmean(dryEarly,2),1));
-        dryLate = squeeze(nanmean(dryFutureLate(:,:,seasons(s,:),:),3));
+        dryLate = squeeze(nanmean(dryFutureLate(:,:,months,:),3));
         dryLate = dryLate(curLatInds, curLonInds, :);
         dryLate = squeeze(nanmean(nanmean(dryLate,2),1));
 
-        wetEarly = squeeze(nanmean(wetFutureEarly(:,:,seasons(s,:),:),3));
+        wetEarly = squeeze(nanmean(wetFutureEarly(:,:,months,:),3));
         wetEarly = wetEarly(curLatInds, curLonInds, :);
         wetEarly = squeeze(nanmean(nanmean(wetEarly,2),1));
-        wetLate = squeeze(nanmean(wetFutureLate(:,:,seasons(s,:),:),3));
+        wetLate = squeeze(nanmean(wetFutureLate(:,:,months,:),3));
         wetLate = wetLate(curLatInds, curLonInds, :);
         wetLate = squeeze(nanmean(nanmean(wetLate,2),1));
 
-        hotdryEarly = squeeze(nanmean(hotDryFutureEarly(:,:,seasons(s,:),:),3));
+        hotdryEarly = squeeze(nanmean(hotDryFutureEarly(:,:,months,:),3));
         hotdryEarly = hotdryEarly(curLatInds, curLonInds, :);
         hotdryEarly = squeeze(nanmean(nanmean(hotdryEarly,2),1));
-        hotdryLate = squeeze(nanmean(hotDryFutureLate(:,:,seasons(s,:),:),3));
+        hotdryLate = squeeze(nanmean(hotDryFutureLate(:,:,months,:),3));
         hotdryLate = hotdryLate(curLatInds, curLonInds, :);
         hotdryLate = squeeze(nanmean(nanmean(hotdryLate,2),1));
 
+        figure('Color', [1,1,1]);
+        hold on;
+        box on;
+        axis square;
+        grid on;
+        
+        for m = 1:length(dryLate)
+            t = text(dryLate(m), wetLate(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+            t.FontSize = 18;
+        end
+        
+        plot([0 1], [.1 .1], '--k');
+        plot([.1 .1], [0 1], '--k');
+        
+        xlim([0 .5]);
+        xlabel('Dry years (fraction)');
+        set(gca, 'XTick', 0:.1:.5);
+        set(gca, 'YTick', 0:.1:.5);
+        ylim([0 .5]);
+        ylabel('Wet years (fraction)');
+        set(gca,'FontSize', 36);
+        
+        set(gcf, 'Position', get(0,'Screensize'));
+        
+        seasonStr = seasonNames{s};
+        if annual
+            seasonStr = 'annual';
+        end
+        if north
+            export_fig(['wet-dry-chg-' seasonStr '-' base '-north.eps']);
+        else
+            export_fig(['wet-dry-chg-' seasonStr '-' base '-south.eps']);
+        end
+        
+        
+        
+        
         figure('Color', [1,1,1]);
         hold on;
         box on;
@@ -121,12 +168,17 @@ if drawScatter
         set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'Hot (> 90%)', 'Wet (> 90%)', 'Dry (< 10%)', 'Hot & dry'});
         set(gca, 'FontSize', 36);
         xtickangle(45);
-        title([seasonNames{s}]);
+        %title([seasonNames{s}]);
         set(gcf, 'Position', get(0,'Screensize'));
+        
+        seasonStr = seasonNames{s};
+        if annual
+            seasonStr = 'annual';
+        end
         if north
-            export_fig(['hot-dry-fraction-' seasonNames{s} '-' base '-north.eps']);
+            export_fig(['hot-dry-fraction-' seasonStr '-' base '-north.eps']);
         else
-            export_fig(['hot-dry-fraction-' seasonNames{s} '-' base '-south.eps']);
+            export_fig(['hot-dry-fraction-' seasonStr '-' base '-south.eps']);
         end
         close all;
     end
@@ -191,7 +243,7 @@ if drawMaps
         %plotModelData({lat(latInds,lonInds),lon(latInds,lonInds),dryFutureFrac},'nile','caxis',[-.5 .5], 'colormap', brewermap([],'RdBu'));
         %plotModelData({lat(latInds,lonInds),lon(latInds,lonInds),hotDryFutureFrac},'nile','caxis',[-.5 .5], 'colormap', brewermap([],'RdBu'));
 
-        result = {lat(latInds,lonInds), lon(latInds,lonInds), hotDryFutureFrac - .1};
+        result = {lat(latInds,lonInds), lon(latInds,lonInds), hotDryFutureFrac};
 
         saveData = struct('data', {result}, ...
                           'plotRegion', 'nile', ...

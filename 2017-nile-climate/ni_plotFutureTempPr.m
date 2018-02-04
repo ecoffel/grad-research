@@ -10,6 +10,7 @@ timePeriodFuture = [2056 2080];
 
 plotScatter = false;
 plotMap = true;
+annual = true;
 
 load lat;
 load lon;
@@ -49,7 +50,13 @@ end
 prChg = [];
 prSig = [];
 
-for s = 1:size(seasons, 1)
+for s = 1%:size(seasons, 1)
+    
+    if annual
+        months = 1:12;
+    else
+        months = seasons(s,:);
+    end
     
     curInds = regionInds('nile');
     latIndsRegion = curInds{1};
@@ -58,9 +65,9 @@ for s = 1:size(seasons, 1)
     curInds = regionInds('nile-north');
     latInds = curInds{1};
     lonInds = curInds{2};
-    prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, seasons(s, :), :), 4), 2), 1));
-    prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, seasons(s, :), :), 4), 2), 1));
-    tChg = squeeze(nanmean(nanmean(nanmean(tempChgCmip5(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, seasons(s, :), :)))));
+    prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
+    prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
+    tChg = squeeze(nanmean(nanmean(nanmean(tempChgCmip5(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :)))));
     
     if plotMap
         curInds = regionInds('nile');
@@ -90,29 +97,116 @@ for s = 1:size(seasons, 1)
                           'boxCoords', {[[13 32], [29, 34];
                                          [2 13], [25 42]]});
         plotFromDataFile(saveData);
+        
+        
+        chg = squeeze(nanmean(nanmean(tempChgCmip5(:, :, :, :), 4), 3));
+        result = {lat(latInds,lonInds), lon(latInds,lonInds), nanmedian(chg, 3)}; 
+        sig = [];
+        for xlat = 1:size(chg, 1)
+            for ylon = 1:size(chg, 2)
+                sig(xlat, ylon) = length(find(sign(chg(xlat, ylon, :)) == sign(nanmedian(chg(xlat, ylon), 3))));
+            end
+        end
+
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'nile', ...
+                          'plotRange', [2 5], ...
+                          'cbXTicks', 2:5, ...
+                          'plotTitle', [''], ...
+                          'fileTitle', ['temp-chg-annual.eps'], ...
+                          'plotXUnits', [char(176) 'C'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([], 'Reds'), ...
+                          'plotCountries', true, ...
+                          'boxCoords', {[[13 32], [29, 34];
+                                         [2 13], [25 42]]});
+        plotFromDataFile(saveData);
     end
     
     
     
     if plotScatter
+        
+        prChg(s, :) = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
+        prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1));
+        
+        % prchg vs prstd chg
+        figure('Color', [1,1,1]);
+        hold on;
+        box on;
+        grid on;
+        axis square;
+        
+        for m = 1:size(prFut, 2)
+            prSig(s, m) = kstest2(squeeze(prFut(:, m)), squeeze(prHist(:, m)));
+
+            if prSig(s, m)
+                %plot(tChg(m), prChg(s, m), 'o', 'Color', [85/255.0, 158/255.0, 237/255.0], 'MarkerFaceColor', [115/255.0, 188/255.0, 237/255.0], 'MarkerSize', 25);
+                plot(prChg(m), prStd(m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+            else
+                %plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+            end
+            if tChg(m) < 7
+                t = text(prChg(m), prStd(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                t.FontSize = 18;
+            end
+        end
+        
+        pchg = prChg';
+        pstd = prStd';
+        outind = find(pchg>nanmean(pchg)+2*std(pchg) | pchg<nanmean(pchg)-2*std(pchg) | ...
+             pstd>nanmean(pstd)+2*std(pstd) | pstd<nanmean(pstd)-2*std(pstd));
+        
+        pchg(outind) = [];
+        pstd(outind) = [];
+        
+        f = fit(pchg, pstd, 'poly1');
+        cint = confint(f);
+        if sign(cint(1,1)) == sign(cint(2,1))
+            plot([min(pchg) max(pchg)], [f(min(pchg)) f(max(pchg))], '--b', 'LineWidth', 2);
+        end
+        
+        xlim([-.5 1.5]);
+        ylim([-.12 .2]);
+        set(gca, 'FontSize', 36);
+        xlabel('Precipitation change (mm/day)');
+        ylabel('P std. dev. change (mm/day)');
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig pr-std-chg-north.eps;
+        
         figure('Color', [1,1,1]);
         hold on;
         box on;
         grid on;
         axis square;
 
-        prChg(s, :) = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
         for m = 1:size(prFut, 2)
             prSig(s, m) = kstest2(squeeze(prFut(:, m)), squeeze(prHist(:, m)));
 
             if prSig(s, m)
                 %plot(tChg(m), prChg(s, m), 'o', 'Color', [85/255.0, 158/255.0, 237/255.0], 'MarkerFaceColor', [115/255.0, 188/255.0, 237/255.0], 'MarkerSize', 25);
-                plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+                if tChg(m) < 7
+                    plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+                end
             else
                 %plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
             end
-            t = text(tChg(m), prChg(s, m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
-            t.FontSize = 18;
+            if tChg(m) < 7
+                t = text(tChg(m), prChg(s, m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                t.FontSize = 18;
+            end
+        end
+        
+        tfit = tChg;
+        prfit = (squeeze(prChg(s,:)))';
+        outind = find(prfit>nanmean(prfit)+2*std(prfit) | prfit<nanmean(prfit)-2*std(prfit) | ...
+             tfit>nanmean(tfit)+2*std(tfit) | tfit<nanmean(tfit)-2*std(tfit));
+        tfit(outind) = [];
+        prfit(outind) = [];
+        f = fit(tfit, prfit, 'poly1');
+        cint = confint(f);
+        if sign(cint(1,1)) == sign(cint(2,1))
+            plot([min(tChg) max(tChg)], [f(min(tChg)) f(max(tChg))], '--b', 'LineWidth', 2);
         end
         
         plot([-1 10], [0 0], '--k', 'LineWidth', 2);
@@ -124,9 +218,13 @@ for s = 1:size(seasons, 1)
         xlabel(['Temperature change (' char(176) 'C)']);
         ylabel('Precipitation change (mm/day)');
         set(gca, 'FontSize', 36);
-        title([seasonNames{s}]);
+        %title([seasonNames{s}]);
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig(['temp-pr-chg-north-' seasonNames{s} '.eps']);
+        seasonStr = seasonNames{s};
+        if annual
+            seasonStr = 'annual';
+        end
+        export_fig(['temp-pr-chg-north-' seasonStr '.eps']);
         close all;
     end
 end
