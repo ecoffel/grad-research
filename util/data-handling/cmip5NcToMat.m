@@ -13,6 +13,8 @@ yearStep = 20;
 skipExistingFolders = true;
 skipExistingFiles = true;
 
+selLev = 3;
+
 for k = 1:length(ncFileNames)
     if fileCount >= maxNum & maxNum ~= -1
         return
@@ -30,6 +32,10 @@ for k = 1:length(ncFileNames)
     runName = '';
     startDate = '';
     endDate = '';
+    
+    if length(strfind(ncFileName, '_day_')) == 0
+        continue;
+    end
     
     % pull data out of the nc file name
     parts = strsplit(ncFileName, '/');
@@ -124,7 +130,10 @@ for k = 1:length(ncFileNames)
     end
     
     % get the missing value param
-    missingVal = netcdf.getAtt(ncid, varIdMain, 'missing_value');
+    if length(findstr(rawNcDir, 'noresm1')) == 0
+        missingVal = netcdf.getAtt(ncid, varIdMain, 'missing_value');
+    end
+    
     
     % 24 hr timestep
     deltaT = etime(datevec('24', 'HH'), datevec('00', 'HH'));
@@ -266,10 +275,11 @@ for k = 1:length(ncFileNames)
     while curTimeStepStart < length(timestep)
     
         if dimIdLev ~= -1
-            data(:,:,:,:) = single(netcdf.getVar(ncid, varIdMain, [0, 0, 0, curTimeStepStart], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, dims{dimIdLev}{2}, min(curTimeStepEnd-curTimeStepStart, dims{dimIdTime}{2}-curTimeStepStart)]));
+            levId = find(netcdf.getVar(ncid,varIdPLev,[0],[8])==50000)-1;
+            data(:,:,:,:) = single(netcdf.getVar(ncid, varIdMain, [0, 0, levId, curTimeStepStart], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1, min(curTimeStepEnd-curTimeStepStart, dims{dimIdTime}{2}-curTimeStepStart)]));
             data = permute(data, [2 1 3 4]);
             
-            plevs = single(netcdf.getVar(ncid, varIdPLev, 0, dims{dimIdLev}{2}));
+            %plevs = single(netcdf.getVar(ncid, varIdPLev, 0, dims{dimIdLev}{2}));
         else
             data(:,:,:) = single(netcdf.getVar(ncid, varIdMain, [0, 0, curTimeStepStart], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, min(curTimeStepEnd-curTimeStepStart, dims{dimIdTime}{2}-curTimeStepStart)]));
             data = permute(data, [2 1 3]);
@@ -310,8 +320,8 @@ for k = 1:length(ncFileNames)
             
             if dimIdLev ~= -1
                 timeIndexRange = (curIndex-startIndex+1:min(size(data, 4), nextIndex-startIndex+1));
-                monthlyData = data(:, :, :, timeIndexRange);
-                monthlyDataSet = {lat, lon, double(monthlyData), plevs};
+                monthlyData = squeeze(data(:, :, :, timeIndexRange));
+                monthlyDataSet = {lat, lon, double(monthlyData)};
             else
                 timeIndexRange = (curIndex-startIndex+1:min(size(data, 3), nextIndex-startIndex+1));
                 monthlyData = data(:, :, timeIndexRange);

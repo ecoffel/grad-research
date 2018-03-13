@@ -1,7 +1,8 @@
-function [heatWaveDurMean, heatWaveDurMax, heatWaveInt] = findHeatWaveStats(dataBase, dataFuture, percentile)
+function [heatWaveDurMean, heatWaveDurMax, heatWaveIntMean, heatWaveIntMax] = findHeatWaveStats(dataBase, dataFuture, percentile)
     heatWaveDurMean = []; 
     heatWaveDurMax = []; 
-    heatWaveInt = []; 
+    heatWaveIntMean = []; 
+    heatWaveIntMax = []; 
     
     % for all months, calculate the chance of there being a heatwave matching
     % defined characteristics...
@@ -33,12 +34,16 @@ function [heatWaveDurMean, heatWaveDurMax, heatWaveInt] = findHeatWaveStats(data
                 % average number of events per year
                 if length(indDur) > 0
                     heatWaveDurMean(xlat, ylon, year) = nanmean(indDur);
-                    heatWaveDurMax(xlat, ylon, year) = max(indDur);
+                    heatWaveDurMax(xlat, ylon, year) = nanmax(indDur);
+                    heatWaveIntMean(xlat, ylon, year) = nanmean(d(indTemp));
+                    heatWaveIntMax(xlat, ylon, year) = nanmax(d(indTemp));
                 else
                     heatWaveDurMean(xlat, ylon, year) = NaN;
                     heatWaveDurMax(xlat, ylon, year) = NaN;
+                    heatWaveIntMean(xlat, ylon, year) = NaN;
+                    heatWaveIntMax(xlat, ylon, year) = NaN;
                 end
-                heatWaveInt(xlat, ylon, year) = nanmean(d(indTemp));
+                
             end 
         end
     end

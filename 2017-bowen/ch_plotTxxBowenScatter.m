@@ -5,16 +5,16 @@ waterGrid = logical(waterGrid);
 
 showOutliers = true;
 plotModels = false;
-useTxxSeasonalAmp = false;
+useTxxSeasonalAmp = true;
 useTxxChg = false;
-useTxChg = true;
+useTxChg = false;
 
-var1 = 'rlusChg';
-var1Months = [6 7 8];
-v1XStr = ['JJA SH change (W/m^2)'];
-v1XLim = [-20 40];
-v1XTick = -20:10:40;
-v1AbsoluteStr = '-absolute';
+var1 = 'zgPosAnomChg';
+var1Months = [1];
+v1XStr = ['JJA clt chg (Fraction)'];
+v1XLim = [-10 10];
+v1XTick = -10:2:10;
+v1AbsoluteStr = '';
 v1Subset = '';
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
@@ -39,7 +39,7 @@ selRegions = [4];
 % txx amp
 if useTxxSeasonalAmp
     load e:/data/projects/bowen/derived-chg/txxTxWarmChg.mat;
-    ampVar = txxTxWarmChg;
+    ampVar = txxTxWarmChg(:,:,[1 2 3 4 5 9 10 11]);
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
     ampVar = txxChg;
@@ -54,6 +54,7 @@ end
 load(['e:/data/projects/bowen/derived-chg/' var1 v1Subset v1AbsoluteStr '']);
 eval(['v1 = ' var1 ';']);
 v1(v1>1000 | v1<-1000) = NaN;
+v1 = nanmean(v1,4);
 %v1 = v1 .* 3600 .* 24;
 
 load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);

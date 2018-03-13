@@ -14,10 +14,12 @@ fileNames = ["swvl1",  "swvl2",  "swvl3",  "swvl4"]
 files =     ["33.128", "141.128"]
 fileNames = ["rsn",    "sd"]
 
+file =      ["201.128"]
+fileNames = ["mx2t"]
 
 baseDir = 'e:/data/era-interim/raw/land/snow/'
 
-useInterimLand = True;
+useInterimLand = False;
 
 def interim_request(file, fileName, dates, target):
     server.retrieve({

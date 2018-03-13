@@ -47,8 +47,6 @@ end
 prChg = [];
 prSig = [];
 
-for s = 1:size(seasons, 1)
-    
     if annual
         months = 1:12;
     else
@@ -119,6 +117,3 @@ for s = 1:size(seasons, 1)
     set(gca, 'YTick', -.2:.1:.3);
     ylabel('Precipitation std. dev. change (mm/day)');
     set(gca, 'FontSize', 36);
-
-end
-    

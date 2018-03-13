@@ -85,13 +85,22 @@ if drawScatter
         dryEarly = squeeze(nanmean(nanmean(dryEarly,2),1));
         dryLate = squeeze(nanmean(dryFutureLate(:,:,months,:),3));
         dryLate = dryLate(curLatInds, curLonInds, :);
-        dryLate = squeeze(nanmean(nanmean(dryLate,2),1));
-
+        
         wetEarly = squeeze(nanmean(wetFutureEarly(:,:,months,:),3));
         wetEarly = wetEarly(curLatInds, curLonInds, :);
         wetEarly = squeeze(nanmean(nanmean(wetEarly,2),1));
         wetLate = squeeze(nanmean(wetFutureLate(:,:,months,:),3));
         wetLate = wetLate(curLatInds, curLonInds, :);
+%         dryLateSig = [];
+%         wetLateSig = [];
+%         for m = 1:size(dryLate, 3)
+%             dd = reshape(dryLate(:,:,m), [numel(dryLate(:,:,m)), 1]) - .1;
+%             ww = reshape(wetLate(:,:,m), [numel(wetLate(:,:,m)), 1]) - .1;
+%             dryLateSig(m) = kstest2(dd, zeros(size(dd)));
+%             wetLateSig(m) = kstest2(ww, zeros(size(ww)));
+%         end
+        
+        dryLate = squeeze(nanmean(nanmean(dryLate,2),1));
         wetLate = squeeze(nanmean(nanmean(wetLate,2),1));
 
         hotdryEarly = squeeze(nanmean(hotDryFutureEarly(:,:,months,:),3));
