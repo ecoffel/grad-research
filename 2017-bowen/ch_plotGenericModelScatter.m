@@ -6,37 +6,35 @@ waterGrid = logical(waterGrid);
 showOutliers = true;
 v1AbsoluteStr = '-absolute';
 v2AbsoluteStr = '-absolute';
-v3AbsoluteStr = '-absolute';
+v3AbsoluteStr = '';
 
-var1 = '    cltChg';
-var1Months = [9 10 11];
-v1XStr = 'SON cloud change (Fraction)';
-v1XLim = [-20 5];
-v1XTick = -20:5:5;
+var1 = 'hfssChg';
+var1Months = [];
+v1XStr = 'hfss';
+v1XLim = [-20 30];
+v1XTick = -20:10:30;
 v1FileStr = [var1 v1AbsoluteStr '-JJA'];
 
-var2 = 'rsdsNetChg';
-var2Months = [9 10 11];
-v2YStr = 'SON net SW change (W/m^2)';
+var2 = 'hflsChg';
+var2Months = [];
+v2YStr = 'hfls change (Fraction)';
 v2YLim = [-20 30];
 v2YTick = -20:10:30;
 v2FileStr = [var2 v2AbsoluteStr '-JJA'];
 
-showVar3 = false;
+showVar3 = true;
 % shown in colors
-var3 = 'cltChg';
-var3Months = [6 7 8];
-v3YLim = [-20 50];
-v3YTicks = -20:10:50;
+var3 = 'txxAmp';
+var3Months = [1];
 v3FileStr = [var3 v3AbsoluteStr '-JJA'];
 v3ColorOffset = 0;
-v3Color = brewermap(v3ColorOffset + 25, 'BrBG') .* .8;
+v3Color = brewermap(v3ColorOffset+25, '*RdBu') .* .8;
 
-regionIds = [7];
+regionIds = [4];
 
 scatterPlots = true;
-saveScatter = true;
-showFit = true;
+saveScatter = false;
+showFit = false;
 
 globalCorrMap = false;
 plotModels = false;
@@ -52,7 +50,7 @@ v2(v2>1000 | v2<-1000) = NaN;
 %v2 = v2 .* 3600 .* 24;
 
 load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);
-eval(['v3 = ' var3 ';']);
+eval(['v3 = amp;']);
 v3(v3>1000 | v3 < -1000) = NaN;
 
 load e:/data/projects/bowen/derived-chg/txxAmp.mat;
@@ -96,7 +94,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]];               % china
 
-load('2017-bowen/hottest-season-ncep.mat');
+load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 seasons = [[12 1 2];
            [3 4 5];
            [6 7 8];
@@ -122,9 +120,23 @@ if scatterPlots
         % select lat lon coords for region
         [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
+        if length(var1Months) == 0
+            var1Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+            var1Months = [var1Months-1 var1Months var1Months+1];
+            var1Months(var1Months == 0) = 12;
+            var1Months(var1Months == 13) = 1;
+        end
+        
         % select txx/bowen for region for all models
         v1Chg = squeeze(nanmean(nanmean(nanmean(v1(latInds, lonInds, :, var1Months), 4), 2), 1));
 
+        if length(var2Months) == 0
+            var2Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+            var2Months = [var2Months-1 var2Months var2Months+1];
+            var2Months(var2Months == 0) = 12;
+            var2Months(var2Months == 13) = 1;
+        end
+        
         % and bowen
         v2Chg = squeeze(nanmean(nanmean(nanmean(v2(latInds, lonInds, :, var2Months), 4), 2), 1));
         
@@ -194,7 +206,7 @@ if scatterPlots
                     t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
                 end
             end
-            t.FontSize = 18;
+            t.FontSize = 26;
         end
 
         if showFit

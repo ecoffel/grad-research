@@ -1,15 +1,14 @@
 
 baseDir = 'e:/data';
-var = 'ef';                  
+var = 'mrso';                  
 percentChange = false;
 warmSeason = true;
 warmSeasonAnom = false;
 
-
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
 %               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -17,6 +16,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+
 plotMap = true;
 
 timePeriodHistorical = 1985:2005;
@@ -29,6 +29,8 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showRegions =  1;
+
+
 regionNames = {'World', ...
                 'Eastern U.S.', ...
                 'Southeast U.S.', ...
@@ -60,8 +62,7 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]];               % china
-
-
+       
 regionLatLonInd = {};
 
 % loop over all regions to find lat/lon indicies
@@ -84,22 +85,21 @@ for region = showRegions
     
     % historical and future monthly precip, mm/day
     % dims: (x, y, model)
-    regionalBowenHistorical = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalBowenHistorical(regionalBowenHistorical == 0) = NaN;
-    regionalBowenFuture = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalBowenFuture(regionalBowenFuture == 0) = NaN;
+    regionalMrsoVarHistorical = zeros(length(curLat), length(curLon), length(models), 12);
+    regionalMrsoVarHistorical(regionalMrsoVarHistorical == 0) = NaN;
+    regionalMrsoVarFuture = zeros(length(curLat), length(curLon), length(models), 12);
+    regionalMrsoVarFuture(regionalMrsoVarFuture == 0) = NaN;
     
     for model = 1:length(models)
         fprintf('loading %s historical...\n', models{model});
-        bowen = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
-        bowen{3} = squeeze(nanmean(bowen{3}, 3));
-        bowen{3}(abs(bowen{3})>100) = NaN;
+        flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
+        flux{3} = squeeze(nanstd(flux{3}, [], 3));
         
         % remove water tiles
-        for month = 1:size(bowen{3}, 4)
-            curGrid = bowen{3}(:, :, month);
+        for month = 1:size(flux{3}, 4)
+            curGrid = flux{3}(:, :, month);
             curGrid(waterGrid) = NaN;
-            bowen{3}(:, :, month) = curGrid;
+            flux{3}(:, :, month) = curGrid;
         end
         
         % loop over all grid cells and select hottest season flux
@@ -109,22 +109,21 @@ for region = showRegions
                     continue;
                 end
                 
-                regionalBowenHistorical(curLat(xlat), curLon(ylon), model, :) = bowen{3}(curLat(xlat), curLon(ylon), :);
+                regionalMrsoVarHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
             end
         end
         
-        clear bowen;
+        clear flux;
         
         fprintf('loading %s future...\n', models{model});
-        bowen = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
-        bowen{3} = squeeze(nanmean(bowen{3}, 3));
-        bowen{3}(abs(bowen{3})>100) = NaN;
+        flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
+        flux{3} = squeeze(nanstd(flux{3}, [], 3));
         
         % remove water tiles
-        for month = 1:size(bowen{3}, 4)
-            curGrid = bowen{3}(:, :, month);
+        for month = 1:size(flux{3}, 4)
+            curGrid = flux{3}(:, :, month);
             curGrid(waterGrid) = NaN;
-            bowen{3}(:, :, month) = curGrid;
+            flux{3}(:, :, month) = curGrid;
         end
         
         % loop over all grid cells and select hottest season flux
@@ -134,7 +133,7 @@ for region = showRegions
                     continue;
                 end
                 
-                regionalBowenFuture(curLat(xlat), curLon(ylon), model, :) = bowen{3}(curLat(xlat), curLon(ylon), :);
+                regionalMrsoVarFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
 
             end
         end
@@ -142,9 +141,9 @@ for region = showRegions
     
     % calculate soil change for each model
     chg = [];
-    for model = 1:size(regionalBowenHistorical, 3)
-        tmpHistorical = regionalBowenHistorical;
-        tmpFuture = regionalBowenFuture;
+    for model = 1:size(regionalMrsoVarHistorical, 3)
+        tmpHistorical = regionalMrsoVarHistorical;
+        tmpFuture = regionalMrsoVarFuture;
         
         % change in all seasons
         if percentChange
@@ -164,6 +163,8 @@ for region = showRegions
         sigChg = zeros(size(lat,1), size(lat, 2));
         for xlat = 1:size(chg, 1)
             for ylon = 1:size(chg, 2)
+                
+                months = 1:12;
                 
                 if warmSeason 
                     months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
@@ -196,16 +197,19 @@ for region = showRegions
         if percentChange
             chg = chg .* 100;
             plotChg = plotChg .* 100;
-           
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var '-Chg.mat'], [var 'Chg']);
+            
+            %eval([var 'Chg = chg;']);
+            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
         else
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-tx.mat'], [var 'Chg']);
+            eval([var 'VarChg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'VarChg-absolute-all-txx.mat'], [var 'VarChg']);
         end
 %         
-%         efHistorical = regionalBowenHistorical;
-%         save(['e:/data/projects/bowen/derived-chg/efHistorical-absolute.mat'], 'efHistorical');
+%         hflsHistorical = regionalFluxHistorical;
+%         save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
+%         
+%         hflsFuture = regionalFluxFuture;
+%         save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
 
         plotChg = nanmedian(plotChg, 3);
         plotChg(:,1) = plotChg(:,end);
@@ -219,11 +223,11 @@ for region = showRegions
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-.1 .1], ...
-                          'cbXTicks', -.1:.05:.1, ...
+                          'plotRange', [-20 20], ...
+                          'cbXTicks', -20:5:20, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
-                          'fileTitle', [var '-chg-' num2str(region) '-warm-all-tx.eps'], ...
-                          'plotXUnits', ['Fraction'], ...
+                          'fileTitle', [var '-var-chg-' num2str(region) '-warm-all-txx.eps'], ...
+                          'plotXUnits', ['W/m^2'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...
@@ -234,23 +238,23 @@ for region = showRegions
     end
     
     % spatial average
-    regionalBowenHistorical = squeeze(nanmean(nanmean(regionalBowenHistorical, 2), 1));
-    regionalBowenFuture = squeeze(nanmean(nanmean(regionalBowenFuture, 2), 1));
+    regionalMrsoVarHistorical = squeeze(nanmean(nanmean(regionalMrsoVarHistorical, 2), 1));
+    regionalMrsoVarFuture = squeeze(nanmean(nanmean(regionalMrsoVarFuture, 2), 1));
     
     % average over models
-    regionalSoilHistoricalMean = nanmean(regionalBowenHistorical, 2);
-    regionalSoilFutureMean = nanmean(regionalBowenFuture, 2);
+    regionalSoilHistoricalMean = nanmean(regionalMrsoVarHistorical, 2);
+    regionalSoilFutureMean = nanmean(regionalMrsoVarFuture, 2);
     
     if percentChange
         % percentage change
-        regionalSoilChgStd = nanstd((regionalBowenFuture - regionalBowenHistorical) ./ regionalBowenHistorical .* 100, [], 2);
-        regionSoilChg = regionalBowenFuture - regionalBowenHistorical;
+        regionalSoilChgStd = nanstd((regionalMrsoVarFuture - regionalMrsoVarHistorical) ./ regionalMrsoVarHistorical .* 100, [], 2);
+        regionSoilChg = regionalMrsoVarFuture - regionalMrsoVarHistorical;
         regionSoilChgMean = (regionalSoilFutureMean - regionalSoilHistoricalMean) ./ regionalSoilHistoricalMean .* 100;
     else
         % absolute change
         % std over models
-        regionalSoilChgStd = nanstd(regionalBowenFuture - regionalBowenHistorical, [], 2);
-        regionSoilChg = regionalBowenFuture - regionalBowenHistorical;
+        regionalSoilChgStd = nanstd(regionalMrsoVarFuture - regionalMrsoVarHistorical, [], 2);
+        regionSoilChg = regionalMrsoVarFuture - regionalMrsoVarHistorical;
         regionSoilChgMean = regionalSoilFutureMean - regionalSoilHistoricalMean;
     end
     

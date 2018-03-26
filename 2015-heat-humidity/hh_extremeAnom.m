@@ -19,14 +19,14 @@ testModels = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-baseVar = 'huss';
+baseVar = 'wb-davies-jones-full';
 testVar = '';
 
 baseRegrid = true;
 testRegrid = true;
 
 region = 'world';
-rcp = 'rcp45';
+rcp = 'rcp85';
 ensembles = 1;
 
 plotRegion = 'world';
@@ -39,7 +39,7 @@ basePeriodYears = 1985:2004;
 testPeriodYears = 2070:2080;
 
 % compare the annual mean temperatures or the mean extreme temperatures
-annualmean = true;
+annualmean = false;
 exportFormat = 'png';
 
 blockWater = false;

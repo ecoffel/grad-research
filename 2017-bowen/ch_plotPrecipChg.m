@@ -70,7 +70,7 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 % load hottest seasons for each grid cell
-load('2017-bowen/hottest-season-ncep.mat');
+load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
 
 for region = showRegions
     curLat = regionLatLonInd{region}{1};
@@ -160,7 +160,13 @@ for region = showRegions
                 months = 1:12;
                 
                 if warmSeason 
-                    months = seasons(hottestSeason(xlat, ylon), :);
+                    months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
+                    months(months == 0) = 12;
+                    months(months == 13) = 1;
+                    
+                    months(isnan(months(:,1)),1) = mode(months(:,1));
+                    months(isnan(months(:,2)),2) = mode(months(:,2));
+                    months(isnan(months(:,3)),3) = mode(months(:,3));
                 end
                 
                 % select only non-nan items
@@ -189,35 +195,32 @@ for region = showRegions
             save(['e:/data/projects/bowen/derived-chg/' var 'Chg.mat'], [var 'Chg']);
         else
             eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute.mat'], [var 'Chg']);
+            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-txx.mat'], [var 'Chg']);
         end
-        
-        prHistorical = regionalPrHistorical;
-        save(['e:/data/projects/bowen/derived-chg/prHistorical-absolute.mat'], 'prHistorical');
-        
-        prFuture = regionalPrFuture;
-        save(['e:/data/projects/bowen/derived-chg/prFuture-absolute.mat'], 'prFuture');
+%         
+%         prHistorical = regionalPrHistorical;
+%         save(['e:/data/projects/bowen/derived-chg/prHistorical-absolute.mat'], 'prHistorical');
+%         
+%         prFuture = regionalPrFuture;
+%         save(['e:/data/projects/bowen/derived-chg/prFuture-absolute.mat'], 'prFuture');
 
         plotChg = nanmedian(plotChg, 3);
         plotChg(:,1) = plotChg(:,end);
 
-        result = {lat, lon, plotChg};
+        result = {lat, lon, plotChg .* 3600 .* 24};
         
         sigChg(1:15,:) = 0;
         sigChg(75:90,:) = 0;
 
-        colorScheme = '*RdBu';
-        if strcmp(var, 'hfls')
-            colorScheme = 'RdBu';
-        end
+        colorScheme = 'BrBG';
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-25 25], ...
-                          'cbXTicks', -25:10:25, ...
+                          'plotRange', [-1 1], ...
+                          'cbXTicks', -1:.25:1, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
-                          'fileTitle', [var '-chg-' num2str(region) '-warm.eps'], ...
-                          'plotXUnits', ['W/m^2'], ...
+                          'fileTitle', [var '-chg-' num2str(region) '-warm-all-txx.eps'], ...
+                          'plotXUnits', ['mm/day'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([], colorScheme), ...
                           'statData', sigChg, ...

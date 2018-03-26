@@ -2,33 +2,32 @@ load lat;
 load lon;
 
 % load TNn amplification map
-load ampAgreement-rcp85-23-cmip5-ann-max-all-2060-2080
-txxAmp = saveData.data{3};
+load e:\data\projects\bowen\derived-chg\txxAmp.mat
+ampVar = amp;
 
 % load snow change map
-load mrso-chg-1
-mrsoChgMap = saveData.data{3};
-
-load mrso-bowen-corr-cmip5;
-mrsoCorrMap = saveData.data{3};
+load e:\data\projects\bowen\derived-chg\efChg-absolute.mat
+derVar = efChg;
 
 % matched lists with change in tnn/snow at each grid cell
-txxCor = [];
-mrsoChg = [];
-mrsoCorr = [];
+gridTxx = [];
+gridDer = [];
 
-for xlat = 1:90
-    for ylon = 1:size(txxAmp, 2)
-        if ~isnan(txxAmp(xlat, ylon)) && ~isnan(mrsoChgMap(xlat, ylon)) && mrsoChgMap(xlat, ylon) ~= 0 && txxAmp(xlat, ylon) ~= 0
-            txxCor(end+1) = txxAmp(xlat, ylon);
-            mrsoChg(end+1) = mrsoChgMap(xlat, ylon);
-            mrsoCorr(end+1) = mrsoCorrMap(xlat, ylon);
+for model = 1:size(ampVar, 3)
+    ind = 1;
+    for xlat = 1:90
+        for ylon = 1:size(ampVar, 2)
+            if ~isnan(ampVar(xlat, ylon)) && ~isnan(derVar(xlat, ylon, model)) && derVar(xlat, ylon, model) ~= 0 && ampVar(xlat, ylon, model) ~= 0
+                gridTxx(model, ind) = ampVar(xlat, ylon);
+                gridDer(model, ind) = derVar(xlat, ylon);
+            else
+                gridTxx(model, ind) = NaN;
+                gridDer(model, ind) = NaN;
+            end
+            ind = ind+1;
         end
     end
 end
-
-% count nan tiles - all tiles with no historical snow
-mrsoChg(isnan(mrsoChg)) = 0;
 
 % these are the possible amp levels
 tChg = -3:.5:3;
@@ -45,17 +44,17 @@ mrsoCorrSig = [];
 % go over all levels and find the mean/std snow change for all grid cells
 for t = 1:length(tChg)
     if t < length(tChg)
-        ind = find(txxCor > tChg(t) & txxCor <= tChg(t+1));
+        ind = find(gridTxx > tChg(t) & gridTxx <= tChg(t+1));
     else
-        ind = find(txxCor > tChg(t));
+        ind = find(gridTxx > tChg(t));
     end
-    meanMrsoChg(end+1) = nanmedian(mrsoChg(ind));
+    meanMrsoChg(end+1) = nanmedian(derVar(ind));
     meanMrsoCorr(end+1) = nanmedian(mrsoCorr(ind));
     
-    meanMrsoChgStd(end+1) = std(mrsoChg(ind));
+    meanMrsoChgStd(end+1) = std(derVar(ind));
     meanMrsoCorrStd(end+1) = std(mrsoCorr(ind));
     if length(ind) > 0
-        mrsoChgSig(end+1) = length(find(sign(mrsoChg(ind)) == sign(meanMrsoChg(end)))) >= .75*numel(ind);
+        mrsoChgSig(end+1) = length(find(sign(derVar(ind)) == sign(meanMrsoChg(end)))) >= .75*numel(ind);
         mrsoCorrSig(end+1) = length(find(sign(mrsoCorr(ind)) == sign(meanMrsoCorr(end)))) >= .75*numel(ind);
         %snwSig(end+1) = kstest2(snwCor(ind), zeros(size(snwCor(ind))));
     else

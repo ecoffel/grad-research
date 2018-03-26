@@ -8,13 +8,16 @@ basePeriod = 'past';
 
 baseDataset = 'cmip5';
 
+excludeTropics = false;
+
+hottestSeasonType = 'all-txx';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-          
+
 baseRcps = {'historical'};
 baseEnsemble = 'r1i1p1';
 
@@ -66,9 +69,9 @@ load lon;
 % warm-season-tx-anom = change in Tx in local warm season minus Tx change over year
 % warm-season-tx = change in Tx in local warm season
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'surrounding-season-tx';
+changeMetric = 'thresh';
 
-load 2017-bowen/hottest-season-ncep;
+load(['2017-bowen/hottest-season-txx-rel-cmip5-' hottestSeasonType '.mat']);
 
 if length(findstr(changeMetric, 'min')) > 0
     baseVar = 'tasmin';
@@ -79,7 +82,7 @@ else
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
-thresh = [1 10:10:90 99];
+thresh = [90];
 
 numDays = 372;
 
@@ -96,7 +99,7 @@ for m = 1:length(models)
     
     % temperature data (thresh, ann-max, or daily-max)
     baseData = [];
-
+   
     ['loading base model ' curModel '...']
 
     for y = basePeriodYears(1):yearStep:basePeriodYears(end)
@@ -108,7 +111,7 @@ for m = 1:length(models)
         baseDaily = baseDaily{3};
         
         % if any kelvin values, convert to C
-        if baseDaily(1,1,1,1,1) > 100
+        if nanmean(nanmean(nanmean(nanmean(nanmean(baseDaily))))) > 100
             baseDaily = baseDaily - 273.15;
         end
 
@@ -148,6 +151,7 @@ for m = 1:length(models)
 
                         % skip if NaN (water)
                         if isnan(baseDaily(xlat, ylon, 1))
+                            baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = NaN;
                             continue;
                         end
 
@@ -257,7 +261,7 @@ for m = 1:length(models)
         futureDaily = futureDaily{3};
 
         % convert any kelvin values to C
-        if futureDaily(1,1,1,1,1) > 100
+        if nanmean(nanmean(nanmean(nanmean(nanmean(futureDaily))))) > 100
             futureDaily = futureDaily - 273.15;
         end
 
@@ -293,6 +297,7 @@ for m = 1:length(models)
                     for ylon = 1:size(futureDaily, 2)
 
                         if isnan(futureDaily(xlat, ylon, 1))
+                            futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = NaN;
                             continue;
                         end
 
@@ -379,6 +384,9 @@ for m = 1:length(models)
 
         % calculate change for the current base period model, average over base models:
         chgData = futureData - baseData;
+    elseif strcmp(changeMetric, 'thresh')
+        chgData = nanmean(futureData, 3) - nanmean(baseData, 3);
+        
     elseif strcmp(changeMetric, 'warm-season-tx-anom')
         % take mean across all months & years
         baseAnnTx = squeeze(nanmean(baseData, 3));
@@ -392,9 +400,9 @@ for m = 1:length(models)
         for xlat = 1:size(baseData, 1)
             for ylon = 1:size(baseData, 2)
                 % average over hottest months for current model
-                baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, seasons(hottestSeason(xlat, ylon), :)), 3));
+                baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, seasons(hottestSeason(xlat, ylon, m), :)), 3));
                 % average over all years & hottest months
-                futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4), 3));
+                futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, seasons(hottestSeason(xlat, ylon, m), :)), 4), 3));
             end
         end
 
@@ -410,10 +418,31 @@ for m = 1:length(models)
         futureWarmSeasonTx = [];
         for xlat = 1:size(baseData, 1)
             for ylon = 1:size(baseData, 2)
-                % average over hottest months for current model
-                baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, seasons(hottestSeason(xlat, ylon), :)), 3));
-                % average over all years & hottest months
-                futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4), 3));
+                
+                % exclude tropics
+                if ~excludeTropics || (xlat <= 35 || xlat >= 55)
+                    if ~isnan(hottestSeason(xlat, ylon, m))
+                        months = [hottestSeason(xlat, ylon, m)-1 hottestSeason(xlat, ylon, m) hottestSeason(xlat, ylon, m)+1];
+                        months(months == 0) = 12;
+                        months(months == 13) = 1;
+
+                        % average over hottest months for current model
+                        baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, months), 3));
+                        % average over all years & hottest months
+                        futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, months), 4), 3));
+                    else
+
+                        % set to nans
+                        baseWarmSeasonTx(xlat, ylon) = NaN;
+                        futureWarmSeasonTx(xlat, ylon) = NaN;
+                    end
+                else
+                    months = 1:12;
+                    % average over hottest months for current model
+                    baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, months), 3));
+                    % average over all years & hottest months
+                    futureWarmSeasonTx(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, months), 4), 3));
+                end
             end
         end
 
@@ -431,7 +460,7 @@ for m = 1:length(models)
         for xlat = 1:size(baseData, 1)
             for ylon = 1:size(baseData, 2)
                 
-                surSeasons = [hottestSeason(xlat, ylon)-1 hottestSeason(xlat, ylon)+1];
+                surSeasons = [hottestSeason(xlat, ylon, m)-1 hottestSeason(xlat, ylon, m)+1];
                 surSeasons(surSeasons==0) = 4;
                 surSeasons(surSeasons==5) = 1;
                 
@@ -447,7 +476,13 @@ for m = 1:length(models)
 
     end
 
-    save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+    if strcmp(changeMetric, 'thresh')
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' num2str(thresh) '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'chgData');
+    elseif excludeTropics
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-exclude-tropics' '-' hottestSeasonType '.mat'], 'chgData');
+    else
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'chgData');
+    end
 
 
 end

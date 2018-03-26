@@ -11,12 +11,14 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-% ann-max: change in annual maximum minus change in mean daily maximum
+% txx-amp: change in annual maximum minus change in mean daily maximum
 % ann-min: change in annual minimum minus change in mean daily minimum
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
 % warm-season-anom: warm season Tx change minus surounding seasons
-chgMetric = 'ann-min';
+chgMetric = 'txx-thresh';
+
+thresh = 90;
 
 modelSubset = 'all';
 
@@ -134,8 +136,11 @@ chg2 = [];
 for m = 1:length(models)
     
     % load and process change 1
-    if strcmp(chgMetric, 'ann-max')
+    if strcmp(chgMetric, 'txx-amp')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        curChg = chgData;
+    elseif strcmp(chgMetric, 'txx-thresh')
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-' num2str(thresh) '-' models{m} '-' rcp '-' timePeriod '-all-txx.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
@@ -165,8 +170,8 @@ for m = 1:length(models)
     clear curChg chgData;
 
     % load and process change 2
-    if strcmp(chgMetric, 'ann-max')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+    if strcmp(chgMetric, 'txx-amp') || strcmp(chgMetric, 'txx-thresh')
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
@@ -197,26 +202,34 @@ end
 
 amp = chg1 - chg2;
 
-% if strcmp(chgMetric, 'ann-max')
-%     txChg = chg2;
-%     save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
-%     save('e:/data/projects/bowen/derived-chg/txChg.mat', 'txChg');
-%     
-%     txxChg = chg1;
-%     save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
-% elseif strcmp(chgMetric, 'warm-season-anom')
-%     warmTxAnom = amp;
-%     save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
-% elseif strcmp(chgMetric, 'ann-min')
-%     save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
-% end
+if strcmp(chgMetric, 'txx-amp')
+    txChgWarm = chg2;
+    save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
+    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    
+    txxChg = chg1;
+    save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
+elseif strcmp(chgMetric, 'txx-thresh')
+    save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
+    
+    txxChg = chg1;
+    save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
+elseif strcmp(chgMetric, 'warm-season-anom')
+    txChgWarm = chg1;
+    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    
+    warmTxAnom = amp;
+    save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
+elseif strcmp(chgMetric, 'ann-min')
+    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
 % max threshold that still allows for specified level of model agreement
 ampThresh = -1;
 
 % fraction of models that must agree on dir of change
-prcAgree = 0.75;
+prcAgree = 0.66;
 
 if strcmp(chgMetric, 'ann-max') || strcmp(chgMetric, 'ann-min') || strcmp(chgMetric, 'daily-max-min') ...
    || strcmp(chgMetric, 'warm-season-anom')
@@ -273,8 +286,8 @@ if showAllModels
         result = {lat, lon, amp(:,:,m)};
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [ampLevels(1) ampLevels(end)], ...
-                          'cbXTicks', ampLevels, ...
+                          'plotRange', [-3 3], ...
+                          'cbXTicks', -3:.5:3, ...
                           'plotTitle', ['Amplification - ' models{m}], ...
                           'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' chgMetric '-' models{m} '-' timePeriod '.eps'], ...
                           'plotXUnits', ['Amplification (' char(176) 'C)'], ...
@@ -306,8 +319,8 @@ if showAllModels
                           'plotRegion', 'world', ...
                           'plotRange', [0 10], ...
                           'cbXTicks', 0:10, ...
-                          'plotTitle', ['Tx change - ' models{m}], ...
-                          'fileTitle', ['tx-chg-' rcp '-' num2str(size(amp, 3)) '-cmip5-' chgMetric '-' models{m} '-' timePeriod '.eps'], ...
+                          'plotTitle', ['Warm season Tx change - ' models{m}], ...
+                          'fileTitle', ['tx-warm-chg-' rcp '-' num2str(size(amp, 3)) '-cmip5-' chgMetric '-' models{m} '-' timePeriod '.eps'], ...
                           'plotXUnits', ['(' char(176) 'C)'], ...
                           'blockWater', true, ...
                           'colormap', brewermap([],'YlOrRd'), ...
@@ -321,8 +334,8 @@ else
 
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
-                      'plotRange', [ampLevels(1) ampLevels(end)], ...
-                      'cbXTicks', ampLevels, ...
+                      'plotRange', [-3 3], ...
+                      'cbXTicks', -3:.5:3, ...
                       'plotTitle', ['Amplification'], ...
                       'fileTitle', ['ampAgreement-' rcp '-' num2str(size(amp, 3)) '-cmip5-' chgMetric '-' modelSubset '-' timePeriod '.eps'], ...
                       'plotXUnits', ['Amplification (' char(176) 'C)'], ...

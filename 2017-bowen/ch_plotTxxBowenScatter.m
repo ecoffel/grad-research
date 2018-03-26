@@ -7,27 +7,29 @@ showOutliers = true;
 plotModels = false;
 useTxxSeasonalAmp = true;
 useTxxChg = false;
-useTxChg = false;
+useTxWarmAnom = false;
+useTxWarmChg = false;
 
-var1 = 'zgPosAnomChg';
-var1Months = [1];
-v1XStr = ['JJA clt chg (Fraction)'];
-v1XLim = [-10 10];
-v1XTick = -10:2:10;
-v1AbsoluteStr = '';
+var1 = 'hfssChg';
+var1Months = [];
+v1XStr = ['Warm hfss chg (W/m^2)'];
+v1XLim = [-10 40];
+v1XTick = -10:10:40;
+v1AbsoluteStr = '-absolute-all-txx';
 v1Subset = '';
-v1FileStr = [var1 v1AbsoluteStr '-JJA'];
+v1FileStr = [var1 v1AbsoluteStr '-warm'];
 
-showVar3 = false;
+showVar3 = true;
 % shown in colors
-var3 = 'efChg';
-var3Months = [1];
-v3YLim = [0 40];
-v3YTicks = 0:10:40;
+var3 = 'rldsChg';
+v3YStr = ['Warm rlds chg (W/m^2)'];
+var3Months = [];
+
 v3AbsoluteStr = '-absolute';
 v3FileStr = [var3 v3AbsoluteStr '-JJA'];
-v3ColorOffset = 15;
-v3Color = brewermap(v3ColorOffset + 25, 'Reds');
+v3ColorOffset = 0;
+v3Colormap = '*RdBu';
+
 
 scatterPlots = true;
 saveScatter = false;
@@ -38,12 +40,15 @@ selRegions = [4];
 
 % txx amp
 if useTxxSeasonalAmp
-    load e:/data/projects/bowen/derived-chg/txxTxWarmChg.mat;
-    ampVar = txxTxWarmChg(:,:,[1 2 3 4 5 9 10 11]);
+    load e:/data/projects/bowen/derived-chg/txxAmp.mat;
+    ampVar = amp;
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
     ampVar = txxChg;
-elseif useTxChg
+elseif useTxWarmAnom
+    load e:/data/projects/bowen/derived-chg/warmTxAnom.mat;
+    ampVar = warmTxAnom;
+elseif useTxWarmChg
     load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
     ampVar = txChgWarm;
 else
@@ -51,10 +56,9 @@ else
     ampVar = amp;
 end
 
-load(['e:/data/projects/bowen/derived-chg/' var1 v1Subset v1AbsoluteStr '']);
+load(['e:/data/projects/bowen/derived-chg/' var1 v1AbsoluteStr v1Subset '']);
 eval(['v1 = ' var1 ';']);
 v1(v1>1000 | v1<-1000) = NaN;
-v1 = nanmean(v1,4);
 %v1 = v1 .* 3600 .* 24;
 
 load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);
@@ -76,7 +80,8 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'Central Africa', ...
                 'North Africa', ...
-                'China'};
+                'China', ...
+                'South Africa'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -86,7 +91,8 @@ regionAb = {'world', ...
             'amazon', ...
             'africa-cent', ...
             'n-africa', ...
-            'china'};
+            'china', ...
+            's-africa'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
@@ -97,7 +103,8 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10, 7], [-75, -62]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
-           [[22 40], [105 122]]];               % china
+           [[22 40], [105 122]]; ...               % china
+           [[-24 -8], [14 40]]];                      % south africa
 
 if plotModels
     modelLeg = {};
@@ -119,7 +126,7 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 % load hottest seasons for each grid cell
-load('2017-bowen/hottest-season-ncep.mat');
+load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 
 if scatterPlots
     % loop over regions
@@ -130,7 +137,21 @@ if scatterPlots
         % select amp for region for all models
         regionAmp = squeeze(nanmean(nanmean(ampVar(latInds, lonInds, :))));
 
+        if length(var1Months) == 0
+            var1Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+            var1Months = [var1Months-1 var1Months var1Months+1];
+            var1Months(var1Months == 0) = 12;
+            var1Months(var1Months == 13) = 1;
+        end
+        
         v1Chg = squeeze(nanmean(nanmean(nanmean(v1(latInds, lonInds, :, var1Months), 4), 2), 1));
+        
+        if length(var3Months) == 0
+            var3Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+            var3Months = [var3Months-1 var3Months var3Months+1];
+            var3Months(var3Months == 0) = 12;
+            var3Months(var3Months == 13) = 1;
+        end
         
         if showVar3
             v3Chg = squeeze(nanmean(nanmean(nanmean(v3(latInds, lonInds, :, var3Months), 4), 2), 1));
@@ -154,9 +175,10 @@ if scatterPlots
 
             outliers = union(v1Outliers, ampOutliers);
             v1ChgNoOutliers = v1Chg;
-            v1ChgNoOutliers(outliers) = [];
+            %v1ChgNoOutliers(outliers) = [];
             regionAmpNoOutliers = regionAmp;
-            regionAmpNoOutliers(outliers) = [];
+            %regionAmpNoOutliers(outliers) = [];
+            %v3Chg(outliers) = [];
         end
 
         figure('Color', [1,1,1]);
@@ -167,17 +189,20 @@ if scatterPlots
         
         v3ChgSort = sort(v3Chg);
         
+        v3Color = brewermap(length(v3ChgSort)*2, v3Colormap) .* .7;
+        v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
+        
         % loop over all models
-        for m = 1:length(v1Chg)
+        for m = 1:length(v1ChgNoOutliers)
             
-            color = v3Color(v3ColorOffset+find(v3ChgSort == v3Chg(m)), :);
+            color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == v3Chg(m))-1, :);
             
             if showVar3
-                t = text(v1Chg(m), regionAmp(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                t = text(v1ChgNoOutliers(m), regionAmpNoOutliers(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
             else
-                t = text(v1Chg(m), regionAmp(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                t = text(v1ChgNoOutliers(m), regionAmpNoOutliers(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
             end
-            t.FontSize = 18;
+            t.FontSize = 26;
         end
 
         if oneToOne
@@ -187,14 +212,14 @@ if scatterPlots
         if showOutliers
             [f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
             cNoOutliers = confint(f);
-%            if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
-                pNoOutliers = plot([min(v1ChgNoOutliers) max(v1ChgNoOutliers)], [f(min(v1ChgNoOutliers)) f(max(v1ChgNoOutliers))], '--b', 'LineWidth', 2);
- %           end
-            %legText = sprintf('Slope = %.2f, R^2 = %.2f\n', f.p1, gof.rsquare);
-            legText = sprintf('R^2 = %.2f\n', gof.rsquare);
-%             if sign(cNoOutliers(1,1)) == sign(cNoOutliers(2,1))
-%                 sigOutliers = 'Sig';
-%             end
+            pNoOutliers = plot([min(v1ChgNoOutliers) max(v1ChgNoOutliers)], [f(min(v1ChgNoOutliers)) f(max(v1ChgNoOutliers))], '--b', 'LineWidth', 2);
+ 
+            if showVar3
+                pc = partialcorr([regionAmpNoOutliers v1ChgNoOutliers], v3Chg);
+                legText = sprintf('Partial correlation = %.2f\n', pc(2,1));
+            else
+                legText = sprintf('R^2 = %.2f\n', gof.rsquare);
+            end
         end
 
         f = fit(v1Chg, regionAmp, 'poly1');
@@ -219,7 +244,11 @@ if scatterPlots
             ylabel(['TXx chg (' char(176) 'C)']);
             ylim([-2 12]);
             set(gca, 'YTick', -2:2:12);
-        elseif useTxChg
+        elseif useTxWarmAnom
+            ylabel(['Warm season Tx - annual Tx (' char(176) 'C)']);
+            ylim([-2 12]);
+            set(gca, 'YTick', -2:2:12);
+        elseif useTxWarmChg
             ylabel(['Warm season Tx chg (' char(176) 'C)']);
             ylim([-2 12]);
             set(gca, 'YTick', -2:2:12);
@@ -233,15 +262,24 @@ if scatterPlots
         legend([pNoOutliers], {[legText]});
         set(gcf, 'Position', get(0,'Screensize'));
 
+        if showVar3
+            colormap(v3Color);
+            caxis([-max(abs(v3ChgSort)) max(abs(v3ChgSort))]);
+            cb = colorbar();
+            ylabel(cb, v3YStr);
+        end
+        
         tempVar = 'txx';
         
         if saveScatter
             if useTxxSeasonalAmp
                 export_fig(['txx-warm-amp-' v1FileStr '-scatter-' num2str(region) '.eps']); 
             elseif useTxxChg
-                export_fig(['tx-warm-' v1FileStr '-scatter-' num2str(region) '.eps']);
-            else
-                export_fig(['txx-amp-' v1FileStr '-scatter-' num2str(region) '.eps']);
+                export_fig(['txx-chg-' v1FileStr '-scatter-' num2str(region) '.eps']);
+            elseif useTxWarmAnom
+                export_fig(['tx-warm-anom-' v1FileStr '-scatter-' num2str(region) '.eps']);
+            elseif useTxWarmChg
+                export_fig(['tx-warm-chg-' v1FileStr '-scatter-' num2str(region) '.eps']);
             end
             close all;
         end
@@ -253,6 +291,8 @@ end
 
 if globalCorrMap
     
+    load hottest-season-txx-rel-era.mat;
+    
     corrMap = [];
     corrSig = [];
     
@@ -261,17 +301,21 @@ if globalCorrMap
     
     for xlat = 1:size(lat, 1)
         for ylon = 1:size(lat, 2)
-            if waterGrid(xlat, ylon)
+            if waterGrid(xlat, ylon) || isnan(hottestSeason(xlat, ylon))
                 corrMap(xlat, ylon) = NaN;
                 corrSig(xlat, ylon) = 0;
                 continue;
             end
-                       
+            
+            months = [hottestSeason(xlat, ylon)-1 hottestSeason(xlat, ylon) hottestSeason(xlat, ylon)+1];
+            months(months == 0) = 12;
+            months(months == 13) = 1;
+            
             %select txx/bowen for region for all models
             regionAmp = squeeze(ampVar(xlat, ylon, :));
 
             %and bowen
-            regionDriverChg = squeeze(nanmean(driverVar(xlat, ylon, :, seasons(hottestSeason(xlat, ylon), :)), 4));
+            regionDriverChg = squeeze(nanmean(v1(xlat, ylon, :, months), 4));
             driverWarm(xlat, ylon, :) = regionDriverChg;
             
             nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp));
@@ -299,20 +343,10 @@ if globalCorrMap
                 regionAmpNoOutliers = regionAmp;
                 regionAmpNoOutliers(outliers) = [];
             end
-%             
-%             if showOutliers
-%                 f = fit(regionAmpNoOutliers, regionDriverChgNoOutliers, 'poly1');
-%                 c = confint(f);
-%             else
-%                 f = fit(regionAmp, regionDriverChg, 'poly1');
-%                 c = confint(f);
-%                 
-%             end
-%             corrMap(xlat, ylon) = f.p1;
-%             corrSig(xlat, ylon) = sign(c(1,1)) == sign(c(2,1));
             
             if showOutliers
-                corrMap(xlat, ylon) = corr(regionAmpNoOutliers, v1ChgNoOutliers);
+                [f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
+                corrMap(xlat, ylon) = gof.rsquare;%corr(regionAmpNoOutliers, v1ChgNoOutliers);
             else
                 corrMap(xlat, ylon) = corr(regionAmp, regionDriverChg);
             end
@@ -327,39 +361,22 @@ if globalCorrMap
     result = {lat, lon, corrMap};
 
     tempVar = 'txx';
-    if useSeasonalAmp
-        tempVar = 'tx-seasonal';
-    end
 
-    
-    if useHfss
-        title = ['TXx chg - hfss chg corr'];
-        file = [tempVar '-hfss-chg-corr.eps'];
-    elseif useHfls
-        title = ['TXx chg - hfls chg corr'];
-        file = [tempVar '-hfls-chg-corr.eps'];
-    elseif useRsds
-        title = ['TXx chg - rsds-chg corr'];
-        file = [tempVar '-rsds-chg-corr.eps'];
-    else
-        title = ['TXx chg - Bowen chg corr'];
-        file = [tempVar '-bowen-chg-corr.eps'];
-    end
+    title = ['Tx warm chg - hfss corr'];
+    file = ['tx-warm-chg-hfss-corr.eps'];
     
     sigChg(1:15,:) = 0;
     sigChg(80:90,:) = 0;
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
-                      'plotRange', [-1 1], ...
-                      'cbXTicks', -1:.25:1, ...
+                      'plotRange', [0 1], ...
+                      'cbXTicks', 0:.25:1, ...
                       'plotTitle', title, ...
                       'fileTitle', file, ...
-                      'plotXUnits', ['Slope'], ...
+                      'plotXUnits', ['R^2'], ...
                       'blockWater', true, ...
-                      'statData', corrSig, ...
-                      'stippleInterval', 5, ...
-                      'colormap', brewermap([], '*RdBu'), ...
+                      'colormap', brewermap([], 'Reds'), ...
                       'boxCoords', {regions([2,4,7], :)});
                   
                   

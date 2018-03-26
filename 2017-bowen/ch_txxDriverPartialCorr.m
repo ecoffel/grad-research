@@ -5,30 +5,21 @@ waterGrid = logical(waterGrid);
 
 showOutliers = true;
 plotModels = false;
-useTxxSeasonalAmp = false;
+useTxxSeasonalAmp = true;
 useTxxChg = false;
 useTxWarmAnom = false;
-useTxWarmChg = true;
+useTxWarmChg = false;
 
 vars = {'cltChg', 'efChg', 'hussHumChg', 'rsdsNetChg', 'mrsoChg', 'prChg', ...
         'heatFluxChg', 'hflsChg', 'hfssChg', 'netRadChg', ...
         'rldsChg', 'rldsNetChg', 'rsdsChg', ...
-        'rsusChg'};%'cltHistorical', 'prHistorical', 'hfssHistorical', 'hflsHistorical', 'efHistorical', 'TCHfssJJA'};
-vars = {'cltChg', 'efChg', 'hussHumChg', 'mrsoChg', 'prChg', ...
-        'hflsChg', 'hfssChg'};
-%vars = {'prHistorical', 'hfssHistorical', 'efHistorical', 'cltHistorical', 'TCHfssJJA'};
+        'rsusChg'};%, 'cltHistorical', 'prHistorical', 'hfssHistorical', 'hflsHistorical', 'efHistorical'};
+vars = {'hfssChg','cltChg', 'efChg', 'hussHumChg', 'mrsoChg', 'prChg', ...
+        'hflsChg'};
 
-varMonths = {};
-varsAddition = {};
+N = 2;
 
-for v = 1:length(vars)
-    varMonths{v} = [6 7 8];
-    varsAddition{v} = '-absolute';
-end
-
-N = 1;
-
-selRegions = 4;
+selRegions = 10;
 
 % txx amp
 if useTxxSeasonalAmp
@@ -49,7 +40,7 @@ else
 end
 
 for v = 1:length(vars)
-    load(['e:/data/projects/bowen/derived-chg/' vars{v} varsAddition{v}]);
+    load(['e:/data/projects/bowen/derived-chg/' vars{v} '-absolute']);
     eval(['v' num2str(v) '=' vars{v} ';']);
 end
 
@@ -118,11 +109,22 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
         % select lat lon coords for region
         [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
+        months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+        months = [months-1 months months+1];
+        months(months == 0) = 12;
+        months(months == 13) = 1;
+        
         % select amp for region for all models
         regionAmp = squeeze(nanmean(nanmean(ampVar(latInds, lonInds, :))));
 
-        
         combos = combnk(vars, N);
+        ii = size(combos,1);
+        for c = 1:length(combos)
+            combos{ii+1,1} = combos{c,2};
+            combos{ii+1,2} = combos{c,1};
+            ii = ii+1;
+        end
+        
         adjR2 = [];
         bestModel = [];
         bestCombo = 0;
@@ -150,7 +152,7 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
             
             nn = find(isnan(regionAmpCur));
             for v = curVarInd
-                eval(['v' num2str(v) 'Chg = squeeze(nanmean(nanmean(nanmean(v' num2str(v) '(latInds, lonInds, :, varMonths{' num2str(v) '}), 4), 2), 1));']);     
+                eval(['v' num2str(v) 'Chg = squeeze(nanmean(nanmean(nanmean(v' num2str(v) '(latInds, lonInds, :, months), 4), 2), 1));']);     
                 eval(['nn = union(nn, find(isnan(v' num2str(v) 'Chg)));']);
             end
 
@@ -168,21 +170,17 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
 
             X = [];
 
-            regionAmpCur(outliers) = [];
+            %regionAmpCur(outliers) = [];
             regionAmpCur = (regionAmpCur - nanmean(regionAmpCur)) ./ nanstd(regionAmpCur);
             for v = curVarInd
-                eval(['v' num2str(v) 'Chg(outliers) = [];']);
+                %eval(['v' num2str(v) 'Chg(outliers) = [];']);
                 eval(['v' num2str(v) 'Chg = (v' num2str(v) 'Chg - nanmean(v' num2str(v) 'Chg)) ./ nanstd(v' num2str(v) 'Chg);']);
                 eval(['X = [X v' num2str(v) 'Chg];']);
             end
     
-            %mdl = stepwiselm(X,regionAmpCur,'constant','Upper','linear','PEnter',0.05,'PredictorVars',curVars);
-            mdl = fitlm(X,regionAmpCur,'PredictorVars',curVars);
-            if length(adjR2) == 0 || mdl.Rsquared.Adjusted > max(adjR2)
-                bestModel = mdl;
-                bestCombo = c;
-            end
-            adjR2(c) = mdl.Rsquared.Adjusted;
+            pcorr = partialcorr([regionAmpCur, X(:,1)], X(:,2));
+            
+            adjR2(c) = pcorr(2,1);
 
         end
 %         
@@ -192,20 +190,20 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
     end
 
 sortedR2 = sort(adjR2);
-for i = 0:4
+for i = 0:10
     ind = find(adjR2 == sortedR2(end-i));
     fprintf('(');
     for n = 1:N
         fprintf('%s, ', combos{ind(1),n});
     end
-    fprintf(') = %.2f\n',sqrt(adjR2(ind(1))));
+    fprintf(') = %.2f\n',adjR2(ind(1)));
 end
     
 
-yticklabels = bestModel.CoefficientNames(2:end);
-coefs = bestModel.Coefficients.Estimate;
-coefCIs = bestModel.coefCI;
-pvals = bestModel.Coefficients.pValue;
+% yticklabels = bestModel.CoefficientNames(2:end);
+% coefs = bestModel.Coefficients.Estimate;
+% coefCIs = bestModel.coefCI;
+% pvals = bestModel.Coefficients.pValue;
 
 % figure('Color', [1,1,1]);
 % hold on; 

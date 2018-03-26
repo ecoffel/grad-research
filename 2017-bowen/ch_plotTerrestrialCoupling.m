@@ -19,7 +19,7 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 % load hottest seasons for each grid cell
-load('2017-bowen/hottest-season-ncep.mat');
+load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 
 TC = zeros(size(lat, 1), size(lat, 2), length(models));
 TC(TC == 0) = NaN;
@@ -28,31 +28,31 @@ for m = 1:length(models)
     
     fprintf('loading %s...\n', models{m});
     mrsoHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/mrso/regrid/world'], 'mrso', 'startYear', 1980, 'endYear', 2004);
-    hflsHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfls/regrid/world'], 'hfls', 'startYear', 1980, 'endYear', 2004);
+    hfssHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfss/regrid/world'], 'hfss', 'startYear', 1980, 'endYear', 2004);
     
     fprintf('calculating TC for %s...\n', models{m});
     for xlat = 15:75
         for ylon = 1:size(lat, 2)
-            if waterGrid(xlat, ylon) 
+            if waterGrid(xlat, ylon) || isnan(hottestSeason(xlat, ylon, m));
                 continue;
             end
             
-            if warmSeason
-                months = seasons(hottestSeason(xlat, ylon), :);
-            end
+            months = [hottestSeason(xlat, ylon, m)-1 hottestSeason(xlat, ylon, m) hottestSeason(xlat, ylon, m)+1];
+            months(months == 0) = 12;
+            months(months == 13) = 1;
             
             mrso = squeeze(nanmean(mrsoHistorical{3}(xlat, ylon, :, months), 4));
-            hfls = squeeze(nanmean(hflsHistorical{3}(xlat, ylon, :, months), 4));
+            hfss = squeeze(nanmean(hfssHistorical{3}(xlat, ylon, :, months), 4));
             
             % skip all zero tiles or those with nan or those all the
             % same...
             if length(find(mrso==0)) > 0 || length(find(isnan(mrso))) > 0 || length(find(mrso==median(mrso))) == length(mrso) || ...
-               length(find(isnan(hfls))) > 0 || length(find(hfls == 0)) > 0
+               length(find(isnan(hfss))) > 0 || length(find(hfss == 0)) > 0
                 continue;
             end
             
             mrsoStd = nanstd(mrso);
-            slope = fit(mrso, hfls, 'poly1');
+            slope = fit(mrso, hfss, 'poly1');
             slope = slope.p1;
             TC(xlat, ylon, m) = mrsoStd * slope;
  
@@ -60,6 +60,5 @@ for m = 1:length(models)
     end
     
 end
-
-TCHflsJJA = TC;
-save('e:/data/projects/bowen/derived-chg/TCHflsJJA.mat', 'TCHflsJJA');
+TCHfss = TC;
+save('e:/data/projects/bowen/derived-chg/TCHfss.mat', 'TCHfss');
