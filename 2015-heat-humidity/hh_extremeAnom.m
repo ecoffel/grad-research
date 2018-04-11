@@ -33,7 +33,7 @@ plotRegion = 'world';
 
 plotEachModel = false;
 
-plotTitle = ['CMIP5 specific humidity'];
+plotTitle = ['Historical annual maximum wet bulb'];
 
 basePeriodYears = 1985:2004;
 testPeriodYears = 2070:2080;
@@ -82,11 +82,12 @@ else
     maxMinFileStr = 'ext';
 end
 
-if strcmp(baseVar, 'wb')
+if strcmp(baseVar, 'wb-davies-jones-full')
     if strcmp(basePeriod, 'past') & strcmp(testPeriod, 'future')
         plotRange = [0 10];
     else
-        plotRange = [0 35];
+        plotRange = [28 32];
+        
     end
     plotXUnits = 'degrees C';
 elseif strcmp(baseVar, 'rh')
@@ -195,9 +196,9 @@ for e = ensembles
             ['year ' num2str(y) '...']
 
             if baseRegrid
-                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar '/regrid/' region baseBcStr], 'startYear', y, 'endYear', (y+yearStep)-1);
             else
-                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel baseEnsemble baseRcp baseVar], 'startYear', y, 'endYear', (y+yearStep)-1);
             end
 
             if ~strcmp(baseVar, 'rh') && baseDaily{3}(1,1,1,1,1) > 100
@@ -230,9 +231,9 @@ for e = ensembles
                 ['year ' num2str(y) '...']
                 % load daily data, for cmip5
                 if testRegrid
-                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar '/regrid/' region testBcStr], 'startYear', y, 'endYear', (y+yearStep)-1);
                 else
-                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                    testDaily = loadDailyData([baseDir testDataDir '/' curModel testEnsemble testRcp testVar], 'startYear', y, 'endYear', (y+yearStep)-1);
                 end
 
                 % for ncep
@@ -392,12 +393,14 @@ else
 
     saveData = struct('data', {result}, ...
                       'plotRegion', plotRegion, ...
-                      'plotRange', plotRange, ...
+                      'plotRange', [25 30], ...
                       'plotTitle', plotTitle, ...
                       'fileTitle', [fileTitle '.' exportFormat], ...
-                      'plotXUnits', plotXUnits, ...
+                      'plotXUnits', [char(176) 'C'], ...
+                      'cbXTicks', 25:30, ...
                       'plotCountries', false, ...
                       'plotStates', true, ...
+                      'colormap', brewermap([], 'Reds'), ...
                       'blockWater', blockWater);
 
     plotFromDataFile(saveData);

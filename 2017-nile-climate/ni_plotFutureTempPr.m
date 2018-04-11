@@ -1,15 +1,15 @@
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp45';
+rcp = 'rcp85';
 timePeriodBase = [1980 2004];
 timePeriodFuture = [2056 2080];
 
@@ -67,7 +67,7 @@ for s = 1%:size(seasons, 1)
     latIndsRegion = curInds{1};
     lonIndsRegion = curInds{2};
     
-    curInds = regionInds('nile-north');
+    curInds = regionInds('nile-south');
     latInds = curInds{1};
     lonInds = curInds{2};
     prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
@@ -177,7 +177,7 @@ for s = 1%:size(seasons, 1)
         xlabel('Precipitation change (mm/day)');
         ylabel('P std. dev. change (mm/day)');
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig pr-std-chg-rcp45-north.eps;
+        export_fig pr-std-chg-rcp85-south.eps;
         
         figure('Color', [1,1,1]);
         hold on;
@@ -229,7 +229,7 @@ for s = 1%:size(seasons, 1)
         if annual
             seasonStr = 'annual';
         end
-        export_fig(['temp-pr-chg-rcp45-north-' seasonStr '.eps']);
+        export_fig(['temp-pr-chg-rcp85-south-' seasonStr '.eps']);
         close all;
     end
 end

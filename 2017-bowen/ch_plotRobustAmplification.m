@@ -3,7 +3,7 @@
 % maximum vs. the mean daily maximum
 monthly = false;
 
-showAllModels = false;
+showAllModels = true;
 
 load lat;
 load lon;
@@ -16,7 +16,7 @@ waterGrid = logical(waterGrid);
 % ann-max-min: change in annual max minus change in annual min
 % daily-max-min: change in daily max minus change in daily min
 % warm-season-anom: warm season Tx change minus surounding seasons
-chgMetric = 'txx-thresh';
+chgMetric = 'txx-amp';
 
 thresh = 90;
 
@@ -202,27 +202,27 @@ end
 
 amp = chg1 - chg2;
 
-if strcmp(chgMetric, 'txx-amp')
-    txChgWarm = chg2;
-    save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
-    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
-    
-    txxChg = chg1;
-    save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
-elseif strcmp(chgMetric, 'txx-thresh')
-    save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
-    
-    txxChg = chg1;
-    save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
-elseif strcmp(chgMetric, 'warm-season-anom')
-    txChgWarm = chg1;
-    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
-    
-    warmTxAnom = amp;
-    save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
-elseif strcmp(chgMetric, 'ann-min')
-    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
-end
+% if strcmp(chgMetric, 'txx-amp')
+%     txChgWarm = chg2;
+%     save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
+%     save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+%     
+%     txxChg = chg1;
+%     save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
+% elseif strcmp(chgMetric, 'txx-thresh')
+%     save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
+%     
+%     txxChg = chg1;
+%     save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
+% elseif strcmp(chgMetric, 'warm-season-anom')
+%     txChgWarm = chg1;
+%     save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+%     
+%     warmTxAnom = amp;
+%     save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
+% elseif strcmp(chgMetric, 'ann-min')
+%     save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+% end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
 % max threshold that still allows for specified level of model agreement

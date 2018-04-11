@@ -74,19 +74,21 @@ seasons = [[12 1 2];
 
     [f, gof] = fit(hotFutureLate, hotDryFutureLate, 'poly1');
     cint = confint(f);
-    if sign(cint(1,1)) == sign(cint(2,1))
-        p = plot([min(hotFutureLate) max(hotFutureLate)], [f(min(hotFutureLate)) f(max(hotFutureLate))], '--b', 'LineWidth', 2);
-    end
+    p = plot([min(hotFutureLate) max(hotFutureLate)], [f(min(hotFutureLate)) f(max(hotFutureLate))], '--b', 'LineWidth', 2);
 
     xlim([0 100]);
     set(gca, 'XTick', [0 25 50 75 100]);
-    ylim([0 40]);
+    ylim([0 50]);
     legend([p], {sprintf('R^2 = %.2f', gof.rsquare)});
-    xlabel('Hot seasons (%)');
-    ylabel('Hot & dry seasons (%)');
+    xlabel('Hot years (%)');
+    ylabel('Hot & dry years (%)');
     set(gca, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig hot-contrib.eps;
+    if north
+        export_fig hot-contrib-north.eps;
+    else
+        export_fig hot-contrib-south.eps;
+    end
     
     
     figure('Color', [1,1,1]);
@@ -102,16 +104,18 @@ seasons = [[12 1 2];
 
     [f, gof] = fit(dryFutureLate, hotDryFutureLate, 'poly1');
     cint = confint(f);
-    if sign(cint(1,1)) == sign(cint(2,1))
-        p = plot([min(dryFutureLate) max(dryFutureLate)], [f(min(dryFutureLate)) f(max(dryFutureLate))], '--b', 'LineWidth', 2);
-    end
+    p = plot([min(dryFutureLate) max(dryFutureLate)], [f(min(dryFutureLate)) f(max(dryFutureLate))], '--b', 'LineWidth', 2);
 
     xlim([0 100]);
     set(gca, 'XTick', [0 25 50 75 100]);
-    ylim([0 40]);
+    ylim([0 50]);
     legend([p], {sprintf('R^2 = %.2f', gof.rsquare)});
-    xlabel('Dry seasons (%)');
-    ylabel('Hot & dry seasons (%)');
+    xlabel('Dry years (%)');
+    ylabel('Hot & dry years (%)');
     set(gca, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig dry-contrib.eps;
+    if north
+        export_fig dry-contrib-north.eps;
+    else
+        export_fig dry-contrib-south.eps;
+    end

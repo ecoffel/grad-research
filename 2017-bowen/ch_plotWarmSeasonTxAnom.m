@@ -1,6 +1,6 @@
 warmSeason = false;
-txxWarmDiff = false;
-txxThresh = true;
+txxWarmDiff = true;
+txxThresh = false;
 
 load lat;
 load lon;
@@ -80,12 +80,8 @@ elseif txxWarmDiff
             end
             med = nanmedian(data(xlat, ylon, :), 3);
             if ~isnan(med)
-                if kstest(squeeze(data(xlat, ylon, :)))
-                    plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
-                    sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
-                else
-                    sigChg(xlat, ylon) = 1;
-                end
+                plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
+                sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
             else
                 sigChg(xlat, ylon) = 1;
             end

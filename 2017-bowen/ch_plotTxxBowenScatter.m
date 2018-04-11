@@ -10,25 +10,25 @@ useTxxChg = false;
 useTxWarmAnom = false;
 useTxWarmChg = false;
 
-var1 = 'hfssChg';
-var1Months = [];
-v1XStr = ['Warm hfss chg (W/m^2)'];
-v1XLim = [-10 40];
-v1XTick = -10:10:40;
-v1AbsoluteStr = '-absolute-all-txx';
+var1 = 'hfssChgWarmTxxAnom';
+var1Months = [1];
+v1XStr = ['TXx hfss chg minus warm (W/m^2)'];
+v1XLim = [-15 20];
+v1XTick = -15:5:20;
+v1AbsoluteStr = '';
 v1Subset = '';
 v1FileStr = [var1 v1AbsoluteStr '-warm'];
 
 showVar3 = true;
 % shown in colors
-var3 = 'rldsChg';
-v3YStr = ['Warm rlds chg (W/m^2)'];
-var3Months = [];
+var3 = 'mrsoChgWarmTxxAnom';
+v3YStr = ['TXx mrso chg minus warm (%)'];
+var3Months = [1];
 
-v3AbsoluteStr = '-absolute';
-v3FileStr = [var3 v3AbsoluteStr '-JJA'];
+v3AbsoluteStr = '';
+v3FileStr = [var3 v3AbsoluteStr];
 v3ColorOffset = 0;
-v3Colormap = '*RdBu';
+v3Colormap = 'BrBG';
 
 
 scatterPlots = true;
@@ -36,11 +36,11 @@ saveScatter = false;
 globalCorrMap = false;
 oneToOne = false;
 
-selRegions = [4];
+selRegions = [2 4 7 10];
 
 % txx amp
 if useTxxSeasonalAmp
-    load e:/data/projects/bowen/derived-chg/txxAmp.mat;
+    load e:/data/projects/bowen/derived-chg/txxAmpThresh99.mat;
     ampVar = amp;
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
@@ -64,7 +64,7 @@ v1(v1>1000 | v1<-1000) = NaN;
 load(['e:/data/projects/bowen/derived-chg/' var3 v3AbsoluteStr '']);
 eval(['v3 = ' var3 ';']);
 v3(v3>1000 | v3 < -1000) = NaN;
-
+%v3 = v3 .* 3600 .* 24;
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -165,8 +165,8 @@ if scatterPlots
         v3Chg = v3Chg(nn);
         
         if showOutliers
-            ampOutlierStdMult = 2;
-            v1OutlierStdMult = 2;
+            ampOutlierStdMult = 5;
+            v1OutlierStdMult = 3;
 
             v1Outliers = find(v1Chg > nanstd(v1Chg)*v1OutlierStdMult+nanmean(v1Chg) | ...
                                  v1Chg < -nanstd(v1Chg)*v1OutlierStdMult+nanmean(v1Chg));
@@ -218,7 +218,8 @@ if scatterPlots
                 pc = partialcorr([regionAmpNoOutliers v1ChgNoOutliers], v3Chg);
                 legText = sprintf('Partial correlation = %.2f\n', pc(2,1));
             else
-                legText = sprintf('R^2 = %.2f\n', gof.rsquare);
+                pc = corr(regionAmpNoOutliers, v1ChgNoOutliers);
+                legText = sprintf('Correlation = %.2f\n', pc);
             end
         end
 
@@ -237,9 +238,17 @@ if scatterPlots
         set(gca, 'XTick', v1XTick);
 
         if useTxxSeasonalAmp
+            if region == 1
+                ylim([-1 1]);
+                set(gca, 'YTick', -1:.5:1);
+            elseif region == 7
+                ylim([-4 5]);
+                set(gca, 'YTick', -4:5);
+            else
+                ylim([-2 3]);
+                set(gca, 'YTick', -2:3);
+            end
             ylabel(['TXx - warm Tx (' char(176) 'C)']);
-            ylim([-2 3]);
-            set(gca, 'YTick', -2:3);
         elseif useTxxChg
             ylabel(['TXx chg (' char(176) 'C)']);
             ylim([-2 12]);
@@ -250,8 +259,13 @@ if scatterPlots
             set(gca, 'YTick', -2:2:12);
         elseif useTxWarmChg
             ylabel(['Warm season Tx chg (' char(176) 'C)']);
-            ylim([-2 12]);
-            set(gca, 'YTick', -2:2:12);
+            if region == 7
+                ylim([-2 14]);
+            set(gca, 'YTick', -2:2:14);
+            else
+                ylim([-2 12]);
+                set(gca, 'YTick', -2:2:12);
+            end
         else
             ylabel(['TXx amplification (' char(176) 'C)']);
             ylim([-2 5.5]);
@@ -291,25 +305,32 @@ end
 
 if globalCorrMap
     
-    load hottest-season-txx-rel-era.mat;
+    load hottest-season-txx-rel-cmip5-all-txx.mat;
     
-    corrMap = [];
-    corrSig = [];
+    corrMap = zeros(size(lat,1),size(lat,2));
+    corrSig = zeros(size(lat,1),size(lat,2));
     
     driverWarm = zeros(size(lat,1),size(lat,2),size(ampVar,3));
     driverWarm(driverWarm==0) = NaN;
     
+    driver2Warm = zeros(size(lat,1),size(lat,2),size(ampVar,3));
+    driver2Warm(driver2Warm==0) = NaN;
+    
     for xlat = 1:size(lat, 1)
         for ylon = 1:size(lat, 2)
-            if waterGrid(xlat, ylon) || isnan(hottestSeason(xlat, ylon))
+            if waterGrid(xlat, ylon)
                 corrMap(xlat, ylon) = NaN;
                 corrSig(xlat, ylon) = 0;
                 continue;
             end
             
-            months = [hottestSeason(xlat, ylon)-1 hottestSeason(xlat, ylon) hottestSeason(xlat, ylon)+1];
+            months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
             months(months == 0) = 12;
             months(months == 13) = 1;
+
+            months(isnan(months(:,1)),1) = mode(months(:,1));
+            months(isnan(months(:,2)),2) = mode(months(:,2));
+            months(isnan(months(:,3)),3) = mode(months(:,3));
             
             %select txx/bowen for region for all models
             regionAmp = squeeze(ampVar(xlat, ylon, :));
@@ -317,10 +338,12 @@ if globalCorrMap
             %and bowen
             regionDriverChg = squeeze(nanmean(v1(xlat, ylon, :, months), 4));
             driverWarm(xlat, ylon, :) = regionDriverChg;
+            driver2Warm = squeeze(nanmean(v3(xlat, ylon, :, months), 4));
             
-            nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp));
+            nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp) & ~isnan(driver2Warm));
             regionAmp = regionAmp(nn);
             regionDriverChg = regionDriverChg(nn);
+            regionDriverChg2 = driver2Warm(nn);
 
             if length(nn) < 10
                 corrMap(xlat, ylon) = NaN;
@@ -339,14 +362,15 @@ if globalCorrMap
 
                 outliers = union(v1Outliers, ampOutliers);
                 v1ChgNoOutliers = regionDriverChg;
-                v1ChgNoOutliers(outliers) = [];
+                %v1ChgNoOutliers(outliers) = [];
                 regionAmpNoOutliers = regionAmp;
-                regionAmpNoOutliers(outliers) = [];
+                %regionAmpNoOutliers(outliers) = [];
             end
             
             if showOutliers
-                [f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
-                corrMap(xlat, ylon) = gof.rsquare;%corr(regionAmpNoOutliers, v1ChgNoOutliers);
+                %[f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
+                pc=partialcorr([regionAmpNoOutliers, v1ChgNoOutliers], regionDriverChg2);
+                corrMap(xlat, ylon) = pc(2,1);
             else
                 corrMap(xlat, ylon) = corr(regionAmp, regionDriverChg);
             end
@@ -362,8 +386,8 @@ if globalCorrMap
 
     tempVar = 'txx';
 
-    title = ['Tx warm chg - hfss corr'];
-    file = ['tx-warm-chg-hfss-corr.eps'];
+    title = ['TXx amp - hfss/ef corr'];
+    file = ['txx-amp-mrso-var.eps'];
     
     sigChg(1:15,:) = 0;
     sigChg(80:90,:) = 0;

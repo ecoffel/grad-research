@@ -1,8 +1,9 @@
 
 baseDir = 'e:/data';
-var = 'hfls';                  
+var = 'mrso';                  
 percentChange = false;
-warmSeason = true;
+warmSeason = false;
+useTxxMonths = true;
 warmSeasonAnom = false;
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -78,6 +79,7 @@ seasons = [[12 1 2];
 
 % load hottest seasons for each grid cell
 load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
+load('2017-bowen/txx-months-cmip5.mat');
 
 for region = showRegions
     curLat = regionLatLonInd{region}{1};
@@ -174,6 +176,8 @@ for region = showRegions
                     months(isnan(months(:,1)),1) = mode(months(:,1));
                     months(isnan(months(:,2)),2) = mode(months(:,2));
                     months(isnan(months(:,3)),3) = mode(months(:,3));
+                elseif useTxxMonths
+                    months = squeeze(txxMonths(xlat, ylon, :, :));
                 end
                 
                 % select only non-nan items
@@ -198,8 +202,8 @@ for region = showRegions
             chg = chg .* 100;
             plotChg = plotChg .* 100;
             
-            %eval([var 'Chg = chg;']);
-            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
+            eval([var 'Chg = chg;']);
+            save(['e:/data/projects/bowen/derived-chg/' var '-chg-all-txx.mat'], [var 'Chg']);
         else
             eval([var 'Chg = chg;']);
             save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-txx.mat'], [var 'Chg']);
@@ -226,8 +230,8 @@ for region = showRegions
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'world', ...
-                          'plotRange', [-25 25], ...
-                          'cbXTicks', -25:5:25, ...
+                          'plotRange', [15 40], ...
+                          'cbXTicks', 15:5:40, ...
                           'plotTitle', ['Warm season ' var ' change'], ...
                           'fileTitle', [var '-chg-' num2str(region) '-warm-all-txx.eps'], ...
                           'plotXUnits', ['W/m^2'], ...

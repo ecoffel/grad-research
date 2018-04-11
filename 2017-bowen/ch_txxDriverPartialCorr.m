@@ -10,20 +10,22 @@ useTxxChg = false;
 useTxWarmAnom = false;
 useTxWarmChg = false;
 
-vars = {'cltChg', 'efChg', 'hussHumChg', 'rsdsNetChg', 'mrsoChg', 'prChg', ...
-        'heatFluxChg', 'hflsChg', 'hfssChg', 'netRadChg', ...
-        'rldsChg', 'rldsNetChg', 'rsdsChg', ...
-        'rsusChg'};%, 'cltHistorical', 'prHistorical', 'hfssHistorical', 'hflsHistorical', 'efHistorical'};
-vars = {'hfssChg','cltChg', 'efChg', 'hussHumChg', 'mrsoChg', 'prChg', ...
-        'hflsChg'};
+vars = {'hfssChg', 'efChg', 'prChg', ...
+        'hflsChg', 'hfssChg', ...
+        'rldsChg', 'rsdsChg', 'mrsoChg'};%, 'cltHistorical', 'prHistorical', 'hfssHistorical', 'hflsHistorical', 'efHistorical'};
+% vars = {'hfssChg','cltChg', 'efChg', 'prChg', ...
+%         'hflsChg', 'rldsChg', 'mrsoChg'};
+
+vars = {'hflsChgWarmTxxAnom', 'hfssChgWarmTxxAnom', 'prChgWarmTxxAnom', 'rldsChgWarmTxxAnom'}
+
 
 N = 2;
 
-selRegions = 10;
+selRegions = 4;
 
 % txx amp
 if useTxxSeasonalAmp
-    load e:/data/projects/bowen/derived-chg/txxAmp.mat;
+    load e:/data/projects/bowen/derived-chg/txxAmpThresh99.mat;
     ampVar = amp;
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
@@ -40,7 +42,12 @@ else
 end
 
 for v = 1:length(vars)
-    load(['e:/data/projects/bowen/derived-chg/' vars{v} '-absolute']);
+    if strcmp(vars{v}, 'mrsoChg')
+        load(['e:/data/projects/bowen/derived-chg/' vars{v}]);
+    else
+        %load(['e:/data/projects/bowen/derived-chg/' vars{v} '-absolute']);
+        load(['e:/data/projects/bowen/derived-chg/' vars{v}]);
+    end
     eval(['v' num2str(v) '=' vars{v} ';']);
 end
 
@@ -49,7 +56,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
+          
 regionNames = {'World', ...
                 'Eastern U.S.', ...
                 'Southeast U.S.', ...
@@ -59,7 +66,8 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'Central Africa', ...
                 'North Africa', ...
-                'China'};
+                'China', ...
+                'South Africa'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -69,7 +77,8 @@ regionAb = {'world', ...
             'amazon', ...
             'africa-cent', ...
             'n-africa', ...
-            'china'};
+            'china', ...
+            's-africa'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
@@ -80,7 +89,8 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10, 7], [-75, -62]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
-           [[22 40], [105 122]]];               % china
+           [[22 40], [105 122]]; ...               % china
+           [[-24 -8], [14 40]]];                      % south africa
 
 if plotModels
     modelLeg = {};
@@ -114,6 +124,8 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
         months(months == 0) = 12;
         months(months == 13) = 1;
         
+        months = ones([size(ampVar,3),1]);
+        
         % select amp for region for all models
         regionAmp = squeeze(nanmean(nanmean(ampVar(latInds, lonInds, :))));
 
@@ -126,6 +138,8 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
         end
         
         adjR2 = [];
+        v1slope = [];
+        v2slope = [];
         bestModel = [];
         bestCombo = 0;
         
@@ -178,9 +192,12 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
                 eval(['X = [X v' num2str(v) 'Chg];']);
             end
     
-            pcorr = partialcorr([regionAmpCur, X(:,1)], X(:,2));
-            
-            adjR2(c) = pcorr(2,1);
+            mdl = fitlm(X,regionAmpCur,'PredictorVars',curVars);
+            adjR2(c) = mdl.Rsquared.Ordinary;
+            v1slope(c) = mdl.Coefficients.Estimate(2);
+            v2slope(c) = mdl.Coefficients.Estimate(3);
+            %pcorr = partialcorr([regionAmpCur, X(:,1)], X(:,2));
+            %adjR2(c) = pcorr(2,1);
 
         end
 %         
@@ -190,8 +207,18 @@ load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
     end
 
 sortedR2 = sort(adjR2);
-for i = 0:10
+sortedR2(isnan(sortedR2)) = [];
+for i = 0:5
     ind = find(adjR2 == sortedR2(end-i));
+    fprintf('(');
+    for n = 1:N
+        fprintf('%s, ', combos{ind(1),n});
+    end
+    fprintf(') = %.2f (%.2f, %.2f)\n',adjR2(ind(1)), v1slope(ind(1)), v2slope(ind(1)));
+end
+fprintf('\n');
+for i = 1:5
+    ind = find(adjR2 == sortedR2(i));
     fprintf('(');
     for n = 1:N
         fprintf('%s, ', combos{ind(1),n});

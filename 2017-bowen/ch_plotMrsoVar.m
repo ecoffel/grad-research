@@ -204,12 +204,12 @@ for region = showRegions
             eval([var 'VarChg = chg;']);
             save(['e:/data/projects/bowen/derived-chg/' var 'VarChg-absolute-all-txx.mat'], [var 'VarChg']);
         end
-%         
-%         hflsHistorical = regionalFluxHistorical;
-%         save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
-%         
-%         hflsFuture = regionalFluxFuture;
-%         save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
+        
+        mrsoVarHistorical = regionalMrsoVarHistorical;
+        save(['e:/data/projects/bowen/derived-chg/mrsoVarHistorical-absolute-all-txx.mat'], 'mrsoVarHistorical');
+        
+        mrsoVarFuture = regionalMrsoVarFuture;
+        save(['e:/data/projects/bowen/derived-chg/mrsoVarFuture-absolute-all-txx.mat'], 'mrsoVarFuture');
 
         plotChg = nanmedian(plotChg, 3);
         plotChg(:,1) = plotChg(:,end);

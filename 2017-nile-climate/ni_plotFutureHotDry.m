@@ -1,28 +1,30 @@
 base = 'cmip5';
 
+rcp = 'rcp45';
+
 % late period
-load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-' base '-' rcp '-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-' base '-' rcp '-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-' base '-' rcp '-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-' base '-' rcp '-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 % early period
-load(['2017-nile-climate\output\dryFuture-' base '-rcp85-2031-2055.mat']);
+load(['2017-nile-climate\output\dryFuture-' base '-' rcp '-2031-2055.mat']);
 dryFutureEarly = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-rcp85-2031-2055.mat']);
+load(['2017-nile-climate\output\wetFuture-' base '-' rcp '-2031-2055.mat']);
 wetFutureEarly = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-rcp85-2031-2055.mat']);
+load(['2017-nile-climate\output\hotFuture-' base '-' rcp '-2031-2055.mat']);
 hotFutureEarly = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2031-2055.mat']);
+load(['2017-nile-climate\output\hotDryFuture-' base '-' rcp '-2031-2055.mat']);
 hotDryFutureEarly = hotDryFuture;
 
 drawScatter = true;
 drawMaps = false;
-north = false;
+north = true;
 annual = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -139,9 +141,9 @@ if drawScatter
             seasonStr = 'annual';
         end
         if north
-            export_fig(['wet-dry-chg-' seasonStr '-' base '-north.eps']);
+            export_fig(['wet-dry-chg-' seasonStr '-' base '-' rcp '-north.eps']);
         else
-            export_fig(['wet-dry-chg-' seasonStr '-' base '-south.eps']);
+            export_fig(['wet-dry-chg-' seasonStr '-' base '-' rcp '-south.eps']);
         end
         
         
