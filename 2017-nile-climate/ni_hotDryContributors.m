@@ -1,11 +1,11 @@
 % late period
-load(['2017-nile-climate\output\dryFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp45-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp45-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-annual-cmip5-rcp45-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp45-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -14,12 +14,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp85';
+rcp = 'rcp45';
 timePeriodBase = [1980 2004];
 timePeriodFuture = [2056 2080];
 
 annual = true;
-north = false;
+north = true;
 
 load lat;
 load lon;
@@ -31,12 +31,6 @@ seasons = [[12 1 2];
            [3 4 5];
            [6 7 8];
            [9 10 11]];
-
-    if annual
-        months = 1:12;
-    else
-        months = seasons(s,:);
-    end
     
     curInds = regionInds('nile');
     latIndsRegion = curInds{1};
@@ -50,10 +44,10 @@ seasons = [[12 1 2];
     latInds = curInds{1};
     lonInds = curInds{2};
     
-    dryFutureLate = 100 .* squeeze(nanmean(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
-    wetFutureLate = 100 .* squeeze(nanmean(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
-    hotFutureLate = 100 .* squeeze(nanmean(nanmean(nanmean(hotFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
-    hotDryFutureLate = 100 .* squeeze(nanmean(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
+    dryFutureLate = 100 .* squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+    wetFutureLate = 100 .* squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+    hotFutureLate = 100 .* squeeze(nanmean(nanmean(hotFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+    hotDryFutureLate = 100 .* squeeze(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
     
     % prchg vs prstd chg
     figure('Color', [1,1,1]);
@@ -85,9 +79,9 @@ seasons = [[12 1 2];
     set(gca, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
     if north
-        export_fig hot-contrib-north.eps;
+        export_fig hot-contrib-rcp45-north.eps;
     else
-        export_fig hot-contrib-south.eps;
+        export_fig hot-contrib-rcp45-south.eps;
     end
     
     
@@ -115,7 +109,7 @@ seasons = [[12 1 2];
     set(gca, 'FontSize', 40);
     set(gcf, 'Position', get(0,'Screensize'));
     if north
-        export_fig dry-contrib-north.eps;
+        export_fig dry-contrib-rcp45-north.eps;
     else
-        export_fig dry-contrib-south.eps;
+        export_fig dry-contrib-rcp45-south.eps;
     end

@@ -3,23 +3,23 @@ base = 'cmip5';
 rcp = 'rcp45';
 
 % late period
-load(['2017-nile-climate\output\dryFuture-' base '-' rcp '-2056-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-' base '-' rcp '-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-' rcp '-2056-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-' base '-' rcp '-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-' rcp '-2056-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-annual-' base '-' rcp '-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-' rcp '-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' rcp '-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 % early period
-load(['2017-nile-climate\output\dryFuture-' base '-' rcp '-2031-2055.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-' base '-' rcp '-2031-2055.mat']);
 dryFutureEarly = dryFuture;
-load(['2017-nile-climate\output\wetFuture-' base '-' rcp '-2031-2055.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-' base '-' rcp '-2031-2055.mat']);
 wetFutureEarly = wetFuture;
-load(['2017-nile-climate\output\hotFuture-' base '-' rcp '-2031-2055.mat']);
+load(['2017-nile-climate\output\hotFuture-annual-' base '-' rcp '-2031-2055.mat']);
 hotFutureEarly = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-' rcp '-2031-2055.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' rcp '-2031-2055.mat']);
 hotDryFutureEarly = hotDryFuture;
 
 drawScatter = true;
@@ -65,34 +65,24 @@ if drawScatter
         curLonInds = lonIndsSouth;
     end
     
-    for s = 1:size(seasons, 1)
-        if annual
-            months = 1:12;
-            if s > 1
-                break;
-            end
-        else
-            months = seasons(s,:);
-        end
-        
-        hotEarly = squeeze(nanmean(hotFutureEarly(:,:,months,:),3));
-        hotEarly = hotEarly(curLatInds, curLonInds, :);
-        hotEarly = squeeze(nanmean(nanmean(hotEarly,2),1));
-        hotLate = squeeze(nanmean(hotFutureLate(:,:,months,:),3));
-        hotLate = hotLate(curLatInds, curLonInds, :);
-        hotLate = squeeze(nanmean(nanmean(hotLate,2),1));
+    hotEarly = squeeze(hotFutureEarly);
+    hotEarly = hotEarly(curLatInds, curLonInds, :);
+    hotEarly = squeeze(nanmean(nanmean(hotEarly,2),1));
+    hotLate = squeeze(hotFutureLate);
+    hotLate = hotLate(curLatInds, curLonInds, :);
+    hotLate = squeeze(nanmean(nanmean(hotLate,2),1));
 
-        dryEarly = squeeze(nanmean(dryFutureEarly(:,:,months,:),3));
-        dryEarly = dryEarly(curLatInds, curLonInds, :);
-        dryEarly = squeeze(nanmean(nanmean(dryEarly,2),1));
-        dryLate = squeeze(nanmean(dryFutureLate(:,:,months,:),3));
-        dryLate = dryLate(curLatInds, curLonInds, :);
-        
-        wetEarly = squeeze(nanmean(wetFutureEarly(:,:,months,:),3));
-        wetEarly = wetEarly(curLatInds, curLonInds, :);
-        wetEarly = squeeze(nanmean(nanmean(wetEarly,2),1));
-        wetLate = squeeze(nanmean(wetFutureLate(:,:,months,:),3));
-        wetLate = wetLate(curLatInds, curLonInds, :);
+    dryEarly = squeeze(dryFutureEarly);
+    dryEarly = dryEarly(curLatInds, curLonInds, :);
+    dryEarly = squeeze(nanmean(nanmean(dryEarly,2),1));
+    dryLate = squeeze(dryFutureLate);
+    dryLate = dryLate(curLatInds, curLonInds, :);
+
+    wetEarly = squeeze(wetFutureEarly);
+    wetEarly = wetEarly(curLatInds, curLonInds, :);
+    wetEarly = squeeze(nanmean(nanmean(wetEarly,2),1));
+    wetLate = squeeze(wetFutureLate);
+    wetLate = wetLate(curLatInds, curLonInds, :);
 %         dryLateSig = [];
 %         wetLateSig = [];
 %         for m = 1:size(dryLate, 3)
@@ -101,101 +91,48 @@ if drawScatter
 %             dryLateSig(m) = kstest2(dd, zeros(size(dd)));
 %             wetLateSig(m) = kstest2(ww, zeros(size(ww)));
 %         end
-        
-        dryLate = squeeze(nanmean(nanmean(dryLate,2),1));
-        wetLate = squeeze(nanmean(nanmean(wetLate,2),1));
 
-        hotdryEarly = squeeze(nanmean(hotDryFutureEarly(:,:,months,:),3));
-        hotdryEarly = hotdryEarly(curLatInds, curLonInds, :);
-        hotdryEarly = squeeze(nanmean(nanmean(hotdryEarly,2),1));
-        hotdryLate = squeeze(nanmean(hotDryFutureLate(:,:,months,:),3));
-        hotdryLate = hotdryLate(curLatInds, curLonInds, :);
-        hotdryLate = squeeze(nanmean(nanmean(hotdryLate,2),1));
+    dryLate = squeeze(nanmean(nanmean(dryLate,2),1));
+    wetLate = squeeze(nanmean(nanmean(wetLate,2),1));
 
-        figure('Color', [1,1,1]);
-        hold on;
-        box on;
-        axis square;
-        grid on;
-        
-        for m = 1:length(dryLate)
-            t = text(dryLate(m), wetLate(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
-            t.FontSize = 18;
-        end
-        
-        plot([0 1], [.1 .1], '--k');
-        plot([.1 .1], [0 1], '--k');
-        
-        xlim([0 .5]);
-        xlabel('Dry years (fraction)');
-        set(gca, 'XTick', 0:.1:.5);
-        set(gca, 'YTick', 0:.1:.5);
-        ylim([0 .5]);
-        ylabel('Wet years (fraction)');
-        set(gca,'FontSize', 36);
-        
-        set(gcf, 'Position', get(0,'Screensize'));
-        
-        seasonStr = seasonNames{s};
-        if annual
-            seasonStr = 'annual';
-        end
-        if north
-            export_fig(['wet-dry-chg-' seasonStr '-' base '-' rcp '-north.eps']);
-        else
-            export_fig(['wet-dry-chg-' seasonStr '-' base '-' rcp '-south.eps']);
-        end
-        
-        
-        
-        
-        figure('Color', [1,1,1]);
-        hold on;
-        box on;
-        axis square;
-        grid on;
+    hotdryEarly = squeeze(hotDryFutureEarly);
+    hotdryEarly = hotdryEarly(curLatInds, curLonInds, :);
+    hotdryEarly = squeeze(nanmean(nanmean(hotdryEarly,2),1));
+    hotdryLate = squeeze(hotDryFutureLate);
+    hotdryLate = hotdryLate(curLatInds, curLonInds, :);
+    hotdryLate = squeeze(nanmean(nanmean(hotdryLate,2),1));
 
-        b = boxplot([hotEarly hotLate wetEarly wetLate dryEarly dryLate hotdryEarly hotdryLate], ...
-                     'colors', repmat('br', 1, 8), 'positions', [.8 1.2 1.8 2.2 2.8 3.2 3.8 4.2]);
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    axis square;
+    grid on;
 
-        for bind = 1:size(b, 2)
-            if mod(bind,2) ~= 0
-                set(b(:,bind), {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
-                lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
-                set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
-            else
-                set(b(:, bind), {'LineWidth', 'Color'}, {2, [247, 92, 81]./255.0})
-                lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
-                set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
-            end
-        end
-
-        plot([0 5], [.1 .1], '--k', 'LineWidth', 2);
-
-        ylim([0 1]);
-        xlim([0 5]);
-        set(gca, 'YTick', [0 .1 .2 .3 .4 .5 .6 .7 .8 .9 1]);
-        ylabel('Fraction of Years');
-        set(gca, 'XTick', [1,2,3,4], 'XTickLabels', {'Hot (> 90%)', 'Wet (> 90%)', 'Dry (< 10%)', 'Hot & dry'});
-        set(gca, 'FontSize', 36);
-        xtickangle(45);
-        %title([seasonNames{s}]);
-        set(gcf, 'Position', get(0,'Screensize'));
-        
-        seasonStr = seasonNames{s};
-        if annual
-            seasonStr = 'annual';
-        end
-        if north
-            export_fig(['hot-dry-fraction-' seasonStr '-' base '-north.eps']);
-        else
-            export_fig(['hot-dry-fraction-' seasonStr '-' base '-south.eps']);
-        end
-        close all;
+    for m = 1:length(dryLate)
+        t = text(dryLate(m)*100, wetLate(m)*100, num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+        t.FontSize = 18;
     end
+
+    plot([0 100], [10 10], '--k');
+    plot([10 10], [0 100], '--k');
+
+    xlim([0 50]);
+    xlabel('Dry years (%)');
+    set(gca, 'XTick', 0:10:50);
+    set(gca, 'YTick', 0:10:80);
+    ylim([0 80]);
+    ylabel('Wet years (%)');
+    set(gca,'FontSize', 36);
+
+    set(gcf, 'Position', get(0,'Screensize'));
+
+    if north
+        export_fig(['wet-dry-chg-annual-' base '-' rcp '-north.eps']);
+    else
+        export_fig(['wet-dry-chg-annual-' base '-' rcp '-south.eps']);
+    end
+    close all;
 end
-
-
 
 
 

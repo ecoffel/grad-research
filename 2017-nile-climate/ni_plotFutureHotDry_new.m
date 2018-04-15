@@ -1,20 +1,20 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-' base '-historical-1980-2004.mat']);
-hotDryHistorical = hotDryFuture(:, :, :, [1:9 11:23]);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004.mat']);
+hotDryHistorical = hotDryFuture(:, :, [1:9 11:23]);
 
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp45-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080.mat']);
 hotDryFutureLate45 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080.mat']);
 hotDryFutureLate85 = hotDryFuture;
 
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp45-2031-2055.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2031-2055.mat']);
 hotDryFutureEarly45 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-' base '-rcp85-2031-2055.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2031-2055.mat']);
 hotDryFutureEarly85 = hotDryFuture;
 
-drawScatter = true;
-drawMap = false;
+drawScatter = false;
+drawMap = true;
 north = false;
 annual = true;
 
@@ -56,104 +56,90 @@ if drawScatter
         curLonInds = lonIndsSouth;
     end
     
-    for s = 1:size(seasons, 1)
-        if annual
-            months = 1:12;
-            if s > 1
-                break;
-            end
-        else
-            months = seasons(s,:);
-        end
-        
-        hotdryHistorical = squeeze(nanmean(hotDryHistorical(:,:,months,:),3));
-        hotdryHistorical = hotdryHistorical(curLatInds, curLonInds, :);
-        hotdryHistorical = squeeze(nanmean(nanmean(hotdryHistorical,2),1));
-        hotdryHistorical(end+1) = NaN;
-        hotdryEarly45 = squeeze(nanmean(hotDryFutureEarly45(:,:,months,:),3));
-        hotdryEarly45 = hotdryEarly45(curLatInds, curLonInds, :);
-        hotdryEarly45 = squeeze(nanmean(nanmean(hotdryEarly45,2),1));
-        hotdryEarly45(end+1) = NaN;
-        
-        hotdryEarly85 = squeeze(nanmean(hotDryFutureEarly85(:,:,months,:),3));
-        hotdryEarly85 = hotdryEarly85(curLatInds, curLonInds, :);
-        hotdryEarly85 = squeeze(nanmean(nanmean(hotdryEarly85,2),1));
-        
-        hotdryLate45 = squeeze(nanmean(hotDryFutureLate45(:,:,months,:),3));
-        hotdryLate45 = hotdryLate45(curLatInds, curLonInds, :);
-        hotdryLate45 = squeeze(nanmean(nanmean(hotdryLate45,2),1));
-        hotdryLate45(end+1) = NaN;
-        
-        hotdryLate85 = squeeze(nanmean(hotDryFutureLate85(:,:,months,:),3));
-        hotdryLate85 = hotdryLate85(curLatInds, curLonInds, :);
-        hotdryLate85 = squeeze(nanmean(nanmean(hotdryLate85,2),1));
+    hotdryHistorical = hotDryHistorical;
+    hotdryHistorical = hotdryHistorical(curLatInds, curLonInds, :);
+    hotdryHistorical = squeeze(nanmean(nanmean(hotdryHistorical,2),1));
+    hotdryHistorical(end+1) = NaN;
+    hotdryEarly45 = hotDryFutureEarly45;
+    hotdryEarly45 = hotdryEarly45(curLatInds, curLonInds, :);
+    hotdryEarly45 = squeeze(nanmean(nanmean(hotdryEarly45,2),1));
+    hotdryEarly45(end+1) = NaN;
 
-        figure('Color', [1,1,1]);
-        hold on;
-        box on;
-        grid on;
-        axis square;
+    hotdryEarly85 = hotDryFutureEarly85;
+    hotdryEarly85 = hotdryEarly85(curLatInds, curLonInds, :);
+    hotdryEarly85 = squeeze(nanmean(nanmean(hotdryEarly85,2),1));
 
-        b = boxplot([hotdryHistorical.*100 hotdryEarly45.*100 hotdryEarly85.*100 hotdryLate45.*100 hotdryLate85.*100], ...
-                     'colors', 'gbrbr', 'positions', [1 3 4 6 7]);
+    hotdryLate45 = hotDryFutureLate45;
+    hotdryLate45 = hotdryLate45(curLatInds, curLonInds, :);
+    hotdryLate45 = squeeze(nanmean(nanmean(hotdryLate45,2),1));
+    hotdryLate45(end+1) = NaN;
 
-        for bind = 1:size(b, 2)
-            if bind == 1
-                set(b(:,bind), {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
-                lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
-                set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
-            elseif bind == 2 || bind == 4
-                set(b(:, bind), {'LineWidth', 'Color'}, {2, [239, 168, 55]./255.0})
-                lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
-                set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
-            elseif bind == 3 || bind == 5
-                set(b(:, bind), {'LineWidth', 'Color'}, {2, [247, 92, 81]./255.0})
-                lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
-                set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
-            end
-        end
+    hotdryLate85 = hotDryFutureLate85;
+    hotdryLate85 = hotdryLate85(curLatInds, curLonInds, :);
+    hotdryLate85 = squeeze(nanmean(nanmean(hotdryLate85,2),1));
 
-        ylim([0 40]);
-        xlim([0 8]);
-        set(gca, 'YTick', [0 5 10 20 30 40]);
-        ylabel('% of years');
-        set(gca, 'XTick', [1,3.5,6.5], 'XTickLabels', {'1980 - 2004', '2031 - 2055', '2056 - 2080'});
-        set(gca, 'FontSize', 36);
-        xtickangle(45);
-        %title([seasonNames{s}]);
-        set(gcf, 'Position', get(0,'Screensize'));
-        
-        seasonStr = seasonNames{s};
-        if annual
-            seasonStr = 'annual';
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    grid on;
+    axis square;
+
+    b = boxplot([hotdryHistorical.*100 hotdryEarly45.*100 hotdryEarly85.*100 hotdryLate45.*100 hotdryLate85.*100], ...
+                 'colors', 'gbrbr', 'positions', [1 3 4 6 7]);
+
+    for bind = 1:size(b, 2)
+        if bind == 1
+            set(b(:,bind), {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+            lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+            set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+        elseif bind == 2 || bind == 4
+            set(b(:, bind), {'LineWidth', 'Color'}, {2, [239, 168, 55]./255.0})
+            lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+            set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+        elseif bind == 3 || bind == 5
+            set(b(:, bind), {'LineWidth', 'Color'}, {2, [247, 92, 81]./255.0})
+            lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+            set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
         end
-        if north
-            export_fig(['hot-dry-fraction-' seasonStr '-' base '-north.eps']);
-        else
-            export_fig(['hot-dry-fraction-' seasonStr '-' base '-south.eps']);
-        end
-        close all;
     end
+
+    ylim([0 40]);
+    xlim([0 8]);
+    set(gca, 'YTick', [0 5 10 20 30 40]);
+    ylabel('% of years');
+    set(gca, 'XTick', [1,3.5,6.5], 'XTickLabels', {'1980 - 2004', '2031 - 2055', '2056 - 2080'});
+    set(gca, 'FontSize', 40);
+    xtickangle(45);
+    %title([seasonNames{s}]);
+    set(gcf, 'Position', get(0,'Screensize'));
+
+    if north
+        export_fig(['hot-dry-fraction-annual-' base '-north.eps']);
+    else
+        export_fig(['hot-dry-fraction-annual-' base '-south.eps']);
+    end
+    close all;
 end
 
 if drawMap
+    
+    [regionInds, regions, regionNames] = ni_getRegions();
     curInds = regionInds('nile');
     latInds = curInds{1};
     lonInds = curInds{2};
     
-    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* nanmedian(squeeze(nanmean(hotDryHistorical, 3)), 3)}; 
+    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* nanmedian(squeeze(nanmean(hotDryFutureLate45, 3)), 3)}; 
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'nile', ...
-                      'plotRange', [0 15], ...
-                      'cbXTicks', 0:5:15, ...
+                      'plotRange', [0 20], ...
+                      'cbXTicks', 0:5:20, ...
                       'plotTitle', [''], ...
-                      'fileTitle', ['hot-dry-historical-annual.eps'], ...
+                      'fileTitle', ['hot-dry-rcp45-annual.eps'], ...
                       'plotXUnits', ['% of years'], ...
                       'blockWater', true, ...
                       'colormap', brewermap([], 'Oranges'), ...
                       'plotCountries', true, ...
-                      'statData', sig <= .67*length(models), ...
                       'boxCoords', {[[13 32], [29, 34];
                                      [2 13], [25 42]]});
     plotFromDataFile(saveData);

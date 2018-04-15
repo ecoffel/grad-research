@@ -10,7 +10,7 @@ useTxxChg = false;
 useTxWarmAnom = false;
 useTxWarmChg = false;
 
-var1 = 'hfssChgWarmTxxAnom';
+var1 = 'prChgWarmTxxAnom';
 var1Months = [1];
 v1XStr = ['TXx hfss chg minus warm (W/m^2)'];
 v1XLim = [-15 20];
@@ -19,7 +19,7 @@ v1AbsoluteStr = '';
 v1Subset = '';
 v1FileStr = [var1 v1AbsoluteStr '-warm'];
 
-showVar3 = true;
+showVar3 = false;
 % shown in colors
 var3 = 'mrsoChgWarmTxxAnom';
 v3YStr = ['TXx mrso chg minus warm (%)'];
@@ -30,13 +30,12 @@ v3FileStr = [var3 v3AbsoluteStr];
 v3ColorOffset = 0;
 v3Colormap = 'BrBG';
 
-
 scatterPlots = true;
 saveScatter = false;
 globalCorrMap = false;
 oneToOne = false;
 
-selRegions = [2 4 7 10];
+selRegions = [11];
 
 % txx amp
 if useTxxSeasonalAmp

@@ -1,7 +1,7 @@
-var = 'mrso';
+var = 'pr';
 
 load(['E:\data\projects\bowen\derived-chg\' var 'ChgTxxMonths.mat']);
-load(['E:\data\projects\bowen\derived-chg\' var 'Chg-all-txx.mat']);
+load(['E:\data\projects\bowen\derived-chg\' var 'Chg-absolute-all-txx.mat']);
 
 load lat;
 load lon;
