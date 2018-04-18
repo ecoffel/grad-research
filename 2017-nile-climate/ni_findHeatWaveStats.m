@@ -1,4 +1,7 @@
 function [heatWaveDurMean, heatWaveDurMax, heatWaveIntMean, heatWaveIntMax] = findHeatWaveStats(dataBase, dataFuture, percentile)
+
+    minDur = 3;
+
     heatWaveDurMean = []; 
     heatWaveDurMax = []; 
     heatWaveIntMean = []; 
@@ -22,7 +25,7 @@ function [heatWaveDurMean, heatWaveDurMax, heatWaveIntMean, heatWaveIntMax] = fi
 
                 % find all days above threshold temperature
                 indTemp = find(d > threshTemp);
-
+                
                 % for how ever many days long wave we're looking for, take
                 % difference of temp threshold indices - so if 1, that means
                 % consequitive hot days
@@ -30,6 +33,8 @@ function [heatWaveDurMean, heatWaveDurMax, heatWaveIntMean, heatWaveIntMax] = fi
                 x = (diff(indTemp))'==1;
                 f = find([false, x] ~= [x, false]);
                 indDur = f(2:2:end)-f(1:2:end-1);
+                
+                indDur(indDur < minDur) = [];
 
                 % average number of events per year
                 if length(indDur) > 0

@@ -1,14 +1,14 @@
-dataset = 'ncep-reanalysis';
+dataset = 'cmip5';
 
 switch (dataset)
     case 'cmip5'
         models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-                      'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+                      'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
                       'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-        timePeriod = [2021 2050];
-        rcp = 'rcp45';
+        timePeriod = [2056 2080];
+        rcp = 'rcp85';
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
@@ -39,6 +39,10 @@ for model = 1:length(models)
     tempSeasonal = {};
 
     if strcmp(dataset, 'cmip5')
+        if exist(['2017-nile-climate/output/temp-seasonal-' dataset '-historical-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'])
+            continue;
+        end
+        
         fprintf('loading %s...\n', models{model});
         tmax = loadDailyData(['E:\data\cmip5\output\' models{model} '\r1i1p1\' rcp '\tasmax\regrid\world'], 'startYear', timePeriod(1), 'endYear', timePeriod(end));
         if nanmean(nanmean(nanmean(nanmean(nanmean(tmax{3}))))) > 100
@@ -61,7 +65,7 @@ for model = 1:length(models)
     end
     
     if strcmp(dataset, 'cmip5')
-        save(['2017-nile-climate/output/temp-seasonal-' dataset '-historical-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempSeasonal');
+        save(['2017-nile-climate/output/temp-seasonal-' dataset '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempSeasonal');
     else
         save(['2017-nile-climate/output/temp-seasonal-' dataset '.mat'], 'tempSeasonal');
     end

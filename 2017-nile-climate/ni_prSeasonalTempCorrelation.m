@@ -1,7 +1,8 @@
-plotCorr = true;
+plotCorrBox = false;
+plotCorrMap = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
@@ -9,8 +10,11 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 tempCmip5 = {};
 prCmip5 = {};
 for model = 1:length(models)
-    load(['2017-nile-climate/output/temp-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
-    load(['2017-nile-climate/output/pr-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
+    %load(['2017-nile-climate/output/temp-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
+    %load(['2017-nile-climate/output/pr-seasonal-cmip5-historical-1980-2004-' models{model} '.mat']);
+    
+    load(['2017-nile-climate/output/temp-seasonal-cmip5-rcp85-2056-2080-' models{model} '.mat']);
+    load(['2017-nile-climate/output/pr-seasonal-cmip5-rcp85-2056-2080-' models{model} '.mat']);
     for s = 1:length(prSeasonal)
         prCmip5{s}(:, :, :, model) = prSeasonal{s};
         tempCmip5{s}(:, :, :, model) = tempSeasonal{s};
@@ -186,7 +190,34 @@ for s = 1:size(seasons, 1)
 
 end
 
-if plotCorr
+if plotCorrMap
+    [regionInds, regions, regionNames] = ni_getRegions();
+    curInds = regionInds('nile');
+    latInds = curInds{1};
+    lonInds = curInds{2};
+    
+    seasonNames = {'DJF', 'MAM', 'JJA', 'SON'};
+    
+    for s = 1:4
+        result = {lat(latInds,lonInds), lon(latInds,lonInds), nanmedian(tempPrCorrCmip5(:,:,s,:), 4)}; 
+
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'nile', ...
+                          'plotRange', [-1 1], ...
+                          'cbXTicks', -1:.5:1, ...
+                          'plotTitle', [''], ...
+                          'fileTitle', ['temp-pr-corr-cmip5-rcp85-' seasonNames{s} '.eps'], ...
+                          'plotXUnits', ['Correlation'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([], 'RdBu'), ...
+                          'plotCountries', true, ...
+                          'boxCoords', {[[13 32], [29, 34];
+                                         [2 13], [25 42]]});
+        plotFromDataFile(saveData);
+    end
+end
+
+if plotCorrBox
     figure('Color', [1,1,1]);
     colors = get(gca, 'colororder');
     hold on;

@@ -1,5 +1,5 @@
 makeCounts = false;
-plotModels = true;
+plotModels = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -80,8 +80,6 @@ if makeCounts
                 end
             end
         end
-
-
 
         fprintf('loading %s mrso future...\n', models{m});
         mrsoFut = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/rcp85/mrso/regrid/world'], 'mrso', 'startYear', 2056, 'endYear', 2080);

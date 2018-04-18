@@ -1,11 +1,16 @@
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-historical-1980-2004.mat']);
+dryHist = dryFuture;
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-historical-1980-2004.mat']);
+wetHist = wetFuture;
+
 % late period
-load(['2017-nile-climate\output\dryFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-annual-cmip5-rcp85-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-cmip5-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -46,74 +51,109 @@ end
 
 prChg = [];
 prSig = [];
+s = 1;
 
-    if annual
-        months = 1:12;
-    else
-        months = seasons(s,:);
-    end
+if annual
+    months = 1:12;
+else
+    months = seasons(s,:);
+end
+
+curInds = regionInds('nile');
+latIndsRegion = curInds{1};
+lonIndsRegion = curInds{2};
+
+if north
+    curInds = regionInds('nile-north');
+else
+    curInds = regionInds('nile-south');
+end
+latInds = curInds{1};
+lonInds = curInds{2};
+
+prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
+prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
+
+dryHist = squeeze(nanmean(nanmean(dryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+wetHist = squeeze(nanmean(nanmean(wetHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+
+prChg = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
+prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1));
+
+wet = true;
+std = true;
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+
+if std
+    chgvar = prStd;
+else
+    chgvar = prChg;
+end
+
+if wet
+    seasonvar = wetFutureLate;
+else
+    seasonvar = dryFutureLate;
+end
     
-    curInds = regionInds('nile');
-    latIndsRegion = curInds{1};
-    lonIndsRegion = curInds{2};
-    
-    if north
-        curInds = regionInds('nile-north');
-    else
-        curInds = regionInds('nile-south');
-    end
-    latInds = curInds{1};
-    lonInds = curInds{2};
-    
-    prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
-    prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
-    
-    dryFutureLate = squeeze(nanmean(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
-    wetFutureLate = squeeze(nanmean(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :), 3), 2), 1));
-    
-    prChg(s, :) = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
-    prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1));
 
-    % prchg vs prstd chg
-    figure('Color', [1,1,1]);
-    hold on;
-    box on;
-    grid on;
-    axis square;
+for m = 1:size(prFut, 2)
+    t = text(chgvar(m), seasonvar(m) * 100, num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+    t.FontSize = 18;
+end
 
-    for m = 1:size(prFut, 2)
-        prSig(s, m) = kstest2(squeeze(prFut(:, m)), squeeze(prHist(:, m)));
+[f, gof] = fit(chgvar', seasonvar .* 100, 'poly1');
+cint = confint(f);
+p = plot([min(chgvar) max(chgvar)], [f(min(chgvar)) f(max(chgvar))], '--b', 'LineWidth', 2);
 
-        if prSig(s, m)
-            plot(prChg(m), prStd(m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
-        end
-        t = text(prChg(m), prStd(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
-        t.FontSize = 18;
-    end
+if std
+    corrval = partialcorr([seasonvar, prStd'], prChg');
+    corrval = corrval(2, 1);
+else
+    corrval = corr(seasonvar, chgvar');
+end
 
-    pchg = prChg';
-    pstd = prStd';
-    outind = find(pchg>nanmean(pchg)+2*std(pchg) | pchg<nanmean(pchg)-2*std(pchg) | ...
-             pstd>nanmean(pstd)+2*std(pstd) | pstd<nanmean(pstd)-2*std(pstd));
-
-    pchg(outind) = [];
-    pstd(outind) = [];
-
-    f = fit(pchg, pstd, 'poly1');
-    cint = confint(f);
-    if sign(cint(1,1)) == sign(cint(2,1))
-        plot([min(pchg) max(pchg)], [f(min(pchg)) f(max(pchg))], '--b', 'LineWidth', 2);
-    end
-
-    if north
-        xlim([-.2 .4]);
-        set(gca, 'XTick', -.2:.1:.4)
-    else
-        xlim([-.6 1.2]);
-        set(gca, 'XTick', -.6:.3:1.2)
-    end
+xlim([-.4 1.2]);
+set(gca, 'XTick', -.4:.4:1.2)
+ylim([0 70]);
+set(gca, 'YTick', 0:10:70)
+if std
+    xlabel('P std. dev. change (mm/day)');
+else
     xlabel('Precipitation change (mm/day)');
-    ylim([-.2 .3]);
-    set(gca, 'YTick', -.2:.1:.3);
-    ylabel('Precipitation std. dev. change (mm/day)');
-    set(gca, 'FontSize', 36);
+end
+
+if wet
+    ylabel('Future wet season frequency (%)');
+else
+    ylabel('Future dry season frequency (%)');
+end
+set(gca, 'FontSize', 40);
+if std
+    legend([p], {sprintf('Partial correlation = %.2f', corrval)}, 'location', 'northeast');
+else
+    legend([p], {sprintf('Correlation = %.2f', corrval)}, 'location', 'northeast');
+end
+set(gcf, 'Position', get(0,'Screensize'));
+if wet
+    if std
+        export_fig prstd-wet-south-rcp85.eps;
+    else
+        export_fig prchg-wet-south-rcp85.eps;
+    end
+else
+    if std
+        export_fig prstd-dry-south-rcp85.eps;
+    else
+        export_fig prchg-dry-south-rcp85.eps;
+    end
+end
+close all;
+
