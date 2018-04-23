@@ -1,5 +1,5 @@
-plotCorrBox = false;
-plotCorrMap = true;
+plotCorrBox = true;
+plotCorrMap = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -47,8 +47,16 @@ lonGldas = lon;
 load 2017-nile-climate/output/pr-seasonal-chirps.mat;
 prChirps = prSeasonal;
 
+if ~exist('gpcp', 'var')
+    fprintf('loading GPCP...\n');
+    prGpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\1979-2017', 'precip', 'startYear', 1981, 'endYear', 2016);
+end
+
 load lat;
 load lon;
+
+load lat-cpc;
+load lon-cpc;
 
 % find bounds of whole region and north/south subregions
 regionBounds = [[2 32]; [25, 44]];
@@ -59,9 +67,23 @@ regionBoundsSouth = [[2 13]; [25, 42]];
 [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
 
+latGpcp = prGpcp{1};
+lonGpcp = prGpcp{2};
+[latIndsGpcp, lonIndsGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBounds(1,:), regionBounds(2,:));
+[latIndsNorthGpcp, lonIndsNorthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
+[latIndsSouthGpcp, lonIndsSouthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+
 [latIndsGldas, lonIndsGldas] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
 [latIndsNorthGldas, lonIndsNorthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouthGldas, lonIndsSouthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+
+[latIndsCpc, lonIndsCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBounds(1,:), regionBounds(2,:));
+[latIndsNorthCpc, lonIndsNorthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
+[latIndsSouthCpc, lonIndsSouthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+latIndsNorthRelCpc = latIndsNorthCpc-latIndsCpc(1)+1;
+latIndsSouthRelCpc = latIndsSouthCpc-latIndsCpc(1)+1;
+lonIndsNorthRelCpc = lonIndsNorthCpc-lonIndsCpc(1)+1;
+lonIndsSouthRelCpc = lonIndsSouthCpc-lonIndsCpc(1)+1;
 
 load 2017-nile-climate\hottest-season-ncep.mat;
 hottestNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
@@ -78,6 +100,31 @@ latIndsNorthGldas = latIndsNorthGldas-latInds(1)+1;
 lonIndsSouthGldas = lonIndsSouthGldas-lonInds(1)+1;
 lonIndsNorthGldas = lonIndsNorthGldas-lonInds(1)+1;
 
+if ~exist('cpc', 'var')   
+    tempCpc = [];
+    for year = 1981:2016
+        fprintf('cpc year %d...\n', year);
+        load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\temp-monthly-cpc-' num2str(year) '.mat']);
+        cpcTemp{3} = cpcTemp{3};
+%         cpcRegrid = [];
+%         for m = 1:12
+%              tmpcpc = regridGriddata({latCpc(latIndsCpc,lonIndsCpc), lonCpc(latIndsCpc,lonIndsCpc), cpcTemp{3}(:,:,m)}, ...
+%                                               {latGpcp(latIndsGpcp, lonIndsGpcp), lonGpcp(latIndsGpcp, lonIndsGpcp), []}, false);
+%              cpcRegrid(:,:,m) = tmpcpc{3};
+%         end
+
+        if length(tempCpc) == 0
+            tempCpc = cpcTemp{3};
+        else
+            tempCpc = cat(4, tempCpc, cpcTemp{3});
+        end
+
+        clear cpcTemp;
+    end
+    tempCpc = permute(tempCpc, [1 2 4 3]);
+end
+
+
 seasons = [[12 1 2]; 
            [3 4 5];
            [6 7 8];
@@ -86,6 +133,7 @@ seasons = [[12 1 2];
 tempPrCorrNcep = [];
 tempPrCorrEra = [];
 tempPrCorrGldas = [];
+tempPrCorrCpc = [];
 tempPrCorrCmip5 = [];
 
 tempPrSouthCorrNcep = [];
@@ -94,6 +142,8 @@ tempPrSouthCorrEra = [];
 tempPrNorthCorrEra = [];
 tempPrSouthCorrGldas = [];
 tempPrNorthCorrGldas = [];
+tempPrSouthCorrCpc = [];
+tempPrNorthCorrCpc = [];
 tempPrNorthCorrCmip5 = [];
 tempPrSouthCorrCmip5 = [];
 for s = 1:size(seasons, 1)
@@ -170,12 +220,14 @@ for s = 1:size(seasons, 1)
     prNorth = squeeze(nanmean(nanmean(prGldas{s}(latIndsNorthGldas, lonIndsNorthGldas, :), 2), 1));
     tempPrNorthCorrGldas(s) = corr(detrend(tempNorth), detrend(prNorth));
     
-    % CHIRPS - ERA
-    prSouth = squeeze(nanmean(nanmean(prChirps{s}(latIndsSouth, lonIndsSouth, :), 2), 1));
-    tempPrSouthCorrChirpsEra(s) = corr(detrend(tempSouthEra), detrend(prSouth));
+    % CPC - GPCP
+    prSouth = squeeze(nanmean(nanmean(nanmean(prGpcp{3}(latIndsSouthGpcp, lonIndsSouthGpcp, :, seasons(s,:)), 4), 2), 1));
+    tempSouth = squeeze(nanmean(nanmean(nanmean(tempCpc(latIndsSouthRelCpc, lonIndsSouthRelCpc, :, seasons(s,:)), 4), 2), 1));
+    tempPrSouthCorrCpc(s) = corr(detrend(tempSouth), detrend(prSouth));
 
-    prNorth = squeeze(nanmean(nanmean(prChirps{s}(latIndsNorth, lonIndsNorth, :), 2), 1));
-    tempPrNorthCorrChirpsEra(s) = corr(detrend(tempNorthEra), detrend(prNorth));
+    prNorth = squeeze(nanmean(nanmean(nanmean(prGpcp{3}(latIndsNorthGpcp, lonIndsNorthGpcp, :, seasons(s,:)), 4), 2), 1));
+    tempNorth = squeeze(nanmean(nanmean(nanmean(tempCpc(latIndsNorthRelCpc, lonIndsNorthRelCpc, :, seasons(s,:)), 4), 2), 1));
+    tempPrNorthCorrCpc(s) = corr(detrend(tempNorth), detrend(prNorth));
     
     % and for models
     for model = 1:length(models)
@@ -233,7 +285,8 @@ if plotCorrBox
     plot(tempPrNorthCorrNcep, 'o', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrNorthCorrEra, 'x', 'Color', 'k','MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrNorthCorrGldas, 'd', 'Color', 'k','MarkerSize', 30, 'LineWidth', 2);
-    plot(tempPrNorthCorrChirpsEra, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrNorthCorrCpc, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
+    %plot(tempPrNorthCorrChirpsEra, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
@@ -242,7 +295,7 @@ if plotCorrBox
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestNorth} = ['\color{red} ' ax.XTickLabels{hottestNorth}];
 
-    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CHIRPS-ERA');
+    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CPC-GPCP');
     set(leg, 'location', 'northwest');
     ylim([-1 1]);
     xlim([.5 4.5]);
@@ -266,7 +319,7 @@ if plotCorrBox
     plot(tempPrSouthCorrNcep, 'o', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrSouthCorrEra, 'x', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot(tempPrSouthCorrGldas, 'd', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
-    plot(tempPrSouthCorrChirpsEra, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
+    plot(tempPrSouthCorrCpc, 's', 'Color', 'k', 'MarkerSize', 30, 'LineWidth', 2);
     plot([0 5], [0 0], 'k--');
     set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
@@ -275,7 +328,7 @@ if plotCorrBox
     ax.TickLabelInterpreter = 'tex';
     ax.XTickLabels{hottestSouth} = ['\color{red} ' ax.XTickLabels{hottestSouth}];
 
-    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CHIRPS-ERA');
+    leg = legend(' NCEP II', ' ERA-Interim', ' GLDAS', ' CPC-GPCP');
     set(leg, 'location', 'northwest');
     ylim([-1 1]);
     xlim([.5 4.5]);

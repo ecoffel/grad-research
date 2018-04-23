@@ -1,0 +1,34 @@
+largeArea = true;
+
+% this is to allow for regridding to the 2 degree grid
+if largeArea
+    regionBounds = [[-1 36]; [22, 47]]; 
+else
+    regionBounds = [[2 32]; [25, 44]];
+end
+
+fprintf('loading CPC...\n');
+for year = 1981:1:2016
+    fprintf('cpc year %d...\n', year);
+    cpcTemp = {};
+    curcpc = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', year, 'endYear', year);
+    curcpc = dailyToMonthly(curcpc);
+    latCpc = curcpc{1};
+    lonCpc = curcpc{2};
+    
+    if year == 1981
+        save('lat-cpc.mat', 'latCpc');
+        save('lon-cpc.mat', 'lonCpc');
+    end
+    
+    [latInds, lonInds] = latLonIndexRange({latCpc,lonCpc,[]}, regionBounds(1,:), regionBounds(2,:));
+    
+    cpcTemp = {curcpc{1}(latInds, lonInds), curcpc{2}(latInds, lonInds), squeeze(curcpc{3}(latInds, lonInds, :))};
+    
+    if largeArea
+        save(['2017-nile-climate/output/temp-monthly-cpc-' num2str(year) '-largeArea.mat'], 'cpcTemp');
+    else
+        save(['2017-nile-climate/output/temp-monthly-cpc-' num2str(year) '.mat'], 'cpcTemp');
+    end
+    clear curcpc cpcTemp;
+end

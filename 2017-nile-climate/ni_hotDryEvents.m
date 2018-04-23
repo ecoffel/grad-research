@@ -126,10 +126,40 @@ if ~exist('chirpsRaw', 'var')
 %     lonIndChirpsSouth = lonIndChirpsSouth - lonIndChirps(1) + 1;
 end
 
+if ~exist('cpc', 'var')   
+    load lat-cpc;
+    load lon-cpc;
+
+    [latIndsCpc, lonIndsCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBounds(1,:), regionBounds(2,:));
+    [latIndsNorthCpc, lonIndsNorthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
+    [latIndsSouthCpc, lonIndsSouthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+    latIndsNorthRelCpc = latIndsNorthCpc-latIndsCpc(1)+1;
+    latIndsSouthRelCpc = latIndsSouthCpc-latIndsCpc(1)+1;
+    lonIndsNorthRelCpc = lonIndsNorthCpc-lonIndsCpc(1)+1;
+    lonIndsSouthRelCpc = lonIndsSouthCpc-lonIndsCpc(1)+1;
+    
+    tempCpc = [];
+    for year = 1981:2016
+        fprintf('cpc year %d...\n', year);
+        load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\temp-monthly-cpc-' num2str(year) '.mat']);
+        cpcTemp{3} = cpcTemp{3};
+
+        if length(tempCpc) == 0
+            tempCpc = cpcTemp{3};
+        else
+            tempCpc = cat(4, tempCpc, cpcTemp{3});
+        end
+
+        clear cpcTemp;
+    end
+    tempCpc = permute(tempCpc, [1 2 4 3]);
+end
+
 if north
     tmaxEra = tmaxEraRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     tmaxNcep = tmaxNcepRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     tmaxGldas = tmaxGldasRaw{3}(latIndsNorthGldas, lonIndsNorthGldas, :, :);
+    tmaxCpc = tempCpc(latIndsNorthRelCpc, lonIndsNorthRelCpc, :, :);
 
     prEra = prEraRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     prNcep = prNcepRaw{3}(latIndsNorth, lonIndsNorth, :, :);
@@ -140,6 +170,7 @@ else
     tmaxEra = tmaxEraRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     tmaxNcep = tmaxNcepRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     tmaxGldas = tmaxGldasRaw{3}(latIndsSouthGldas, lonIndsSouthGldas, :, :);
+    tmaxCpc = tempCpc(latIndsSouthRelCpc, lonIndsSouthRelCpc, :, :);
 
     prEra = prEraRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     prNcep = prNcepRaw{3}(latIndsSouth, lonIndsSouth, :, :);
@@ -254,6 +285,7 @@ for s = 1:size(seasons, 1)
     curPrChirps = nanmean(prChirps(:, :, :, seasons(s, :)), 4);
     curPrGldas = nanmean(prGldas(:, :, :, seasons(s, :)), 4);
     curTmaxGldas = nanmean(tmaxGldas(:, :, :, seasons(s, :)), 4);
+    curTmaxCpc = nanmean(tmaxCpc(:, :, :, seasons(s, :)), 4);
     
     % get seasonal means over time series...
     curTmaxThreshEra = prctile(curTmaxEra, prcTmax, 3);
@@ -266,6 +298,7 @@ for s = 1:size(seasons, 1)
     curPrThreshChirps = prctile(curPrChirps, prcPr, 3);
     curPrThreshGldas = prctile(curPrGldas, prcPr, 3);
     curTmaxThreshGldas = prctile(curTmaxGldas, prcTmax, 3);
+    curTmaxThreshCpc = prctile(curTmaxCpc, prcTmax, 3);
     
     for year = 1:size(curTmaxEra, 3)
         hotEra(year) = numel(find(curTmaxEra(:, :, year) > curTmaxThreshEra));
@@ -285,7 +318,7 @@ for s = 1:size(seasons, 1)
         end
         
         % using chirps pr & era temp
-        hotdryEraChirps(year) = numel(find(curTmaxEra(:, :, year) > curTmaxThreshEra & curPrChirps(:, :, year) < curPrThreshChirps));
+        hotdryCpcGpcp(year) = numel(find(curTmaxCpc(:, :, year) > curTmaxThreshCpc & curPrGpcp(:, :, year) < curPrThreshGpcp));
     end
     
     % load pre-processed cmip5 hot/dry counts
@@ -322,7 +355,7 @@ for s = 1:size(seasons, 1)
     hotdryEra = normr(hotdryEra);
     hotdryNcep = normr(hotdryNcep);
     hotdryGldas = normr(hotdryGldas);
-    hotdryEraChirps = normr(hotdryEraChirps);
+    hotdryCpcGpcp = normr(hotdryCpcGpcp);
     
     % compute trends for datasets
     fHotEra = fit((1:length(hotEra))', hotEra', 'poly1');
@@ -388,7 +421,7 @@ for s = 1:size(seasons, 1)
     fHotDryEra = fit((1:length(hotdryEra))', hotdryEra', 'poly1');
     fHotDryNcep = fit((1:length(hotdryNcep))', hotdryNcep', 'poly1');
     fHotDryGldas = fit((1:length(hotdryGldas))', hotdryGldas', 'poly1');
-    fHotDryEraChirps = fit((1:length(hotdryEraChirps))', hotdryEraChirps', 'poly1');
+    fHotDryEraChirps = fit((1:length(hotdryCpcGpcp))', hotdryCpcGpcp', 'poly1');
     
     hotDryTrends(s, 1) = fHotDryEra.p1;
     hotDryTrends(s, 2) = fHotDryNcep.p1;
@@ -407,7 +440,7 @@ for s = 1:size(seasons, 1)
     hotDrySig(s, 1) = Mann_Kendall(hotdryEra, .05);
     hotDrySig(s, 2) = Mann_Kendall(hotdryNcep, .05);
     hotDrySig(s, 3) = Mann_Kendall(hotdryGldas, .05);
-    hotDrySig(s, 4) = Mann_Kendall(hotdryEraChirps, .05);
+    hotDrySig(s, 4) = Mann_Kendall(hotdryCpcGpcp, .05);
     
     if plotSeasonalAnnualData
         figure('Color', [1,1,1]);
@@ -497,9 +530,9 @@ for s = 1:size(seasons, 1)
         if Mann_Kendall(hotdryGldas, 0.05)
             plot(1:length(hotdryGldas), fHotDryGldas(1:length(hotdryGldas)), '--', 'Color', colors(3,:), 'LineWidth', 2);
         end
-        p4 = plot(hotdryEraChirps, 'Color', colors(5,:), 'LineWidth', 2);
-        if Mann_Kendall(hotdryEraChirps, 0.05)
-            plot(1:length(hotdryEraChirps), fHotDryEraChirps(1:length(hotdryEraChirps)), '--', 'Color', colors(5,:), 'LineWidth', 2);
+        p4 = plot(hotdryCpcGpcp, 'Color', colors(5,:), 'LineWidth', 2);
+        if Mann_Kendall(hotdryCpcGpcp, 0.05)
+            plot(1:length(hotdryCpcGpcp), fHotDryEraChirps(1:length(hotdryCpcGpcp)), '--', 'Color', colors(5,:), 'LineWidth', 2);
         end
         set(gca, 'FontSize', 40);
         set(gca, 'XTick', 6:10:length(hotdryEra), 'XTickLabels', [1985 1995 2005 2015]);

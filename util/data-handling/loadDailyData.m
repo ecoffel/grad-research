@@ -70,6 +70,7 @@ if ~obs
         cmip5 = false;
         narr = false;
         era = false;
+        cpc = false;
 
         if strfind(curDir, 'cmip5') ~= 0
             cmip5 = true;
@@ -83,6 +84,8 @@ if ~obs
             narr = true;
         elseif strfind(curDir, 'era') ~= 0
             era = true;
+        elseif strfind(curDir, 'cpc') ~= 0
+            cpc = true;
         end
         
         if strfind(curDir, 'regrid') & plev ~= -1
@@ -129,7 +132,7 @@ if ~obs
                     dataMonth = str2num(matFileNameParts{3});
                     dataDay = str2num(matFileNameParts{4});
                 end
-            elseif era
+            elseif era || cpc
                 dataYear = str2num(matFileNameParts{2});
                 dataMonth = str2num(matFileNameParts{3});
                 dataDay = str2num(matFileNameParts{4});

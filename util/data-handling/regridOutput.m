@@ -18,7 +18,7 @@ latLonBounds = [];
 v7 = false;
 region = '';
 tosMod = false;
-gridCor = true;
+gridCor = false;
 monthly = false;
 
 for i=1:2:length(varargin)
@@ -95,7 +95,7 @@ for d = 1:length(dirNames)
         matFileNameParts = strsplit(matFileNameNoExt, '_');
 
         year = str2num(matFileNameParts{2});
-        if year < startyear || year > endyear
+        if (startyear ~= -1 && year < startyear) || (endyear ~= -1 && year > endyear)
             ['skipping ' matFileName '...']
             continue;
         end
