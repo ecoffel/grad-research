@@ -1,6 +1,6 @@
 plotSeasonalAnnualData = false;
-north = false;
-compareCmip5Trends = true;
+north = true;
+compareCmip5Trends = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -26,6 +26,11 @@ regionBoundsNorth = [[13 32]; [29, 34]];
 
 [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+
+latIndsSouthRel = latIndsSouth-latInds(1)+1;
+latIndsNorthRel = latIndsNorth-latInds(1)+1;
+lonIndsSouthRel = lonIndsSouth-lonInds(1)+1;
+lonIndsNorthRel = lonIndsNorth-lonInds(1)+1;
 
 if ~exist('tmaxEraRaw', 'var')
     fprintf('loading ERA temps...\n');
@@ -61,13 +66,7 @@ end
 
 if ~exist('prGpcpRaw', 'var')
     fprintf('loading GPCP pr...\n');
-    prGpcpRaw = loadMonthlyData('E:\data\gpcp\output\precip\monthly\1979-2017', 'precip', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
-    
-    latGpcp = prGpcpRaw{1};
-    lonGpcp = prGpcpRaw{2};
-    [latIndsNorthGpcp, lonIndsNorthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-    [latIndsSouthGpcp, lonIndsSouthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-    [latIndsGpcp, lonIndsGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBounds(1,:), regionBounds(2,:));
+    prGpcpRaw = loadMonthlyData('E:\data\gpcp\output\precip\monthly\regrid\world\1979-2017', 'precip', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
 end
 
 if ~exist('prGldasRaw', 'var')
@@ -127,17 +126,6 @@ if ~exist('chirpsRaw', 'var')
 end
 
 if ~exist('cpc', 'var')   
-    load lat-cpc;
-    load lon-cpc;
-
-    [latIndsCpc, lonIndsCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBounds(1,:), regionBounds(2,:));
-    [latIndsNorthCpc, lonIndsNorthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-    [latIndsSouthCpc, lonIndsSouthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-    latIndsNorthRelCpc = latIndsNorthCpc-latIndsCpc(1)+1;
-    latIndsSouthRelCpc = latIndsSouthCpc-latIndsCpc(1)+1;
-    lonIndsNorthRelCpc = lonIndsNorthCpc-lonIndsCpc(1)+1;
-    lonIndsSouthRelCpc = lonIndsSouthCpc-lonIndsCpc(1)+1;
-    
     tempCpc = [];
     for year = 1981:2016
         fprintf('cpc year %d...\n', year);
@@ -159,22 +147,22 @@ if north
     tmaxEra = tmaxEraRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     tmaxNcep = tmaxNcepRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     tmaxGldas = tmaxGldasRaw{3}(latIndsNorthGldas, lonIndsNorthGldas, :, :);
-    tmaxCpc = tempCpc(latIndsNorthRelCpc, lonIndsNorthRelCpc, :, :);
+    tmaxCpc = tempCpc(latIndsNorthRel, lonIndsNorthRel, :, :);
 
     prEra = prEraRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     prNcep = prNcepRaw{3}(latIndsNorth, lonIndsNorth, :, :);
-    prGpcp = prGpcpRaw{3}(latIndsNorthGpcp, lonIndsNorthGpcp, :, :);
+    prGpcp = prGpcpRaw{3}(latIndsNorth, lonIndsNorth, :, :);
     prGldas = prGldasRaw{3}(latIndsNorthGldas, lonIndsNorthGldas, :, :);
     prChirps = chirpsRaw(latIndsNorth-latInds(1)+1, lonIndsNorth-lonInds(1)+1, :, :);
 else
     tmaxEra = tmaxEraRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     tmaxNcep = tmaxNcepRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     tmaxGldas = tmaxGldasRaw{3}(latIndsSouthGldas, lonIndsSouthGldas, :, :);
-    tmaxCpc = tempCpc(latIndsSouthRelCpc, lonIndsSouthRelCpc, :, :);
+    tmaxCpc = tempCpc(latIndsSouthRel, lonIndsSouthRel, :, :);
 
     prEra = prEraRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     prNcep = prNcepRaw{3}(latIndsSouth, lonIndsSouth, :, :);
-    prGpcp = prGpcpRaw{3}(latIndsSouthGpcp, lonIndsSouthGpcp, :, :);
+    prGpcp = prGpcpRaw{3}(latIndsSouth, lonIndsSouth, :, :);
     prGldas = prGldasRaw{3}(latIndsSouthGldas, lonIndsSouthGldas, :, :);
     prChirps = chirpsRaw(latIndsSouth-latInds(1)+1, lonIndsSouth-lonInds(1)+1, :, :);
 end
@@ -309,6 +297,7 @@ for s = 1:size(seasons, 1)
         dryNcep(year) = numel(find(curPrNcep(:, :, year) < curPrThreshNcep));
         hotdryNcep(year) = numel(find(curTmaxNcep(:, :, year) > curTmaxThreshNcep & curPrNcep(:, :, year) < curPrThreshNcep));
         
+        hotCpc(year) = numel(find(curTmaxCpc(:, :, year) > curTmaxThreshCpc));
         dryGpcp(year) = numel(find(curPrGpcp(:, :, year) < curPrThreshGpcp));
         dryChirps(year) = numel(find(curPrChirps(:, :, year) < curPrThreshChirps));
         if year <= size(curPrGldas, 3)
@@ -352,6 +341,7 @@ for s = 1:size(seasons, 1)
     hotEra = normr(hotEra);
     hotNcep = normr(hotNcep);
     hotGldas = normr(hotGldas);
+    hotCpc = normr(hotCpc);
     hotdryEra = normr(hotdryEra);
     hotdryNcep = normr(hotdryNcep);
     hotdryGldas = normr(hotdryGldas);
@@ -361,10 +351,12 @@ for s = 1:size(seasons, 1)
     fHotEra = fit((1:length(hotEra))', hotEra', 'poly1');
     fHotNcep = fit((1:length(hotNcep))', hotNcep', 'poly1');
     fHotGldas = fit((1:length(hotGldas))', hotGldas', 'poly1');
+    fHotCpc = fit((1:length(hotCpc))', hotCpc', 'poly1');
     
     hotTrends(s, 1) = fHotEra.p1;
     hotTrends(s, 2) = fHotNcep.p1;
     hotTrends(s, 3) = fHotGldas.p1;
+    hotTrends(s, 4) = fHotCpc.p1;
     
     for m = 1:size(hotCmip5, 1)
         f = fit((1:size(hotCmip5, 2))', (squeeze(hotCmip5(m, :)))', 'poly1');
@@ -384,10 +376,13 @@ for s = 1:size(seasons, 1)
     hotCI(s, 2, :) = c(:,1);
     c = confint(fHotGldas);
     hotCI(s, 3, :) = c(:,1);
+    c = confint(fHotCpc);
+    hotCI(s, 4, :) = c(:,1);
     
     hotSig(s, 1) = Mann_Kendall(hotEra, .05);
     hotSig(s, 2) = Mann_Kendall(hotNcep, .05);
     hotSig(s, 3) = Mann_Kendall(hotGldas, .05);
+    hotSig(s, 4) = Mann_Kendall(hotCpc, .05);
     
     fDryEra = fit((1:length(dryEra))', dryEra', 'poly1');
     fDryNcep = fit((1:length(dryNcep))', dryNcep', 'poly1');
@@ -421,12 +416,12 @@ for s = 1:size(seasons, 1)
     fHotDryEra = fit((1:length(hotdryEra))', hotdryEra', 'poly1');
     fHotDryNcep = fit((1:length(hotdryNcep))', hotdryNcep', 'poly1');
     fHotDryGldas = fit((1:length(hotdryGldas))', hotdryGldas', 'poly1');
-    fHotDryEraChirps = fit((1:length(hotdryCpcGpcp))', hotdryCpcGpcp', 'poly1');
+    fHotDryCpcGpcp = fit((1:length(hotdryCpcGpcp))', hotdryCpcGpcp', 'poly1');
     
     hotDryTrends(s, 1) = fHotDryEra.p1;
     hotDryTrends(s, 2) = fHotDryNcep.p1;
     hotDryTrends(s, 3) = fHotDryGldas.p1;
-    hotDryTrends(s, 4) = fHotDryEraChirps.p1;
+    hotDryTrends(s, 4) = fHotDryCpcGpcp.p1;
     
     c = confint(fHotDryEra);
     hotDryCI(s, 1, :) = c(:,1);
@@ -434,7 +429,7 @@ for s = 1:size(seasons, 1)
     hotDryCI(s, 2, :) = c(:,1);
     c = confint(fHotDryGldas);
     hotDryCI(s, 3, :) = c(:,1);
-    c = confint(fHotDryEraChirps);
+    c = confint(fHotDryCpcGpcp);
     hotDryCI(s, 4, :) = c(:,1);
     
     hotDrySig(s, 1) = Mann_Kendall(hotdryEra, .05);
@@ -532,7 +527,7 @@ for s = 1:size(seasons, 1)
         end
         p4 = plot(hotdryCpcGpcp, 'Color', colors(5,:), 'LineWidth', 2);
         if Mann_Kendall(hotdryCpcGpcp, 0.05)
-            plot(1:length(hotdryCpcGpcp), fHotDryEraChirps(1:length(hotdryCpcGpcp)), '--', 'Color', colors(5,:), 'LineWidth', 2);
+            plot(1:length(hotdryCpcGpcp), fHotDryCpcGpcp(1:length(hotdryCpcGpcp)), '--', 'Color', colors(5,:), 'LineWidth', 2);
         end
         set(gca, 'FontSize', 40);
         set(gca, 'XTick', 6:10:length(hotdryEra), 'XTickLabels', [1985 1995 2005 2015]);
@@ -664,7 +659,7 @@ hold on;
 box on;
 axis square;
 grid on;
-displace = [-.1 0 .1];
+displace = [-.15 -.05 .05 .15];
 for d = 1:size(hotTrends, 2)
     for s = 1:size(hotTrends, 1)
         e = errorbar(s+displace(d), hotTrends(s, d), hotTrends(s,d)-hotCI(s,d,1), hotCI(s,d,2)-hotTrends(s,d), 'Color', colors(d,:), 'LineWidth', 2);
@@ -679,7 +674,7 @@ for d = 1:size(hotTrends, 2)
 end
 
 b = boxplot([hotTrendsCmip5(1,:)' hotTrendsCmip5(2,:)' hotTrendsCmip5(3,:)' hotTrendsCmip5(4,:)'], ...
-                     'positions', [1.25 2.25 3.25 4.25], 'widths', [.1 .1 .1 .1]);
+                     'positions', [1.30 2.3 3.3 4.3], 'widths', [.1 .1 .1 .1]);
 
 set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
@@ -701,7 +696,7 @@ else
 end
 
 ylabel('Hot season trend');
-l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS'}, 'location', 'southeast');
+l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'CPC'}, 'location', 'southeast');
 set(l, 'FontSize', 30);
 set(gcf, 'Position', get(0,'Screensize'));
 if north
@@ -758,7 +753,7 @@ else
 end
 
 ylabel('Hot & dry season trend');
-l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'CHIRPS-ERA'}, 'location', 'southeast');
+l = legend(legItems, {'ERA-Interim', 'NCEP II', 'GLDAS', 'CPC-GPCP'}, 'location', 'southeast');
 set(l, 'FontSize', 30);
 set(gcf, 'Position', get(0,'Screensize'));
 if north

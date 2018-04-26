@@ -7,8 +7,8 @@ switch (dataset)
                       'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
                       'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
                       'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-        timePeriod = [2056 2080];
-        rcp = 'rcp85';
+        timePeriod = [1980 2004];
+        rcp = 'historical';
     case 'era-interim'
         fprintf('loading ERA...\n');
         models = {''};
@@ -28,6 +28,8 @@ switch (dataset)
         tmax{3} = tmax{3} - 273.15;
 end
 
+eachYearMonthly = true;
+
 plotMap = false;
 
 seasons = [[12 1 2]; 
@@ -38,8 +40,8 @@ seasons = [[12 1 2];
 for model = 1:length(models)
     tempSeasonal = {};
 
-    if strcmp(dataset, 'cmip5')
-        if exist(['2017-nile-climate/output/temp-seasonal-' dataset '-historical-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'])
+    if strcmp(dataset, 'cmip5') 
+        if ~eachYearMonthly && exist(['2017-nile-climate/output/temp-seasonal-' dataset '-historical-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'])
             continue;
         end
         
@@ -59,15 +61,26 @@ for model = 1:length(models)
     regionBounds = [[2 32]; [25, 44]];
     [latInds, lonInds] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
     
-    for season = 1:size(seasons, 1)
-        regionT = squeeze(nanmean(data(latInds, lonInds, :, seasons(season, :)), 4));
-        tempSeasonal{season} = regionT;
-    end
+    if eachYearMonthly
     
-    if strcmp(dataset, 'cmip5')
-        save(['2017-nile-climate/output/temp-seasonal-' dataset '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempSeasonal');
+        tempMonthly = data(latInds, lonInds, :, :);
+        
+        if strcmp(dataset, 'cmip5')
+            save(['2017-nile-climate/output/temp-monthly-' dataset '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempMonthly');
+        end
     else
-        save(['2017-nile-climate/output/temp-seasonal-' dataset '.mat'], 'tempSeasonal');
+
+        for season = 1:size(seasons, 1)
+            regionT = squeeze(nanmean(data(latInds, lonInds, :, seasons(season, :)), 4));
+            tempSeasonal{season} = regionT;
+        end
+
+        if strcmp(dataset, 'cmip5')
+            save(['2017-nile-climate/output/temp-seasonal-' dataset '-' rcp '-' num2str(timePeriod(1)) '-' num2str(timePeriod(end)) '-' models{model} '.mat'], 'tempSeasonal');
+        else
+            save(['2017-nile-climate/output/temp-seasonal-' dataset '.mat'], 'tempSeasonal');
+        end
     end
     clear tmax data TSeasonal;
+    
 end

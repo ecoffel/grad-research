@@ -25,32 +25,39 @@ baseDir = 'data\\stage4-hourly-pr\\counts'
 inputDrive = 'E:\\'
 outputDrive = 'E:\\'
 
-f = gzip.open('C:/git-ecoffel/grad-research/2017-ag-precip/lats', 'rb')
-d = pickle.load(f)
+lats = np.genfromtxt('C:/git-ecoffel/grad-research/2017-ag-precip/lats.csv', delimiter=',')
+lons = np.genfromtxt('C:/git-ecoffel/grad-research/2017-ag-precip/lons.csv', delimiter=',')
 
-#filenames = glob.glob(inputDrive + baseDir+'\\*counts.dat')
-#find = 0
-#monthlyTotals = np.zeros([881, 1121, len(filenames)])
-#monthlyTotals[:] = np.nan
-#
-#for filename in filenames:
-#    
-#    f = gzip.open(filename, 'rb')
-#    data = pickle.load(f)
-#    
-#    shp = np.shape(data)
-#    
-#    for x in range(shp[0]):
-#        for y in range(shp[1]):
-#            for b in range(shp[2]):
-#                if np.isnan(monthlyTotals[x,y,find]) and data[x,y,b] > 0:
-#                    monthlyTotals[x,y,find] = bins[b] * data[x,y,b]
-#                elif data[x,y,b] > 0:
-#                    monthlyTotals[x,y,find] += bins[b] * data[x,y,b]
-#    find += 1
-#    
-#    print('processed', filename)
-#    if find>5:break
+filenames = glob.glob(inputDrive + baseDir + '\\*counts.dat')
 
+monthlyTotals = []
+
+for filename in filenames:
     
+    f = gzip.open(filename, 'rb')
+    data = pickle.load(f)
+    
+    shp = np.shape(data)
+    
+    monthlyTotals.append(0)
+    
+    gridcnt = 0
+    
+    for x in range(shp[0]):
+        for y in range(shp[1]):
             
+            if lats[x,y] < 32 or lats[x,y] > 40: continue
+            if lons[x,y] > -83 or lons[x,y] < -105: continue
+
+            gridcnt += 1
+
+            for b in range(shp[2]):
+                monthlyTotals[-1] += bins[b] * data[x,y,b]
+            
+    monthlyTotals[-1] /= gridcnt
+    print('processed', filename, monthlyTotals[-1])
+    
+
+with open('monthly-totals.txt', 'w') as fp:
+    for i in monthlyTotals:
+        fp.write(str(i)+'\n')

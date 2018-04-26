@@ -1,4 +1,4 @@
-largeArea = true;
+largeArea = false;
 
 % this is to allow for regridding to the 2 degree grid
 if largeArea
@@ -8,10 +8,10 @@ else
 end
 
 fprintf('loading CPC...\n');
-for year = 1981:1:2016
+for year = 1980:1:2016
     fprintf('cpc year %d...\n', year);
     cpcTemp = {};
-    curcpc = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', year, 'endYear', year);
+    curcpc = loadDailyData('E:\data\cpc-temp\output\tmax\regrid\world', 'startYear', year, 'endYear', year);
     curcpc = dailyToMonthly(curcpc);
     latCpc = curcpc{1};
     lonCpc = curcpc{2};

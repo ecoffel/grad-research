@@ -49,7 +49,7 @@ prChirps = prSeasonal;
 
 if ~exist('gpcp', 'var')
     fprintf('loading GPCP...\n');
-    prGpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\1979-2017', 'precip', 'startYear', 1981, 'endYear', 2016);
+    prGpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\regrid\world\1979-2017', 'precip', 'startYear', 1981, 'endYear', 2016);
 end
 
 load lat;
@@ -67,23 +67,9 @@ regionBoundsSouth = [[2 13]; [25, 42]];
 [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
 
-latGpcp = prGpcp{1};
-lonGpcp = prGpcp{2};
-[latIndsGpcp, lonIndsGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBounds(1,:), regionBounds(2,:));
-[latIndsNorthGpcp, lonIndsNorthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouthGpcp, lonIndsSouthGpcp] = latLonIndexRange({latGpcp,lonGpcp,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-
 [latIndsGldas, lonIndsGldas] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
 [latIndsNorthGldas, lonIndsNorthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouthGldas, lonIndsSouthGldas] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-
-[latIndsCpc, lonIndsCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBounds(1,:), regionBounds(2,:));
-[latIndsNorthCpc, lonIndsNorthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouthCpc, lonIndsSouthCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-latIndsNorthRelCpc = latIndsNorthCpc-latIndsCpc(1)+1;
-latIndsSouthRelCpc = latIndsSouthCpc-latIndsCpc(1)+1;
-lonIndsNorthRelCpc = lonIndsNorthCpc-lonIndsCpc(1)+1;
-lonIndsSouthRelCpc = lonIndsSouthCpc-lonIndsCpc(1)+1;
 
 load 2017-nile-climate\hottest-season-ncep.mat;
 hottestNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
@@ -106,12 +92,6 @@ if ~exist('cpc', 'var')
         fprintf('cpc year %d...\n', year);
         load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\temp-monthly-cpc-' num2str(year) '.mat']);
         cpcTemp{3} = cpcTemp{3};
-%         cpcRegrid = [];
-%         for m = 1:12
-%              tmpcpc = regridGriddata({latCpc(latIndsCpc,lonIndsCpc), lonCpc(latIndsCpc,lonIndsCpc), cpcTemp{3}(:,:,m)}, ...
-%                                               {latGpcp(latIndsGpcp, lonIndsGpcp), lonGpcp(latIndsGpcp, lonIndsGpcp), []}, false);
-%              cpcRegrid(:,:,m) = tmpcpc{3};
-%         end
 
         if length(tempCpc) == 0
             tempCpc = cpcTemp{3};

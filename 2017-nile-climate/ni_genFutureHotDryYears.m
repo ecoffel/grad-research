@@ -18,8 +18,8 @@ if reanalysisBase
 else
     historicalTemp = [];
     historicalPr = [];
-    pThreshPrc = 5;
-    tThreshPrc = 95;
+    pThreshPrc = 25;
+    tThreshPrc = 75;
 end
 
 load lat;

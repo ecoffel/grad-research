@@ -1,4 +1,4 @@
-function gpcpToMat(rawNcDir, outputDir, varName, maxNum)
+function cpcToMat(rawNcDir, outputDir, varName, maxNum)
 
 ncFileNames = dir([rawNcDir, '/', varName, '*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -106,7 +106,11 @@ for k = 1:length(ncFileNames)
     lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1900 01 01 00 00 00]);
+    if strcmp(varName, 'precip')
+        starttime = datenum([1800 01 01 00 00 00]);
+    else
+        starttime = datenum([1900 01 01 00 00 00]);
+    end
     time = [];
     
     % these are days since 1800-01-01 01:01:01
