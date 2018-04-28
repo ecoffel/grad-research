@@ -1,4 +1,4 @@
-warmSeason = false;
+warmSeasonFrac = false;
 txxWarmDiff = true;
 txxThresh = false;
 
@@ -21,11 +21,11 @@ regions = [[[-90 90], [0 360]]; ...             % world
 
 sigChg = [];
 
-if warmSeason
+if warmSeasonFrac
     % difference between warm season warming and annual warming
     
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
-    load e:/data/projects/bowen/derived-chg/txChgWarmExcludeTropics.mat;
+    load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
     
     data = txChgWarm ./ txxChg;
     plotData = [];
@@ -43,21 +43,21 @@ if warmSeason
     
     result = {lat, lon, plotData .* 100};
     txWarmTXxFrac = data;
-    save(['e:/data/projects/bowen/derived-chg/txWarmTXxFrac.mat'], 'txWarmTXxFrac');
+    %save(['e:/data/projects/bowen/derived-chg/txWarmTXxFrac.mat'], 'txWarmTXxFrac');
     
     sigChg(1:15, :) = 0;
     sigChg(80:90, :) = 0;
 
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
-                      'plotRange', [70 110], ...
-                      'cbXTicks', 70:5:110, ...
+                      'plotRange', [70 100], ...
+                      'cbXTicks', 70:5:100, ...
                       'plotTitle', ['Warm season Tx change fraction of TXx change'], ...
-                      'fileTitle', ['ampAgreement-rcp85-' num2str(size(data, 3)) '-cmip5-txx-tx-warm-fraction.eps'], ...
+                      'fileTitle', ['ampAgreement-rcp85-' num2str(size(data, 3)) '-cmip5-txx-tx-warm-fraction-99.eps'], ...
                       'plotXUnits', ['%'], ...
                       'blockWater', true, ...
-                      'colormap', brewermap([],'YlOrRd'), ...
-                      'boxCoords', {regions([2,4,10], :)});
+                      'colormap', brewermap([],'*YlOrRd'), ...
+                      'boxCoords', {regions([2,4,7,10], :)});
     plotFromDataFile(saveData);
     
     
@@ -81,7 +81,7 @@ elseif txxWarmDiff
             med = nanmedian(data(xlat, ylon, :), 3);
             if ~isnan(med)
                 plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
-                sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
+                sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .75*size(data, 3);
             else
                 sigChg(xlat, ylon) = 1;
             end
@@ -95,8 +95,8 @@ elseif txxWarmDiff
 
     saveData = struct('data', {result}, ...
                       'plotRegion', 'world', ...
-                      'plotRange', [-3 3], ...
-                      'cbXTicks', -3:.5:3, ...
+                      'plotRange', [-1.5 1.5], ...
+                      'cbXTicks', -1.5:.5:1.5, ...
                       'plotTitle', ['TXx Amplification over warm season'], ...
                       'fileTitle', ['ampAgreement-rcp85-' num2str(size(data, 3)) '-cmip5-txx-warm-diff-model-warm.eps'], ...
                       'plotXUnits', ['Amplification (' char(176) 'C)'], ...
@@ -125,7 +125,7 @@ elseif txxThresh
             if ~isnan(med)
                 if kstest(squeeze(data(xlat, ylon, :)))
                     plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
-                    sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
+                    sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .75*size(data, 3);
                 else
                     sigChg(xlat, ylon) = 1;
                 end

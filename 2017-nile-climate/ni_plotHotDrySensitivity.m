@@ -33,7 +33,7 @@ hotDryFutureLate90 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t95-p5.mat']);
 hotDryFutureLate95 = hotDryFuture;
 
-north = true;
+north = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -163,10 +163,12 @@ grid on;
 axis square;
 
 e1 = errorbar([74.5 79.5 84.5 89.5 94.5], [nanmedian(hotdry45_75) nanmedian(hotdry45_80) nanmedian(hotdry45_85) nanmedian(hotdry45_90) nanmedian(hotdry45_95)], ...
-                           [nanstd(hotdry45_75)    nanstd(hotdry45_80)    nanstd(hotdry45_85)    nanstd(hotdry45_90)    nanstd(hotdry45_95)]);
+                           [nanmedian(hotdry45_75)-min(hotdry45_75)    nanmedian(hotdry45_80)-min(hotdry45_80)    nanmedian(hotdry45_85)-min(hotdry45_85)    nanmedian(hotdry45_90)-min(hotdry45_90)    nanmedian(hotdry45_95)-min(hotdry45_95)], ...
+                           [max(hotdry45_75)-nanmedian(hotdry45_75)    max(hotdry45_80)-nanmedian(hotdry45_80)    max(hotdry45_85)-nanmedian(hotdry45_85)    max(hotdry45_90)-nanmedian(hotdry45_90)    max(hotdry45_95)-nanmedian(hotdry45_95)]);
 
 e2 = errorbar([75.5 80.5 85.5 90.5 95.5], [nanmedian(hotdry75) nanmedian(hotdry80) nanmedian(hotdry85) nanmedian(hotdry90) nanmedian(hotdry95)], ...
-                           [nanstd(hotdry75)    nanstd(hotdry80)    nanstd(hotdry85)    nanstd(hotdry90)    nanstd(hotdry95)]);
+                           [nanmedian(hotdry75)-min(hotdry75)    nanmedian(hotdry80)-min(hotdry80)    nanmedian(hotdry85)-min(hotdry85)    nanmedian(hotdry90)-min(hotdry90)    nanmedian(hotdry95)-min(hotdry95)], ...
+                           [max(hotdry75)-nanmedian(hotdry75)    max(hotdry80)-nanmedian(hotdry80)    max(hotdry85)-nanmedian(hotdry85)    max(hotdry90)-nanmedian(hotdry90)    max(hotdry95)-nanmedian(hotdry95)]);
 
 
 set(e1, 'LineWidth', 2);
