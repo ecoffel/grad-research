@@ -23,7 +23,7 @@ thresh = 90;
 modelSubset = 'all';
 
 rcp = 'rcp85';
-timePeriod = '2060-2080';
+timePeriod = '2061-2085';
 % 
 modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -202,27 +202,27 @@ end
 
 amp = chg1 - chg2;
 
-% if strcmp(chgMetric, 'txx-amp')
-%     txChgWarm = chg2;
-%     save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
-%     save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
-%     
-%     txxChg = chg1;
-%     save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
-% elseif strcmp(chgMetric, 'txx-thresh')
-%     save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
-%     
-%     txxChg = chg1;
-%     save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
-% elseif strcmp(chgMetric, 'warm-season-anom')
-%     txChgWarm = chg1;
-%     save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
-%     
-%     warmTxAnom = amp;
-%     save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
-% elseif strcmp(chgMetric, 'ann-min')
-%     save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
-% end
+if strcmp(chgMetric, 'txx-amp')
+    txChgWarm = chg2;
+    save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
+    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    
+    txxChg = chg1;
+    save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
+elseif strcmp(chgMetric, 'txx-thresh')
+    save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
+    
+    txxChg = chg1;
+    save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
+elseif strcmp(chgMetric, 'warm-season-anom')
+    txChgWarm = chg1;
+    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    
+    warmTxAnom = amp;
+    save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
+elseif strcmp(chgMetric, 'ann-min')
+    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+end
 
 % threshold in deg C to test for model agreement, if set to -1, search for
 % max threshold that still allows for specified level of model agreement

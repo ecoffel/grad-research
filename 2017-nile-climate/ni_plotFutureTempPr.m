@@ -3,13 +3,13 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-%               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp85';
+rcp = 'rcp45';
 timePeriodBase = [1980 2004];
 timePeriodFuture = [2056 2080];
 
@@ -67,7 +67,7 @@ for s = 1%:size(seasons, 1)
     latIndsRegion = curInds{1};
     lonIndsRegion = curInds{2};
     
-    curInds = regionInds('nile-south');
+    curInds = regionInds('nile-north');
     latInds = curInds{1};
     lonInds = curInds{2};
     prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
@@ -132,8 +132,11 @@ for s = 1%:size(seasons, 1)
     
     if plotScatter
         
-        prChg(s, :) = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
-        prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1));
+        prChg = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1)) ./ squeeze(nanmean(prHist, 1));
+        prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1)) ./ squeeze(nanstd(prHist, [], 1));
+        
+        prChg = prChg .* 100;
+        prStd = prStd .* 100;
         
         % prchg vs prstd chg
         figure('Color', [1,1,1]);
@@ -159,25 +162,25 @@ for s = 1%:size(seasons, 1)
         
         pchg = prChg';
         pstd = prStd';
-        outind = find(pchg>nanmean(pchg)+2*std(pchg) | pchg<nanmean(pchg)-2*std(pchg) | ...
-             pstd>nanmean(pstd)+2*std(pstd) | pstd<nanmean(pstd)-2*std(pstd));
-        
-        pchg(outind) = [];
-        pstd(outind) = [];
-        
-        f = fit(pchg, pstd, 'poly1');
+%         outind = find(pchg>nanmean(pchg)+2*std(pchg) | pchg<nanmean(pchg)-2*std(pchg) | ...
+%              pstd>nanmean(pstd)+2*std(pstd) | pstd<nanmean(pstd)-2*std(pstd));
+%         
+%         pchg(outind) = [];
+%         pstd(outind) = [];
+%         
+        [f,gof,output] = fit(pchg, pstd, 'poly1');
         cint = confint(f);
         if sign(cint(1,1)) == sign(cint(2,1))
             plot([min(pchg) max(pchg)], [f(min(pchg)) f(max(pchg))], '--b', 'LineWidth', 2);
         end
         
-        xlim([-.5 1.5]);
-        ylim([-.12 .2]);
+        xlim([-40 60]);
+        ylim([-50 150]);
         set(gca, 'FontSize', 36);
-        xlabel('Precipitation change (mm/day)');
-        ylabel('P std. dev. change (mm/day)');
+        xlabel('Precipitation change (%)');
+        ylabel('P std. dev. change (%)');
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig pr-std-chg-rcp85-south.eps;
+        export_fig pr-std-chg-rcp45-north.eps;
         
         figure('Color', [1,1,1]);
         hold on;

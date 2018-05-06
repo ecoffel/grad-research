@@ -1,10 +1,7 @@
 
 baseDir = 'e:/data';
-var = 'mrso';                  
-percentChange = true;
-warmSeason = false;
-useTxxMonths = true;
-warmSeasonAnom = false;
+var = 'netRad';               
+
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -17,8 +14,6 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
-plotMap = true;
 
 timePeriodHistorical = 1985:2005;
 timePeriodFuture = 2060:2080;
@@ -79,9 +74,9 @@ seasons = [[12 1 2];
 
 % load hottest seasons for each grid cell
 load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
-load('2017-bowen/txx-months-cmip5.mat');
+load('2017-bowen/txx-months-historical-cmip5-1981-2005.mat');
 txxMonthsHist = txxMonths;
-load('2017-bowen/txx-months-future-cmip5.mat');
+load('2017-bowen/txx-months-future-cmip5-2061-2085.mat');
 txxMonthsFuture = txxMonths;
 
 region = 1;
@@ -157,26 +152,27 @@ for model = 1:length(models)
 end
 
 % calculate soil change for each model
-chg = [];
+chgPer = [];
+chgAbs = [];
 for model = 1:size(regionalFluxHistorical, 3)
     tmpHistorical = regionalFluxHistorical;
     tmpFuture = regionalFluxFuture;
 
     % change in all seasons
-    if percentChange
-        chg(:, :, model) = squeeze((tmpFuture(:,:,model)-tmpHistorical(:,:,model)) ./ tmpHistorical(:,:,model));
-    else
+        chgPer(:, :, model) = squeeze((tmpFuture(:,:,model)-tmpHistorical(:,:,model)) ./ tmpHistorical(:,:,model));
         % in w/m2
-        chg(:, :, model) = squeeze(tmpFuture(:,:,model)-tmpHistorical(:,:,model));
-    end
+        chgAbs(:, :, model) = squeeze(tmpFuture(:,:,model)-tmpHistorical(:,:,model));
 
 end
 
-if percentChange
-    chg = chg .* 100;
-end
+chgPer = chgPer .* 100;
 
-eval([var 'ChgTxxMonths = chg;']);
-save(['e:/data/projects/bowen/derived-chg/' var 'ChgTxxMonths.mat'], [var 'ChgTxxMonths']);
+
+eval([var 'ChgTxxMonths = chgPer;']);
+save(['e:/data/projects/bowen/derived-chg/' var 'ChgTxxMonths-percent.mat'], [var 'ChgTxxMonths']);
+
+eval([var 'ChgTxxMonths = chgAbs;']);
+save(['e:/data/projects/bowen/derived-chg/' var 'ChgTxxMonths-absolute.mat'], [var 'ChgTxxMonths']);
+
 
 

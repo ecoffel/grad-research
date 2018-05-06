@@ -4,31 +4,35 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showOutliers = true;
-v1AbsoluteStr = '-absolute';
-v2AbsoluteStr = '-absolute';
+v1AbsoluteStr = '';
+v2AbsoluteStr = '';
 v3AbsoluteStr = '';
 
-var1 = 'hfssChg';
-var1Months = [];
-v1XStr = 'hfss';
-v1XLim = [-20 30];
-v1XTick = -20:10:30;
-v1FileStr = [var1 v1AbsoluteStr '-JJA'];
+var1 = 'netSurfDownRadChgWarmTxxAnom';
+var1Months = [1];
+v1XStr = 'RSDS TXx rel change (W/m^2)';
+v1XLim = [-30 30];
+v1XTick = -30:10:30;
+v1FileStr = [var1 v1AbsoluteStr];
 
-var2 = 'hflsChg';
-var2Months = [];
-v2YStr = 'hfls change (Fraction)';
-v2YLim = [-20 30];
-v2YTick = -20:10:30;
-v2FileStr = [var2 v2AbsoluteStr '-JJA'];
+var2 = 'efChgWarmTxxAnom';
+var2Months = [1];
+v2YStr = 'EF TXx rel change (Fraction)';
+v2YLim = [-.075 .075];
+v2YTick = -.075:.025:.075;
+% v2YLim = [-2 2];
+% v2YTick = -.075:.025:.075;
+v2FileStr = [var2 v2AbsoluteStr];
 
 showVar3 = true;
 % shown in colors
 var3 = 'txxAmp';
 var3Months = [1];
 v3FileStr = [var3 v3AbsoluteStr '-JJA'];
+v3YStr = ['TXx amplification (' char(176) 'C)'];
 v3ColorOffset = 0;
-v3Color = brewermap(v3ColorOffset+25, '*RdBu') .* .8;
+v3Colormap = '*RdBu';
+v3FileStr = [var3];
 
 regionIds = [4];
 
@@ -42,7 +46,7 @@ plotModels = false;
 % load selected variables
 load(['e:/data/projects/bowen/derived-chg/' var1 v1AbsoluteStr '']);
 eval(['v1 = ' var1 ';']);
-
+%v1 = v1 .* 3600 .* 24;
 
 load(['e:/data/projects/bowen/derived-chg/' var2 v2AbsoluteStr '']);
 eval(['v2 = ' var2 ';']);
@@ -71,7 +75,9 @@ regionNames = {'World', ...
                 'Amazon', ...
                 'Central Africa', ...
                 'North Africa', ...
-                'China'};
+                'China', ...
+                'South Africa', ...
+                'Southern SA'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -81,7 +87,9 @@ regionAb = {'world', ...
             'amazon', ...
             'africa-cent', ...
             'n-africa', ...
-            'china'};
+            'china', ...
+            's-africa', ...
+            'sa-s'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
@@ -92,7 +100,9 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10, 7], [-75, -62]+360]; ...      % Amazon
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
-           [[22 40], [105 122]]];               % china
+           [[22 40], [105 122]]; ...               % china
+           [[-24 -8], [14 40]]; ...                      % south africa
+           [[-45 -25], [-65 -49]+360]];
 
 load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 seasons = [[12 1 2];
@@ -162,9 +172,9 @@ if scatterPlots
 
             outliers = union(v2Outliers, v1Outliers);
             regionV2ChgNoOutliers = v2Chg;
-            regionV2ChgNoOutliers(outliers) = [];
+            %regionV2ChgNoOutliers(outliers) = [];
             regionV1NoOutliers = v1Chg;
-            regionV1NoOutliers(outliers) = [];
+            %regionV1NoOutliers(outliers) = [];
         end
 
         figure('Color', [1,1,1]);
@@ -175,38 +185,25 @@ if scatterPlots
 
         v3ChgSort = sort(v3Chg);
         
+        v3Color = brewermap(length(v3ChgSort)*2, v3Colormap) .* .7;
+        v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
+        
+        plot([-100 100], [0 0], '--k');
+        plot([0 0], [-100 100], '--k');
+        
         % loop over all models
         for m = 1:length(v1Chg)
             
-            color = v3Color(v3ColorOffset+find(v3ChgSort == v3Chg(m)), :);
+            color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == v3Chg(m))-1, :);
             
-            %plot(regionTxx(m), regionBowenChg(m), 'o', 'MarkerSize', 2 + abs(20*regionBowenTxCorr(m)), 'LineWidth', 2);
-            if showOutliers && length(find(v1Outliers == m)) > 0
-                if showVar3
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
-                else
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'r');
-                end
-            elseif showOutliers && length(find(v2Outliers == m)) > 0
-                if showVar3
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
-                else
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', [67, 186, 86]./255.0);
-                end
-            elseif showOutliers && length(find(v2Outliers == m)) > 0 && length(find(v1Outliers == m)) > 0
-                if showVar3
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
-                else
-                    t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'm');
-                end
-            else
                 if showVar3
                     t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
                 else
                     t = text(v1Chg(m), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
                 end
-            end
-            t.FontSize = 26;
+            
+            t.FontSize = 30;
+            t.FontWeight = 'bold';
         end
 
         if showFit
@@ -217,12 +214,18 @@ if scatterPlots
             end
         end
         
+        colormap(v3Color);
+        caxis([-max(abs(v3ChgSort)) max(abs(v3ChgSort))]);
+        cb = colorbar();
+        ylabel(cb, v3YStr);
+        
         set(gca, 'FontSize', 40);
         
         ylabel(v2YStr);
         ylim(v2YLim);
         set(gca, 'YTick', v2YTick);
         
+        title([regionNames{region}]);
         xlabel(v1XStr);
         xlim(v1XLim);
         set(gca, 'XTick', v1XTick);
@@ -234,7 +237,7 @@ if scatterPlots
         set(gcf, 'Position', get(0,'Screensize'));
         
         if saveScatter
-            export_fig([v1FileStr '-' v2FileStr '-scatter-' num2str(region) '.eps']);
+            export_fig([v1FileStr '-' v2FileStr '-' v3FileStr '-scatter-' num2str(region) '.eps']);
             close all;
         end
     end

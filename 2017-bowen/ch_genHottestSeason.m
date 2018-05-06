@@ -16,8 +16,8 @@ if ~exist('tasmax')
     if strcmp(dataset, 'cmip5')
         for m = 1:length(models)
             fprintf('loading %s...\n', models{m});
-            %tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1980, 'endYear', 2004);
-            tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2060, 'endYear', 2079);
+            %tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+            tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
             
             tasmax = tasmax{3};
             if nanmean(nanmean(nanmean(nanmean(nanmean(tasmax))))) > 100
@@ -100,7 +100,7 @@ load lon;
 plotModelData({lat,lon,nanmedian(hottestSeasonLength, 3)},'world','caxis',[1 12])
 
 if txxrel
-    save(['2017-bowen/txx-months-future-' dataset '.mat'], 'txxMonths');
+    save(['2017-bowen/txx-months-future-' dataset '-2061-2085.mat'], 'txxMonths');
     if onlyRegularTxx
         save(['2017-bowen/hottest-season-txx-rel-' dataset '.mat'], 'hottestSeason');
         save(['2017-bowen/hottest-season-length-txx-rel-' dataset '.mat'], 'hottestSeasonLength');

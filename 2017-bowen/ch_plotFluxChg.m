@@ -1,9 +1,8 @@
 
 baseDir = 'e:/data';
-var = 'mrso';                  
-percentChange = false;
+var = 'netRad';                  
 warmSeason = false;
-useTxxMonths = true;
+useTxxMonths = false;
 warmSeasonAnom = false;
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -18,10 +17,8 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-plotMap = true;
-
-timePeriodHistorical = 1985:2005;
-timePeriodFuture = 2060:2080;
+timePeriodHistorical = 1981:2005;
+timePeriodFuture = 2061:2085;
 
 load lat;
 load lon;
@@ -29,7 +26,7 @@ load lon;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-showRegions =  1;
+region =  1;
 
 
 regionNames = {'World', ...
@@ -79,249 +76,156 @@ seasons = [[12 1 2];
 
 % load hottest seasons for each grid cell
 load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
-load('2017-bowen/txx-months-cmip5.mat');
+load('2017-bowen/txx-months-historical-cmip5-1981-2005.mat');
 
-for region = showRegions
-    curLat = regionLatLonInd{region}{1};
-    curLon = regionLatLonInd{region}{2};
-    
-    % historical and future monthly precip, mm/day
-    % dims: (x, y, model)
-    regionalFluxHistorical = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalFluxHistorical(regionalFluxHistorical == 0) = NaN;
-    regionalFluxFuture = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalFluxFuture(regionalFluxFuture == 0) = NaN;
-    
-    for model = 1:length(models)
-        fprintf('loading %s historical...\n', models{model});
-        flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
-        flux{3} = squeeze(nanmean(flux{3}, 3));
-        
-        % remove water tiles
-        for month = 1:size(flux{3}, 4)
-            curGrid = flux{3}(:, :, month);
-            curGrid(waterGrid) = NaN;
-            flux{3}(:, :, month) = curGrid;
-        end
-        
-        % loop over all grid cells and select hottest season flux
-        for xlat = 1:length(curLat)
-            for ylon = 1:length(curLon)
-                if waterGrid(curLat(xlat), curLon(ylon))
-                    continue;
-                end
-                
-                regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
+curLat = regionLatLonInd{region}{1};
+curLon = regionLatLonInd{region}{2};
+
+% historical and future monthly precip, mm/day
+% dims: (x, y, model)
+regionalFluxHistorical = zeros(length(curLat), length(curLon), length(models), 12);
+regionalFluxHistorical(regionalFluxHistorical == 0) = NaN;
+regionalFluxFuture = zeros(length(curLat), length(curLon), length(models), 12);
+regionalFluxFuture(regionalFluxFuture == 0) = NaN;
+
+for model = 1:length(models)
+    fprintf('loading %s historical...\n', models{model});
+    flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/historical/' var '/regrid/world'], var, 'startYear', 1981, 'endYear', 2005);
+    flux{3} = squeeze(nanmean(flux{3}, 3));
+
+    % remove water tiles
+    for month = 1:size(flux{3}, 4)
+        curGrid = flux{3}(:, :, month);
+        curGrid(waterGrid) = NaN;
+        flux{3}(:, :, month) = curGrid;
+    end
+
+    % loop over all grid cells and select hottest season flux
+    for xlat = 1:length(curLat)
+        for ylon = 1:length(curLon)
+            if waterGrid(curLat(xlat), curLon(ylon))
+                continue;
             end
+
+            regionalFluxHistorical(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
         end
-        
-        clear flux;
-        
-        fprintf('loading %s future...\n', models{model});
-        flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
-        flux{3} = squeeze(nanmean(flux{3}, 3));
-        
-        % remove water tiles
-        for month = 1:size(flux{3}, 4)
-            curGrid = flux{3}(:, :, month);
-            curGrid(waterGrid) = NaN;
-            flux{3}(:, :, month) = curGrid;
-        end
-        
-        % loop over all grid cells and select hottest season flux
-        for xlat = 1:length(curLat)
-            for ylon = 1:length(curLon)
-                if waterGrid(curLat(xlat), curLon(ylon))
-                    continue;
-                end
-                
+    end
+
+    clear flux;
+
+    fprintf('loading %s future...\n', models{model});
+    flux = loadMonthlyData([baseDir '/cmip5/output/' models{model} '/mon/r1i1p1/rcp85/' var '/regrid/world'], var, 'startYear', 2060, 'endYear', 2079);
+    flux{3} = squeeze(nanmean(flux{3}, 3));
+
+    % remove water tiles
+    for month = 1:size(flux{3}, 4)
+        curGrid = flux{3}(:, :, month);
+        curGrid(waterGrid) = NaN;
+        flux{3}(:, :, month) = curGrid;
+    end
+
+    % loop over all grid cells and select hottest season flux
+    for xlat = 1:length(curLat)
+        for ylon = 1:length(curLon)
+            if waterGrid(curLat(xlat), curLon(ylon))
+                continue;
+            end
+
                 regionalFluxFuture(curLat(xlat), curLon(ylon), model, :) = flux{3}(curLat(xlat), curLon(ylon), :);
 
-            end
         end
     end
-    
-    % calculate soil change for each model
-    chg = [];
-    for model = 1:size(regionalFluxHistorical, 3)
-        tmpHistorical = regionalFluxHistorical;
-        tmpFuture = regionalFluxFuture;
-        
-        % change in all seasons
-        if percentChange
-            chg(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
-        else
-            % in w/m2
-            chg(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
-        end
-        
-    end
-    
-    if plotMap
-        plotChg = zeros(size(lat,1), size(lat,2), size(chg, 3));
-        plotChg(plotChg == 0) = NaN;
-        
-        % find statistical significance of change over selected months across models
-        sigChg = zeros(size(lat,1), size(lat, 2));
-        for xlat = 1:size(chg, 1)
-            for ylon = 1:size(chg, 2)
-                
-                months = 1:12;
-                
-                if warmSeason 
-                    months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
-                    months(months == 0) = 12;
-                    months(months == 13) = 1;
-                    
-                    months(isnan(months(:,1)),1) = mode(months(:,1));
-                    months(isnan(months(:,2)),2) = mode(months(:,2));
-                    months(isnan(months(:,3)),3) = mode(months(:,3));
-                elseif useTxxMonths
-                    months = squeeze(txxMonths(xlat, ylon, :, :));
-                end
-                
-                % select only non-nan items
-                curChg = squeeze(nanmean(chg(xlat, ylon, :, months), 4));
-                ind = find(~isnan(curChg) & ~isinf(curChg));
-                curChg = curChg(ind);
-
-                % at least 10 non-nan models
-                if length(curChg) == length(models)
-                    med = nanmedian(curChg);
-                    plotChg(xlat, ylon, :) = curChg;
-
-                    % where < 75% models agree on sign
-                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
-                end
-            end
-        end
-
-        plotChg(isinf(plotChg)) = NaN;
-        % median over models
-        if percentChange
-            chg = chg .* 100;
-            plotChg = plotChg .* 100;
-            
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var '-chg-all-txx.mat'], [var 'Chg']);
-        else
-            eval([var 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-txx.mat'], [var 'Chg']);
-        end
-%         
-%         hflsHistorical = regionalFluxHistorical;
-%         save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
-%         
-%         hflsFuture = regionalFluxFuture;
-%         save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
-
-        plotChg = nanmedian(plotChg, 3);
-        plotChg(:,1) = plotChg(:,end);
-
-        result = {lat, lon, plotChg};
-        
-        sigChg(1:15,:) = 0;
-        sigChg(75:90,:) = 0;
-
-        colorScheme = 'Reds';
-        if strcmp(var, 'hfls')
-            colorScheme = 'RdBu';
-        end
-        
-        saveData = struct('data', {result}, ...
-                          'plotRegion', 'world', ...
-                          'plotRange', [15 40], ...
-                          'cbXTicks', 15:5:40, ...
-                          'plotTitle', ['Warm season ' var ' change'], ...
-                          'fileTitle', [var '-chg-' num2str(region) '-warm-all-txx.eps'], ...
-                          'plotXUnits', ['W/m^2'], ...
-                          'blockWater', true, ...
-                          'colormap', brewermap([], colorScheme), ...
-                          'statData', sigChg, ...
-                          'stippleInterval', 5, ...
-                          'boxCoords', {regions([2,4,7,10], :)});
-                      
-        plotFromDataFile(saveData);
-    end
-    
-    % spatial average
-    regionalFluxHistorical = squeeze(nanmean(nanmean(regionalFluxHistorical, 2), 1));
-    regionalFluxFuture = squeeze(nanmean(nanmean(regionalFluxFuture, 2), 1));
-    
-    % average over models
-    regionalSoilHistoricalMean = nanmean(regionalFluxHistorical, 2);
-    regionalSoilFutureMean = nanmean(regionalFluxFuture, 2);
-    
-    if percentChange
-        % percentage change
-        regionalSoilChgStd = nanstd((regionalFluxFuture - regionalFluxHistorical) ./ regionalFluxHistorical .* 100, [], 2);
-        regionSoilChg = regionalFluxFuture - regionalFluxHistorical;
-        regionSoilChgMean = (regionalSoilFutureMean - regionalSoilHistoricalMean) ./ regionalSoilHistoricalMean .* 100;
-    else
-        % absolute change
-        % std over models
-        regionalSoilChgStd = nanstd(regionalFluxFuture - regionalFluxHistorical, [], 2);
-        regionSoilChg = regionalFluxFuture - regionalFluxHistorical;
-        regionSoilChgMean = regionalSoilFutureMean - regionalSoilHistoricalMean;
-    end
-    
-    % test if different from zero at 95th percentile
-    sigChg = [];
-    for month = 1:12
-        sigChg(month) = ttest(regionSoilChg(month, :), 0, 'Alpha', 0.05);
-    end
-    
-    f = figure('Color',[1,1,1]);
-    hold on;
-    grid on;
-    box on;
-    axis square;
-    
-    p1 = shadedErrorBar(1:length(showMonths), regionSoilChgMean(showMonths), regionalSoilChgStd(showMonths), 'g', 1);
-    
-    set(p1.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-    set(p1.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-    set(p1.edge, 'Color', 'w');
-
-    % plot bowen zero line 
-    plot(1:12, zeros(1,12), '--', 'Color', 'k', 'LineWidth', 2);
-
-    xlabel('Month', 'FontSize', 36);
-    set(gca, 'XLim', [1 length(showMonths)], 'XTick', 1:length(showMonths), 'XTickLabel', showMonths);
-    
-    if strcmp(var, 'mrso')
-        if percentChange
-            set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
-            ylabel('Total Snw moisture change (percent)', 'FontSize', 36);
-        else
-            set(gca, 'YLim', [-1e7 1e7]);
-            ylabel('Total Snw moisture change', 'FontSize', 36);
-        end
-    end
-    set(gca, 'FontSize', 36);
-    
-    title(regionNames{region}, 'FontSize', 40);
-    
-    for month = 1:length(showMonths)
-        p2 = plot(month, regionSoilChgMean(showMonths(month)), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-        if sigChg(showMonths(month))
-            set(p2, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
-        else
-            set(p2, 'LineWidth', 3);
-        end
-    end
-    
-    
-    set(gcf, 'Position', get(0,'Screensize'));
-    
-    export_fig([var 'Chg-' regionAb{region} '-' soilVarStr '.png;']);
-    
-    close all;
-    
 end
 
+% calculate soil change for each model
+chgAbs = [];
+chgPer = [];
 
 
+for model = 1:size(regionalFluxHistorical, 3)
+    tmpHistorical = regionalFluxHistorical;
+    tmpFuture = regionalFluxFuture;
 
+    % change in all seasons
+    chgPer(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
+    % in w/m2
+    chgAbs(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
 
+end
+
+plotChg = zeros(size(lat,1), size(lat,2), size(chgAbs, 3));
+plotChg(plotChg == 0) = NaN;
+
+% find statistical significance of change over selected months across models
+sigChg = zeros(size(lat,1), size(lat, 2));
+for xlat = 1:size(chgAbs, 1)
+    for ylon = 1:size(chgAbs, 2)
+
+        months = 1:12;
+
+        if warmSeason 
+            months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
+            months(months == 0) = 12;
+            months(months == 13) = 1;
+
+            months(isnan(months(:,1)),1) = mode(months(:,1));
+            months(isnan(months(:,2)),2) = mode(months(:,2));
+            months(isnan(months(:,3)),3) = mode(months(:,3));
+        elseif useTxxMonths
+            months = squeeze(txxMonths(xlat, ylon, :, :));
+        end
+
+        % select only non-nan items
+        curChg = squeeze(nanmean(chgAbs(xlat, ylon, :, months), 4));
+        ind = find(~isnan(curChg) & ~isinf(curChg));
+        curChg = curChg(ind);
+
+        % at least 10 non-nan models
+        if length(curChg) == length(models)
+            med = nanmedian(curChg);
+            plotChg(xlat, ylon, :) = curChg;
+
+            % where < 75% models agree on sign
+            sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
+        end
+    end
+end
+
+plotChg(isinf(plotChg)) = NaN;
+% median over models
+chgPer = chgPer .* 100;
+plotChg = plotChg .* 100;
+
+eval([var 'Chg = chgPer;']);
+save(['e:/data/projects/bowen/derived-chg/' var '-chg-all-txx.mat'], [var 'Chg']);
+eval([var 'Chg = chgAbs;']);
+save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-txx.mat'], [var 'Chg']);
+
+plotChg = nanmedian(plotChg, 3);
+plotChg(:,1) = plotChg(:,end);
+
+result = {lat, lon, plotChg};
+
+sigChg(1:15,:) = 0;
+sigChg(75:90,:) = 0;
+
+colorScheme = 'Reds';
+if strcmp(var, 'hfls')
+    colorScheme = 'RdBu';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [15 40], ...
+                  'cbXTicks', 15:5:40, ...
+                  'plotTitle', ['Warm season ' var ' change'], ...
+                  'fileTitle', [var '-chg-' num2str(region) '-warm-all-txx.eps'], ...
+                  'plotXUnits', ['W/m^2'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], colorScheme), ...
+                  'statData', sigChg, ...
+                  'stippleInterval', 5, ...
+                  'boxCoords', {regions([2,4,7,10], :)});
+
+plotFromDataFile(saveData);
 

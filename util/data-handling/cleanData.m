@@ -16,8 +16,8 @@
 %               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};  
 
 models = {'hadgem2-es', 'hadgem2-cc'};
-vars = {'mrso'};
-rcps = {'historical', 'rcp45', 'rcp85'};
+vars = {'rsus','rlds','rlus','netRad'};
+rcps = {'historical', 'rcp85'};
 %rcps = {''};
 ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1',};
 %ensembles = {''};

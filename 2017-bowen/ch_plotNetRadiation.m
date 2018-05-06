@@ -16,15 +16,25 @@ regions = [[[-90 90], [0 360]]; ...             % world
                       
 sigChg = [];
 
-load e:/data/projects/bowen/derived-chg/rsdsChg-absolute;
-load e:/data/projects/bowen/derived-chg/rsusChg-absolute;
-load e:/data/projects/bowen/derived-chg/rldsChg-absolute;
-load e:/data/projects/bowen/derived-chg/rlusChg-absolute;
+load e:/data/projects/bowen/derived-chg/rsdsChg-absolute-all-txx;
+load e:/data/projects/bowen/derived-chg/rsusChg-absolute-all-txx;
+load e:/data/projects/bowen/derived-chg/rldsChg-absolute-all-txx;
+load e:/data/projects/bowen/derived-chg/rlusChg-absolute-all-txx;
 
-rsdsChg(isinf(rsdsChg) | abs(rsdsChg) > 1000) = NaN;
-rsusChg(isinf(rsusChg) | abs(rsusChg) > 1000) = NaN;
-rlusChg(isinf(rlusChg) | abs(rlusChg) > 1000) = NaN;
-rldsChg(isinf(rldsChg) | abs(rldsChg) > 1000) = NaN;
+load e:/data/projects/bowen/derived-chg/rsdsChgWarmAnom;
+load e:/data/projects/bowen/derived-chg/rsusChgWarmAnom;
+load e:/data/projects/bowen/derived-chg/rldsChgWarmAnom;
+load e:/data/projects/bowen/derived-chg/rlusChgWarmAnom;
+
+load e:/data/projects/bowen/derived-chg/rsdsChgWarmTxxAnom;
+load e:/data/projects/bowen/derived-chg/rsusChgWarmTxxAnom;
+load e:/data/projects/bowen/derived-chg/rldsChgWarmTxxAnom;
+load e:/data/projects/bowen/derived-chg/rlusChgWarmTxxAnom;
+
+% rsdsChg(isinf(rsdsChg) | abs(rsdsChg) > 1000) = NaN;
+% rsusChg(isinf(rsusChg) | abs(rsusChg) > 1000) = NaN;
+% rlusChg(isinf(rlusChg) | abs(rlusChg) > 1000) = NaN;
+% rldsChg(isinf(rldsChg) | abs(rldsChg) > 1000) = NaN;
 
 
 %load e:/data/projects/bowen/derived-chg/hfss-absolute-chg-all;
@@ -40,13 +50,19 @@ seasons = [[12 1 2];
 %surfSwNetChg = squeeze(rsdsChg - rsusChg);
 %surfLwNetChg = squeeze(rldsChg - rlusChg);
 
-surfAbChg = rsdsChg - rlusChg;
-save('e:/data/projects/bowen/derived-chg/surfAbChg-absolute.mat', 'surfAbChg');
-
 %heatFluxChg = squeeze(hfssChg+hflsChg);
 
-net = rsdsChg-rsusChg;
+netSurfDownRadChgWarmAnom = (rsdsChgWarmAnom+rldsChgWarmAnom);
+save('e:/data/projects/bowen/derived-chg/netSurfDownRadChgWarmAnom.mat', 'netSurfDownRadChgWarmAnom');
 
+netSurfRadChgWarmAnom = (rsdsChgWarmAnom+rldsChgWarmAnom-rsusChgWarmAnom-rlusChgWarmAnom);
+save('e:/data/projects/bowen/derived-chg/netSurfRadChgWarmAnom.mat', 'netSurfRadChgWarmAnom');
+
+netSurfDownRadChgWarmTxxAnom = (rsdsChgWarmTxxAnom+rldsChgWarmTxxAnom);
+save('e:/data/projects/bowen/derived-chg/netSurfDownRadChgWarmTxxAnom.mat', 'netSurfDownRadChgWarmTxxAnom');
+
+netSurfRadChgWarmTxxAnom = (rsdsChgWarmTxxAnom+rldsChgWarmTxxAnom-rsusChgWarmTxxAnom-rlusChgWarmTxxAnom);
+save('e:/data/projects/bowen/derived-chg/netSurfRadChgWarmTxxAnom.mat', 'netSurfRadChgWarmTxxAnom');
 %topSwNetChg = net;
 %save('e:/data/projects/bowen/derived-chg/topSwNet-absolute-chg-all.mat', 'topSwNetChg');
 

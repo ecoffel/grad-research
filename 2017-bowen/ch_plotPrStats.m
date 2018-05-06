@@ -1,9 +1,6 @@
 
 baseDir = 'e:/data';
 var = 'pr';                  
-percentChange = false;
-warmSeason = true;
-warmSeasonAnom = false;
 
 metric = 'ConsecDryDays';
 
@@ -21,8 +18,8 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 
 plotMap = true;
 
-timePeriodHistorical = 1985:2005;
-timePeriodFuture = 2060:2080;
+timePeriodHistorical = 1981:2005;
+timePeriodFuture = 2061:2085;
 
 load lat;
 load lon;
@@ -79,232 +76,132 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 % load hottest seasons for each grid cell
-load('2017-bowen/hottest-season-ncep.mat');
+load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
+load('2017-bowen/txx-months-historical-cmip5-1981-2005.mat');
+txxMonthsHist = txxMonths;
+load('2017-bowen/txx-months-future-cmip5-2061-2085.mat');
+txxMonthsFut = txxMonths;
 
-for region = showRegions
-    curLat = regionLatLonInd{region}{1};
-    curLon = regionLatLonInd{region}{2};
-    
-    % historical and future monthly precip, mm/day
-    % dims: (x, y, model)
-    regionalDryHistorical = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalDryHistorical(regionalDryHistorical == 0) = NaN;
-    regionalDryFuture = zeros(length(curLat), length(curLon), length(models), 12);
-    regionalDryFuture(regionalDryFuture == 0) = NaN;
-    
-    for model = 1:length(models)
-        fprintf('loading %s historical...\n', models{model});
-        pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/historical/' var], 'startYear', 1981, 'endYear', 2005);
-        if strcmp(metric, 'DryDays')
-            prMetric = squeeze(nanmean(findDryDays(pr{3}),3));
-        elseif strcmp(metric, 'Std')
-            prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
-        elseif strcmp(metric, 'ConsecDryDays')
-            prMetric = squeeze(nanmean(findConsecDryDays(pr{3}),3));
-        end
-        
-        metricRegrid = [];
+region = 1;
+
+curLat = regionLatLonInd{region}{1};
+curLon = regionLatLonInd{region}{2};
+
+% historical and future monthly precip, mm/day
+% dims: (x, y, model)
+regionalDryHistorical = zeros(length(curLat), length(curLon), length(models), 12);
+regionalDryHistorical(regionalDryHistorical == 0) = NaN;
+regionalDryHistoricalTxx = zeros(length(curLat), length(curLon), length(models));
+regionalDryHistoricalTxx(regionalDryHistoricalTxx == 0) = NaN;
+
+regionalDryFuture = zeros(length(curLat), length(curLon), length(models), 12);
+regionalDryFuture(regionalDryFuture == 0) = NaN;
+regionalDryFutureTxx = zeros(length(curLat), length(curLon), length(models));
+regionalDryFutureTxx(regionalDryFutureTxx == 0) = NaN;
+
+for model = 1:length(models)
+    fprintf('loading %s historical...\n', models{model});
+    pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/historical/' var], 'startYear', 1981, 'endYear', 2005);
+    if strcmp(metric, 'DryDays')
+        prMetric = findDryDays(pr{3});
+    elseif strcmp(metric, 'Std')
+        prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
+    elseif strcmp(metric, 'ConsecDryDays')
+        prMetric = findConsecDryDays(pr{3});
+    end
+
+    metricRegrid = [];
+    for year = 1:size(prMetric, 3)
         for month = 1:12
-            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,month)},{lat,lon,[]},false);
-            metricRegrid(:,:,month) = ddr{3};
+            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,year,month)},{lat,lon,[]},false);
+            metricRegrid(:,:,year,month) = ddr{3};
         end
-        
-        regionalDryHistorical(:,:,model,:) = metricRegrid;
-        clear pr;
-        
-        fprintf('loading %s future...\n', models{model});
-        pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/rcp85/' var ], 'startYear', 2060, 'endYear', 2079);
-        if strcmp(metric, 'DryDays')
-            prMetric = squeeze(nanmean(findDryDays(pr{3}),3));
-        elseif strcmp(metric, 'Std')
-            prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
-        elseif strcmp(metric, 'ConsecDryDays')
-            prMetric = squeeze(nanmean(findConsecDryDays(pr{3}),3));
-        end
-        
-        metricRegrid = [];
-        for month = 1:12
-            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,month)},{lat,lon,[]},false);
-            metricRegrid(:,:,month) = ddr{3};
-        end
-        
-        regionalDryFuture(:,:,model,:) = metricRegrid;
-        clear pr;
     end
     
-    % calculate soil change for each model
-    chg = [];
-    for model = 1:size(regionalDryHistorical, 3)
-        tmpHistorical = regionalDryHistorical;
-        tmpFuture = regionalDryFuture;
-        
-        % change in all seasons
-        if percentChange
-            chg(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
-        else
-            % in w/m2
-            chg(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
-        end
-        
-    end
-    
-    if plotMap
-        plotChg = zeros(size(lat,1), size(lat,2), size(chg, 3));
-        plotChg(plotChg == 0) = NaN;
-        
-        % find statistical significance of change over selected months across models
-        sigChg = zeros(size(lat,1), size(lat, 2));
-        for xlat = 1:size(chg, 1)
-            for ylon = 1:size(chg, 2)
-                
-                months = 1:12;
-                
-                if warmSeason 
-                    months = seasons(hottestSeason(xlat, ylon), :);
-                end
-                
-                % select only non-nan items
-                curChg = squeeze(nanmean(chg(xlat, ylon, :, months), 4));
-                ind = find(~isnan(curChg) & ~isinf(curChg));
-                curChg = curChg(ind);
-
-                % at least 10 non-nan models
-                if length(curChg) == length(models)
-                    med = nanmedian(curChg);
-                    plotChg(xlat, ylon, :) = curChg;
-
-                    % where < 75% models agree on sign
-                    sigChg(xlat, ylon) = length(find(sign(curChg) == sign(med))) < round(.75*length(models));
+    for xlat = 1:size(metricRegrid,1)
+        for ylon = 1:size(metricRegrid,2)
+            for year = 1:size(metricRegrid, 3)
+                if ~isnan(txxMonthsHist(xlat, ylon, model, year))
+                    regionalDryHistoricalTxx(xlat, ylon, model) = metricRegrid(xlat, ylon, year, txxMonthsHist(xlat, ylon, model, year));
                 end
             end
         end
-
-        plotChg(isinf(plotChg)) = NaN;
-        % median over models
-        if percentChange
-            chg = chg .* 100;
-            plotChg = plotChg .* 100;
-            
-            %eval([var 'Chg = chg;']);
-            %save(['e:/data/projects/bowen/derived-chg/' var '-chg-all.mat'], [var 'Chg']);
-        else
-            eval(['pr' metric 'Chg = chg;']);
-            save(['e:/data/projects/bowen/derived-chg/pr' metric 'Chg.mat'], ['pr' metric 'Chg']);
-        end
-%         
-%         hflsHistorical = regionalFluxHistorical;
-%         save(['e:/data/projects/bowen/derived-chg/hflsHistorical-absolute.mat'], 'hflsHistorical');
-%         
-%         hflsFuture = regionalFluxFuture;
-%         save(['e:/data/projects/bowen/derived-chg/hflsFuture-absolute.mat'], 'hflsFuture');
-
-        plotChg = nanmedian(plotChg, 3);
-        plotChg(:,1) = plotChg(:,end);
-
-        result = {lat, lon, plotChg};
-        
-        sigChg(1:15,:) = 0;
-        sigChg(75:90,:) = 0;
-
-        colorScheme = 'Reds';
-        if strcmp(var, 'hfls')
-            colorScheme = 'RdBu';
-        end
-        
-        saveData = struct('data', {result}, ...
-                          'plotRegion', 'world', ...
-                          'plotRange', [0 25], ...
-                          'cbXTicks', 0:5:25, ...
-                          'plotTitle', ['Warm season ' var ' change'], ...
-                          'fileTitle', ['dryDay-chg-' num2str(region) '-warm.eps'], ...
-                          'plotXUnits', ['Days'], ...
-                          'blockWater', true, ...
-                          'colormap', brewermap([], colorScheme), ...
-                          'statData', sigChg, ...
-                          'stippleInterval', 5, ...
-                          'boxCoords', {regions([2,4,7,10], :)});
-                      
-        plotFromDataFile(saveData);
     end
-    
-    % spatial average
-    regionalDryHistorical = squeeze(nanmean(nanmean(regionalDryHistorical, 2), 1));
-    regionalDryFuture = squeeze(nanmean(nanmean(regionalDryFuture, 2), 1));
-    
-    % average over models
-    regionalSoilHistoricalMean = nanmean(regionalDryHistorical, 2);
-    regionalSoilFutureMean = nanmean(regionalDryFuture, 2);
-    
-    if percentChange
-        % percentage change
-        regionalSoilChgStd = nanstd((regionalDryFuture - regionalDryHistorical) ./ regionalDryHistorical .* 100, [], 2);
-        regionSoilChg = regionalDryFuture - regionalDryHistorical;
-        regionSoilChgMean = (regionalSoilFutureMean - regionalSoilHistoricalMean) ./ regionalSoilHistoricalMean .* 100;
-    else
-        % absolute change
-        % std over models
-        regionalSoilChgStd = nanstd(regionalDryFuture - regionalDryHistorical, [], 2);
-        regionSoilChg = regionalDryFuture - regionalDryHistorical;
-        regionSoilChgMean = regionalSoilFutureMean - regionalSoilHistoricalMean;
-    end
-    
-    % test if different from zero at 95th percentile
-    sigChg = [];
-    for month = 1:12
-        sigChg(month) = ttest(regionSoilChg(month, :), 0, 'Alpha', 0.05);
-    end
-    
-    f = figure('Color',[1,1,1]);
-    hold on;
-    grid on;
-    box on;
-    axis square;
-    
-    p1 = shadedErrorBar(1:length(showMonths), regionSoilChgMean(showMonths), regionalSoilChgStd(showMonths), 'g', 1);
-    
-    set(p1.mainLine, 'Color', [25/255.0, 158/255.0, 56/255.0], 'LineWidth', 3);
-    set(p1.patch, 'FaceColor', [25/255.0, 158/255.0, 56/255.0]);
-    set(p1.edge, 'Color', 'w');
 
-    % plot bowen zero line 
-    plot(1:12, zeros(1,12), '--', 'Color', 'k', 'LineWidth', 2);
+    regionalDryHistorical(:,:,model,:) = nanmean(metricRegrid,3);
+    clear pr prMetric;
 
-    xlabel('Month', 'FontSize', 36);
-    set(gca, 'XLim', [1 length(showMonths)], 'XTick', 1:length(showMonths), 'XTickLabel', showMonths);
-    
-    if strcmp(var, 'mrso')
-        if percentChange
-            set(gca, 'YLim', [-20 20], 'YTick', -20:10:20);
-            ylabel('Total Snw moisture change (percent)', 'FontSize', 36);
-        else
-            set(gca, 'YLim', [-1e7 1e7]);
-            ylabel('Total Snw moisture change', 'FontSize', 36);
-        end
+    fprintf('loading %s future...\n', models{model});
+    pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/rcp85/' var ], 'startYear', 2060, 'endYear', 2079);
+    if strcmp(metric, 'DryDays')
+        prMetric = findDryDays(pr{3});
+    elseif strcmp(metric, 'Std')
+        prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
+    elseif strcmp(metric, 'ConsecDryDays')
+        prMetric = findConsecDryDays(pr{3});
     end
-    set(gca, 'FontSize', 36);
-    
-    title(regionNames{region}, 'FontSize', 40);
-    
-    for month = 1:length(showMonths)
-        p2 = plot(month, regionSoilChgMean(showMonths(month)), 'o', 'MarkerSize', 15, 'Color', [25/255.0, 158/255.0, 56/255.0], 'MarkerEdgeColor', 'k');
-        if sigChg(showMonths(month))
-            set(p2, 'LineWidth', 3, 'MarkerFaceColor', [25/255.0, 158/255.0, 56/255.0]);
-        else
-            set(p2, 'LineWidth', 3);
+
+    metricRegrid = [];
+    for year = 1:size(prMetric, 3)
+        for month = 1:12
+            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,year,month)},{lat,lon,[]},false);
+            metricRegrid(:,:,year,month) = ddr{3};
         end
     end
     
-    
-    set(gcf, 'Position', get(0,'Screensize'));
-    
-    export_fig([var 'Chg-' regionAb{region} '-' soilVarStr '.png;']);
-    
-    close all;
-    
+    for xlat = 1:size(metricRegrid,1)
+        for ylon = 1:size(metricRegrid,2)
+            for year = 1:size(metricRegrid, 3)
+                if ~isnan(txxMonthsFut(xlat, ylon, model, year))
+                    regionalDryFutureTxx(xlat, ylon, model) = metricRegrid(xlat, ylon, year, txxMonthsFut(xlat, ylon, model, year));
+                end
+            end
+        end
+    end
+
+    regionalDryFuture(:,:,model,:) = nanmean(metricRegrid,3);
+    clear pr prMetric;
 end
 
 
+% calculate soil change for each model
+chgAbs = [];
+chgPer = [];
 
+chgAbsTxx = [];
+chgPerTxx = [];
 
+for model = 1:size(regionalDryHistorical, 3)
+    tmpHistorical = regionalDryHistorical;
+    tmpFuture = regionalDryFuture;
+    
+    tmpHistoricalTxx = regionalDryHistoricalTxx;
+    tmpFutureTxx = regionalDryFutureTxx;
 
+    % change in all seasons
+    chgPer(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
+    % in w/m2
+    chgAbs(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
 
+        % change in all seasons
+    chgPerTxx(:, :, model, :) = squeeze((tmpFutureTxx(:,:,model,:)-tmpHistoricalTxx(:,:,model,:)) ./ tmpHistoricalTxx(:,:,model,:));
+    % in w/m2
+    chgAbsTxx(:, :, model, :) = squeeze(tmpFutureTxx(:,:,model,:)-tmpHistoricalTxx(:,:,model,:));
+
+end
+
+% median over models
+chgPer = chgPer .* 100;
+chgAbs = chgAbs .* 100;
+chgPerTxx = chgPerTxx .* 100;
+chgAbsTxx = chgAbsTxx .* 100;
+
+eval([var metric 'Chg = chgPer;']);
+save(['e:/data/projects/bowen/derived-chg/' var metric '-all-txx.mat'], [var metric 'Chg']);
+eval([var metric 'Chg = chgAbs;']);
+save(['e:/data/projects/bowen/derived-chg/' var metric '-absolute-all-txx.mat'], [var metric 'Chg']);
+
+eval([var metric 'ChgTxxMonths = chgPerTxx;']);
+save(['e:/data/projects/bowen/derived-chg/' var metric 'ChgTxxMonths-percent.mat'], [var metric  'ChgTxxMonths']);
+eval([var metric 'ChgTxxMonths = chgAbsTxx;']);
+save(['e:/data/projects/bowen/derived-chg/' var metric 'ChgTxxMonths-absolute.mat'], [var metric 'ChgTxxMonths']);

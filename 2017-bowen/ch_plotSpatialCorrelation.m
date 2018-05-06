@@ -1,10 +1,59 @@
-load E:\data\projects\bowen\derived-chg\txxAmp.mat;
-load E:\data\projects\bowen\derived-chg\hfssChgWarmTxxAnom.mat;
-load E:\data\projects\bowen\derived-chg\prChgWarmTxxAnom.mat;
-load E:\data\projects\bowen\derived-chg\efChgWarmTxxAnom.mat;
-hfss = hfssChgWarmTxxAnom;
-pr = prChgWarmTxxAnom;
-ef = efChgWarmTxxAnom;
+txxWarmAnom = true;
+warmSeasonAnom = false;
+excludeWinter = false;
+
+var = 'ef';
+
+if txxWarmAnom
+    load E:\data\projects\bowen\derived-chg\txxAmp.mat;
+    load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmTxxAnom.mat']);
+    driverRaw = eval([var 'ChgWarmTxxAnom']);
+    
+    if strcmp(var, 'ef')
+        yrange = [-25 10];
+        yticks = -25:5:10;
+        unit = 'unit EF';
+        driverRaw(abs(driverRaw)>1) = NaN;
+    elseif strcmp(var, 'pr')
+        yrange = [-4 1];
+        yticks = -4:1:1;
+        unit = 'mm/day';
+        driverRaw = driverRaw .* 3600 .* 24;
+    elseif strcmp(var, 'netRad')
+        yrange = [-.2 .2];
+        yticks = -.2:.1:.2;
+        unit = 'W/m^2';
+    elseif strcmp(var, 'clt')
+        yrange = [-.2 .2];
+        yticks = -.2:.1:.2;
+        unit = 'Fraction';
+    elseif strcmp(var, 'hfss')
+        yrange = [-.2 .2];
+        yticks = -.2:.1:.2;
+        unit = 'W/m^2';
+    elseif strcmp(var, 'hfls')
+        yrange = [-.1 .1];
+        yticks = -.1:.05:.1;
+        unit = 'W/m^2';
+    end
+elseif warmSeasonAnom
+    load e:/data/projects/bowen/derived-chg/txChg.mat;
+    load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
+    amp = txChgWarm - txChg;
+    
+    if excludeWinter
+        load E:\data\projects\bowen\derived-chg\hfssChgWarmAnom-nowint.mat;
+        load E:\data\projects\bowen\derived-chg\prChgWarmAnom-nowint.mat;
+        load E:\data\projects\bowen\derived-chg\efChgWarmAnom-nowint.mat;
+    else
+        load E:\data\projects\bowen\derived-chg\hfssChgWarmAnom.mat;
+        load E:\data\projects\bowen\derived-chg\prChgWarmAnom.mat;
+        load E:\data\projects\bowen\derived-chg\efChgWarmAnom.mat;
+    end
+    hfssRaw = hfssChgWarmAnom;
+    prRaw = prChgWarmAnom;
+    efRaw = efChgWarmAnom;
+end
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
@@ -43,102 +92,64 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]];               % china
-
+       
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 rind = 1;
-prslopes = [];
-shslopes = [];
-efslopes = [];
+dslopes = [];
 
 for region = [1 2 4 7 10]
     [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
-
     for m = 1:size(amp,3)
-        %subplot(5,5,m);
-        %hold on;
-
         a = squeeze(amp(:,:,m));
         a(waterGrid) = NaN;
         a = a(latInds,lonInds);
         a = reshape(a, [numel(a),1]);
 
-        sh = squeeze(hfssChgWarmTxxAnom(:,:,m));
-        sh(waterGrid) = NaN;
-        sh = sh(latInds,lonInds);
-        sh = reshape(sh, [numel(sh),1]);
+        driver = squeeze(driverRaw(:,:,m));
+        driver(waterGrid) = NaN;
+        driver = driver(latInds,lonInds);
+        if region == 1
+            driver(1:15,:) = NaN;
+            driver(75:90,:) = NaN;
+        end
+        driver = reshape(driver, [numel(driver),1]);
 
-        nn = find(isnan(a) | isnan(sh));
+        nn = find(isnan(a) | isnan(driver));
 
-        sh(nn) = [];
-        aSh = a;
-        aSh(nn) = [];
-
-        pr = squeeze(prChgWarmTxxAnom(:,:,m)) .* 3600 .* 24;
-        pr(waterGrid) = NaN;
-        pr = pr(latInds,lonInds);
-        pr = reshape(pr, [numel(pr),1]);
-
-        nn = find(isnan(a) | isnan(pr));
-
-        pr(nn) = [];
-        aPr = a;
-        aPr(nn) = [];
+        driver(nn) = [];
+        aDriver = a;
+        aDriver(nn) = [];
         
-        
-        ef = squeeze(efChgWarmTxxAnom(:,:,m));
-        ef(waterGrid) = NaN;
-        ef = ef(latInds,lonInds);
-        ef = reshape(ef, [numel(ef),1]);
 
-        nn = find(isnan(a) | isnan(ef));
-
-        ef(nn) = [];
-        aEf = a;
-        aEf(nn) = [];
-
-        X = [ones(size(aSh)), sh];
-        b = regress(aSh,X);
+        X = [ones(size(aDriver)), driver];
+        b = regress(aDriver,X);
         afit = X*b;
-        resid = aSh-afit;        
+        resid = aDriver-afit;        
         slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
-        shslopes(rind,m) = nanmean(slopes(:,2));
+        dslopes(rind,m) = nanmean(slopes(:,2));
         
-        
-        X = [ones(size(aPr)), pr];
-        b = regress(aPr,X);
-        afit = X*b;
-        resid = aPr-afit;        
-        slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
-        prslopes(rind,m) = nanmean(slopes(:,2));
-        
-        
-        X = [ones(size(aEf)), ef];
-        b = regress(aEf,X);
-        afit = X*b;
-        resid = aEf-afit;        
-        slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
-        efslopes(rind,m) = nanmean(slopes(:,2));
-    %     
-    %     y1 = bslopes(:,1)+min(x)*bslopes(:,2);
-    %     y2 = bslopes(:,1)+max(x)*bslopes(:,2);
-    %     
-    %     figure('Color',[1,1,1]);
-    %     hold on;
-    %     box on;
-    %     axis square;
-    %     grid on;
-    %     p = plot([min(x) max(x)], [y1 y2], 'r');
-    %     set(p,'Color',[1 0 0 .01]);
-    %     ylim([-2 5]);
-    %     xlim([-10 10]);
-
-%         [f,gof,out] = fit(sh, aSh, 'poly1');
-%         shslopes(rind,m) = f.p1;
-% 
-%         [f,gof,out] = fit(pr, aPr, 'poly1');
-%         prslopes(rind,m) = f.p1;
-        %p = plot([min(x) max(x)], [f(min(x)) f(max(x))], 'k', 'LineWidth', 1);
+        if region == 1
+            data = {driver, slopes};
+            save(['E:\data\projects\bowen\derived-chg\slopes\slopes-' var '-' models{m} '-1.mat'], 'data');
+        end
+%         y1 = slopes(:,1)+min(driver)*slopes(:,2);
+%         y2 = slopes(:,1)+max(driver)*slopes(:,2);
+%         
+%         figure('Color',[1,1,1]);
+%         hold on;
+%         box on;
+%         axis square;
+%         grid on;
+%         p = plot([min(driver) max(driver)], [y1 y2], 'r');
+%         set(p,'Color',[1 0 0 .01]);
+%         ylim([-2 5]);
+%         xlim([-10 10]);
 
     end
 
@@ -152,70 +163,21 @@ hold on;
 grid on;
 axis square;
 box on;
-b = boxplot(shslopes','positions',1:5);
+b = boxplot(dslopes','positions',1:5);
 plot([0 6], [0 0], '--k');
-ylim([-.25 .25]);
+ylim(yrange);
+set(gca, 'YTick', yticks);
 xlim([0 6]);
 set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:5, 'XTickLabel', {'World', 'U.S.', 'Europe', 'Amazon', 'China'});xtickangle(45);
-ylabel([char(176) 'C / W/m^2']);
+ylabel([char(176) 'C / ' unit]);
 set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig txx-amp-spatial-sh.eps;
+if txxWarmAnom
+    export_fig(['txx-amp-spatial-' var '.eps']);
+elseif warmSeasonAnom
+    export_fig(['warm-anom-spatial-' var '.eps']);
+end
 close all;
-
-figure('Color',[1,1,1]);
-hold on;
-grid on;
-axis square;
-box on;
-b = boxplot(prslopes','positions',1:5);
-plot([0 6], [0 0], '--k');
-ylim([-2.5 2]);
-xlim([0 6]);
-set(gca, 'FontSize', 40);
-set(gca, 'XTick', 1:5, 'XTickLabel', {'World', 'U.S.', 'Europe', 'Amazon', 'China'});xtickangle(45);
-ylabel([char(176) 'C / mm/day']);
-set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
-lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig txx-amp-spatial-pr.eps;
-close all;
-
-
-figure('Color',[1,1,1]);
-hold on;
-grid on;
-axis square;
-box on;
-b = boxplot(efslopes','positions',1:5);
-plot([0 6], [0 0], '--k');
-ylim([-20 12]);
-xlim([0 6]);
-set(gca, 'FontSize', 40);
-set(gca, 'XTick', 1:5, 'XTickLabel', {'World', 'U.S.', 'Europe', 'Amazon', 'China'});
-ylabel([char(176) 'C / unit EF']);
-set(gca, 'YTick', -20:5:10);
-xtickangle(45);
-set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
-lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig txx-amp-spatial-ef.eps;
-close all;
-
-
-figure('Color',[1,1,1]);
-hold on;
-grid on;
-axis square;
-box on;
-xlim([-12 12]);
-set(gca, 'XTick', -12:3:12);
-ylim([-2 3]);
-ylabel(['99th % Tx amplification (' char(176) 'C)']);
-xlabel('PR amplification (mm/day)');
-set(gca, 'FontSize', 40);

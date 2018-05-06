@@ -79,8 +79,10 @@ wetHist = squeeze(nanmean(nanmean(wetHist(latInds-latIndsRegion(1)+1, lonInds-lo
 dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 
-prChg = squeeze(nanmean(prFut, 1) - nanmean(prHist, 1));
-prStd = squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1));
+prChg = (squeeze(nanmean(prFut, 1) - nanmean(prHist, 1))) ./ squeeze(nanmean(prHist,1));
+prStd = (squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1))) ./ squeeze(nanstd(prHist,[],1));
+prCoVar = squeeze(nanstd(prFut, [], 1) ./ nanmean(prFut, 1)) - ...
+          squeeze(nanstd(prHist, [], 1) ./ nanmean(prHist, 1));
 
 wet = true;
 std = true;

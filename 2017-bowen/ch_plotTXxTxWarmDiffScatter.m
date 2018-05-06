@@ -6,12 +6,13 @@ waterGrid = logical(waterGrid);
 showOutliers = true;
 plotModels = false;
 useTxxSeasonalAmp = false;
-useTxxChg = true;
+useTxxChg = false;
+useTxChgWarm = true;
 
-var1 = 'txChgWarm';
+var1 = 'txChg';
 var1Months = [1];
-v1XStr = ['Warm season Tx change (' char(176) 'C)'];
-v1XLim = [-2 14];
+v1XStr = ['Tx change (' char(176) 'C)'];
+v1XLim = [-2 10];
 v1XTick = -2:2:14;
 v1AbsoluteStr = '';
 v1Subset = '';
@@ -42,6 +43,9 @@ if useTxxSeasonalAmp
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
     ampVar = txxChg;
+elseif useTxChgWarm
+    load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
+    ampVar = txChgWarm;
 else
     load e:/data/projects/bowen/derived-chg/txxAmp.mat;
     ampVar = amp;
@@ -213,6 +217,10 @@ if scatterPlots
             ylabel(['TXx change (' char(176) 'C)']);
             ylim([-2 12]);
             set(gca, 'YTick', -2:2:12);
+        elseif useTxChgWarm
+            ylabel(['Warm season Tx change (' char(176) 'C)']);
+            ylim([-2 14]);
+            set(gca, 'YTick', -2:2:14);
         else
             ylabel(['TXx amplification (' char(176) 'C)']);
             ylim([-2 5.5]);

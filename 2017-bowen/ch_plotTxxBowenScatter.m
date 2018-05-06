@@ -10,21 +10,20 @@ useTxxChg = false;
 useTxWarmAnom = false;
 useTxWarmChg = false;
 
-var1 = 'prChgWarmTxxAnom';
+var1 = 'prConsecDryDaysChgWarmTxxAnom';
 var1Months = [1];
-v1XStr = ['TXx hfss chg minus warm (W/m^2)'];
-v1XLim = [-15 20];
-v1XTick = -15:5:20;
-v1AbsoluteStr = '';
+v1XStr = ['EF change in warm season (%)'];
+v1XLim = [-80 80];
+v1XTick = -80:40:80;
+v1AbsoluteStr = '-percent';
 v1Subset = '';
-v1FileStr = [var1 v1AbsoluteStr '-warm'];
+v1FileStr = [var1 v1AbsoluteStr v1Subset];
 
 showVar3 = false;
 % shown in colors
-var3 = 'mrsoChgWarmTxxAnom';
+var3 = 'efChgWarmTxxAnom';
 v3YStr = ['TXx mrso chg minus warm (%)'];
 var3Months = [1];
-
 v3AbsoluteStr = '';
 v3FileStr = [var3 v3AbsoluteStr];
 v3ColorOffset = 0;
@@ -35,7 +34,7 @@ saveScatter = false;
 globalCorrMap = false;
 oneToOne = false;
 
-selRegions = [11];
+selRegions = [2 4 7 10];
 
 % txx amp
 if useTxxSeasonalAmp
@@ -80,7 +79,8 @@ regionNames = {'World', ...
                 'Central Africa', ...
                 'North Africa', ...
                 'China', ...
-                'South Africa'};
+                'South Africa', ...
+                'Southern SA'};
 regionAb = {'world', ...
             'us-east', ...
             'us-se', ...
@@ -91,7 +91,8 @@ regionAb = {'world', ...
             'africa-cent', ...
             'n-africa', ...
             'china', ...
-            's-africa'};
+            's-africa', ...
+            'sa-s'};
             
 regions = [[[-90 90], [0 360]]; ...             % world
            [[30 42], [-91 -75] + 360]; ...     % eastern us
@@ -103,7 +104,8 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[-10 10], [15, 30]]; ...            % central africa
            [[15 30], [-4 29]]; ...              % north africa
            [[22 40], [105 122]]; ...               % china
-           [[-24 -8], [14 40]]];                      % south africa
+           [[-24 -8], [14 40]]; ...                      % south africa
+           [[-45 -25], [-65 -49]+360]];
 
 if plotModels
     modelLeg = {};
@@ -124,7 +126,7 @@ seasons = [[12 1 2];
            [6 7 8];
            [9 10 11]];
 
-% load hottest seasons for each grid cell
+% load hottest seasons for each grid cell q
 load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 
 if scatterPlots
@@ -138,7 +140,12 @@ if scatterPlots
 
         if length(var1Months) == 0
             var1Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
-            var1Months = [var1Months-1 var1Months var1Months+1];
+            
+            if region == 7
+                var1Months = [var1Months-2:var1Months+3];
+            else
+                var1Months = [var1Months-1 var1Months var1Months+1];
+            end
             var1Months(var1Months == 0) = 12;
             var1Months(var1Months == 13) = 1;
         end
@@ -164,8 +171,8 @@ if scatterPlots
         v3Chg = v3Chg(nn);
         
         if showOutliers
-            ampOutlierStdMult = 5;
-            v1OutlierStdMult = 3;
+            ampOutlierStdMult = 2;
+            v1OutlierStdMult = 2;
 
             v1Outliers = find(v1Chg > nanstd(v1Chg)*v1OutlierStdMult+nanmean(v1Chg) | ...
                                  v1Chg < -nanstd(v1Chg)*v1OutlierStdMult+nanmean(v1Chg));
@@ -192,14 +199,14 @@ if scatterPlots
         v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
         
         % loop over all models
-        for m = 1:length(v1ChgNoOutliers)
+        for m = 1:length(v1Chg)
             
             color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == v3Chg(m))-1, :);
             
             if showVar3
-                t = text(v1ChgNoOutliers(m), regionAmpNoOutliers(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+                t = text(v1Chg(m), regionAmp(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
             else
-                t = text(v1ChgNoOutliers(m), regionAmpNoOutliers(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+                t = text(v1Chg(m), regionAmp(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
             end
             t.FontSize = 26;
         end
@@ -241,11 +248,11 @@ if scatterPlots
                 ylim([-1 1]);
                 set(gca, 'YTick', -1:.5:1);
             elseif region == 7
-                ylim([-4 5]);
-                set(gca, 'YTick', -4:5);
+                ylim([-4 6]);
+                set(gca, 'YTick', -4:2:6);
             else
-                ylim([-2 3]);
-                set(gca, 'YTick', -2:3);
+                ylim([-3 3]);
+                set(gca, 'YTick', -3:3);
             end
             ylabel(['TXx - warm Tx (' char(176) 'C)']);
         elseif useTxxChg
@@ -254,8 +261,8 @@ if scatterPlots
             set(gca, 'YTick', -2:2:12);
         elseif useTxWarmAnom
             ylabel(['Warm season Tx - annual Tx (' char(176) 'C)']);
-            ylim([-2 12]);
-            set(gca, 'YTick', -2:2:12);
+            ylim([-2 6]);
+            set(gca, 'YTick', -2:2:6);
         elseif useTxWarmChg
             ylabel(['Warm season Tx chg (' char(176) 'C)']);
             if region == 7
@@ -323,26 +330,19 @@ if globalCorrMap
                 continue;
             end
             
-            months = [squeeze(hottestSeason(xlat, ylon, :)-1) squeeze(hottestSeason(xlat, ylon, :)) squeeze(hottestSeason(xlat, ylon, :)+1)];
-            months(months == 0) = 12;
-            months(months == 13) = 1;
-
-            months(isnan(months(:,1)),1) = mode(months(:,1));
-            months(isnan(months(:,2)),2) = mode(months(:,2));
-            months(isnan(months(:,3)),3) = mode(months(:,3));
             
             %select txx/bowen for region for all models
             regionAmp = squeeze(ampVar(xlat, ylon, :));
 
             %and bowen
-            regionDriverChg = squeeze(nanmean(v1(xlat, ylon, :, months), 4));
+            regionDriverChg = squeeze(nanmean(v1(xlat, ylon, :, var1Months), 4));
             driverWarm(xlat, ylon, :) = regionDriverChg;
-            driver2Warm = squeeze(nanmean(v3(xlat, ylon, :, months), 4));
+            %driver2Warm = squeeze(nanmean(v3(xlat, ylon, :, var3Months), 4));
             
-            nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp) & ~isnan(driver2Warm));
+            nn = find(~isnan(regionDriverChg) & ~isnan(regionAmp));
             regionAmp = regionAmp(nn);
             regionDriverChg = regionDriverChg(nn);
-            regionDriverChg2 = driver2Warm(nn);
+
 
             if length(nn) < 10
                 corrMap(xlat, ylon) = NaN;
@@ -350,32 +350,13 @@ if globalCorrMap
                 continue;
             end
             
-            if showOutliers
-                ampOutlierStdMult = 2;
-                v1OutlierStdMult = 2;
-
-                v1Outliers = find(regionDriverChg > nanstd(regionDriverChg)*v1OutlierStdMult+nanmean(regionDriverChg) | ...
-                                     regionDriverChg < -nanstd(regionDriverChg)*v1OutlierStdMult+nanmean(regionDriverChg));
-                ampOutliers = find(regionAmp > nanstd(regionAmp)*ampOutlierStdMult+nanmean(regionAmp) | ...
-                                   regionAmp < -nanstd(regionAmp)*ampOutlierStdMult+nanmean(regionAmp));
-
-                outliers = union(v1Outliers, ampOutliers);
-                v1ChgNoOutliers = regionDriverChg;
-                %v1ChgNoOutliers(outliers) = [];
-                regionAmpNoOutliers = regionAmp;
-                %regionAmpNoOutliers(outliers) = [];
-            end
+            corrMap(xlat, ylon) = corr(regionAmp, regionDriverChg);
             
-            if showOutliers
-                %[f,gof,out] = fit(v1ChgNoOutliers, regionAmpNoOutliers, 'poly1');
-                pc=partialcorr([regionAmpNoOutliers, v1ChgNoOutliers], regionDriverChg2);
-                corrMap(xlat, ylon) = pc(2,1);
-            else
-                corrMap(xlat, ylon) = corr(regionAmp, regionDriverChg);
-            end
             
         end
     end
+    
+    corrMap(nanmedian(ampVar,3)<.25) = NaN;
     
     corrSig = nanmedian(driverWarm, 3) > 1;
     corrSig(1:15,:) = 0;

@@ -5,10 +5,10 @@ waterGrid = logical(waterGrid);
 
 showOutliers = true;
 plotModels = false;
-useTxxSeasonalAmp = false;
+useTxxSeasonalAmp = true;
 useTxxChg = false;
 useTxWarmAnom = false;
-useTxWarmChg = true;
+useTxWarmChg = false;
 
 vars = {'cltChg', 'efChg', 'hussHumChg', 'rsdsNetChg', 'mrsoChg', 'prChg', ...
         'heatFluxChg', 'hflsChg', 'hfssChg', 'netRadChg', ...
