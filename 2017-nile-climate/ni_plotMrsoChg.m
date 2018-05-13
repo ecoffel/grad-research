@@ -1,5 +1,6 @@
 makeCounts = false;
 plotModels = false;
+plotMaps = false;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -44,6 +45,7 @@ curInds = regionInds(region);
 
 mrsoMeanChg = [];
 mrsoHotChg = [];
+mrsoMeanChgPer = [];
 
 for m = 1:length(models)
     
@@ -134,7 +136,6 @@ for m = 1:length(models)
 
     mrsoHotChg(:,:,m) = nanmean(heatMrsoFut,3) - nanmean(heatMrsoHist,3);
     mrsoMeanChg(:,:,m) = nanmean(nanmean(mrsoFut,4),3) - nanmean(nanmean(mrsoHist,4),3);
-    
     mrsoDryChg(:,:,m) = nanmean(dryMrsoFut,3) - nanmean(dryMrsoHist,3);
 
 end
@@ -166,8 +167,10 @@ set(b(:, 3), {'LineWidth', 'Color'}, {2, [239, 168, 55]./255.0})
 lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
 
+plot([0 10], [0 0], '--k');
 set(gca, 'XTick', [1,2,3], 'XTickLabels', {'Driest month', 'Hottest month', 'Annual mean'});
 ylim([-13 13]);
+xlim([.5 3.5]);
 ylabel('Soil moisture change (%)');
 set(gca, 'YTick', -15:5:15);
 set(gca, 'FontSize', 40);

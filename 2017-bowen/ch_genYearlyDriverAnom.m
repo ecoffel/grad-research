@@ -1,6 +1,6 @@
 
 baseDir = 'e:/data';
-var = 'rsds';
+var = 'netRad';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -40,7 +40,7 @@ regionalFluxFutureTxx(regionalFluxFutureTxx==0) = NaN;
 for model = 1:length(models)
     
     if exist(['e:/data/projects/bowen/' var '-chg-data/' var '-warm-anom-historical-1981-2005-' models{model} '.mat'])
-        continue;
+      %  continue;
     end
     
     fprintf('loading %s historical...\n', models{model});

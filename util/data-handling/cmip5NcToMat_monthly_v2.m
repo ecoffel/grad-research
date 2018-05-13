@@ -156,9 +156,15 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
         % days since x
         timestep = netcdf.getVar(ncid, varIdTime, [0], [dims{dimIdTime}{2}]);
         
+        noleap = false;
+        
         % add on time offset to this file
         if length(findstr(rawNcDir, 'hadgem2')) > 0
             starttime = addtodate(starttime, floor(timestep(1) / 30), 'month');
+        elseif length(findstr(rawNcDir, 'fgoals')) > 0
+            leapyearcount = sum(leapyear(0000:year(timestep(1))));
+            starttime = addtodate(starttime, (timestep(1)+leapyearcount)*24, 'hour');
+            noleap = true;
         else
             starttime = addtodate(starttime, timestep(1)*24, 'hour');
         end
@@ -175,6 +181,7 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
         lastMonth = -1;
         monthlyInd = 1;
         dailyData = [];
+        
 
         while ind < dims{dimIdTime}{2}
             % get next time step...

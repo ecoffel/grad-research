@@ -5,7 +5,6 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 warmSeason = false;
-months = [6 7 8];
 
 baseDir = 'e:/data/projects/bowen/mrso-chg-data/';
 
@@ -27,13 +26,13 @@ TC(TC == 0) = NaN;
 for m = 1:length(models)
     
     fprintf('loading %s...\n', models{m});
-    mrsoHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/mrso/regrid/world'], 'mrso', 'startYear', 1980, 'endYear', 2004);
-    hfssHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfss/regrid/world'], 'hfss', 'startYear', 1980, 'endYear', 2004);
+    mrsoHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/mrso/regrid/world'], 'mrso', 'startYear', 1981, 'endYear', 2005);
+    hfssHistorical = loadMonthlyData(['e:/data/cmip5/output/' models{m} '/mon/r1i1p1/historical/hfss/regrid/world'], 'hfss', 'startYear', 1981, 'endYear', 2005);
     
     fprintf('calculating TC for %s...\n', models{m});
     for xlat = 15:75
         for ylon = 1:size(lat, 2)
-            if waterGrid(xlat, ylon) || isnan(hottestSeason(xlat, ylon, m));
+            if waterGrid(xlat, ylon) || isnan(hottestSeason(xlat, ylon, m))
                 continue;
             end
             

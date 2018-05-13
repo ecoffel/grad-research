@@ -1,11 +1,11 @@
 % late period
-load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp45-2056-2080.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2056-2080.mat']);
 dryFutureLate = dryFuture;
-load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp45-2056-2080.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2056-2080.mat']);
 wetFutureLate = wetFuture;
-load(['2017-nile-climate\output\hotFuture-annual-cmip5-rcp45-2056-2080.mat']);
+load(['2017-nile-climate\output\hotFuture-annual-cmip5-rcp85-2056-2080.mat']);
 hotFutureLate = hotFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp45-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2056-2080.mat']);
 hotDryFutureLate = hotDryFuture;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -14,7 +14,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp45';
+rcp = 'rcp85';
 timePeriodBase = [1980 2004];
 timePeriodFuture = [2056 2080];
 
@@ -72,7 +72,7 @@ seasons = [[12 1 2];
 
     xlim([0 100]);
     set(gca, 'XTick', [0 25 50 75 100]);
-    ylim([0 50]);
+    ylim([0 100]);
     legend([p], {sprintf('R^2 = %.2f', gof.rsquare)});
     xlabel('Hot years (%)');
     ylabel('Hot & dry years (%)');

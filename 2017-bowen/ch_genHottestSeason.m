@@ -10,19 +10,22 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 
 hottestSeason = [];
 hottestSeasonLength = [];
-txxMonths = [];
+
 
 if ~exist('tasmax')
     if strcmp(dataset, 'cmip5')
         for m = 1:length(models)
             fprintf('loading %s...\n', models{m});
-            %tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2005);
-            tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+            tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+            %tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
             
             tasmax = tasmax{3};
             if nanmean(nanmean(nanmean(nanmean(nanmean(tasmax))))) > 100
                 tasmax = tasmax - 273.15;
             end
+            
+            txxMonths = [];
+            txxDays = [];
             
 
             for xlat = 1:size(tasmax, 1)
@@ -31,6 +34,9 @@ if ~exist('tasmax')
                     if txxrel
                         months = zeros([size(tasmax, 3), 1]);
                         months(months == 0) = NaN;
+                        
+                        days = zeros([size(tasmax, 3), 1]);
+                        days(days == 0) = NaN;
 
                         for year = 1:size(tasmax, 3)
                             t = squeeze(reshape(permute(squeeze(tasmax(xlat, ylon, year, :, :)), [2 1]), [numel(tasmax(xlat, ylon, year, :, :)), 1]));
@@ -39,10 +45,12 @@ if ~exist('tasmax')
                             if length(ind) > 0
                                 monthdays = length(t) / 12;
                                 months(year) = ceil(ind(1)/monthdays);
+                                days(year) = ind(1);
                             end
                         end
 
-                        txxMonths(xlat, ylon, m, :) = months;
+                        txxMonths(xlat, ylon, :) = months;
+                        txxDays(xlat, ylon, :) = days;
                         
                         if length(months) > 0
                             uMonths = unique(months);
@@ -79,6 +87,10 @@ if ~exist('tasmax')
                     end
                 end
             end
+            
+            save(['2017-bowen/txx-timing/txx-months-' models{m} '-historical-' dataset '-1981-2005.mat'], 'txxMonths');
+            save(['2017-bowen/txx-timing/txx-days-' models{m} '-historical-' dataset '-1981-2005.mat'], 'txxDays');
+            
         end
     else
         %tasmax = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', 1980, 'yearEnd', 2015);
@@ -100,7 +112,6 @@ load lon;
 plotModelData({lat,lon,nanmedian(hottestSeasonLength, 3)},'world','caxis',[1 12])
 
 if txxrel
-    save(['2017-bowen/txx-months-future-' dataset '-2061-2085.mat'], 'txxMonths');
     if onlyRegularTxx
         save(['2017-bowen/hottest-season-txx-rel-' dataset '.mat'], 'hottestSeason');
         save(['2017-bowen/hottest-season-length-txx-rel-' dataset '.mat'], 'hottestSeasonLength');

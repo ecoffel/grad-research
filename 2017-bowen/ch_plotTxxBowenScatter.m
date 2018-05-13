@@ -10,12 +10,12 @@ useTxxChg = false;
 useTxWarmAnom = false;
 useTxWarmChg = false;
 
-var1 = 'prConsecDryDaysChgWarmTxxAnom';
+var1 = 'efChgDailyWarmTxxAnom';
 var1Months = [1];
-v1XStr = ['EF change in warm season (%)'];
-v1XLim = [-80 80];
-v1XTick = -80:40:80;
-v1AbsoluteStr = '-percent';
+v1XStr = ['EF daily amplification (Fraction)'];
+v1XLim = [-.2 .2];
+v1XTick = -.2:.1:.2;
+v1AbsoluteStr = '';
 v1Subset = '';
 v1FileStr = [var1 v1AbsoluteStr v1Subset];
 
@@ -30,7 +30,7 @@ v3ColorOffset = 0;
 v3Colormap = 'BrBG';
 
 scatterPlots = true;
-saveScatter = false;
+saveScatter = true;
 globalCorrMap = false;
 oneToOne = false;
 
@@ -38,8 +38,8 @@ selRegions = [2 4 7 10];
 
 % txx amp
 if useTxxSeasonalAmp
-    load e:/data/projects/bowen/derived-chg/txxAmpThresh99.mat;
-    ampVar = amp;
+    load e:/data/projects/bowen/derived-chg/efTxxAmp.mat;
+    ampVar = txxAmp;
 elseif useTxxChg
     load e:/data/projects/bowen/derived-chg/txxChg.mat;
     ampVar = txxChg;
@@ -248,11 +248,11 @@ if scatterPlots
                 ylim([-1 1]);
                 set(gca, 'YTick', -1:.5:1);
             elseif region == 7
-                ylim([-4 6]);
-                set(gca, 'YTick', -4:2:6);
+                ylim([-2 4]);
+                set(gca, 'YTick', -2:1:4);
             else
-                ylim([-3 3]);
-                set(gca, 'YTick', -3:3);
+                ylim([-1 3]);
+                set(gca, 'YTick', -1:3);
             end
             ylabel(['TXx - warm Tx (' char(176) 'C)']);
         elseif useTxxChg

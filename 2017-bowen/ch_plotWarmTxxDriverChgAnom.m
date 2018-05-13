@@ -1,5 +1,5 @@
-txxWarmAnom = false;
-warmSeasonAnom = true;
+txxWarmAnom = true;
+warmSeasonAnom = false;
 
 percentChg = false;
 excludeWinter = false;
@@ -11,10 +11,10 @@ if percentChg
 end
 
 if txxWarmAnom
-    load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmTxxAnom' prcStr '.mat']);
-    eval(['chg = ' var 'ChgWarmTxxAnom;']);
-    fileName = ['pr-chg-txx-warm-anom' prcStr '.eps'];
-    plotTitle = 'PR change in TXx month vs. warm season';
+    load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmTxxAnom' prcStr '.mat']);
+    eval(['chg = ' var 'ChgDailyWarmTxxAnom;']);
+    fileName = ['ef-daily-chg-txx-warm-anom' prcStr '.eps'];
+    plotTitle = 'EF daily amplification';
 elseif warmSeasonAnom
     if excludeWinter
         load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmAnom' prcStr '-nowint.mat']);

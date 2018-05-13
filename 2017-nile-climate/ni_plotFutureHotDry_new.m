@@ -13,8 +13,8 @@ hotDryFutureEarly45 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2031-2055.mat']);
 hotDryFutureEarly85 = hotDryFuture;
 
-drawScatter = false;
-drawMap = true;
+drawScatter = true;
+drawMap = false;
 north = false;
 annual = true;
 

@@ -33,7 +33,7 @@ hotDryFutureLate90 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t95-p5.mat']);
 hotDryFutureLate95 = hotDryFuture;
 
-north = false;
+north = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -162,24 +162,43 @@ box on;
 grid on;
 axis square;
 
-e1 = errorbar([74.5 79.5 84.5 89.5 94.5], [nanmedian(hotdry45_75) nanmedian(hotdry45_80) nanmedian(hotdry45_85) nanmedian(hotdry45_90) nanmedian(hotdry45_95)], ...
-                           [nanmedian(hotdry45_75)-min(hotdry45_75)    nanmedian(hotdry45_80)-min(hotdry45_80)    nanmedian(hotdry45_85)-min(hotdry45_85)    nanmedian(hotdry45_90)-min(hotdry45_90)    nanmedian(hotdry45_95)-min(hotdry45_95)], ...
-                           [max(hotdry45_75)-nanmedian(hotdry45_75)    max(hotdry45_80)-nanmedian(hotdry45_80)    max(hotdry45_85)-nanmedian(hotdry45_85)    max(hotdry45_90)-nanmedian(hotdry45_90)    max(hotdry45_95)-nanmedian(hotdry45_95)]);
+b1 = boxplot([hotdry75 hotdry80 hotdry85 hotdry90 hotdry95], 'positions', [1.2 2.2 3.2 4.2 5.2], 'widths', [.2 .2 .2 .2 .2]);
+b2 = boxplot([hotdry45_75 hotdry45_80 hotdry45_85 hotdry45_90 hotdry45_95], 'positions', [.8 1.8 2.8 3.8 4.8], 'widths', [.2 .2 .2 .2 .2]);
 
-e2 = errorbar([75.5 80.5 85.5 90.5 95.5], [nanmedian(hotdry75) nanmedian(hotdry80) nanmedian(hotdry85) nanmedian(hotdry90) nanmedian(hotdry95)], ...
-                           [nanmedian(hotdry75)-min(hotdry75)    nanmedian(hotdry80)-min(hotdry80)    nanmedian(hotdry85)-min(hotdry85)    nanmedian(hotdry90)-min(hotdry90)    nanmedian(hotdry95)-min(hotdry95)], ...
-                           [max(hotdry75)-nanmedian(hotdry75)    max(hotdry80)-nanmedian(hotdry80)    max(hotdry85)-nanmedian(hotdry85)    max(hotdry90)-nanmedian(hotdry90)    max(hotdry95)-nanmedian(hotdry95)]);
+colors = brewermap(10, 'Reds');
 
+for bind = 1:size(b1,2)
+    set(b1(:, bind), {'LineWidth', 'Color'}, {2, colors(3+bind,:)})
+    lines = findobj(b1(:, bind), 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+end
 
-set(e1, 'LineWidth', 2);
-set(e2, 'LineWidth', 2);
-xlim([72 97]);
-plot([0 100], [0 0], '--k');
+colors = brewermap(10, 'Blues');
+
+for bind = 1:size(b2,2)
+    set(b2(:, bind), {'LineWidth', 'Color'}, {2, colors(3+bind,:)})
+    lines = findobj(b2(:, bind), 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+end
+
+if north
+    ylim([0 150]);
+    set(gca, 'YTick', 0:25:150);
+else
+    ylim([0 15]);
+    set(gca, 'YTick', 0:5:15);
+end
+
+xlim([0 6]);
+
+set(gca,'TickLabelInterpreter', 'tex');    
+xtickangle(0);
+
+set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{75}/P_{25}', 'T_{80}/P_{20}', 'T_{85}/P_{15}', 'T_{90}/P_{10}', 'T_{95}/P_{5}'});
+xtickangle(90);
 ylabel('Increase in frequency (multiple)');
-xlabel('Temperature percentile');
-set(gca, 'FontSize', 40);
+set(gca, 'FontSize', 36);
 set(gcf, 'Position', get(0,'Screensize'));
-legend([e2,e1],{'RCP 8.5', 'RCP 4.5'},'location','northwest');
 
 if north
     export_fig(['hot-dry-freq-multiplier-' base '-north.eps']);

@@ -5,9 +5,16 @@ excludeWinter = false;
 var = 'ef';
 
 if txxWarmAnom
-    load E:\data\projects\bowen\derived-chg\txxAmp.mat;
-    load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmTxxAnom.mat']);
-    driverRaw = eval([var 'ChgWarmTxxAnom']);
+    load E:\data\projects\bowen\derived-chg\efTxxAmp.mat;
+    amp = txxAmp;
+    if strcmp(var, 'TCHfss')
+        load(['E:\data\projects\bowen\derived-chg\' var '.mat']);
+        driverRaw = eval([var]);
+    else
+        load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmTxxAnom.mat']);
+        driverRaw = eval([var 'ChgDailyWarmTxxAnom']);
+    end
+    
     
     if strcmp(var, 'ef')
         yrange = [-25 10];
@@ -34,6 +41,10 @@ if txxWarmAnom
     elseif strcmp(var, 'hfls')
         yrange = [-.1 .1];
         yticks = -.1:.05:.1;
+        unit = 'W/m^2';
+    elseif strcmp(var, 'TCHfss')
+        yrange = [-1 1];
+        yticks = -1:.5:1;
         unit = 'W/m^2';
     end
 elseif warmSeasonAnom
@@ -127,16 +138,20 @@ for region = [1 2 4 7 10]
         aDriver(nn) = [];
         
 
-        X = [ones(size(aDriver)), driver];
-        b = regress(aDriver,X);
-        afit = X*b;
-        resid = aDriver-afit;        
-        slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
-        dslopes(rind,m) = nanmean(slopes(:,2));
+        if length(driver)>2
+            X = [ones(size(aDriver)), driver];
+            b = regress(aDriver,X);
+            afit = X*b;
+            resid = aDriver-afit;        
+            slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
+            dslopes(rind,m) = nanmean(slopes(:,2));
+        else
+            dslopes(rind,m) = NaN;
+        end
         
         if region == 1
             data = {driver, slopes};
-            save(['E:\data\projects\bowen\derived-chg\slopes\slopes-' var '-' models{m} '-1.mat'], 'data');
+            %save(['E:\data\projects\bowen\derived-chg\slopes\slopes-' var '-' models{m} '-1.mat'], 'data');
         end
 %         y1 = slopes(:,1)+min(driver)*slopes(:,2);
 %         y2 = slopes(:,1)+max(driver)*slopes(:,2);
@@ -176,7 +191,7 @@ lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
 if txxWarmAnom
-    export_fig(['txx-amp-spatial-' var '.eps']);
+    export_fig(['txx-amp-spatial-' var '-daily.eps']);
 elseif warmSeasonAnom
     export_fig(['warm-anom-spatial-' var '.eps']);
 end

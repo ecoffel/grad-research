@@ -1,6 +1,6 @@
 
 baseDir = 'e:/data';
-var = 'netRad';                  
+var = 'pr';                  
 warmSeason = false;
 useTxxMonths = false;
 warmSeasonAnom = false;
@@ -197,35 +197,6 @@ chgPer = chgPer .* 100;
 plotChg = plotChg .* 100;
 
 eval([var 'Chg = chgPer;']);
-save(['e:/data/projects/bowen/derived-chg/' var '-chg-all-txx.mat'], [var 'Chg']);
+save(['e:/data/projects/bowen/derived-chg/' var 'Chg-all-txx.mat'], [var 'Chg']);
 eval([var 'Chg = chgAbs;']);
 save(['e:/data/projects/bowen/derived-chg/' var 'Chg-absolute-all-txx.mat'], [var 'Chg']);
-
-plotChg = nanmedian(plotChg, 3);
-plotChg(:,1) = plotChg(:,end);
-
-result = {lat, lon, plotChg};
-
-sigChg(1:15,:) = 0;
-sigChg(75:90,:) = 0;
-
-colorScheme = 'Reds';
-if strcmp(var, 'hfls')
-    colorScheme = 'RdBu';
-end
-
-saveData = struct('data', {result}, ...
-                  'plotRegion', 'world', ...
-                  'plotRange', [15 40], ...
-                  'cbXTicks', 15:5:40, ...
-                  'plotTitle', ['Warm season ' var ' change'], ...
-                  'fileTitle', [var '-chg-' num2str(region) '-warm-all-txx.eps'], ...
-                  'plotXUnits', ['W/m^2'], ...
-                  'blockWater', true, ...
-                  'colormap', brewermap([], colorScheme), ...
-                  'statData', sigChg, ...
-                  'stippleInterval', 5, ...
-                  'boxCoords', {regions([2,4,7,10], :)});
-
-plotFromDataFile(saveData);
-

@@ -1,8 +1,8 @@
 
 baseDir = 'e:/data';
-var = 'pr';                  
+var = 'ef';                  
 
-metric = 'ConsecDryDays';
+metric = 'Std';
 
 % models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -15,7 +15,6 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
 plotMap = true;
 
 timePeriodHistorical = 1981:2005;
@@ -87,121 +86,129 @@ region = 1;
 curLat = regionLatLonInd{region}{1};
 curLon = regionLatLonInd{region}{2};
 
-% historical and future monthly precip, mm/day
-% dims: (x, y, model)
-regionalDryHistorical = zeros(length(curLat), length(curLon), length(models), 12);
-regionalDryHistorical(regionalDryHistorical == 0) = NaN;
-regionalDryHistoricalTxx = zeros(length(curLat), length(curLon), length(models));
-regionalDryHistoricalTxx(regionalDryHistoricalTxx == 0) = NaN;
-
-regionalDryFuture = zeros(length(curLat), length(curLon), length(models), 12);
-regionalDryFuture(regionalDryFuture == 0) = NaN;
-regionalDryFutureTxx = zeros(length(curLat), length(curLon), length(models));
-regionalDryFutureTxx(regionalDryFutureTxx == 0) = NaN;
 
 for model = 1:length(models)
-    fprintf('loading %s historical...\n', models{model});
-    pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/historical/' var], 'startYear', 1981, 'endYear', 2005);
-    if strcmp(metric, 'DryDays')
-        prMetric = findDryDays(pr{3});
-    elseif strcmp(metric, 'Std')
-        prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
-    elseif strcmp(metric, 'ConsecDryDays')
-        prMetric = findConsecDryDays(pr{3});
-    end
-
-    metricRegrid = [];
-    for year = 1:size(prMetric, 3)
-        for month = 1:12
-            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,year,month)},{lat,lon,[]},false);
-            metricRegrid(:,:,year,month) = ddr{3};
-        end
+    
+    if exist(['e:/data/projects/bowen/derived-chg/var-stats/' var metric '-absolute-' models{model} '.mat'])
+        continue;
     end
     
-    for xlat = 1:size(metricRegrid,1)
-        for ylon = 1:size(metricRegrid,2)
-            for year = 1:size(metricRegrid, 3)
+    % historical and future monthly precip, mm/day
+    % dims: (x, y, model)
+    regionalMetricHistorical = zeros(length(curLat), length(curLon), 12);
+    regionalMetricHistorical(regionalMetricHistorical == 0) = NaN;
+    regionalMetricHistoricalTxx = zeros(length(curLat), length(curLon));
+    regionalMetricHistoricalTxx(regionalMetricHistoricalTxx == 0) = NaN;
+
+    regionalMetricFuture = zeros(length(curLat), length(curLon), 12);
+    regionalMetricFuture(regionalMetricFuture == 0) = NaN;
+    regionalMetricFutureTxx = zeros(length(curLat), length(curLon));
+    regionalMetricFutureTxx(regionalMetricFutureTxx == 0) = NaN;
+
+    
+    fprintf('loading %s historical...\n', models{model});
+    try
+        driver = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+    catch 
+        continue;
+    end
+    if strcmp(metric, 'DryDays')
+        driverMetric = findDryDays(driver{3});
+    elseif strcmp(metric, 'Std')
+        driverMetric = squeeze(nanstd(driver{3}(:, :, :, 1:12, :), [], 5));
+    elseif strcmp(metric, 'ConsecDryDays')
+        driverMetric = findConsecDryDays(driver{3});
+    end
+
+%     metricRegrid = [];
+%     for year = 1:size(prMetric, 3)
+%         for month = 1:12
+%             ddr = regridGriddata({driver{1},driver{2},prMetric(:,:,year,month)},{lat,lon,[]},false);
+%             metricRegrid(:,:,year,month) = ddr{3};
+%         end
+%     end
+    
+    for xlat = 1:size(driverMetric,1)
+        for ylon = 1:size(driverMetric,2)
+            for year = 1:size(driverMetric, 3)
                 if ~isnan(txxMonthsHist(xlat, ylon, model, year))
-                    regionalDryHistoricalTxx(xlat, ylon, model) = metricRegrid(xlat, ylon, year, txxMonthsHist(xlat, ylon, model, year));
+                    regionalMetricHistoricalTxx(xlat, ylon) = driverMetric(xlat, ylon, year, txxMonthsHist(xlat, ylon, model, year));
                 end
             end
         end
     end
 
-    regionalDryHistorical(:,:,model,:) = nanmean(metricRegrid,3);
-    clear pr prMetric;
+    regionalMetricHistorical(:,:,:) = squeeze(nanmean(driverMetric, 3));
+    clear driver driverMetric;
 
     fprintf('loading %s future...\n', models{model});
-    pr = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/rcp85/' var ], 'startYear', 2060, 'endYear', 2079);
+    driver = loadDailyData([baseDir '/cmip5/output/' models{model} '/r1i1p1/rcp85/' var '/regrid/world'], 'startYear', 2061, 'endYear', 2085);
     if strcmp(metric, 'DryDays')
-        prMetric = findDryDays(pr{3});
+        driverMetric = findDryDays(driver{3});
     elseif strcmp(metric, 'Std')
-        prMetric = squeeze(nanmean(nanstd(pr{3}, [], 5),3));
+        driverMetric = squeeze(nanstd(driver{3}(:, :, :, 1:12, :), [], 5));
     elseif strcmp(metric, 'ConsecDryDays')
-        prMetric = findConsecDryDays(pr{3});
+        driverMetric = findConsecDryDays(driver{3});
     end
 
-    metricRegrid = [];
-    for year = 1:size(prMetric, 3)
-        for month = 1:12
-            ddr = regridGriddata({pr{1},pr{2},prMetric(:,:,year,month)},{lat,lon,[]},false);
-            metricRegrid(:,:,year,month) = ddr{3};
-        end
-    end
+%     metricRegrid = [];
+%     for year = 1:size(driverMetric, 3)
+%         for month = 1:12
+%             ddr = regridGriddata({driver{1},driver{2},driverMetric(:,:,year,month)},{lat,lon,[]},false);
+%             metricRegrid(:,:,year,month) = ddr{3};
+%         end
+%     end
     
-    for xlat = 1:size(metricRegrid,1)
-        for ylon = 1:size(metricRegrid,2)
-            for year = 1:size(metricRegrid, 3)
+    for xlat = 1:size(driverMetric,1)
+        for ylon = 1:size(driverMetric,2)
+            for year = 1:size(driverMetric, 3)
                 if ~isnan(txxMonthsFut(xlat, ylon, model, year))
-                    regionalDryFutureTxx(xlat, ylon, model) = metricRegrid(xlat, ylon, year, txxMonthsFut(xlat, ylon, model, year));
+                    regionalMetricFutureTxx(xlat, ylon) = driverMetric(xlat, ylon, year, txxMonthsFut(xlat, ylon, model, year));
                 end
             end
         end
     end
 
-    regionalDryFuture(:,:,model,:) = nanmean(metricRegrid,3);
-    clear pr prMetric;
-end
-
-
-% calculate soil change for each model
-chgAbs = [];
-chgPer = [];
-
-chgAbsTxx = [];
-chgPerTxx = [];
-
-for model = 1:size(regionalDryHistorical, 3)
-    tmpHistorical = regionalDryHistorical;
-    tmpFuture = regionalDryFuture;
+    regionalMetricFuture(:,:,:) = squeeze(nanmean(driverMetric,3));
+    clear driver driverMetric;
     
-    tmpHistoricalTxx = regionalDryHistoricalTxx;
-    tmpFutureTxx = regionalDryFutureTxx;
+    % calculate soil change for each model
+    chgAbs = [];
+    chgPer = [];
+
+    chgAbsTxx = [];
+    chgPerTxx = [];
+    
+    tmpHistorical = regionalMetricHistorical;
+    tmpFuture = regionalMetricFuture;
+    
+    tmpHistoricalTxx = regionalMetricHistoricalTxx;
+    tmpFutureTxx = regionalMetricFutureTxx;
 
     % change in all seasons
-    chgPer(:, :, model, :) = squeeze((tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:)) ./ tmpHistorical(:,:,model,:));
+    chgPer(:, :, :) = squeeze((tmpFuture(:,:,:)-tmpHistorical(:,:,:)) ./ tmpHistorical(:,:,:));
     % in w/m2
-    chgAbs(:, :, model, :) = squeeze(tmpFuture(:,:,model,:)-tmpHistorical(:,:,model,:));
+    chgAbs(:, :, :) = squeeze(tmpFuture(:,:,:)-tmpHistorical(:,:,:));
 
         % change in all seasons
-    chgPerTxx(:, :, model, :) = squeeze((tmpFutureTxx(:,:,model,:)-tmpHistoricalTxx(:,:,model,:)) ./ tmpHistoricalTxx(:,:,model,:));
+    chgPerTxx(:, :, :) = squeeze((tmpFutureTxx(:,:,:)-tmpHistoricalTxx(:,:,:)) ./ tmpHistoricalTxx(:,:,:));
     % in w/m2
-    chgAbsTxx(:, :, model, :) = squeeze(tmpFutureTxx(:,:,model,:)-tmpHistoricalTxx(:,:,model,:));
+    chgAbsTxx(:, :, :) = squeeze(tmpFutureTxx(:,:,:)-tmpHistoricalTxx(:,:,:));
 
+    % median over models
+    chgPer = chgPer .* 100;
+    chgPerTxx = chgPerTxx .* 100;
+
+    eval([var metric 'Chg = chgPer;']);
+    save(['e:/data/projects/bowen/derived-chg/var-stats/' var metric '-percent-' models{model} '.mat'], [var metric 'Chg']);
+    eval([var metric 'Chg = chgAbs;']);
+    save(['e:/data/projects/bowen/derived-chg/var-stats/' var metric '-absolute-' models{model} '.mat'], [var metric 'Chg']);
+
+    eval([var metric 'ChgTxxMonths = chgPerTxx;']);
+    save(['e:/data/projects/bowen/derived-chg/var-stats/' var metric 'ChgTxxMonths-percent-' models{model} '.mat'], [var metric  'ChgTxxMonths']);
+    eval([var metric 'ChgTxxMonths = chgAbsTxx;']);
+    save(['e:/data/projects/bowen/derived-chg/var-stats/' var metric 'ChgTxxMonths-absolute-' models{model} '.mat'], [var metric 'ChgTxxMonths']);
+   
 end
 
-% median over models
-chgPer = chgPer .* 100;
-chgAbs = chgAbs .* 100;
-chgPerTxx = chgPerTxx .* 100;
-chgAbsTxx = chgAbsTxx .* 100;
 
-eval([var metric 'Chg = chgPer;']);
-save(['e:/data/projects/bowen/derived-chg/' var metric '-all-txx.mat'], [var metric 'Chg']);
-eval([var metric 'Chg = chgAbs;']);
-save(['e:/data/projects/bowen/derived-chg/' var metric '-absolute-all-txx.mat'], [var metric 'Chg']);
-
-eval([var metric 'ChgTxxMonths = chgPerTxx;']);
-save(['e:/data/projects/bowen/derived-chg/' var metric 'ChgTxxMonths-percent.mat'], [var metric  'ChgTxxMonths']);
-eval([var metric 'ChgTxxMonths = chgAbsTxx;']);
-save(['e:/data/projects/bowen/derived-chg/' var metric 'ChgTxxMonths-absolute.mat'], [var metric 'ChgTxxMonths']);

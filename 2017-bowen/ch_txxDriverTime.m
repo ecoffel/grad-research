@@ -2,7 +2,7 @@ txxAnom = true;
 warmSeasonAnom = false;
 
 showscatter = false;
-var = 'rsds';
+var = 'netRad';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -62,11 +62,13 @@ if txxAnom
         ampVarHist(:,:,:,m) = annExt;
         load(['E:\data\projects\bowen\' var '-chg-data\' var '-txx-warm-anom-historical-1981-2005-' models{m} '.mat']);
         driverVarHist(:,:,:,m) = regionalFluxHistoricalTxx;
+        driverVarHist(driverVarHist>1)=NaN;
         
         load(['E:\data\projects\bowen\temp-chg-data\cmip5-ann-max-' models{m} '-rcp85-2061-2085.mat']);
         ampVarFut(:,:,:,m) = annExt;
         load(['E:\data\projects\bowen\' var '-chg-data\' var '-txx-anom-future-2061-2085-' models{m} '.mat']);
         driverVarFut(:,:,:,m) = regionalFluxFutureTxx;
+        driverVarFut(driverVarFut>1)=NaN;
     end
     
 elseif warmSeasonAnom
@@ -170,6 +172,7 @@ for region = [2 4 7 10]
             aFut(:,:,year) = aTmp;
         end
         aFut = squeeze(nanmean(nanmean(aFut,2),1));
+        aFut = (aFut-nanmean(aFut)) ./ nanmean(aFut); 
         
         curDVar = squeeze(driverVarFut(:,:,:,m));
         dFut = [];
@@ -214,88 +217,138 @@ for r = 1:size(slopesHist,2)
 end
 
 
+slopesScatter = false;
+if slopesScatter
+    region = 4;
+
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    axis square;
+    grid on;
+
+    load(['e:/data/projects/bowen/derived-chg/txxAmp.mat']);
+    [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
+    txxAmp = squeeze(nanmean(nanmean(amp(latInds,lonInds,:),2),1));
+
+    v3Colormap = '*RdBu';
+    v3ChgSort = sort(txxAmp);
+    v3Color = brewermap(length(v3ChgSort)*2, v3Colormap) .* .7;
+    v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
+
+    % loop over all models
+    for m = 1:length(models)
+        color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == txxAmp(m))-1, :);
+        t = text(slopesHist(m,2), slopesFut(m,2), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+        t.FontSize = 30;
+        t.FontWeight = 'bold';
+    end
+
+    colormap(v3Color);
+    caxis([-max(abs(v3ChgSort)) max(abs(v3ChgSort))]);
+    cb = colorbar();
+    ylabel(cb, 'TXx amplification');
+
+    set(gca, 'FontSize', 40);
+
+    ylabel('Future TXx-EF anom slope');
+    ylim([-1.5 1]);
+    set(gca, 'YTick', -1.5:.5:1);
+    xlabel('Historical TXx-EF anom slope');
+    xlim([-1.6 1]);
+    set(gca, 'XTick', -1.5:.5:1);
+
+    title([regionNames{region}]);
+    plot([-100 100], [0 0], '--k');
+    plot([0 0], [-100 100], '--k');
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig txx-amp-ef-slope-ef-chg-4.eps;
+    close all;
+end
+
+
 if showscatter
-var3 = 'txxAmp';
-var3Months = [1];
-v3FileStr = [var3];
-v3YStr = ['TXx amplification (' char(176) 'C)'];
-v3ColorOffset = 0;
-v3Colormap = '*RdBu';
-v3FileStr = [var3];
-load(['e:/data/projects/bowen/derived-chg/' var3]);
-eval(['v3 = amp;']);
-v3(v3>1000 | v3 < -1000) = NaN;
+    var3 = 'txxAmp';
+    var3Months = [1];
+    v3FileStr = [var3];
+    v3YStr = ['TXx amplification (' char(176) 'C)'];
+    v3ColorOffset = 0;
+    v3Colormap = '*RdBu';
+    v3FileStr = [var3];
+    load(['e:/data/projects/bowen/derived-chg/' var3]);
+    eval(['v3 = amp;']);
+    v3(v3>1000 | v3 < -1000) = NaN;
 
-var2 = 'efChgWarmTxxAnom';
-var2Months = [1];
-v2YStr = 'EF TXx rel change (Fraction)';
-v2YLim = [-.075 .125];
-v2YTick = -.075:.025:.125;
-% v2YLim = [-2 2];
-% v2YTick = -.075:.025:.075;
-v2FileStr = [var2];
-load(['e:/data/projects/bowen/derived-chg/' var2]);
-eval(['v2 = ' var2 ';']);
-v2(v2>1000 | v2<-1000) = NaN;
-%v2 = v2 .* 3600 .* 24;
-load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
+    var2 = 'efChgWarmTxxAnom';
+    var2Months = [1];
+    v2YStr = 'EF TXx rel change (Fraction)';
+    v2YLim = [-.075 .125];
+    v2YTick = -.075:.025:.125;
+    % v2YLim = [-2 2];
+    % v2YTick = -.075:.025:.075;
+    v2FileStr = [var2];
+    load(['e:/data/projects/bowen/derived-chg/' var2]);
+    eval(['v2 = ' var2 ';']);
+    v2(v2>1000 | v2<-1000) = NaN;
+    %v2 = v2 .* 3600 .* 24;
+    load('2017-bowen/hottest-season-txx-rel-cmip5.mat');
 
-figure('Color', [1,1,1]);
-hold on;
-box on;
-axis square;
-grid on;
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    axis square;
+    grid on;
 
-region = 10;
+    region = 10;
 
-[latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
+    [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
-if length(var2Months) == 0
-    var2Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
-    var2Months = [var2Months-1 var2Months var2Months+1];
-    var2Months(var2Months == 0) = 12;
-    var2Months(var2Months == 13) = 1;
-end
+    if length(var2Months) == 0
+        var2Months = round(squeeze(nanmean(nanmean(hottestSeason(latInds, lonInds, :)))));
+        var2Months = [var2Months-1 var2Months var2Months+1];
+        var2Months(var2Months == 0) = 12;
+        var2Months(var2Months == 13) = 1;
+    end
 
-% and bowen
-v2Chg = squeeze(nanmean(nanmean(nanmean(v2(latInds, lonInds, :, var2Months), 4), 2), 1));
-v3Chg = squeeze(nanmean(nanmean(nanmean(v3(latInds, lonInds, :, var3Months), 4), 2), 1));
-nn = find(~isnan(v3Chg) & ~isnan(v2Chg));
-v2Chg = v2Chg(nn);
-v3Chg = v3Chg(nn);
+    % and bowen
+    v2Chg = squeeze(nanmean(nanmean(nanmean(v2(latInds, lonInds, :, var2Months), 4), 2), 1));
+    v3Chg = squeeze(nanmean(nanmean(nanmean(v3(latInds, lonInds, :, var3Months), 4), 2), 1));
+    nn = find(~isnan(v3Chg) & ~isnan(v2Chg));
+    v2Chg = v2Chg(nn);
+    v3Chg = v3Chg(nn);
 
-v3ChgSort = sort(v3Chg);
-v3Color = brewermap(length(v3ChgSort)*2, v3Colormap) .* .7;
-v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
+    v3ChgSort = sort(v3Chg);
+    v3Color = brewermap(length(v3ChgSort)*2, v3Colormap) .* .7;
+    v3ZeroInd = find(abs(v3ChgSort) == min(abs(v3ChgSort)));
 
-% loop over all models
-for m = 1:length(models)
-    color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == v3Chg(m))-1, :);
-    t = text(slopes(m,7), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
-    t.FontSize = 30;
-    t.FontWeight = 'bold';
-end
+    % loop over all models
+    for m = 1:length(models)
+        color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == v3Chg(m))-1, :);
+        t = text(slopes(m,7), v2Chg(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+        t.FontSize = 30;
+        t.FontWeight = 'bold';
+    end
 
-colormap(v3Color);
-caxis([-max(abs(v3ChgSort)) max(abs(v3ChgSort))]);
-cb = colorbar();
-ylabel(cb, v3YStr);
+    colormap(v3Color);
+    caxis([-max(abs(v3ChgSort)) max(abs(v3ChgSort))]);
+    cb = colorbar();
+    ylabel(cb, v3YStr);
 
-set(gca, 'FontSize', 40);
+    set(gca, 'FontSize', 40);
 
-ylabel(v2YStr);
-ylim(v2YLim);
-set(gca, 'YTick', v2YTick);
+    ylabel(v2YStr);
+    ylim(v2YLim);
+    set(gca, 'YTick', v2YTick);
 
-title([regionNames{region}]);
-xlabel('Historical EF-TXx anom slope');
-xlim([-.75 .5]);
-set(gca, 'XTick', [-.75:.25:.5]);
-plot([-100 100], [0 0], '--k');
-plot([0 0], [-100 100], '--k');
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig txx-amp-ef-slope-ef-chg-10.eps;
-close all;
+    title([regionNames{region}]);
+    xlabel('Historical EF-TXx anom slope');
+    xlim([-.75 .5]);
+    set(gca, 'XTick', [-.75:.25:.5]);
+    plot([-100 100], [0 0], '--k');
+    plot([0 0], [-100 100], '--k');
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig txx-amp-ef-slope-ef-chg-10.eps;
+    close all;
 end
 
 
@@ -308,7 +361,7 @@ hold on;
 grid on;
 axis square;
 box on;
-b = boxplot(corrs,'positions',[.8 1.2 1.8 2.2 2.8 3.2 3.8 4.2],'colors','brbrbrbr');
+b = boxplot(slopes,'positions',[.8 1.2 1.8 2.2 2.8 3.2 3.8 4.2],'colors','brbrbrbr');
 plot([0 6], [0 0], '--k');
 xlim([0 5]);
 ylim([-1 1]);

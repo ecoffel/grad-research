@@ -3,7 +3,7 @@
 % maximum vs. the mean daily maximum
 monthly = false;
 
-showAllModels = true;
+showAllModels = false;
 
 load lat;
 load lon;
@@ -209,6 +209,16 @@ if strcmp(chgMetric, 'txx-amp')
     
     txxChg = chg1;
     save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
+    
+    for m = 1:length(models)
+        txChgWarm = chg2(:, :, m);
+        txxAmp = amp(:, :, m);
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/txxAmp-' models{m} '.mat'], 'txxAmp');
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/txChgWarm-' models{m} '.mat'], 'txChgWarm');
+
+        txxChg = chg1(:, :, m);
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/txxChg-' models{m} '.mat'], 'txxChg');
+    end
 elseif strcmp(chgMetric, 'txx-thresh')
     save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
     

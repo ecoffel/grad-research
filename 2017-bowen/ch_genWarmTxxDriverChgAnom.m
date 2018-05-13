@@ -4,7 +4,7 @@ warmSeasonAnom = false;
 percentChg = false;
 excludeWinter = false;
 
-var = 'netRad';
+var = 'hfss';
 
 if percentChg
     load(['E:\data\projects\bowen\derived-chg\' var 'ChgTxxMonths-percent.mat']);

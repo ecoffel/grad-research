@@ -58,6 +58,11 @@ for k = 1:length(ncFileNames)
     
     % check for output folder and make it if it doesn't exist
     folDataTarget = [outputDir, '/', modelName, '/', runName, '/', emissionsScenario, '/', varName, '/', startDate, '-', endDate];
+    
+    if isdir([outputDir, '/', modelName, '/', runName, '/', emissionsScenario, '/', varName, '/regrid/world/', startDate, '-', endDate])
+        continue;
+    end
+    
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
@@ -118,7 +123,7 @@ for k = 1:length(ncFileNames)
             varIdLon = i;
         end
         
-        if length(findstr(vname, 'plev')) ~= 0
+        if strcmp(vname, 'plev')
             varIdPLev = i;
         end
         
