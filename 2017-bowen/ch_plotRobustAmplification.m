@@ -18,7 +18,7 @@ waterGrid = logical(waterGrid);
 % warm-season-anom: warm season Tx change minus surounding seasons
 chgMetric = 'txx-amp';
 
-thresh = 90;
+thresh = 99;
 
 modelSubset = 'all';
 

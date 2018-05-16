@@ -1,11 +1,11 @@
 
 dataset = 'cmip5';
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-               'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5'};%, 'csiro-mk3-6-0', ...
-%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-%               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-var = 'zg';          
+               'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+var = 'ef';          
 
 load lat;
 load lon;
@@ -16,9 +16,15 @@ waterGrid = logical(waterGrid);
 load('2017-bowen/hottest-season-txx-rel-cmip5-all-txx.mat');
 
 for m = 1:length(models)
-    if exist(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxAmp-' models{m} '.mat'])
-        continue;
+    if exist(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxAmp-movingWarm-' models{m} '.mat'])
+        %continue;
     end
+    
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-historical-cmip5-1981-2005.mat']);
+    txxMonthsHist = txxMonths;
+
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-future-cmip5-2061-2085.mat']);
+    txxMonthsFut = txxMonths;
     
     fprintf('loading %s...\n', models{m});
     driverHist = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
@@ -46,11 +52,14 @@ for m = 1:length(models)
                 continue;
             end
             
-            months = [squeeze(hottestSeason(xlat, ylon, m)-1) squeeze(hottestSeason(xlat, ylon, m)) squeeze(hottestSeason(xlat, ylon, m)+1)];
-            months(months == 0) = 12;
-            months(months == 13) = 1;
+            curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
+            curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
             
-            driverWarmChg(xlat, ylon) = squeeze(nanmean(nanmean(nanmean(driverFut(xlat, ylon,:,months,:), 5), 4), 3)) - squeeze(nanmean(nanmean(nanmean(driverHist(xlat, ylon,:,months,:), 5), 4), 3));
+%             months = [squeeze(hottestSeason(xlat, ylon, m)-1) squeeze(hottestSeason(xlat, ylon, m)) squeeze(hottestSeason(xlat, ylon, m)+1)];
+%             months(months == 0) = 12;
+%             months(months == 13) = 1;
+            
+            driverWarmChg(xlat, ylon) = squeeze(nanmean(nanmean(nanmean(driverFut(xlat, ylon,:,curTxxMonthsFut,:), 5), 4), 3)) - squeeze(nanmean(nanmean(nanmean(driverHist(xlat, ylon,:,curTxxMonthsHist,:), 5), 4), 3));
             
             for year = 1:size(driverHist, 3)
                 curDriverHist = squeeze(reshape(permute(squeeze(driverHist(xlat, ylon, year, :, :)), [2 1]), [numel(driverHist(xlat, ylon, year, :, :)), 1]));
@@ -71,8 +80,8 @@ for m = 1:length(models)
     eval([var 'TxxAmp = driverTxxAmp;']);
     eval([var 'WarmChg = driverWarmChg;']);
     
-    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxAmp-' models{m} '.mat'], [var 'TxxAmp']);
-    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxChg-' models{m} '.mat'], [var 'TxxChg']);
-    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'WarmChg-' models{m} '.mat'], [var 'WarmChg']);
+    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxAmp-movingWarm-' models{m} '.mat'], [var 'TxxAmp']);
+    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'TxxChg-movingWarm-' models{m} '.mat'], [var 'TxxChg']);
+    save(['e:/data/projects/bowen/derived-chg/var-txx-amp/' var 'WarmChg-movingWarm-' models{m} '.mat'], [var 'WarmChg']);
 end
 

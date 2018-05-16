@@ -1,6 +1,6 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t90-p10.mat']);
 hotDryHistorical = hotDryFuture(:, :, [1:9 11:23]);
 
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080.mat']);
@@ -15,7 +15,7 @@ hotDryFutureEarly85 = hotDryFuture;
 
 drawScatter = true;
 drawMap = false;
-north = false;
+north = true;
 annual = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -107,7 +107,7 @@ if drawScatter
     xlim([0 8]);
     set(gca, 'YTick', [0 5 10 20 30 40]);
     ylabel('% of years');
-    set(gca, 'XTick', [1,3.5,6.5], 'XTickLabels', {'1980 - 2004', '2031 - 2055', '2056 - 2080'});
+    set(gca, 'XTick', [1,3.5,6.5], 'XTickLabels', {'1981 - 2005', '2031 - 2055', '2056 - 2080'});
     set(gca, 'FontSize', 40);
     xtickangle(45);
     %title([seasonNames{s}]);
@@ -128,14 +128,14 @@ if drawMap
     latInds = curInds{1};
     lonInds = curInds{2};
     
-    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* nanmedian(squeeze(nanmean(hotDryFutureLate45, 3)), 3)}; 
+    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* nanmedian(squeeze(nanmean(hotDryHistorical, 3)), 3)}; 
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'nile', ...
                       'plotRange', [0 20], ...
                       'cbXTicks', 0:5:20, ...
                       'plotTitle', [''], ...
-                      'fileTitle', ['hot-dry-rcp45-annual.eps'], ...
+                      'fileTitle', ['hot-dry-historical-annual.eps'], ...
                       'plotXUnits', ['% of years'], ...
                       'blockWater', true, ...
                       'colormap', brewermap([], 'Oranges'), ...

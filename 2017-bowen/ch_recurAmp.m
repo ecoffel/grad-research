@@ -39,6 +39,11 @@ for m = 1:length(models)
         tFut = tFut-273.15;
     end
     
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-historical-cmip5-1981-2005.mat']);
+    txxMonthsHist = txxMonths;
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-future-cmip5-2061-2085.mat']);
+    txxMonthsFut = txxMonths;
+    
     for xlat = 1:size(lat, 1)
         for ylon = 1:size(lat, 2)
             
@@ -46,21 +51,24 @@ for m = 1:length(models)
                 continue;
             end
             
-            months = [squeeze(hottestSeason(xlat, ylon, m)-1) squeeze(hottestSeason(xlat, ylon, m)) squeeze(hottestSeason(xlat, ylon, m)+1)];
-            months(months == 0) = 12;
-            months(months == 13) = 1;
+%             months = [squeeze(hottestSeason(xlat, ylon, m)-1) squeeze(hottestSeason(xlat, ylon, m)) squeeze(hottestSeason(xlat, ylon, m)+1)];
+%             months(months == 0) = 12;
+%             months(months == 13) = 1;
 
-            curt = squeeze(t(xlat, ylon, :, months, :));
+            curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
+            curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
+            
+            curt = squeeze(t(xlat, ylon, :, curTxxMonthsHist, :));
             curt = reshape(permute(curt, [3 2 1]), [numel(curt),1]);
             curThresh = prctile(curt, thresh);
             
             for year = 1:size(t, 3)
-                curt = squeeze(t(xlat, ylon, year, months, :));
+                curt = squeeze(t(xlat, ylon, year, curTxxMonthsHist, :));
                 curt = reshape(permute(curt, [2 1]), [numel(curt), 1]);
                 recurHist(xlat, ylon, year, m) = length(find(curt>curThresh));
                 recurTxShift(xlat, ylon, year, m) = length(find((curt+txChgWarm(xlat, ylon, m))>curThresh));
                 
-                curtfut = squeeze(tFut(xlat, ylon, year, months, :));
+                curtfut = squeeze(tFut(xlat, ylon, year, curTxxMonthsFut, :));
                 curtfut = reshape(permute(curtfut, [2 1]), [numel(curtfut), 1]);
                 recurAmp(xlat, ylon, year, m) = length(find(curtfut>curThresh));
             end
@@ -73,7 +81,7 @@ for m = 1:length(models)
 end
 
 data = {recurHist, recurTxShift, recurAmp};
-save('recurChg-99', 'data');
+save('recurChg-99-movingWarm', 'data');
 
 result = {lat,lon,nanmedian(squeeze(nanmean(data{3},3))-squeeze(nanmean(data{2},3)),3)};
     
@@ -82,7 +90,7 @@ saveData = struct('data', {result}, ...
                   'plotRange', [-5 5], ...
                   'cbXTicks', -5:1:5, ...
                   'plotTitle', [''], ...
-                  'fileTitle', ['recur-amp-txshift-99.eps'], ...
+                  'fileTitle', ['recur-amp-txx-99.eps'], ...
                   'plotXUnits', ['Days per warm season'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([], '*RdBu'));
@@ -91,14 +99,14 @@ plotFromDataFile(saveData);
 
 
 
-result = {lat,lon,nanmedian(squeeze(nanmean(data{3},3))-squeeze(nanmean(data{1},3)),3)};
+result = {lat,lon,nanmedian(squeeze(nanmean(data{2},3))-squeeze(nanmean(data{1},3)),3)};
     
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [0 60], ...
-                  'cbXTicks', 0:10:60, ...
+                  'plotRange', [0 100], ...
+                  'cbXTicks', 0:20:100, ...
                   'plotTitle', [''], ...
-                  'fileTitle', ['recur-amp-hist-99.eps'], ...
+                  'fileTitle', ['recur-amp-warm-99.eps'], ...
                   'plotXUnits', ['Days per warm season'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([], 'Reds'));

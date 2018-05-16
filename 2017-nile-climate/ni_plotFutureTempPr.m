@@ -3,14 +3,14 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp45';
-timePeriodBase = [1980 2004];
+rcp = 'rcp85';
+timePeriodBase = [1981 2005];
 timePeriodFuture = [2056 2080];
 
 plotScatter = true;
@@ -67,7 +67,7 @@ for s = 1%:size(seasons, 1)
     latIndsRegion = curInds{1};
     lonIndsRegion = curInds{2};
     
-    curInds = regionInds('nile-north');
+    curInds = regionInds('nile-south');
     latInds = curInds{1};
     lonInds = curInds{2};
     prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
@@ -139,7 +139,7 @@ for s = 1%:size(seasons, 1)
         prStd = prStd .* 100;
         
         % prchg vs prstd chg
-        figure('Color', [1,1,1]);
+            figure('Color', [1,1,1]);
         hold on;
         box on;
         grid on;
@@ -174,13 +174,16 @@ for s = 1%:size(seasons, 1)
             plot([min(pchg) max(pchg)], [f(min(pchg)) f(max(pchg))], '--b', 'LineWidth', 2);
         end
         
-        xlim([-40 60]);
-        ylim([-50 150]);
+        xlim([-40 80]);
+        ylim([-100 150]);
+        plot([-50 100], [0 0], '--k');
+        plot([0 0], [-150 150], '--k');
         set(gca, 'FontSize', 36);
         xlabel('Precipitation change (%)');
         ylabel('P std. dev. change (%)');
         set(gcf, 'Position', get(0,'Screensize'));
-        export_fig pr-std-chg-rcp45-north.eps;
+        export_fig pr-std-chg-rcp85-south.eps;
+        close all;
         
         figure('Color', [1,1,1]);
         hold on;

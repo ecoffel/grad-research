@@ -239,7 +239,7 @@ if slopesScatter
     % loop over all models
     for m = 1:length(models)
         color = v3Color(length(v3ChgSort)-v3ZeroInd+find(v3ChgSort == txxAmp(m))-1, :);
-        t = text(slopesHist(m,2), slopesFut(m,2), num2str(m), 'HorizontalAlignment', 'center', 'Color', color);
+        t = text(slopesHist(m,2), txxAmp(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
         t.FontSize = 30;
         t.FontWeight = 'bold';
     end
@@ -251,9 +251,9 @@ if slopesScatter
 
     set(gca, 'FontSize', 40);
 
-    ylabel('Future TXx-EF anom slope');
-    ylim([-1.5 1]);
-    set(gca, 'YTick', -1.5:.5:1);
+    ylabel('TXx amplification');
+    ylim([-1 3]);
+    set(gca, 'YTick', -1:3);
     xlabel('Historical TXx-EF anom slope');
     xlim([-1.6 1]);
     set(gca, 'XTick', -1.5:.5:1);

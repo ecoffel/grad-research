@@ -8,6 +8,22 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+txxMonthLengthHist = [];
+txxMonthLengthFut = [];
+for m = 1:length(models)          
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-historical-cmip5-1981-2005.mat']);
+    txxMonthsHist = txxMonths;
+    
+    load(['2017-bowen/txx-timing/txx-months-' models{m} '-future-cmip5-2061-2085.mat']);
+    txxMonthsFut = txxMonths;
+
+    for xlat = 1:size(lat,1)
+        for ylon = 1:size(lat,2)
+            txxMonthLengthHist(xlat,ylon,m) = length(unique(squeeze(txxMonthsHist(xlat,ylon,:))));
+            txxMonthLengthFut(xlat,ylon,m) = length(unique(squeeze(txxMonthsFut(xlat,ylon,:))));
+        end
+    end
+end
 result = {lat, lon, mode(hottestSeason, 3)};
 
 saveData = struct('data', {result}, ...

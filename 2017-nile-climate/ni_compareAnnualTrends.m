@@ -7,7 +7,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 rcp = 'historical';
 timePeriod = [1981 2016];
 
-plotTempPTrends = false;
+plotTempPTrends = true;
 plotHotDryTrends = false;
 
 if ~exist('eraTemp', 'var')
@@ -87,7 +87,7 @@ if ~exist('cpc', 'var')
     cpc = nanmean(cpc, 4);
 end
 
-north = false;
+north = true;
 
 regionBounds = [[2 32]; [25, 44]];
 regionBoundsSouth = [[2 13]; [25, 42]];
@@ -280,8 +280,14 @@ prSE = prSE .* 10;
 
 if plotTempPTrends
     
-    figure('Color',[1,1,1]);
-    colors = get(gca, 'colororder');
+    fig = figure('Color',[1,1,1]);
+    
+    colors = get(fig, 'defaultaxescolororder');
+    temp = colors(1,:);
+    colors(1,:) = colors(2,:);
+    colors(2,:) = temp;
+    set(fig, 'defaultaxescolororder', colors);
+    
     legItems = [];
     hold on;
     box on;

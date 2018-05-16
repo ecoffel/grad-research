@@ -4,28 +4,18 @@ excludeWinter = false;
 
 var = 'ef';
 
+bootstrap = false;
+daily = true;
+
 if txxWarmAnom
-    load E:\data\projects\bowen\derived-chg\efTxxAmp.mat;
-    amp = txxAmp;
-    if strcmp(var, 'TCHfss')
-        load(['E:\data\projects\bowen\derived-chg\' var '.mat']);
-        driverRaw = eval([var]);
-    else
-        load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmTxxAnom.mat']);
-        driverRaw = eval([var 'ChgDailyWarmTxxAnom']);
-    end
-    
-    
     if strcmp(var, 'ef')
-        yrange = [-25 10];
-        yticks = -25:5:10;
+        yrange = [-21 5];
+        yticks = -20:5:5;
         unit = 'unit EF';
-        driverRaw(abs(driverRaw)>1) = NaN;
     elseif strcmp(var, 'pr')
         yrange = [-4 1];
         yticks = -4:1:1;
         unit = 'mm/day';
-        driverRaw = driverRaw .* 3600 .* 24;
     elseif strcmp(var, 'netRad')
         yrange = [-.2 .2];
         yticks = -.2:.1:.2;
@@ -47,23 +37,6 @@ if txxWarmAnom
         yticks = -1:.5:1;
         unit = 'W/m^2';
     end
-elseif warmSeasonAnom
-    load e:/data/projects/bowen/derived-chg/txChg.mat;
-    load e:/data/projects/bowen/derived-chg/txChgWarm.mat;
-    amp = txChgWarm - txChg;
-    
-    if excludeWinter
-        load E:\data\projects\bowen\derived-chg\hfssChgWarmAnom-nowint.mat;
-        load E:\data\projects\bowen\derived-chg\prChgWarmAnom-nowint.mat;
-        load E:\data\projects\bowen\derived-chg\efChgWarmAnom-nowint.mat;
-    else
-        load E:\data\projects\bowen\derived-chg\hfssChgWarmAnom.mat;
-        load E:\data\projects\bowen\derived-chg\prChgWarmAnom.mat;
-        load E:\data\projects\bowen\derived-chg\efChgWarmAnom.mat;
-    end
-    hfssRaw = hfssChgWarmAnom;
-    prRaw = prChgWarmAnom;
-    efRaw = efChgWarmAnom;
 end
 
 load waterGrid.mat;
@@ -105,23 +78,50 @@ regions = [[[-90 90], [0 360]]; ...             % world
            [[22 40], [105 122]]];               % china
        
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+if daily
+    load E:\data\projects\bowen\derived-chg\efTxxAmp.mat;
+    amp = txxAmp;    
+
+    load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmTxxAnom.mat']);
+    driverRaw = eval([var 'ChgDailyWarmTxxAnom']);
+else
+    load E:\data\projects\bowen\derived-chg\txxAmp.mat;
+
+    load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmTxxAnom.mat']);
+    driverRaw = eval([var 'ChgWarmTxxAnom']);
+end
+
+          
 rind = 1;
+efind = 1;
 dslopes = [];
+dslopesP = [];
 
-for region = [1 2 4 7 10]
+for region = [1]% 2 4 7 10]
     [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
-
-    for m = 1:size(amp,3)
+    
+    allDriver = [];
+    allADriver = [];
+    allEGroup = [];
+    
+    for m = 1:length(models)
+        
+        load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+        
         a = squeeze(amp(:,:,m));
         a(waterGrid) = NaN;
         a = a(latInds,lonInds);
+        if region == 1
+            a(1:15,:) = NaN;
+            a(75:90,:) = NaN;
+        end
         a = reshape(a, [numel(a),1]);
-
+        
         driver = squeeze(driverRaw(:,:,m));
         driver(waterGrid) = NaN;
         driver = driver(latInds,lonInds);
@@ -130,68 +130,149 @@ for region = [1 2 4 7 10]
             driver(75:90,:) = NaN;
         end
         driver = reshape(driver, [numel(driver),1]);
+        %driver(abs(driver)>.5) = NaN;
+        
+        efGroup(waterGrid) = NaN;
+        efGroup = efGroup(latInds,lonInds);
+        if region == 1
+            efGroup(1:15,:) = NaN;
+            efGroup(75:90,:) = NaN;
+        end
+        efGroup =  reshape(efGroup, [numel(efGroup),1]);
 
         nn = find(isnan(a) | isnan(driver));
 
         driver(nn) = [];
         aDriver = a;
         aDriver(nn) = [];
+        efGroup(nn) = [];
         
-
-        if length(driver)>2
-            X = [ones(size(aDriver)), driver];
-            b = regress(aDriver,X);
-            afit = X*b;
-            resid = aDriver-afit;        
-            slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
-            dslopes(rind,m) = nanmean(slopes(:,2));
-        else
-            dslopes(rind,m) = NaN;
+        allDriver = [allDriver; driver];
+        allADriver = [allADriver; aDriver];
+        allEGroup = [allEGroup; efGroup];
+        
+        for e = 1:5
+            
+            % all ef vals
+            if e == 5
+                nn = 1:length(driver);
+            else
+                % others
+                nn = find(efGroup == e);
+            end
+            
+            curDriver = driver(nn);
+            curADriver = aDriver(nn);
+            
+            if bootstrap
+                if length(curDriver)>2
+                    X = [ones(size(curADriver)), curDriver];
+                    b = regress(curADriver,X);
+                    afit = X*b;
+                    resid = curADriver-afit;        
+                    slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
+                    dslopes(rind, e,m) = nanmean(slopes(:,2));
+                else
+                    dslopes(rind, e,m) = NaN;
+                end
+            else
+                f = fitlm(curDriver, curADriver, 'linear');
+                dslopes(rind, e, m) = f.Coefficients.Estimate(2);
+                dslopesP(rind, e, m) = f.Coefficients.pValue(2); 
+                
+                if e == 1
+                   x = 5; 
+                end
+            end
         end
-        
-        if region == 1
-            data = {driver, slopes};
+        %if region == 1
+        %    data = {driver, slopes};
             %save(['E:\data\projects\bowen\derived-chg\slopes\slopes-' var '-' models{m} '-1.mat'], 'data');
-        end
-%         y1 = slopes(:,1)+min(driver)*slopes(:,2);
-%         y2 = slopes(:,1)+max(driver)*slopes(:,2);
+        %end
+
+    end
+
+    rind = rind+1;
+    
+    colors = [[1 0 0 .01];
+              [0 1 0 .01];
+              [0 0 1 .01];
+              [.5 .5 0 .01]];
+    
+%     for e = 2
 %         
 %         figure('Color',[1,1,1]);
 %         hold on;
 %         box on;
 %         axis square;
 %         grid on;
-%         p = plot([min(driver) max(driver)], [y1 y2], 'r');
-%         set(p,'Color',[1 0 0 .01]);
-%         ylim([-2 5]);
-%         xlim([-10 10]);
+% 
+%         X = [ones(size(allDriver(allEGroup == e))), allDriver(allEGroup == e)];
+%         b = regress(allADriver(allEGroup == e),X);
+%         afit = X*b;
+%         resid = allADriver(allEGroup == e)-afit;        
+%         slopes = bootstrp(1000, @(bootr)regress(afit+bootr,X),resid);
+%         y1 = slopes(:,1)+min(allDriver(allEGroup == e))*slopes(:,2);
+%         y2 = slopes(:,1)+max(allDriver(allEGroup == e))*slopes(:,2);
+% 
+%         p1 = plot(allDriver(allEGroup == e), allADriver(allEGroup == e), '.');
+%         set(p1, 'Color', colors(e,:));
+%         p = plot([min(allDriver(allEGroup == e)) max(allDriver(allEGroup == e))], [y1 y2], 'r');
+%         set(p,'Color',colors(e,:));
+% 
+%     end
 
-    end
-
-    rind = rind+1;
-    
     
 end
+
+dslopes = squeeze(dslopes);
+dslopesP = squeeze(dslopesP);
+
+[f,gof] = fit((1:4)', nanmedian(dslopes(1:4,:),2), 'poly3');
+fx = 1:.1:4;
+fy = f(fx);
 
 figure('Color',[1,1,1]);
 hold on;
 grid on;
 axis square;
 box on;
-b = boxplot(dslopes','positions',1:5);
+%b = boxplot(dslopes','positions',1:5);
+
+for e = 1:size(dslopes,1)
+    for m = 1:size(dslopes,2)
+        if dslopesP(e, m) <= 0.05 && dslopes(e, m) < 0
+            b = plot(e, dslopes(e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [160, 116, 46]./255.0);
+        elseif dslopesP(e, m) <= 0.05 && dslopes(e, m) > 0
+            b = plot(e, dslopes(e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [68, 166, 226]./255.0);
+        else
+            b = plot(e, dslopes(e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
+        end
+    end
+    
+    b = plot([e-.2 e+.2], [nanmean(dslopes(e,:),2) nanmean(dslopes(e,:),2)], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
+    b = plot([e-.2 e+.2], [nanmedian(dslopes(e,:),2) nanmedian(dslopes(e,:),2)], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
+end
+
 plot([0 6], [0 0], '--k');
+plot(fx, fy, '--k', 'LineWidth', 2, 'Color', [.5 .5 .5]);
 ylim(yrange);
 set(gca, 'YTick', yticks);
-xlim([0 6]);
+xlim([.5 5.5]);
 set(gca, 'FontSize', 40);
-set(gca, 'XTick', 1:5, 'XTickLabel', {'World', 'U.S.', 'Europe', 'Amazon', 'China'});xtickangle(45);
+set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
+xtickangle(45);
 ylabel([char(176) 'C / ' unit]);
-set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
-lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
+%set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
+%lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
+%set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
 if txxWarmAnom
-    export_fig(['txx-amp-spatial-' var '-daily.eps']);
+    if daily
+        export_fig(['txx-amp-spatial-' var '-daily-groups-movingwarm.eps']);
+    else
+        export_fig(['txx-amp-spatial-' var '-monthly.eps']);
+    end
 elseif warmSeasonAnom
     export_fig(['warm-anom-spatial-' var '.eps']);
 end

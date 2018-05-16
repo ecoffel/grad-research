@@ -151,9 +151,9 @@ box on;
 grid on;
 axis square;
 
-b = boxplot([squeeze(nanmean(nanmean(mrsoDryChg(latIndsSouth, lonIndsSouth, :),2),1)) ...
-             squeeze(nanmean(nanmean(mrsoHotChg(latIndsSouth, lonIndsSouth, :),2),1)) ...
-             squeeze(nanmean(nanmean(mrsoMeanChg(latIndsSouth, lonIndsSouth, :),2),1))], 'positions', [1 2 3]);
+b = boxplot([squeeze(nanmean(nanmean(mrsoDryChg(latIndsNorth, lonIndsNorth, :),2),1)) ...
+             squeeze(nanmean(nanmean(mrsoHotChg(latIndsNorth, lonIndsNorth, :),2),1)) ...
+             squeeze(nanmean(nanmean(mrsoMeanChg(latIndsNorth, lonIndsNorth, :),2),1))], 'positions', [1 2 3]);
 
 set(b(:, 1), {'LineWidth', 'Color'}, {2, [147 66 0]./255.0})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -176,7 +176,7 @@ set(gca, 'YTick', -15:5:15);
 set(gca, 'FontSize', 40);
 xtickangle(45);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['soil-moisture-change-south.eps']);
+export_fig(['soil-moisture-change-north.eps']);
 close all;
 
 if plotMaps

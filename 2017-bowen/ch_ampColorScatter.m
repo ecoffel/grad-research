@@ -1,6 +1,6 @@
-load E:\data\projects\bowen\derived-chg\txxAmpThresh99.mat
-load E:\data\projects\bowen\derived-chg\efChgWarmTxxAnom.mat
-load E:\data\projects\bowen\derived-chg\prChgWarmTxxAnom.mat
+load E:\data\projects\bowen\derived-chg\txx-amp\txxAmp-access1-3.mat;
+load E:\data\projects\bowen\derived-chg\var-txx-amp\efTxxAmp-access1-3.mat;
+load E:\data\projects\bowen\derived-chg\var-txx-amp\zgTxxAmp-access1-3.mat;
 load lat
 load lon
 load waterGrid
@@ -53,20 +53,20 @@ ampProc = [];
 efProc = [];
 prProc = [];
 
-for m = 1:25
-    a=amp(:,:,m);
+for m = 1
+    a=txxAmp(:,:,m);
     a(waterGrid)=NaN;
     a(1:20,:)=NaN;
     a(75:90,:)=NaN;
     ampProc(:,:,m)=a;
 
-    e=efChgWarmTxxAnom(:,:,m);
+    e=efTxxAmp(:,:,m);
     e(waterGrid)=NaN;
     e(1:20,:)=NaN;
     e(75:90,:)=NaN;
     efProc(:,:,m)=e;
     
-    p=prChgWarmTxxAnom(:,:,m);
+    p=zgTxxAmp(:,:,m);
     p(waterGrid)=NaN;
     p(1:20,:)=NaN;
     p(75:90,:)=NaN;
@@ -86,7 +86,7 @@ p(nn)=[];
 cmap = '*RdBu';
 ampSort = a(randperm(length(a)));
 cmap = brewermap(200, cmap);
-cmapRange = [-1 1];
+cmapRange = [-2 2];
 
 % loop over all models
 colors = ampSort ./ cmapRange(2);

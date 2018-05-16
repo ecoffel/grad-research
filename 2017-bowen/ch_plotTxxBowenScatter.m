@@ -4,7 +4,7 @@ load waterGrid;
 waterGrid = logical(waterGrid);
 
 showOutliers = true;
-plotModels = false;
+plotModels = true;
 useTxxSeasonalAmp = true;
 useTxxChg = false;
 useTxWarmAnom = false;
@@ -64,7 +64,7 @@ eval(['v3 = ' var3 ';']);
 v3(v3>1000 | v3 < -1000) = NaN;
 %v3 = v3 .* 3600 .* 24;
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
@@ -254,7 +254,7 @@ if scatterPlots
                 ylim([-1 3]);
                 set(gca, 'YTick', -1:3);
             end
-            ylabel(['TXx - warm Tx (' char(176) 'C)']);
+            ylabel(['TXx amplification (' char(176) 'C)']);
         elseif useTxxChg
             ylabel(['TXx chg (' char(176) 'C)']);
             ylim([-2 12]);
