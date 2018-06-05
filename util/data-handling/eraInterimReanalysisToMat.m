@@ -135,7 +135,7 @@ for k = 1:length(ncFileNames)
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
-        %continue;
+        continue;
     end
     
 
@@ -177,6 +177,9 @@ for k = 1:length(ncFileNames)
             elseif strcmp(varName, 'sshf') || strcmp(varName, 'slhf')
                 % sum and convert to W/m2
                 monthlyData(:, :, monthlyInd) = -nansum(dailyData(:, :, [4 8]), 3) ./ 24 ./ 3600;
+            elseif strcmp(varName, 'sp') | strcmp(varName, 'd2m')
+                % sum and convert to W/m2
+                monthlyData(:, :, monthlyInd) = nanmean(dailyData(:, :, :), 3);
             end
             dailyData = [];
             monthlyInd = monthlyInd + 1;
@@ -220,12 +223,14 @@ for k = 1:length(ncFileNames)
     
     % save the final month
     monthlyData = squeeze(monthlyData);
-    monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
-    fileName = [varName, '_', datestr(curStartDate, 'yyyy_mm_dd')];
-    eval([fileName ' = monthlyDataSet;']);
-    save([folDataTarget, '/', fileName, '.mat'], fileName);
-    clear monthlyDataSet;
-    eval(['clear ' fileName ';']);
+    if length(monthlyData) > 0
+        monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
+        fileName = [varName, '_', datestr(curStartDate, 'yyyy_mm_dd')];
+        eval([fileName ' = monthlyDataSet;']);
+        save([folDataTarget, '/', fileName, '.mat'], fileName);
+        clear monthlyDataSet;
+        eval(['clear ' fileName ';']);
+    end
     
  end
 

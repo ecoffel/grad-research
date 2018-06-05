@@ -1,6 +1,6 @@
 
 baseDir = 'e:/data';
-var = 'netRad';
+var = 'ef';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -10,6 +10,8 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 
 timePeriodHistorical = 1981:2005;
 timePeriodFuture = 2061:2085;
+
+useTxxDays = true;
 
 load lat;
 load lon;

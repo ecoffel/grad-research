@@ -7,17 +7,32 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
+          
+% for wb
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+models = {'ipsl-cm5b-lr'};
 hottestSeason = [];
 hottestSeasonLength = [];
+
+var = 'tasmax';
+timePeriod = 'historical';
 
 
 if ~exist('tasmax')
     if strcmp(dataset, 'cmip5')
         for m = 1:length(models)
             fprintf('loading %s...\n', models{m});
-            tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2005);
-            %tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+            
+            if strcmp(timePeriod, 'historical')
+                tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+                timePeriodStr = '1981-2005';
+            elseif strcmp(timePeriod, 'future')
+                tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/' var '/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+                timePeriodStr = '2061-2085';
+            end
             
             tasmax = tasmax{3};
             if nanmean(nanmean(nanmean(nanmean(nanmean(tasmax))))) > 100
@@ -88,8 +103,14 @@ if ~exist('tasmax')
                 end
             end
             
-            save(['2017-bowen/txx-timing/txx-months-' models{m} '-historical-' dataset '-1981-2005.mat'], 'txxMonths');
-            save(['2017-bowen/txx-timing/txx-days-' models{m} '-historical-' dataset '-1981-2005.mat'], 'txxDays');
+            
+            if strcmp(var, 'wb-davies-jones-full')
+                save(['2017-bowen/txx-timing/' var '-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
+                save(['2017-bowen/txx-timing/' var '-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
+            else
+                save(['2017-bowen/txx-timing/txx-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
+                save(['2017-bowen/txx-timing/txx-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
+            end
             
         end
     else

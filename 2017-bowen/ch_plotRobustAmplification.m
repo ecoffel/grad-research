@@ -18,6 +18,8 @@ waterGrid = logical(waterGrid);
 % warm-season-anom: warm season Tx change minus surounding seasons
 chgMetric = 'txx-amp';
 
+var = 'wb-davies-jones-full';
+
 thresh = 99;
 
 modelSubset = 'all';
@@ -30,7 +32,8 @@ modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-          
+
+    
 % % for mrsos
 % modelsAll = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 %               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -62,7 +65,10 @@ if strcmp(modelSubset, 'clouds')
 elseif strcmp(modelSubset, 'all')
     models = modelsAll;
 end
-            
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};           
 regionNames = {'World', ...
                 'Eastern U.S.', ...
                 'Southeast U.S.', ...
@@ -137,7 +143,7 @@ for m = 1:length(models)
     
     % load and process change 1
     if strcmp(chgMetric, 'txx-amp')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'txx-thresh')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-' num2str(thresh) '-' models{m} '-' rcp '-' timePeriod '-all-txx.mat']);
@@ -171,7 +177,7 @@ for m = 1:length(models)
 
     % load and process change 2
     if strcmp(chgMetric, 'txx-amp') || strcmp(chgMetric, 'txx-thresh')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
         load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
@@ -203,21 +209,21 @@ end
 amp = chg1 - chg2;
 
 if strcmp(chgMetric, 'txx-amp')
-    txChgWarm = chg2;
-    save('e:/data/projects/bowen/derived-chg/txxAmp.mat', 'amp');
-    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    wbChgWarm = chg2;
+    save('e:/data/projects/bowen/derived-chg/wbAmp.mat', 'amp');
+    save('e:/data/projects/bowen/derived-chg/wbChgWarm.mat', 'wbChgWarm');
     
-    txxChg = chg1;
-    save('e:/data/projects/bowen/derived-chg/txxChg.mat', 'txxChg');
+    wbChg = chg1;
+    save('e:/data/projects/bowen/derived-chg/wbChg.mat', 'wbChg');
     
     for m = 1:length(models)
-        txChgWarm = chg2(:, :, m);
-        txxAmp = amp(:, :, m);
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/txxAmp-' models{m} '.mat'], 'txxAmp');
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/txChgWarm-' models{m} '.mat'], 'txChgWarm');
+        wbChgWarm = chg2(:, :, m);
+        wbAmp = amp(:, :, m);
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbAmp-' models{m} '.mat'], 'wbAmp');
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbChgWarm-' models{m} '.mat'], 'wbChgWarm');
 
-        txxChg = chg1(:, :, m);
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/txxChg-' models{m} '.mat'], 'txxChg');
+        wbChg = chg1(:, :, m);
+        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbChg-' models{m} '.mat'], 'wbChg');
     end
 elseif strcmp(chgMetric, 'txx-thresh')
     save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');

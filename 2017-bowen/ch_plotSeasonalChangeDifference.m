@@ -102,7 +102,7 @@ for m = 1:length(models)
     curFuture = monthlyMeans;
     
     % load txx chg for this model 
-    load([tempBaseDir 'chgData-cmip5-ann-max-' models{m} '-rcp85-2060-2080.mat']);
+    load([tempBaseDir 'chgData-cmip5-ann-max-' models{m} '-rcp85-2061-2085.mat']);
     curTxxChg = chgData;
     
     load([tempBaseDir 'chgData-cmip5-seasonal-' tasmaxMetric '-' models{m} '-rcp85-2060-2080.mat']);
@@ -175,34 +175,36 @@ for i = 4%1:length(regionNames)
     
     set(f, 'defaultAxesColorOrder', [[0 0 0]; [0 0 0]]);
     
-    yyaxis left;
-    p1 = plot(1:12, tasmaxHistorical, '-', 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 3);
-    p2 = plot(1:12, tasmaxFuture, '-', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
-    ylabel(['Tx (' char(176) 'C)']);
-    ylim([0 50]);
-    set(gca, 'YTick', [0 10 20 30]);
+%     yyaxis left;
+%     p1 = plot(1:12, tasmaxHistorical, '-', 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 3);
+%     p2 = plot(1:12, tasmaxFuture, '-', 'Color', [239/255.0, 71/255.0, 85/255.0], 'LineWidth', 3);
+%     ylabel(['Tx (' char(176) 'C)']);
+%     ylim([0 50]);
+%     set(gca, 'YTick', [0 10 20 30]);
     
-    yyaxis right;
-    p3 = plot(1:12, tasmaxChg, 'LineWidth', 3, 'Color', [249, 84, 244] ./ 255.0);
+%     yyaxis right;
+    p3 = plot(1:12, tasmaxChg, 'LineWidth', 3, 'Color', [239/255.0, 71/255.0, 85/255.0]);
     plot([1 12], [txxChg txxChg], '--', 'Color', [249, 84, 244] ./ 255.0, 'LineWidth', 3);
-    ylabel(['Tx change (' char(176) 'C)']);
-    ylim([0 6]);
-    set(gca, 'YTick', [3 4 5 6]);
+    plot([1 12], [nanmean(tasmaxChg) nanmean(tasmaxChg)], '--k', 'LineWidth', 2);
+    plot([6 9], [nanmean(tasmaxChg(6:9)) nanmean(tasmaxChg(6:9))], '--k', 'LineWidth', 2);
+    ylabel(['Temperature change (' char(176) 'C)']);
+    ylim([3 7]);
+    set(gca, 'YTick', [3 4 5 6 7]);
 
     xlabel('Month', 'FontSize', 36);
     set(gca, 'XTick', 1:12, 'XTickLabels', {'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'});
     xlim([.5 12.5])
     
-    ax = gca;
-    ax.YAxis(1).Color = 'k';
-    ax.YAxis(2).Color = [249, 84, 244] ./ 255.0;
+%    ax = gca;
+%    ax.YAxis(1).Color = 'k';
+%    ax.YAxis(2).Color = [249, 84, 244] ./ 255.0;
     set(gca, 'FontSize', 36);
-    legend([p1 p2 p3], {'Historical', 'Future', 'Change'});
+    %legend([p1 p2 p3], {'Historical', 'Future', 'Change'});
     
     title(regionNames{i});
     set(gcf, 'Position', get(0,'Screensize'));
     
-    export_fig seasonal-chg-4.eps;
+    export_fig seasonal-chg-limited.eps;
     
     close all;
 end

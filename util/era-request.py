@@ -14,12 +14,36 @@ fileNames = ["swvl1",  "swvl2",  "swvl3",  "swvl4"]
 files =     ["33.128", "141.128"]
 fileNames = ["rsn",    "sd"]
 
-file =      ["201.128"]
+files =      ["201.128"]
 fileNames = ["mx2t"]
 
-baseDir = 'e:/data/era-interim/raw/land/snow/'
+
+files =      ["134.128"]
+fileNames = ["sp"]
+
+files =      ["168.128"]
+fileNames = ["d2m"]
+
+
+baseDir = 'e:/data/era-interim/raw/'
 
 useInterimLand = False;
+
+#def interim_request(file, fileName, dates, target):
+#    server.retrieve({
+#        "class": "ei",
+#        "dataset": "interim",
+#        "date": dates,
+#        "expver": "1",
+#        "grid": "2.00/2.00",
+#        "levtype": "sfc",
+#        "param": file,
+#        "step": "6",
+#        "stream": "oper",
+#        "time": "00:00:00/06:00:00/12:00:00/18:00:00",
+#        "type": "fc",
+#        "format": "netcdf",
+#        "target": target})
 
 def interim_request(file, fileName, dates, target):
     server.retrieve({
@@ -53,8 +77,8 @@ def interim_land_request(file, fileName, dates, target):
         "target": target})
     
 
-yearStart = 1980
-yearEnd = 2016
+yearStart = 1989
+yearEnd = 1990
 for f in range(len(files)):
     for year in list(range(yearStart, yearEnd + 1)):
         startDate = '%04d-01-01' % (year)

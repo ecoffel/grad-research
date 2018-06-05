@@ -1,7 +1,6 @@
 txxWarmAnom = true;
-warmSeasonAnom = false;
-excludeWinter = false;
 
+useWb = false;
 var = 'ef';
 
 bootstrap = false;
@@ -9,33 +8,27 @@ daily = true;
 
 if txxWarmAnom
     if strcmp(var, 'ef')
+        if useWb
+        yrange = [-1 5];
+        yticks = -1:1:5;    
+        else
         yrange = [-21 5];
         yticks = -20:5:5;
+        end
         unit = 'unit EF';
     elseif strcmp(var, 'pr')
         yrange = [-4 1];
         yticks = -4:1:1;
         unit = 'mm/day';
-    elseif strcmp(var, 'netRad')
-        yrange = [-.2 .2];
-        yticks = -.2:.1:.2;
-        unit = 'W/m^2';
-    elseif strcmp(var, 'clt')
-        yrange = [-.2 .2];
-        yticks = -.2:.1:.2;
-        unit = 'Fraction';
-    elseif strcmp(var, 'hfss')
-        yrange = [-.2 .2];
-        yticks = -.2:.1:.2;
-        unit = 'W/m^2';
-    elseif strcmp(var, 'hfls')
-        yrange = [-.1 .1];
-        yticks = -.1:.05:.1;
-        unit = 'W/m^2';
-    elseif strcmp(var, 'TCHfss')
-        yrange = [-1 1];
-        yticks = -1:.5:1;
-        unit = 'W/m^2';
+    elseif strcmp(var, 'huss')
+        if useWb
+        yrange = [300 900];
+        yticks = 300:100:900;
+        else
+            yrange = [-800 1000];
+        yticks = -800:200:1000;
+        end
+        unit = 'kg/kg';
     end
 end
 
@@ -82,21 +75,39 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+%     models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%               'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-esm2g', ...
+%               'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%               'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
+amp = [];
+driverRaw = [];
 if daily
-    load E:\data\projects\bowen\derived-chg\efTxxAmp.mat;
-    amp = txxAmp;    
+    if useWb
+        load(['E:\data\projects\bowen\derived-chg\' var 'WbAmp-16.mat']);
+        amp = wbAmp;    
 
-    load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmTxxAnom.mat']);
-    driverRaw = eval([var 'ChgDailyWarmTxxAnom']);
-else
-    load E:\data\projects\bowen\derived-chg\txxAmp.mat;
+        load(['E:\data\projects\bowen\derived-chg\' var 'ChgDailyWarmWbAnom.mat']);
+        driverRaw = eval([var 'ChgDailyWarmWbAnom']);
+    else
+        for m = 1:length(models)
+            load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efTxxAmp-movingWarm-' models{m} '.mat']);
+            load(['E:\data\projects\bowen\derived-chg\txx-amp\txxAmp-' models{m} '.mat']);
 
-    load(['E:\data\projects\bowen\derived-chg\' var 'ChgWarmTxxAnom.mat']);
-    driverRaw = eval([var 'ChgWarmTxxAnom']);
+            amp(:, :, m) = txxAmp;
+            driverRaw(:, :, m) = efTxxAmp;
+        end
+        
+        driverRaw(abs(driverRaw)>.5) = NaN;
+    end
 end
 
-          
+% load(['E:\data\projects\bowen\derived-chg\wbTxxChg.mat']);
+% amp = wbTxxChg;    
+% 
+% load(['E:\data\projects\bowen\derived-chg\tasmaxWbChg.mat']);
+% driverRaw = eval(['tasmaxWbChg']);
+
 rind = 1;
 efind = 1;
 dslopes = [];
@@ -111,7 +122,7 @@ for region = [1]% 2 4 7 10]
     
     for m = 1:length(models)
         
-        load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+       load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
         
         a = squeeze(amp(:,:,m));
         a(waterGrid) = NaN;
@@ -130,7 +141,11 @@ for region = [1]% 2 4 7 10]
             driver(75:90,:) = NaN;
         end
         driver = reshape(driver, [numel(driver),1]);
-        %driver(abs(driver)>.5) = NaN;
+        
+        % remove large ef vals
+%         if ~useWb
+%             driver(abs(driver)>.5) = NaN;
+%         end
         
         efGroup(waterGrid) = NaN;
         efGroup = efGroup(latInds,lonInds);
@@ -185,6 +200,7 @@ for region = [1]% 2 4 7 10]
                 end
             end
         end
+        
         %if region == 1
         %    data = {driver, slopes};
             %save(['E:\data\projects\bowen\derived-chg\slopes\slopes-' var '-' models{m} '-1.mat'], 'data');
@@ -269,11 +285,11 @@ ylabel([char(176) 'C / ' unit]);
 set(gcf, 'Position', get(0,'Screensize'));
 if txxWarmAnom
     if daily
-        export_fig(['txx-amp-spatial-' var '-daily-groups-movingwarm.eps']);
-    else
-        export_fig(['txx-amp-spatial-' var '-monthly.eps']);
+        if useWb
+            export_fig(['wb-amp-spatial-' var '-daily-groups-movingwarm.eps']);
+        else
+            export_fig(['txx-amp-spatial-' var '-daily-groups-movingwarm.eps']);
+        end
     end
-elseif warmSeasonAnom
-    export_fig(['warm-anom-spatial-' var '.eps']);
 end
 close all;
