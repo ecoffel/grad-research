@@ -22,7 +22,7 @@ baseBiasCorrect = false;
 popRegrid = true;
 
 region = 'world';
-rcp = 'rcp45';
+rcp = 'rcp85';
 exposureThreshold = 30;
 ssps = 1:5;
 
@@ -137,7 +137,7 @@ for m = 1:length(baseModels)
         ['year ' num2str(y) '...']
         if baseRegrid
             if strcmp(baseDataset, 'ncep')
-                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
+                baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '-mslp' '/regrid/world'], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             else
                 baseDaily = loadDailyData([baseDir baseDataDir '/' curModel ensemble baseRcp baseVar '/regrid/' region baseBcStr], 'yearStart', y, 'yearEnd', (y+yearStep)-1);
             end
@@ -214,13 +214,13 @@ for t = testPeriodYears(1):10:testPeriodYears(end-1)
     
     chgData(chgData > 10) = NaN;
     
-    for x = 1:size(chgData, 1)
-        for y = 1:size(chgData, 2)
-            for month = 1:size(chgData, 3)
-                chgData(x, y, month, :) = sort(chgData(x, y, month, :));
-            end
-        end
-    end
+%     for x = 1:size(chgData, 1)
+%         for y = 1:size(chgData, 2)
+%             for month = 1:size(chgData, 3)
+%                 chgData(x, y, month, :) = sort(chgData(x, y, month, :));
+%             end
+%         end
+%     end
     
     for c = 1:size(chgData, 4)
         
