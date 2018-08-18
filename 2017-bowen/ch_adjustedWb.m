@@ -1,7 +1,5 @@
-txxWarmAnom = true;
 
-useWb = false;
-var = 'huss';
+useMaxWbDay = true;
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
@@ -9,43 +7,92 @@ waterGrid = logical(waterGrid);
 load lat;
 load lon;
 
-if ~exist('histTmax', 'var')
-% load era tmax and huss
-eraHuss = loadDailyData('E:\data\era-interim\output\huss\regrid\world', 'startYear', 1981, 'endYear', 2016);
-eraHuss = eraHuss{3};
-eraTmax = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', 1981, 'endYear', 2016);
-eraTmax = eraTmax{3}-273.15;
+load(['2017-bowen/txx-timing/txx-months-era-1981-2016.mat']);
+txxMonthsHist = txxMonths;
 
-histTmax = [];
-histHuss = [];
+if ~exist('histTXx', 'var')
+    % load era tmax and huss
+    eraHuss = loadDailyData('E:\data\era-interim\output\huss\regrid\world', 'startYear', 1981, 'endYear', 2016);
+    eraHuss = eraHuss{3};
+    eraTmax = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', 1981, 'endYear', 2016);
+    eraTmax = eraTmax{3}-273.15;
+    eraWb = loadDailyData('E:\data\era-interim\output\wb-davies-jones-full\regrid\world', 'startYear', 1981, 'endYear', 2016);
+    eraWb = eraWb{3};
+    
+    histTXx = [];
+    histTx = [];
+    histHussOnTXx = [];
+    histHussOnTx = [];
+    
+    histWb = [];
+    histTxOnWb = [];
+    histHussOnWb = [];
 
-for xlat = 1:size(lat, 1)
-    for ylon = 1:size(lat, 2)
-        if waterGrid(xlat, ylon)
-            histTmax(xlat, ylon) = NaN;
-            histHuss(xlat, ylon) = NaN;
-            continue;
-        end
-        
-        mxt = [];
-        mxh = [];
-        
-        for year = 1:size(eraTmax, 3)
-            t = eraTmax(xlat, ylon, year, :, :);
-            t = reshape(t, [numel(t), 1]);
-            ind = find(t == nanmax(t));
+    for xlat = 1:size(lat, 1)
+        for ylon = 1:size(lat, 2)
+            if waterGrid(xlat, ylon)
+                histTXx(xlat, ylon) = NaN;
+                histTx(xlat, ylon) = NaN;
+                histWb(xlat, ylon) = NaN;
+                histHussOnWb(xlat, ylon) = NaN;
+                histTxOnWb(xlat, ylon) = NaN;
+                histHussOnTXx(xlat, ylon) = NaN;
+                histHussOnTx(xlat, ylon) = NaN;
+                continue;
+            end
 
-            h = eraHuss(xlat, ylon, :, :, :);
-            h = reshape(h, [numel(h), 1]);
+            mxt = [];
+            meant = [];
+            mxh = [];
+            meanh = [];
             
-            mxt(year) = t(ind(1));
-            mxh(year) = h(ind(1));
+            % max wb
+            mxwb = [];
+            % max t and h on wb day
+            mxwbt = [];
+            mxwbh = [];
+
+            eraMonths = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
+            
+            for year = 1:size(eraTmax, 3)
+                t = eraTmax(xlat, ylon, year, :, :);
+                t = reshape(t, [numel(t), 1]);
+                indt = find(t == nanmax(t));
+                
+                wb = eraWb(xlat, ylon, year, :, :);
+                wb = reshape(wb, [numel(wb), 1]);
+                indwb = find(wb == nanmax(wb));
+
+                h = eraHuss(xlat, ylon, :, :, :);
+                h = reshape(h, [numel(h), 1]);
+
+                mxt(year) = t(indt(1));
+                mxh(year) = h(indt(1));
+                
+                if length(indwb) > 0
+                    mxwb(year) = wb(indwb(1));
+                    mxwbt(year) = t(indwb(1));
+                    mxwbh(year) = h(indwb(1));
+                else
+                    mxwb(year) = NaN;
+                    mxwbt(year) = NaN;
+                    mxwbh(year) = NaN;
+                end
+                
+                meant(year) = squeeze(nanmean(nanmean(eraTmax(xlat, ylon, year, eraMonths, :), 5), 4));
+                meanh(year) = squeeze(nanmean(nanmean(eraHuss(xlat, ylon, year, eraMonths, :), 5), 4));
+            end
+
+            histTXx(xlat, ylon) = nanmean(mxt);
+            histHussOnTXx(xlat, ylon) = nanmean(mxh);
+            histTx(xlat, ylon) = nanmean(meant);
+            histHussOnTx(xlat, ylon) = nanmean(meanh);
+            
+            histWb(xlat, ylon) = nanmean(mxwb);
+            histHussOnWb(xlat, ylon) = nanmean(mxwbh);
+            histTxOnWb(xlat, ylon) = nanmean(mxwbt);
         end
-        
-        histTmax(xlat, ylon) = nanmean(mxt);
-        histHuss(xlat, ylon) = nanmean(mxh);
     end
-end
 end
 
 
@@ -83,11 +130,19 @@ end
 
 efOnTxx(abs(efOnTxx)>1) = NaN;
 
-amp = txxChgOnTxx;
-driverRaw = efOnTxx;
+if useMaxWbDay
+    amp = txxOnWb;
+    driverRaw = efOnWb;
 
-amp2 = hussOnTxx;
-driverRaw2 = efOnTxx;
+    amp2 = hussOnWb;
+    driverRaw2 = efOnWb;
+else
+    amp = txxChgOnTxx;
+    driverRaw = efOnTxx;
+
+    amp2 = hussOnTxx;
+    driverRaw2 = efOnTxx;
+end
 
 unit = 'unit EF';
 
@@ -197,8 +252,8 @@ for m = 1:length(models)
 
 end
 
-tchg = [];
-hchg = [];
+tchgDueToEf = [];
+hchgDueToEf = [];
 twchg = [];
     
 efChgs = -.3:.1:.3;
@@ -208,12 +263,19 @@ hChgs = 0:.25e-3:3e-3;
 baseH = .005;
 baseT = 33;
 
-twchgT = zeros(size(lat, 1), size(lat, 2), length(dmodels));
-twchgT(twchgT==0) = NaN;
-twchgH = zeros(size(lat, 1), size(lat, 2), length(dmodels));
-twchgH(twchgH==0) = NaN;
-twchgTot = zeros(size(lat, 1), size(lat, 2), length(dmodels));
-twchgTot(twchgTot==0) = NaN;
+twchgT_efchg = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgT_efchg(twchgT_efchg==0) = NaN;
+twchgH_efchg = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgH_efchg(twchgH_efchg==0) = NaN;
+twchgTot_efchg = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgTot_efchg(twchgTot_efchg==0) = NaN;
+
+twchgT_warming = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgT_warming(twchgT_warming==0) = NaN;
+twchgH_warming = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgH_warming(twchgH_warming==0) = NaN;
+twchgTot_warming = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+twchgTot_warming(twchgTot_warming==0) = NaN;
 
 for m = 1:length(dmodels)
     load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
@@ -221,50 +283,222 @@ for m = 1:length(dmodels)
 	for xlat = 1:size(lat, 1)
         for ylon = 1:size(lat, 2)
             curGroup = efGroup(xlat, ylon);
-            if waterGrid(xlat, ylon) || isnan(curGroup) || isnan(efOnTxx(xlat, ylon, m))
+            if waterGrid(xlat, ylon) || isnan(curGroup) || isnan(efOnWb(xlat, ylon, m))
                 continue;
             end
+            
+            if useMaxWbDay
+                efChg = efOnWb;
+                curHistTxx = histTxOnWb;
+                curHistHuss = histHussOnWb;
+                txxChg = txxOnWb;
+                hussChg = hussOnWb;
+            else
+                efChg = efOnTxx;
+                curHistTxx = histTXx;
+                curHistHuss = histHussOnTXx;
+                txxChg = txxChgOnTxx;
+                hussChg = hussOnTxx;
+            end
+            
+            tchgDueToEf = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
+            hchgDueToEf = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
+            % using ef-chg predicted t/h chg
+            twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf, 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgTot_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf, 100200, curHistHuss(xlat, ylon) + hchgDueToEf)-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+%             
+            % using total model projected t/h chg
+            twchgT_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgH_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgTot_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
 
-            tchg = predict(dmodels{m}{curGroup}{1}, efOnTxx(xlat, ylon, m));
-            hchg = predict(dmodels{m}{curGroup}{2}, efOnTxx(xlat, ylon, m));
-            twchgT(xlat, ylon, m) = kopp_wetBulb(histTmax(xlat, ylon) + tchg, 100200, histHuss(xlat, ylon)) - kopp_wetBulb(histTmax(xlat, ylon), 100200, histHuss(xlat, ylon));
-            twchgH(xlat, ylon, m) = kopp_wetBulb(histTmax(xlat, ylon), 100200, histHuss(xlat, ylon) + hchg) - kopp_wetBulb(histTmax(xlat, ylon), 100200, histHuss(xlat, ylon));
-            twchgTot(xlat, ylon, m) = kopp_wetBulb(histTmax(xlat, ylon) + tchg, 100200, histHuss(xlat, ylon) + hchg)-kopp_wetBulb(histTmax(xlat, ylon), 100200, histHuss(xlat, ylon));
         end
     end
     
-    twchgTPer(:,:,m) = twchgT(:,:,m) ./ twchgTot(:,:,m);
-    twchgHPer(:,:,m) = twchgH(:,:,m) ./ twchgTot(:,:,m);
+    twchgTPer_efchg(:,:,m) = twchgT_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
+    twchgHPer_efchg(:,:,m) = twchgH_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
+    
+    twchgTPer_warming(:,:,m) = twchgT_warming(:,:,m) ./ twchgTot_warming(:,:,m);
+    twchgHPer_warming(:,:,m) = twchgH_warming(:,:,m) ./ twchgTot_warming(:,:,m);
 end
 
-result = {lat, lon, 100 .* nanmean(twchgTPer, 3)};
+result = {lat, lon, 100 .* nanmedian(twchgTPer_warming, 3)};
+
+agreement = zeros(size(lat));
+sig = zeros(size(lat));
+for xlat = 1:size(lat, 1)
+    for ylon = 1:size(lat, 2)
+        for m = 1:size(twchgTPer_warming, 3)
+            if twchgTPer_warming(xlat, ylon, m) >= .5
+                agreement(xlat, ylon) = agreement(xlat, ylon) + 1;
+            else
+                agreement(xlat, ylon) = agreement(xlat, ylon) - 1;
+            end
+        end
+    end
+end
+
+sig = double(~(abs(agreement) > 0));
+sig(1:15,:) = 0;
+sig(75:90,:) = 0;
+
+if useMaxWbDay
+    title = 'T_W chg on T_W day: contribution from T chg';
+    file = 'wb-on-wb-contrib-warming.eps';
+else
+    title = 'T_W chg on TXx day: contribution from T chg';
+    file = 'wb-on-txx-contrib-warming.eps';
+end
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
                   'plotRange', [25 75], ...
-                  'cbXTicks', 25:10:75, ...
-                  'plotTitle', ['Temperature'], ...
-                  'fileTitle', ['wb-on-txx-t-contrib.eps'], ...
+                  'cbXTicks', 25:5:75, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
                   'plotXUnits', ['%'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([], 'Reds'));
+                  'colormap', brewermap([], '*RdYlGn'), ...
+                  'statData', sig);
 plotFromDataFile(saveData);
 
-result = {lat, lon, 100 .* nanmean(twchgHPer, 3)};
+
+
+
+
+result = {lat, lon, nanmedian(twchgT_efchg, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to EF-induced T chg: T_W day';
+    file = 'tw-chg-ef-ind-t-chg-on-wb.eps';
+else
+    title = 'T_W chg due to EF-induced T chg: TXx day';
+    file = 'tw-chg-ef-ind-t-chg-on-txx.eps';
+end
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [25 75], ...
-                  'cbXTicks', 25:10:75, ...
-                  'plotTitle', ['Humidity'], ...
-                  'fileTitle', ['wb-on-txx-h-contrib.eps'], ...
-                  'plotXUnits', ['%'], ...
+                  'plotRange', [-.5 .5], ...
+                  'cbXTicks', -.5:.1:.5, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], '*RdBu'));
+plotFromDataFile(saveData);
+
+result = {lat, lon, nanmedian(twchgT_warming, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to warming-induced T chg: T_W day'
+    file = 'tw-chg-warming-ind-t-chg-on-wb.eps';
+else
+    title = 'T_W chg due to warming-induced T chg: TXx day';
+    file = 'tw-chg-warming-ind-t-chg-on-txx.eps';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [0 4], ...
+                  'cbXTicks', 0:.5:4, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([], 'Reds'));
 plotFromDataFile(saveData);
 
 
-y=[nanmedian(twchgT,2)';nanmedian(twchgH,2)'];
+
+result = {lat, lon, nanmedian(twchgH_efchg, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to EF-induced H chg: T_W day';
+    file = 'tw-chg-due-to-ef-ind-h-chg-on-wb.eps';
+else
+    title = 'T_W chg due to EF-induced H chg: TXx day';
+    file = 'tw-chg-due-to-ef-ind-h-chg-on-txx.eps';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [-.5 .5], ...
+                  'cbXTicks', -.5:.1:.5, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], '*RdBu'));
+plotFromDataFile(saveData);
+
+result = {lat, lon, nanmedian(twchgH_warming, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to warming-induced H chg: T_W day';
+    file = 'tw-chg-warming-ind-h-chg-on-wb.eps';
+else
+    title = 'T_W chg due to warming-induced H chg: TXx day';
+    file = 'tw-chg-warming-ind-h-chg-on-txx.eps';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [0 4], ...
+                  'cbXTicks', 0:.5:4, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], 'Reds'));
+plotFromDataFile(saveData);
+
+
+
+result = {lat, lon, nanmedian(twchgTot_efchg, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to EF chg: T_W day';
+    file = 'tw-chg-due-to-ef-chg-on-wb.eps';
+else
+    title = 'T_W chg due to EF chg: TXx day';
+    file = 'tw-chg-due-to-ef-chg-on-txx.eps';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [-.5 .5], ...
+                  'cbXTicks', -.5:.1:.5, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], '*RdBu'));
+plotFromDataFile(saveData);
+
+result = {lat, lon, nanmedian(twchgTot_warming, 3)};
+
+if useMaxWbDay
+    title = 'T_W chg due to warming: T_W day';
+    file = 'tw-chg-warming-on-wb.eps';
+else
+    title = 'T_W chg due to warming: TXx day';
+    file = 'tw-chg-warming-on-txx.eps';
+end
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [0 4], ...
+                  'cbXTicks', 0:.5:4, ...
+                  'plotTitle', [title], ...
+                  'fileTitle', [file], ...
+                  'plotXUnits', [char(176) 'C'], ...
+                  'blockWater', true, ...
+                  'colormap', brewermap([], 'Reds'));
+plotFromDataFile(saveData);
+
+
+y=[nanmedian(twchgT_efchg,2)';nanmedian(twchgH_efchg,2)'];
 
 figure('Color', [1,1,1]);
 hold on;

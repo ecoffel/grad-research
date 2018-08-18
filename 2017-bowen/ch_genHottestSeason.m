@@ -1,7 +1,7 @@
 txxrel = true;
 onlyRegularTxx = false;
 
-dataset = 'cmip5';
+dataset = 'era';
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -13,7 +13,9 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
-models = {'ipsl-cm5b-lr'};
+
+% for era
+models = {''};
 hottestSeason = [];
 hottestSeasonLength = [];
 
@@ -22,16 +24,20 @@ timePeriod = 'historical';
 
 
 if ~exist('tasmax')
-    if strcmp(dataset, 'cmip5')
         for m = 1:length(models)
             fprintf('loading %s...\n', models{m});
             
-            if strcmp(timePeriod, 'historical')
-                tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
-                timePeriodStr = '1981-2005';
-            elseif strcmp(timePeriod, 'future')
-                tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/' var '/regrid/world'], 'startYear', 2061, 'endYear', 2085);
-                timePeriodStr = '2061-2085';
+            if strcmp(dataset, 'cmip5')
+                if strcmp(timePeriod, 'historical')
+                    tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+                    timePeriodStr = '1981-2005';
+                elseif strcmp(timePeriod, 'future')
+                    tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/' var '/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+                    timePeriodStr = '2061-2085';
+                end
+            elseif strcmp(dataset, 'era')
+                tasmax = loadDailyData(['e:/data/era-interim/output/mx2t/regrid/world'], 'startYear', 1981, 'endYear', 2016);
+                timePeriodStr = '1981-2016';
             end
             
             tasmax = tasmax{3};
@@ -103,28 +109,20 @@ if ~exist('tasmax')
                 end
             end
             
-            
-            if strcmp(var, 'wb-davies-jones-full')
-                save(['2017-bowen/txx-timing/' var '-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
-                save(['2017-bowen/txx-timing/' var '-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
-            else
-                save(['2017-bowen/txx-timing/txx-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
-                save(['2017-bowen/txx-timing/txx-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
+            if strcmp(dataset, 'cmip5')
+                if strcmp(var, 'wb-davies-jones-full')
+                    save(['2017-bowen/txx-timing/' var '-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
+                    save(['2017-bowen/txx-timing/' var '-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
+                else
+                    save(['2017-bowen/txx-timing/txx-months-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxMonths');
+                    save(['2017-bowen/txx-timing/txx-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
+                end
+            elseif strcmp(dataset, 'era')
+                save(['2017-bowen/txx-timing/txx-months-era-' timePeriodStr '.mat'], 'txxMonths');
+                save(['2017-bowen/txx-timing/txx-days-era-' timePeriodStr '.mat'], 'txxDays');
             end
             
         end
-    else
-        %tasmax = loadDailyData('e:/data/era-interim/output/mx2t/regrid/world', 'yearStart', 1980, 'yearEnd', 2015);
-        tasmax = loadDailyData('e:/data/ncep-reanalysis/output/tmax/regrid/world', 'startYear', 1980, 'endYear', 2015);
-        tasmax{3} = tasmax{3} - 273.15;
-
-        if txxrel
-            tasmax = tasmax{3};
-        else
-            tasmax = dailyToMonthly(tasmax);
-            tasmax = tasmax{3};
-        end
-    end
 end
 
 load lat;

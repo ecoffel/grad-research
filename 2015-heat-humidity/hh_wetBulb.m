@@ -3,10 +3,10 @@ function hh_wetBulb(dataDir, isRegridded, region, biasCorrect)
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-tempVar = 'tmax';
-hussVar = 'shum';
+tempVar = 'mx2t';
+hussVar = 'huss';
 %rhVar = 'rh';
-pVar = 'pres';
+pVar = 'sp';
 
 skipExisting = true;
 x4 = false;
