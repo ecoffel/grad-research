@@ -1,5 +1,5 @@
 
-useMaxWbDay = true;
+useWb = false;
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
@@ -126,11 +126,23 @@ for m = 1:length(models)
     
     load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     efOnWb(:,:,m) = efTxxChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
+    txChgWarmSeason(:, :, m) = txChgWarm;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
+    efChgWarmSeason(:, :, m) = efWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
+    hussChgWarmSeason(:, :, m) = hussWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChgWarm-' models{m}]);
+    wbChgWarmSeason(:, :, m) = wbChgWarm;
 end
 
 efOnTxx(abs(efOnTxx)>1) = NaN;
 
-if useMaxWbDay
+if useWb
     amp = txxOnWb;
     driverRaw = efOnWb;
 
@@ -143,6 +155,12 @@ else
     amp2 = hussOnTxx;
     driverRaw2 = efOnTxx;
 end
+
+amp3 = txChgWarmSeason;
+driverRaw3 = efChgWarmSeason;
+
+amp4 = hussChgWarmSeason;
+driverRaw4 = efChgWarmSeason;
 
 unit = 'unit EF';
 
@@ -186,6 +204,30 @@ for m = 1:length(models)
         driver2 = reshape(driver2, [numel(driver2),1]);
     end
 
+    a3 = squeeze(amp3(:,:,m));
+    a3(waterGrid) = NaN;
+    a3(1:15,:) = NaN;
+    a3(75:90,:) = NaN;
+    a3 = reshape(a3, [numel(a3),1]);
+
+    driver3 = squeeze(driverRaw3(:,:,m));
+    driver3(waterGrid) = NaN;
+    driver3(1:15,:) = NaN;
+    driver3(75:90,:) = NaN;
+    driver3 = reshape(driver3, [numel(driver3),1]);
+    
+    a4 = squeeze(amp4(:,:,m));
+    a4(waterGrid) = NaN;
+    a4(1:15,:) = NaN;
+    a4(75:90,:) = NaN;
+    a4 = reshape(a4, [numel(a4),1]);
+
+    driver4 = squeeze(driverRaw4(:,:,m));
+    driver4(waterGrid) = NaN;
+    driver4(1:15,:) = NaN;
+    driver4(75:90,:) = NaN;
+    driver4 = reshape(driver4, [numel(driver4),1]);
+    
     efGroup(waterGrid) = NaN;
     efGroup(1:15,:) = NaN;
     efGroup(75:90,:) = NaN;
@@ -194,8 +236,14 @@ for m = 1:length(models)
     if length(amp2) > 0
         nn = find(isnan(a) | isnan(driver) | isnan(a2) | isnan(driver2));
         driver2(nn) = [];
+        driver3(nn) = [];
+        driver4(nn) = [];
         aDriver2 = a2;
         aDriver2(nn) = [];
+        aDriver3 = a3;
+        aDriver3(nn) = [];
+        aDriver4 = a4;
+        aDriver4(nn) = [];
     else
         nn = find(isnan(a) | isnan(driver));
     end
@@ -238,12 +286,24 @@ for m = 1:length(models)
             dslopesP(2, e, m) = f2.Coefficients.pValue(2);
             
             curFits{e}{2} = f2;
-            
-            f3 = fitlm(curADriver2, curADriver, 'linear');
+
+            curDriver3 = driver3(nn);
+            curADriver3 = aDriver3(nn);
+
+            f3 = fitlm(curDriver3, curADriver3, 'linear');
             dslopes(3, e, m) = f3.Coefficients.Estimate(2);
             dslopesP(3, e, m) = f3.Coefficients.pValue(2);
             
             curFits{e}{3} = f3;
+            
+            curDriver4 = driver4(nn);
+            curADriver4 = aDriver4(nn);
+            
+            f4 = fitlm(curDriver4, curADriver4, 'linear');
+            dslopes(4, e, m) = f4.Coefficients.Estimate(2);
+            dslopesP(4, e, m) = f4.Coefficients.pValue(2);
+            
+            curFits{e}{4} = f4;
         end
         
         dmodels{m} = curFits;
@@ -277,6 +337,11 @@ twchgH_warming(twchgH_warming==0) = NaN;
 twchgTot_warming = zeros(size(lat, 1), size(lat, 2), length(dmodels));
 twchgTot_warming(twchgTot_warming==0) = NaN;
 
+tchgDueToEf = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+tchgDueToEf(tchgDueToEf==0) = NaN;
+hchgDueToEf = zeros(size(lat, 1), size(lat, 2), length(dmodels));
+hchgDueToEf(tchgDueToEf==0) = NaN;
+
 for m = 1:length(dmodels)
     load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
    
@@ -287,7 +352,7 @@ for m = 1:length(dmodels)
                 continue;
             end
             
-            if useMaxWbDay
+            if useWb
                 efChg = efOnWb;
                 curHistTxx = histTxOnWb;
                 curHistHuss = histHussOnWb;
@@ -301,12 +366,12 @@ for m = 1:length(dmodels)
                 hussChg = hussOnTxx;
             end
             
-            tchgDueToEf = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
-            hchgDueToEf = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
+            tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
+            hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
             % using ef-chg predicted t/h chg
-            twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf, 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgTot_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf, 100200, curHistHuss(xlat, ylon) + hchgDueToEf)-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgTot_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
 %             
             % using total model projected t/h chg
             twchgT_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
@@ -332,18 +397,16 @@ for xlat = 1:size(lat, 1)
         for m = 1:size(twchgTPer_warming, 3)
             if twchgTPer_warming(xlat, ylon, m) >= .5
                 agreement(xlat, ylon) = agreement(xlat, ylon) + 1;
-            else
-                agreement(xlat, ylon) = agreement(xlat, ylon) - 1;
             end
         end
     end
 end
 
-sig = double(~(abs(agreement) > 0));
+sig = double(~(abs(agreement) > .66*length(models) | abs(agreement) < .33*length(models)));
 sig(1:15,:) = 0;
 sig(75:90,:) = 0;
 
-if useMaxWbDay
+if useWb
     title = 'T_W chg on T_W day: contribution from T chg';
     file = 'wb-on-wb-contrib-warming.eps';
 else
@@ -367,9 +430,25 @@ plotFromDataFile(saveData);
 
 
 
-result = {lat, lon, nanmedian(twchgT_efchg, 3)};
+result = {lat, lon, nanmean(twchgT_efchg, 3)};
 
-if useMaxWbDay
+agreement = zeros(size(lat));
+sig = zeros(size(lat));
+for xlat = 1:size(lat, 1)
+    for ylon = 1:size(lat, 2)
+        if waterGrid(xlat, ylon)
+            continue;
+        end
+        
+        med = nanmean(twchgH_efchg(xlat, ylon, :), 3);
+        agreement(xlat, ylon) = ~(length(find(sign(twchgH_efchg(xlat, ylon, :)) == sign(med))) > .66*length(models));
+    end
+end
+
+agreement(1:15,:) = 0;
+agreement(75:90,:) = 0;
+
+if useWb
     title = 'T_W chg due to EF-induced T chg: T_W day';
     file = 'tw-chg-ef-ind-t-chg-on-wb.eps';
 else
@@ -385,12 +464,13 @@ saveData = struct('data', {result}, ...
                   'fileTitle', [file], ...
                   'plotXUnits', [char(176) 'C'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([], '*RdBu'));
+                  'colormap', brewermap([], '*RdBu'), ...
+                  'statData', agreement);
 plotFromDataFile(saveData);
 
-result = {lat, lon, nanmedian(twchgT_warming, 3)};
+result = {lat, lon, nanmean(twchgT_warming, 3)};
 
-if useMaxWbDay
+if useWb
     title = 'T_W chg due to warming-induced T chg: T_W day'
     file = 'tw-chg-warming-ind-t-chg-on-wb.eps';
 else
@@ -411,9 +491,26 @@ plotFromDataFile(saveData);
 
 
 
-result = {lat, lon, nanmedian(twchgH_efchg, 3)};
+result = {lat, lon, nanmean(twchgH_efchg, 3)};
 
-if useMaxWbDay
+agreement = zeros(size(lat));
+sig = zeros(size(lat));
+for xlat = 1:size(lat, 1)
+    for ylon = 1:size(lat, 2)
+        if waterGrid(xlat, ylon)
+            continue;
+        end
+        
+        med = nanmean(twchgH_efchg(xlat, ylon, :), 3);
+        agreement(xlat, ylon) = ~(length(find(sign(twchgH_efchg(xlat, ylon, :)) == sign(med))) > .66*length(models));
+    end
+end
+
+agreement(1:15,:) = 0;
+agreement(75:90,:) = 0;
+
+
+if useWb
     title = 'T_W chg due to EF-induced H chg: T_W day';
     file = 'tw-chg-due-to-ef-ind-h-chg-on-wb.eps';
 else
@@ -429,12 +526,13 @@ saveData = struct('data', {result}, ...
                   'fileTitle', [file], ...
                   'plotXUnits', [char(176) 'C'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([], '*RdBu'));
+                  'colormap', brewermap([], '*RdBu'), ...
+                  'statData', agreement);
 plotFromDataFile(saveData);
 
-result = {lat, lon, nanmedian(twchgH_warming, 3)};
+result = {lat, lon, nanmean(twchgH_warming, 3)};
 
-if useMaxWbDay
+if useWb
     title = 'T_W chg due to warming-induced H chg: T_W day';
     file = 'tw-chg-warming-ind-h-chg-on-wb.eps';
 else
@@ -455,9 +553,25 @@ plotFromDataFile(saveData);
 
 
 
-result = {lat, lon, nanmedian(twchgTot_efchg, 3)};
+result = {lat, lon, nanmean(twchgTot_efchg, 3)};
 
-if useMaxWbDay
+agreement = zeros(size(lat));
+sig = zeros(size(lat));
+for xlat = 1:size(lat, 1)
+    for ylon = 1:size(lat, 2)
+        if waterGrid(xlat, ylon)
+            continue;
+        end
+        
+        med = nanmean(twchgTot_efchg(xlat, ylon, :), 3);
+        agreement(xlat, ylon) = ~(length(find(sign(twchgTot_efchg(xlat, ylon, :)) == sign(med))) > .66*length(models));
+    end
+end
+
+agreement(1:15,:) = 0;
+agreement(75:90,:) = 0;
+
+if useWb
     title = 'T_W chg due to EF chg: T_W day';
     file = 'tw-chg-due-to-ef-chg-on-wb.eps';
 else
@@ -473,12 +587,13 @@ saveData = struct('data', {result}, ...
                   'fileTitle', [file], ...
                   'plotXUnits', [char(176) 'C'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([], '*RdBu'));
+                  'colormap', brewermap([], '*RdBu'), ...
+                  'statData', agreement);
 plotFromDataFile(saveData);
 
-result = {lat, lon, nanmedian(twchgTot_warming, 3)};
+result = {lat, lon, nanmean(twchgTot_warming, 3)};
 
-if useMaxWbDay
+if useWb
     title = 'T_W chg due to warming: T_W day';
     file = 'tw-chg-warming-on-wb.eps';
 else

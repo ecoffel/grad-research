@@ -25,8 +25,13 @@ for t = 1:length(temps)
            
         wb(t, r) = kopp_wetBulb(T_c, 101325, RH, 1) * 9/5 + 32;
         
+        
+        
     end
 end
 
-%csvwrite('heat-index.csv', hi);
+hi(wb > 35.5 * 9/5+32) = 0;
+wb(wb > 35.5 * 9/5+32 | hi == 0) = 0;
+
+csvwrite('heat-index.csv', hi);
 csvwrite('wet-bulb.csv', wb);
