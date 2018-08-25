@@ -1,7 +1,35 @@
-load(['2017-nile-climate\output\dryFuture-annual-cmip5-historical-1980-2004.mat']);
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-historical-1981-2005-t90-p10.mat']);
 dryHist = dryFuture;
-load(['2017-nile-climate\output\wetFuture-annual-cmip5-historical-1980-2004.mat']);
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-historical-1981-2005-t90-p10.mat']);
 wetHist = wetFuture;
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-historical-1981-2005-t90-p10.mat']);
+hotDryHist = hotDryFuture;
+
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2025-2049-t90-p10-tfull-pfull.mat']);
+dryFuture25 = dryFuture;
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2025-2049-t90-p10-tfull-pfull.mat']);
+wetFuture25 = wetFuture;
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2025-2049-t90-p10-tfull-pfull.mat']);
+hotDryFuture25 = hotDryFuture;
+
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2050-2074-t90-p10-tfull-pfull.mat']);
+dryFuture50 = dryFuture;
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2050-2074-t90-p10-tfull-pfull.mat']);
+wetFuture50 = wetFuture;
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2050-2074-t90-p10-tfull-pfull.mat']);
+hotDryFuture50 = hotDryFuture;
+
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2075-2099-t90-p50-tfull-pfull.mat']);
+dryFuture75 = dryFuture;
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2075-2099-t90-p50-tfull-pfull.mat']);
+wetFuture75 = wetFuture;
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2075-2099-t90-p10-tfull-pfull.mat']);
+hotDryFuture75 = hotDryFuture;
+
+load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2056-2080.mat']);
+dryFutureLate = dryFuture;
+load(['2017-nile-climate\output\wetFuture-annual-cmip5-rcp85-2056-2080.mat']);
+wetFutureLate = wetFuture;
 
 % late period
 load(['2017-nile-climate\output\dryFuture-annual-cmip5-rcp85-2056-2080.mat']);
@@ -20,8 +48,8 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 rcp = 'rcp85';
-timePeriodBase = [1980 2004];
-timePeriodFuture = [2056 2080];
+timePeriodBase = [1981 2005];
+timePeriodFuture = [2075 2099];
 
 annual = true;
 north = false;
@@ -63,11 +91,8 @@ curInds = regionInds('nile');
 latIndsRegion = curInds{1};
 lonIndsRegion = curInds{2};
 
-if north
-    curInds = regionInds('nile-north');
-else
-    curInds = regionInds('nile-south');
-end
+curInds = regionInds('nile-blue');
+
 latInds = curInds{1};
 lonInds = curInds{2};
 
@@ -76,8 +101,23 @@ prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, months
 
 dryHist = squeeze(nanmean(nanmean(dryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 wetHist = squeeze(nanmean(nanmean(wetHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+hotDryHist = squeeze(nanmean(nanmean(hotDryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+
+dryFuture25 = squeeze(nanmean(nanmean(dryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+wetFuture25 = squeeze(nanmean(nanmean(wetFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+hotDryFuture25 = squeeze(nanmean(nanmean(hotDryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+
+dryFuture50 = squeeze(nanmean(nanmean(dryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+wetFuture50 = squeeze(nanmean(nanmean(wetFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+hotDryFuture50 = squeeze(nanmean(nanmean(hotDryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+
+dryFuture75 = squeeze(nanmean(nanmean(dryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+wetFuture75 = squeeze(nanmean(nanmean(wetFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+hotDryFuture75 = squeeze(nanmean(nanmean(hotDryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+
 dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+hotDryFutureLate = squeeze(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 
 prChg = (squeeze(nanmean(prFut, 1) - nanmean(prHist, 1))) ./ squeeze(nanmean(prHist,1));
 prStd = (squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1))) ./ squeeze(nanstd(prHist,[],1));

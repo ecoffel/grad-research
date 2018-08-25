@@ -1,4 +1,4 @@
-function gpcpToMat(rawNcDir, outputDir, varName, maxNum)
+function udelToMat(rawNcDir, outputDir, varName, maxNum)
 
 ncFileNames = dir([rawNcDir, '/', varName, '*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -86,6 +86,7 @@ for k = 1:length(ncFileNames)
 
     scale_factor = 1;
     add_offset = 0;
+    missing_val = 0;
     
     for i = 0:vars{varIdMain}{4}-1
         attname = netcdf.inqAttName(ncid, varIdMain-1, i);
@@ -93,6 +94,8 @@ for k = 1:length(ncFileNames)
             scale_factor = double(netcdf.getAtt(ncid, varIdMain-1,'scale_factor'));
         elseif strcmp(attname, 'add_offset')
             add_offset = double(netcdf.getAtt(ncid, varIdMain-1,'add_offset'));
+        elseif strcmp(attname, 'missing_value')
+            missing_val = double(netcdf.getAtt(ncid, varIdMain-1,'missing_value'));
         end
     end
     
@@ -100,17 +103,17 @@ for k = 1:length(ncFileNames)
     lon = double(netcdf.getVar(ncid, varIdLon-1, [0], [dims{dimIdLon}{2}]));
     
     [lon, lat] = meshgrid(lon, lat);
-    lat = flipud(lat);
+    %lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1800 01 01 00 00 00]);
+    starttime = datenum([1900 01 01 00 00 00]);
     time = [];
     
     % these are days since 1800-01-01 01:01:01
 	timestep = netcdf.getVar(ncid, varIdTime-1, [0], [dims{dimIdTime}{2}]);
     
     for t = 1:length(timestep)
-        time(t) = addtodate(starttime, timestep(t), 'day');
+        time(t) = addtodate(starttime, timestep(t), 'hour');
     end
     
     % check for output folder and make it if it doesn't exist
@@ -125,7 +128,7 @@ for k = 1:length(ncFileNames)
     ind = 0;
 
     % month of last time step, so we know when to save
-    curStartDate = -1;
+    curStartDate = time(1);
     lastMonth = -1;
     monthlyInd = 1;
     monthlyData = [];
@@ -138,12 +141,8 @@ for k = 1:length(ncFileNames)
         monthlyData = data;
        
         monthlyData = squeeze(monthlyData);
+        monthlyData(monthlyData == missing_val) = NaN;
 
-        % skip empty months (hopefully just first one)
-        if length(monthlyData) == 0
-            continue;
-        end
-        
         monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
 
         % save the .mat file in the correct location and w/ the correct name
@@ -155,10 +154,10 @@ for k = 1:length(ncFileNames)
         monthlyData = [];
         monthlyInd = 1;
         lastMonth = curMonth;
+        ind = ind + 1;
         curStartDate = time(ind+1);
         eval(['clear ' fileName ';']);
             
-        ind = ind + 1;
     end
     
  end

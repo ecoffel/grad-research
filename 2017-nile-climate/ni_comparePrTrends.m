@@ -1,5 +1,6 @@
 regionBounds = [[2 32]; [25, 44]];
-regionBoundsSouth = [[2 13]; [25, 42]];
+%regionBoundsSouth = [[2 13]; [25, 42]];
+regionBoundsSouth = [[8 13]; [34, 40]];
 regionBoundsNorth = [[13 32]; [29, 34]];
 
 if ~exist('gpcp', 'var')

@@ -8,6 +8,9 @@ hotDryFutureLate45 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080.mat']);
 hotDryFutureLate85 = hotDryFuture;
 
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2081-2099-t90-p10-tfull-pfull.mat']);
+hotDryFutureEnd85 = hotDryFuture;
+
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2031-2055.mat']);
 hotDryFutureEarly45 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2031-2055.mat']);
@@ -15,7 +18,7 @@ hotDryFutureEarly85 = hotDryFuture;
 
 drawScatter = true;
 drawMap = false;
-north = true;
+north = false;
 annual = true;
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -77,6 +80,10 @@ if drawScatter
     hotdryLate85 = hotDryFutureLate85;
     hotdryLate85 = hotdryLate85(curLatInds, curLonInds, :);
     hotdryLate85 = squeeze(nanmean(nanmean(hotdryLate85,2),1));
+    
+    hotdryEnd85 = hotDryFutureEnd85;
+    hotdryEnd85 = hotdryEnd85(curLatInds, curLonInds, :);
+    hotdryEnd85 = squeeze(nanmean(nanmean(hotdryEnd85,2),1));
 
     figure('Color', [1,1,1]);
     hold on;

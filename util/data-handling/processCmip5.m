@@ -1,4 +1,4 @@
-vars = {'zg'};
+vars = {'ts'};
 
 modelBaseDir = 'cmip5/raw';
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
@@ -15,8 +15,8 @@ for m = 1:length(models)
         for r = 1:length(rcps)
             for v = 1:length(vars)
                 %cmip5NcToMat_monthly(['d:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'd:/data/cmip5/output', vars{v}, -1);
-                %cmip5NcToMat_monthly_v2(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'e:/data/cmip5/output', vars{v});
-                cmip5NcToMat(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'e:/data/cmip5/output', vars{v}, -1);
+                cmip5NcToMat_monthly_v2(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'e:/data/cmip5/output', vars{v});
+                %cmip5NcToMat(['e:/data/' modelBaseDir '/' models{m} '/' ensembles{e} '/' rcps{r} '/' vars{v}], 'e:/data/cmip5/output', vars{v}, -1);
             end
         end
     end

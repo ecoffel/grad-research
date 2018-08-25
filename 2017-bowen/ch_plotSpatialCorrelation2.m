@@ -39,15 +39,29 @@ for m = 1:length(models)
     
     load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     efOnWb(:,:,m) = efTxxChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
+    txChgWarmSeason(:, :, m) = txChgWarm;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
+    efChgWarmSeason(:, :, m) = efWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
+    hussChgWarmSeason(:, :, m) = hussWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChgWarm-' models{m}]);
+    wbChgWarmSeason(:, :, m) = wbChgWarm;
 end
 
 efOnTxx(abs(efOnTxx)>1) = NaN;
 
-amp = txxChgOnTxx;
-driverRaw = efOnTxx;
+amp = wbChgWarmSeason;
+driverRaw = efChgWarmSeason;
+% amp = wbOnTxx;
+% driverRaw = efOnTxx;
 
-amp2 = wbOnTxx;
-driverRaw2 = efOnTxx;
+amp2 = [];%wbChgOnWb;
+driverRaw2 = [];%efOnWb;
 
 unit = 'unit EF';
 
@@ -144,30 +158,32 @@ end
 
 txxslopes=squeeze(dslopes(1,5,:));
 txxp=squeeze(dslopesP(1,5,:));
-wbslopes=squeeze(dslopes(2,5,:))
-wbp=squeeze(dslopesP(2,5,:));
-
-figure('Color',[1,1,1]);
-hold on; 
-axis square;
-box on;
-grid on;
-for m = 1:length(txxslopes)
-    t = text(txxslopes(m), wbslopes(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
-    t.FontSize = 26;
+if length(amp2) > 0
+    wbslopes=squeeze(dslopes(2,5,:))
+    wbp=squeeze(dslopesP(2,5,:));
 end
-set(gca, 'XDir', 'reverse')
-xlim([-15 3])
-ylim([-3 15])
-set(gca, 'XTick', [-15 -10 -5 0 3]);
-xlabel(['TXx ' char(176) 'C / unit EF']);
-ylabel(['T_{W} ' char(176) 'C / unit EF']);
-set(gca, 'YTick', [-3 0 5 10 15]);
-plot([3 -15], [-3 15], '--k')
-set(gca, 'FontSize', 36);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['ef-txx-wb-slope-scatter.eps']);
-close all;
+% 
+% figure('Color',[1,1,1]);
+% hold on; 
+% axis square;
+% box on;
+% grid on;
+% for m = 1:length(txxslopes)
+%     t = text(txxslopes(m), wbslopes(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+%     t.FontSize = 26;
+% end
+% set(gca, 'XDir', 'reverse')
+% xlim([-15 3])
+% ylim([-3 15])
+% set(gca, 'XTick', [-15 -10 -5 0 3]);
+% xlabel(['TXx ' char(176) 'C / unit EF']);
+% ylabel(['T_{W} ' char(176) 'C / unit EF']);
+% set(gca, 'YTick', [-3 0 5 10 15]);
+% plot([3 -15], [-3 15], '--k')
+% set(gca, 'FontSize', 36);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig(['ef-txx-wb-slope-scatter.eps']);
+% close all;
 
 
 %dslopes = squeeze(dslopes);
@@ -184,6 +200,9 @@ axis square;
 box on;
 %b = boxplot(dslopes','positions',1:5);
 
+colorTxx = [160, 116, 46]./255.0;
+colorWb = [68, 166, 226]./255.0;
+
 for e = 1:size(dslopes,2)
     for m = 1:size(dslopes,3)
         
@@ -193,18 +212,18 @@ for e = 1:size(dslopes,2)
         end
         
         if dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) < 0
-            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [160, 116, 46]./255.0);
+            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
         elseif dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) > 0
-            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [68, 166, 226]./255.0);
+            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
         else
             b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
         end
         
         if length(amp2) > 0
             if dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) < 0
-                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [160, 116, 46]./255.0);
+                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
             elseif dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) > 0
-                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', [68, 166, 226]./255.0);
+                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
             else
                 b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
             end
@@ -236,5 +255,5 @@ ylabel([char(176) 'C / ' unit]);
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-ef-wb-on-txx.eps']);
+export_fig(['spatial-ef-wb-warm-season.eps']);
 close all;

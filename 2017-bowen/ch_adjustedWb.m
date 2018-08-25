@@ -1,5 +1,6 @@
 
-useWb = false;
+useWb = true;
+useWarmSeason = true;
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
@@ -20,9 +21,9 @@ if ~exist('histTXx', 'var')
     eraWb = eraWb{3};
     
     histTXx = [];
-    histTx = [];
+    histTxWarmSeason = [];
     histHussOnTXx = [];
-    histHussOnTx = [];
+    histHussWarmSeason = [];
     
     histWb = [];
     histTxOnWb = [];
@@ -32,12 +33,12 @@ if ~exist('histTXx', 'var')
         for ylon = 1:size(lat, 2)
             if waterGrid(xlat, ylon)
                 histTXx(xlat, ylon) = NaN;
-                histTx(xlat, ylon) = NaN;
+                histTxWarmSeason(xlat, ylon) = NaN;
                 histWb(xlat, ylon) = NaN;
                 histHussOnWb(xlat, ylon) = NaN;
                 histTxOnWb(xlat, ylon) = NaN;
                 histHussOnTXx(xlat, ylon) = NaN;
-                histHussOnTx(xlat, ylon) = NaN;
+                histHussWarmSeason(xlat, ylon) = NaN;
                 continue;
             end
 
@@ -85,8 +86,8 @@ if ~exist('histTXx', 'var')
 
             histTXx(xlat, ylon) = nanmean(mxt);
             histHussOnTXx(xlat, ylon) = nanmean(mxh);
-            histTx(xlat, ylon) = nanmean(meant);
-            histHussOnTx(xlat, ylon) = nanmean(meanh);
+            histTxWarmSeason(xlat, ylon) = nanmean(meant);
+            histHussWarmSeason(xlat, ylon) = nanmean(meanh);
             
             histWb(xlat, ylon) = nanmean(mxwb);
             histHussOnWb(xlat, ylon) = nanmean(mxwbh);
@@ -114,6 +115,7 @@ for m = 1:length(models)
     
     load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-txxDays-' models{m} '.mat']);
     efOnTxx(:,:,m) = efTxxChg;
+    efOnTxx(:,1,m) = (efOnTxx(:,end,m)+efOnTxx(:,2,m)) ./ 2;
     
     load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChg-' models{m}]);
     wbChgOnWb(:, :, m) = wbChg;
@@ -126,12 +128,14 @@ for m = 1:length(models)
     
     load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     efOnWb(:,:,m) = efTxxChg;
+    efOnWb(:,1,m) = (efOnWb(:,end,m)+efOnWb(:,2,m)) ./ 2;
     
     load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
     txChgWarmSeason(:, :, m) = txChgWarm;
     
     load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
     efChgWarmSeason(:, :, m) = efWarmChg;
+    efChgWarmSeason(:,1,m) = (efChgWarmSeason(:,end,m)+efChgWarmSeason(:,2,m)) ./ 2;
     
     load(['E:\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
     hussChgWarmSeason(:, :, m) = hussWarmChg;
@@ -141,6 +145,39 @@ for m = 1:length(models)
 end
 
 efOnTxx(abs(efOnTxx)>1) = NaN;
+efOnWb(abs(efOnWb)>1) = NaN;
+
+% result = {lat, lon, nanmedian(wbChgOnWb, 3)};
+% 
+% agreement = zeros(size(lat));
+% sig = zeros(size(lat));
+% for xlat = 1:size(lat, 1)
+%     for ylon = 1:size(lat, 2)
+%         if waterGrid(xlat, ylon)
+%             continue;
+%         end
+%         
+%         med = nanmedian(wbChgOnWb(xlat, ylon, :), 3);
+%         num = length(find(~isnan(squeeze(wbChgOnWb(xlat, ylon, :)))));
+%         agreement(xlat, ylon) = ~(length(find(sign(wbChgOnWb(xlat, ylon, :)) == sign(med))) > .66*num);
+%     end
+% end
+% 
+% agreement(1:15,:) = 0;
+% agreement(75:90,:) = 0;
+% 
+% saveData = struct('data', {result}, ...
+%                   'plotRegion', 'world', ...
+%                   'plotRange', [0 4], ...
+%                   'cbXTicks', 0:.5:4, ...
+%                   'plotTitle', ['T_W chg on T_W day'], ...
+%                   'fileTitle', ['wb-chg-wb.eps'], ...
+%                   'plotXUnits', [char(176) 'C'], ...
+%                   'blockWater', true, ...
+%                   'colormap', brewermap([], 'Reds'), ...
+%                   'statData', agreement);
+% plotFromDataFile(saveData);
+
 
 if useWb
     amp = txxOnWb;
@@ -352,22 +389,35 @@ for m = 1:length(dmodels)
                 continue;
             end
             
-            if useWb
-                efChg = efOnWb;
-                curHistTxx = histTxOnWb;
-                curHistHuss = histHussOnWb;
-                txxChg = txxOnWb;
-                hussChg = hussOnWb;
+            if useWarmSeason
+                efChg = efChgWarmSeason;
+                curHistTxx = histTxWarmSeason;
+                curHistHuss = histHussWarmSeason;
+                txxChg = txChgWarmSeason;
+                hussChg = hussChgWarmSeason;
             else
-                efChg = efOnTxx;
-                curHistTxx = histTXx;
-                curHistHuss = histHussOnTXx;
-                txxChg = txxChgOnTxx;
-                hussChg = hussOnTxx;
+                if useWb
+                    efChg = efOnWb;
+                    curHistTxx = histTxOnWb;
+                    curHistHuss = histHussOnWb;
+                    txxChg = txxOnWb;
+                    hussChg = hussOnWb;
+                else
+                    efChg = efOnTxx;
+                    curHistTxx = histTXx;
+                    curHistHuss = histHussOnTXx;
+                    txxChg = txxChgOnTxx;
+                    hussChg = hussOnTxx;
+                end
             end
             
-            tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
-            hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
+            if useWarmSeason
+                tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{3}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{3}, 0);
+                hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{4}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{4}, 0);
+            else
+                tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
+                hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
+            end
             % using ef-chg predicted t/h chg
             twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
             twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
@@ -406,12 +456,17 @@ sig = double(~(abs(agreement) > .66*length(models) | abs(agreement) < .33*length
 sig(1:15,:) = 0;
 sig(75:90,:) = 0;
 
-if useWb
-    title = 'T_W chg on T_W day: contribution from T chg';
-    file = 'wb-on-wb-contrib-warming.eps';
+if useWarmSeason
+    title = 'T_W chg in warm season: contribution from T chg';
+    file = 'wb-in-warm-season-contrib-warming.eps';
 else
-    title = 'T_W chg on TXx day: contribution from T chg';
-    file = 'wb-on-txx-contrib-warming.eps';
+    if useWb
+        title = 'T_W chg on T_W day: contribution from T chg';
+        file = 'wb-on-wb-contrib-warming.eps';
+    else
+        title = 'T_W chg on TXx day: contribution from T chg';
+        file = 'wb-on-txx-contrib-warming.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -448,12 +503,17 @@ end
 agreement(1:15,:) = 0;
 agreement(75:90,:) = 0;
 
-if useWb
-    title = 'T_W chg due to EF-induced T chg: T_W day';
-    file = 'tw-chg-ef-ind-t-chg-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to EF-induced T chg: warm season';
+    file = 'tw-chg-ef-ind-t-chg-in-warm-season.eps';
 else
-    title = 'T_W chg due to EF-induced T chg: TXx day';
-    file = 'tw-chg-ef-ind-t-chg-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to EF-induced T chg: T_W day';
+        file = 'tw-chg-ef-ind-t-chg-on-wb.eps';
+    else
+        title = 'T_W chg due to EF-induced T chg: TXx day';
+        file = 'tw-chg-ef-ind-t-chg-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -470,12 +530,17 @@ plotFromDataFile(saveData);
 
 result = {lat, lon, nanmean(twchgT_warming, 3)};
 
-if useWb
-    title = 'T_W chg due to warming-induced T chg: T_W day'
-    file = 'tw-chg-warming-ind-t-chg-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to warming-induced T chg: warm season'
+    file = 'tw-chg-warming-ind-t-chg-in-warm-season.eps';
 else
-    title = 'T_W chg due to warming-induced T chg: TXx day';
-    file = 'tw-chg-warming-ind-t-chg-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to warming-induced T chg: T_W day'
+        file = 'tw-chg-warming-ind-t-chg-on-wb.eps';
+    else
+        title = 'T_W chg due to warming-induced T chg: TXx day';
+        file = 'tw-chg-warming-ind-t-chg-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -509,13 +574,17 @@ end
 agreement(1:15,:) = 0;
 agreement(75:90,:) = 0;
 
-
-if useWb
-    title = 'T_W chg due to EF-induced H chg: T_W day';
-    file = 'tw-chg-due-to-ef-ind-h-chg-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to EF-induced H chg: warm season';
+    file = 'tw-chg-due-to-ef-ind-h-chg-in-warm-season.eps';
 else
-    title = 'T_W chg due to EF-induced H chg: TXx day';
-    file = 'tw-chg-due-to-ef-ind-h-chg-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to EF-induced H chg: T_W day';
+        file = 'tw-chg-due-to-ef-ind-h-chg-on-wb.eps';
+    else
+        title = 'T_W chg due to EF-induced H chg: TXx day';
+        file = 'tw-chg-due-to-ef-ind-h-chg-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -532,12 +601,17 @@ plotFromDataFile(saveData);
 
 result = {lat, lon, nanmean(twchgH_warming, 3)};
 
-if useWb
-    title = 'T_W chg due to warming-induced H chg: T_W day';
-    file = 'tw-chg-warming-ind-h-chg-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to warming-induced H chg: warm season';
+    file = 'tw-chg-warming-ind-h-chg-in-warm-season.eps';
 else
-    title = 'T_W chg due to warming-induced H chg: TXx day';
-    file = 'tw-chg-warming-ind-h-chg-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to warming-induced H chg: T_W day';
+        file = 'tw-chg-warming-ind-h-chg-on-wb.eps';
+    else
+        title = 'T_W chg due to warming-induced H chg: TXx day';
+        file = 'tw-chg-warming-ind-h-chg-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -571,12 +645,17 @@ end
 agreement(1:15,:) = 0;
 agreement(75:90,:) = 0;
 
-if useWb
-    title = 'T_W chg due to EF chg: T_W day';
-    file = 'tw-chg-due-to-ef-chg-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to EF chg: warm season';
+    file = 'tw-chg-due-to-ef-chg-in-warm-season.eps';
 else
-    title = 'T_W chg due to EF chg: TXx day';
-    file = 'tw-chg-due-to-ef-chg-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to EF chg: T_W day';
+        file = 'tw-chg-due-to-ef-chg-on-wb.eps';
+    else
+        title = 'T_W chg due to EF chg: TXx day';
+        file = 'tw-chg-due-to-ef-chg-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
@@ -593,12 +672,17 @@ plotFromDataFile(saveData);
 
 result = {lat, lon, nanmean(twchgTot_warming, 3)};
 
-if useWb
-    title = 'T_W chg due to warming: T_W day';
-    file = 'tw-chg-warming-on-wb.eps';
+if useWarmSeason
+    title = 'T_W chg due to warming: warm season';
+    file = 'tw-chg-warming-in-warm-season.eps';
 else
-    title = 'T_W chg due to warming: TXx day';
-    file = 'tw-chg-warming-on-txx.eps';
+    if useWb
+        title = 'T_W chg due to warming: T_W day';
+        file = 'tw-chg-warming-on-wb.eps';
+    else
+        title = 'T_W chg due to warming: TXx day';
+        file = 'tw-chg-warming-on-txx.eps';
+    end
 end
 
 saveData = struct('data', {result}, ...
