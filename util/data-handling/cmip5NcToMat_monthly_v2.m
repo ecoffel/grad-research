@@ -9,6 +9,10 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
     for k = 1:length(ncFileNames)
         ncFileName = ncFileNames{k}
 
+        if ~contains(ncFileName, 'Amon')
+            continue;
+        end
+        
         ncid = netcdf.open([rawNcDir, '/', ncFileName]);
         [ndim, nvar] = netcdf.inq(ncid);
 
