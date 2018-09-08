@@ -1,11 +1,11 @@
 function heatIndex(dataDir, isRegridded)
 
-tempVar = 'tasmax';
+tempVar = 'tmax';
 rhVar = 'rh';
 
 regridStr = '';
 if isRegridded
-    regridStr = 'regrid/';
+    regridStr = 'regrid/world/';
 end
 
 tempDirNames = dir([dataDir '/' tempVar '/' regridStr]);
@@ -288,28 +288,43 @@ while tempStartInd <= tempEndInd & rhStartInd <= rhEndInd
                 T = (tempData(xpos,ypos,d) - 273.15) * 9/5 + 32;
                 RH = rhData(xpos,ypos,d);
 
-                if T > 80 & T < 110 & RH > 40
-                    hi(xpos,ypos,d) = -42.379 + 2.04901523*T + 10.14333127*RH  - ...
+                
+                hi(xpos, ypos, d) = (0.5 * (T + 61.0 + ((T-68.0)*1.2) + (RH*0.094)) + T) / 2.0;
+
+                if hi(xpos, ypos, d) > 80
+                    hi(xpos, ypos, d) = -42.379 + 2.04901523*T + 10.14333127*RH  - ...
                                     .22475541*T*RH - .00683783*T*T - .05481717*RH*RH + ...
                                     .00122874*T*T*RH + .00085282*T*RH*RH - .00000199*T*T*RH*RH;
 
-                    if T > 80 & T < 112 & RH < 13
-                        hi(xpos,ypos,d) = hi(xpos,ypos,d) - ((13-RH)/4)*sqrt((17-abs(T-95))/17);
+                    if T > 80 && T < 112 && RH < 13
+                        hi(xpos, ypos, d) = hi(xpos, ypos, d) - ((13.0-RH)/4)*sqrt((17.0-abs(T-95.0))/17);
+                    elseif T > 80 && T < 87 && RH > 85
+                        hi(xpos, ypos, d) = hi(xpos, ypos, d) +  ((RH-85)/10) * ((87-T)/5);
                     end
-                else
-                    hi(xpos,ypos,d) = NaN;
                 end
+
+%                 
+%                 
+%                 if T > 80 & T < 110 & RH > 40
+%                     hi(xpos,ypos,d) = -42.379 + 2.04901523*T + 10.14333127*RH  - ...
+%                                     .22475541*T*RH - .00683783*T*T - .05481717*RH*RH + ...
+%                                     .00122874*T*T*RH + .00085282*T*RH*RH - .00000199*T*T*RH*RH;
+% 
+%                     if T > 80 & T < 112 & RH < 13
+%                         hi(xpos,ypos,d) = hi(xpos,ypos,d) - ((13-RH)/4)*sqrt((17-abs(T-95))/17);
+%                     end
+%                 else
+%                     hi(xpos,ypos,d) = NaN;
+%                 end
 
             end
 
         end
     end
 
-    hi(hi < 80) = NaN;
-    hi = (hi - 32) .* 5/9;
+%     hi(hi < 80) = NaN;
+%     hi = (hi - 32) .* 5/9;
 
-    
-    
     ['processing ' hiCurDir '/' fileName]
     eval([fileName ' = {tempLat, tempLon, hi};']);
     save([hiCurDir, '/', fileName, '.mat'], fileName, '-v7.3');

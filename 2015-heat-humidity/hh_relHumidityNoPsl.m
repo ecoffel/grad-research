@@ -330,17 +330,14 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
         ['skipping ' rhCurDir '/' fileName]
         tempStartInd = tempStartInd + 1;
         hussStartInd = hussStartInd + 1;
-        pslStartInd = pslStartInd + 1;
         continue;
     end
     
     tempCurFileName = [tempMatDirNames{tempStartInd}, '/', tempMatFileName];
     hussCurFileName = [hussMatDirNames{hussStartInd}, '/', hussMatFileName];
-    pslCurFileName = [pslMatDirNames{pslStartInd}, '/', pslMatFileName];
 
     load(tempCurFileName);
     load(hussCurFileName);
-    load(pslCurFileName);
 
     eval(['tempLat = ' tempMatFileNameNoExt '{1};']);
     eval(['tempLon = ' tempMatFileNameNoExt '{2};']);
@@ -352,32 +349,28 @@ while tempStartInd <= tempEndInd & hussStartInd <= hussEndInd & pslStartInd <= p
     eval(['hussData = ' hussMatFileNameNoExt '{3};']);
     eval(['clear ' hussMatFileNameNoExt ';']);
 
-    eval(['pslLat = ' pslMatFileNameNoExt '{1};']);
-    eval(['pslLon = ' pslMatFileNameNoExt '{2};']);
-    eval(['pslData = ' pslMatFileNameNoExt '{3};']);
-    eval(['clear ' pslMatFileNameNoExt ';']);
-
     monthlyRh = [];
 
     tempStartInd = tempStartInd + 1;
     hussStartInd = hussStartInd + 1;
-    pslStartInd = pslStartInd + 1;
     
-    if size(pslData,1) ~= size(tempData,1) | size(pslData,1) ~= size(hussData,1) | size(tempData,1) ~= size(hussData,1)
+    if size(tempData,1) ~= size(hussData,1)
         ['lat dimensions do not match, skipping ' tempCurFileName]
         continue;
     end
 
-    if size(pslData,2) ~= size(tempData,2) | size(pslData,2) ~= size(hussData,2) | size(tempData,2) ~= size(hussData,2)
+    if size(tempData,2) ~= size(hussData,2)
         ['lon dimensions do not match, skipping ' tempCurFileName]
         continue;
     end
 
-    if size(pslData,3) ~= size(tempData,3) | size(pslData,3) ~= size(hussData,3) | size(tempData,3) ~= size(hussData,3)
+    if size(tempData,3) ~= size(hussData,3)
         ['data dimensions do not match, skipping ' tempCurFileName]
         continue;
     end
 
+    pslData = ones(size(tempData)) .* 101325;
+    
     % convert to kelvin if needed
     if tempData(1,1,1) < 200
         tempData = tempData + 273.15;

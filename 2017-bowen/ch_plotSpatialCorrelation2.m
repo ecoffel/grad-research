@@ -54,6 +54,275 @@ for m = 1:length(models)
 end
 
 efOnTxx(abs(efOnTxx)>1) = NaN;
+efOnWb(abs(efOnWb)>1) = NaN;
+efChgWarmSeason(abs(efChgWarmSeason)>1) = NaN;
+
+colorWarm = [160, 116, 46]./255.0;
+colorWb = [68, 166, 226]./255.0;
+colorTxx = [216, 66, 19]./255.0;
+
+regions = [[[-90 90], [0 360]]; ...             % world
+           [[30 42], [-91 -75] + 360]; ...     % eastern us
+           [[30 41], [-95 -75] + 360]; ...      % southeast us
+           [[45, 55], [10, 35]]; ...            % Europe
+           [[35 50], [-10+360 45]]; ...        % Med
+           [[5 20], [-90 -45]+360]; ...         % Northern SA
+           [[-10, 7], [-75, -62]+360]; ...      % Amazon
+           [[-10 10], [15, 30]]; ...            % central africa
+           [[15 30], [-4 29]]; ...              % north africa
+           [[22 40], [105 122]]; ...               % china
+           [[-24 -8], [14 40]]; ...                      % south africa
+           [[-45 -25], [-65 -49]+360]];
+
+region = 1;
+[latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
+
+for m = 1:length(models)
+
+    load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+   
+    efGroup(waterGrid) = NaN;
+    efGroup(1:15,:) = NaN;
+    efGroup(75:90,:) = NaN;
+    efGroup =  reshape(efGroup, [numel(efGroup),1]);
+    
+    cureftxx = efOnTxx(:, :, m);
+    cureftxx(waterGrid) = NaN;
+    cureftxx(1:15,:) = NaN;
+    cureftxx(75:90,:) = NaN;
+    cureftxx =  reshape(cureftxx, [numel(cureftxx),1]);
+    eftxx(:,m) = cureftxx;
+    
+    curefwb = efOnWb(:, :, m);
+    curefwb(waterGrid) = NaN;
+    curefwb(1:15,:) = NaN;
+    curefwb(75:90,:) = NaN;
+    curefwb =  reshape(curefwb, [numel(curefwb),1]);
+    efwb(:,m) = curefwb;
+    
+    curefwarm = efChgWarmSeason(:, :, m);
+    curefwarm(waterGrid) = NaN;
+    curefwarm(1:15,:) = NaN;
+    curefwarm(75:90,:) = NaN;
+    curefwarm =  reshape(curefwarm, [numel(curefwarm),1]);
+    efwarm(:,m) = curefwarm;
+    
+    curwbtxx = wbOnTxx(:, :, m);
+    curwbtxx(waterGrid) = NaN;
+    curwbtxx(1:15,:) = NaN;
+    curwbtxx(75:90,:) = NaN;
+    curwbtxx =  reshape(curwbtxx, [numel(curwbtxx),1]);
+    wbtxx(:,m) = curwbtxx;
+    
+    curwbwb = wbChgOnWb(:, :, m);
+    curwbwb(waterGrid) = NaN;
+    curwbwb(1:15,:) = NaN;
+    curwbwb(75:90,:) = NaN;
+    curwbwb =  reshape(curwbwb, [numel(curwbwb),1]);
+    wbwb(:,m) = curwbwb;
+    
+    curwbwarm = wbChgWarmSeason(:, :, m);
+    curwbwarm(waterGrid) = NaN;
+    curwbwarm(1:15,:) = NaN;
+    curwbwarm(75:90,:) = NaN;
+    curwbwarm =  reshape(curwbwarm, [numel(curwbwarm),1]);
+    wbwarm(:,m) = curwbwarm;
+    
+    curtxxtxx = txxChgOnTxx(:, :, m);
+    curtxxtxx(waterGrid) = NaN;
+    curtxxtxx(1:15,:) = NaN;
+    curtxxtxx(75:90,:) = NaN;
+    curtxxtxx =  reshape(curtxxtxx, [numel(curtxxtxx),1]);
+    txxtxx(:,m) = curtxxtxx;
+    
+    curtxxwb = txxOnWb(:, :, m);
+    curtxxwb(waterGrid) = NaN;
+    curtxxwb(1:15,:) = NaN;
+    curtxxwb(75:90,:) = NaN;
+    curtxxwb =  reshape(curtxxwb, [numel(curtxxwb),1]);
+    txxwb(:,m) = curtxxwb;
+    
+    curtxxwarm = txChgWarmSeason(:, :, m);
+    curtxxwarm(waterGrid) = NaN;
+    curtxxwarm(1:15,:) = NaN;
+    curtxxwarm(75:90,:) = NaN;
+    curtxxwarm =  reshape(curtxxwarm, [numel(curtxxwarm),1]);
+    txxwarm(:,m) = curtxxwarm;
+end
+
+names = {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'};
+
+for e = 1:5
+
+    % all ef vals
+    if e == 5
+        nn = 1:length(efGroup);
+    else
+        % others
+        nn = find(efGroup == e);
+    end
+    
+    cureftxx = squeeze(nanmean(eftxx(nn,:),1));
+    curefwb = squeeze(nanmean(efwb(nn,:),1));
+    curefwarm = squeeze(nanmean(efwarm(nn,:),1));
+    curwbtxx = squeeze(nanmean(wbtxx(nn,:),1));
+    curwbwb = squeeze(nanmean(wbwb(nn,:),1));
+    curwbwarm = squeeze(nanmean(wbwarm(nn,:),1));
+    curtxxtxx = squeeze(nanmean(txxtxx(nn,:),1));
+    curtxxwb = squeeze(nanmean(txxwb(nn,:),1));
+    curtxxwarm = squeeze(nanmean(txxwarm(nn,:),1));
+    
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    axis square;
+    grid on;
+    er = errorbar(nanmedian(curwbwb), nanmedian(curefwb), nanmedian(curefwb)-min(curefwb), max(curefwb)-nanmedian(curefwb), nanmedian(curwbwb)-min(curwbwb), max(curwbwb)-nanmedian(curwbwb));
+    set(er, 'color', colorWb, 'linewidth', 2);
+    plot(nanmedian(curwbwb), nanmedian(curefwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
+
+    er = errorbar(nanmedian(curwbtxx), nanmedian(cureftxx), nanmedian(cureftxx)-min(cureftxx), max(cureftxx)-nanmedian(cureftxx), nanmedian(curwbtxx)-min(curwbtxx), max(curwbtxx)-nanmedian(curwbtxx));
+    set(er, 'color', colorTxx, 'linewidth', 2);
+    plot(nanmedian(curwbtxx), nanmedian(cureftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
+
+    er = errorbar(nanmedian(curwbwarm), nanmedian(curefwarm), nanmedian(curefwarm)-min(curefwarm), max(curefwarm)-nanmedian(curefwarm), nanmedian(curwbwarm)-min(curwbwarm), max(curwbwarm)-nanmedian(curwbwarm));
+    set(er, 'color', colorWarm, 'linewidth', 2);
+    plot(nanmedian(curwbwarm), nanmedian(curefwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
+
+    title(names{e});
+    xlabel(['T_W change (' char(176) 'C)']);
+    ylabel('EF change (Fraction)');
+    set(gca, 'XTick', 1.5:1:7);
+    set(gca, 'FontSize', 40);
+    xlim([1.5 7]);
+    ylim([-.07 .03]);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['ef-wb-chg-' num2str(e) '.eps']);
+    close all;
+
+    figure('Color', [1,1,1]);
+    hold on;
+    box on;
+    axis square;
+    grid on;
+    er = errorbar(nanmedian(curtxxwb), nanmedian(curefwb), nanmedian(curefwb)-min(curefwb), max(curefwb)-nanmedian(curefwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
+    set(er, 'color', colorWb, 'linewidth', 2);
+    plot(nanmedian(curtxxwb), nanmedian(curefwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
+
+    er = errorbar(nanmedian(curtxxtxx), nanmedian(cureftxx), nanmedian(cureftxx)-min(cureftxx), max(cureftxx)-nanmedian(cureftxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
+    set(er, 'color', colorTxx, 'linewidth', 2);
+    plot(nanmedian(curtxxtxx), nanmedian(cureftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
+
+    er = errorbar(nanmedian(curtxxwarm), nanmedian(curefwarm), nanmedian(curefwarm)-min(curefwarm), max(curefwarm)-nanmedian(curefwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
+    set(er, 'color', colorWarm, 'linewidth', 2);
+    plot(nanmedian(curtxxwarm), nanmedian(curefwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
+
+    title(names{e});
+    xlabel(['TXx change (' char(176) 'C)']);
+    ylabel('EF change (Fraction)');
+    set(gca, 'XTick', 1.5:7);
+    set(gca, 'FontSize', 40);
+    xlim([1.5 7]);
+    ylim([-.07 .03]);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['ef-txx-chg-' num2str(e) '.eps']);
+    close all;
+end
+    
+    
+    
+% eftxx = squeeze(nanmean(nanmean(efOnTxx(latInds, lonInds, :), 2), 1));
+% efwb = squeeze(nanmean(nanmean(efOnWb(latInds, lonInds, :), 2), 1));
+% efwarm = squeeze(nanmean(nanmean(efChgWarmSeason(latInds, lonInds, :), 2), 1));
+% wbtxx = squeeze(nanmean(nanmean(wbOnTxx(latInds, lonInds, :), 2), 1));
+% wbwb = squeeze(nanmean(nanmean(wbChgOnWb(latInds, lonInds, :), 2), 1));
+% wbwarm = squeeze(nanmean(nanmean(wbChgWarmSeason(latInds, lonInds, :), 2), 1));
+% txxtxx = squeeze(nanmean(nanmean(txxChgOnTxx(latInds, lonInds, :), 2), 1));
+% txxwb = squeeze(nanmean(nanmean(txxOnWb(latInds, lonInds, :), 2), 1));
+% txxwarm = squeeze(nanmean(nanmean(txChgWarmSeason(latInds, lonInds, :), 2), 1));
+
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% axis square;
+% grid on;
+% e = errorbar(nanmedian(wbwb), nanmedian(efwb), nanmedian(efwb)-min(efwb), max(efwb)-nanmedian(efwb), nanmedian(wbwb)-min(wbwb), max(wbwb)-nanmedian(wbwb));
+% set(e, 'color', colorWb, 'linewidth', 2);
+% plot(nanmedian(wbwb), nanmedian(efwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
+% 
+% e = errorbar(nanmedian(wbtxx), nanmedian(eftxx), nanmedian(eftxx)-min(eftxx), max(eftxx)-nanmedian(eftxx), nanmedian(wbtxx)-min(wbtxx), max(wbtxx)-nanmedian(wbtxx));
+% set(e, 'color', colorTxx, 'linewidth', 2);
+% plot(nanmedian(wbtxx), nanmedian(eftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
+% 
+% e = errorbar(nanmedian(wbwarm), nanmedian(efwarm), nanmedian(efwarm)-min(efwarm), max(efwarm)-nanmedian(efwarm), nanmedian(wbwarm)-min(wbwarm), max(wbwarm)-nanmedian(wbwarm));
+% set(e, 'color', colorWarm, 'linewidth', 2);
+% plot(nanmedian(wbwarm), nanmedian(efwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
+% 
+% title('Global');
+% xlabel(['T_W change (' char(176) 'C)']);
+% ylabel('EF change (Fraction)');
+% set(gca, 'XTick', 1.5:1:7);
+% set(gca, 'FontSize', 40);
+% xlim([1.5 7]);
+% ylim([-.07 .03]);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig(['ef-wb-chg-global.eps']);
+% close all;
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% axis square;
+% grid on;
+% e = errorbar(nanmedian(txxwb), nanmedian(efwb), nanmedian(efwb)-min(efwb), max(efwb)-nanmedian(efwb), nanmedian(txxwb)-min(txxwb), max(txxwb)-nanmedian(txxwb));
+% set(e, 'color', colorWb, 'linewidth', 2);
+% plot(nanmedian(txxwb), nanmedian(efwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
+% 
+% e = errorbar(nanmedian(txxtxx), nanmedian(eftxx), nanmedian(eftxx)-min(eftxx), max(eftxx)-nanmedian(eftxx), nanmedian(txxtxx)-min(txxtxx), max(txxtxx)-nanmedian(txxtxx));
+% set(e, 'color', colorTxx, 'linewidth', 2);
+% plot(nanmedian(txxtxx), nanmedian(eftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
+% 
+% e = errorbar(nanmedian(txxwarm), nanmedian(efwarm), nanmedian(efwarm)-min(efwarm), max(efwarm)-nanmedian(efwarm), nanmedian(txxwarm)-min(txxwarm), max(txxwarm)-nanmedian(txxwarm));
+% set(e, 'color', colorWarm, 'linewidth', 2);
+% plot(nanmedian(txxwarm), nanmedian(efwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
+% 
+% title('Global');
+% xlabel(['TXx change (' char(176) 'C)']);
+% ylabel('EF change (Fraction)');
+% set(gca, 'XTick', 1.5:7);
+% set(gca, 'FontSize', 40);
+% xlim([1.5 7]);
+% ylim([-.07 .03]);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig(['ef-txx-chg-global.eps']);
+% close all;
+% 
+% wbwblin = reshape(nanmedian(wbChgOnWb, 3), [numel(nanmedian(wbChgOnWb, 3)), 1]);
+% efwblin = reshape(nanmedian(efOnWb, 3), [numel(nanmedian(efOnWb, 3)), 1]);
+% ind = find(~isnan(wbwblin) & ~isnan(efwblin));
+% wbwblin = wbwblin(ind);
+% efwblin = efwblin(ind);
+% 
+% fwb = fit(wbwblin, efwblin, 'poly1');
+% plot([min(wbwb) max(wbwb)], [fwb(min(wbwb)) fwb(max(wbwb))], '--', 'Color', colorWb);
+% 
+% wbtxxlin = reshape(nanmedian(wbOnTxx, 3), [numel(nanmedian(wbOnTxx, 3)), 1]);
+% eftxxlin = reshape(nanmedian(efOnTxx, 3), [numel(nanmedian(efOnTxx, 3)), 1]);
+% ind = find(~isnan(wbtxxlin) & ~isnan(eftxxlin));
+% wbtxxlin = wbtxxlin(ind);
+% eftxxlin = eftxxlin(ind);
+% 
+% ftxx = fit(wbtxxlin, eftxxlin, 'poly1');
+% plot([nanmedian(wbtxx)-1 nanmedian(wbtxx)+1], [ftxx(nanmedian(wbtxx)-1) ftxx(nanmedian(wbtxx)+1)], '--', 'Color', colorTxx);
+% 
+% wbwarmlin = reshape(nanmedian(wbChgWarmSeason, 3), [numel(nanmedian(wbChgWarmSeason, 3)), 1]);
+% efwarmlin = reshape(nanmedian(efChgWarmSeason, 3), [numel(nanmedian(efChgWarmSeason, 3)), 1]);
+% ind = find(~isnan(wbwarmlin) & ~isnan(efwarmlin));
+% wbwarmlin = wbwarmlin(ind);
+% efwarmlin = efwarmlin(ind);
+% 
+% fwarm = fit(wbwarmlin, efwarmlin, 'poly1');
+% plot([min(wbwarm) max(wbwarm)], [fwarm(min(wbwarm)) fwarm(max(wbwarm))], '--', 'Color', colorWarm);
 
 amp = wbChgWarmSeason;
 driverRaw = efChgWarmSeason;
