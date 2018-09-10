@@ -77,7 +77,8 @@ load lon;
 % warm-season-tx = change in Tx in local warm season
 % no-warm-season-tx = change in non-warm season tx
 % thresh = changes above temperature thresholds specified in thresh
-changeMetric = 'warm-season-tx';
+% thresh-range = changes between two percentiles
+changeMetric = 'thresh-range';
 
 load(['2017-bowen/hottest-season-txx-rel-cmip5-' hottestSeasonType '.mat']);
 
@@ -90,7 +91,7 @@ else
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
-thresh = [90 95 99];
+thresh = 0:10:100;
 
 numDays = 372;
 
@@ -154,7 +155,7 @@ for m = 1:length(models)
             end
         end
         
-        if strcmp(changeMetric, 'thresh')
+        if strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
             % calculate base period thresholds
 
             % loop over all thresholds
@@ -307,7 +308,7 @@ for m = 1:length(models)
             end
         end
 
-        if strcmp(changeMetric, 'thresh')
+        if strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
             % loop over thresholds
             for t = 1:length(thresh)
                 % latitude
@@ -407,7 +408,7 @@ for m = 1:length(models)
 
         % calculate change for the current base period model, average over base models:
         chgData = futureData - baseData;
-    elseif strcmp(changeMetric, 'thresh')
+    elseif strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
         chgData = nanmean(futureData, 3) - nanmean(baseData, 3);
         
     elseif strcmp(changeMetric, 'warm-season-tx-anom')

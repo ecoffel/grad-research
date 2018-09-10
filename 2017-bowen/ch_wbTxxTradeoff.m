@@ -58,6 +58,18 @@ for m = 1:length(models)
     load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     efOnWb(:,:,m) = efTxxChg;
     
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
+    txChgWarmSeason(:, :, m) = txChgWarm;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
+    efChgWarmSeason(:, :, m) = efWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
+    hussChgWarmSeason(:, :, m) = hussWarmChg;
+    
+    load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChgWarm-' models{m}]);
+    wbChgWarmSeason(:, :, m) = wbChgWarm;
+    
     tt = reshape(txxChgOnTxx(:,:,m), [numel(txxChgOnTxx(:,:,m)), 1]);
     wbt = reshape(wbOnTxx(:,:,m), [numel(wbOnTxx(:,:,m)), 1]);
     ht = reshape(hussOnTxx(:,:,m), [numel(hussOnTxx(:,:,m)), 1]);
@@ -104,9 +116,7 @@ hwb(nn) = [];
 ewb(nn) = [];
 wbwb(nn) = [];
 
-
-
-data = txxChgOnTxx;
+data = txxOnWb-txChgWarmSeason;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -132,11 +142,12 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [0 8], ...
-                  'cbXTicks', 0:8, ...
-                  'plotTitle', ['TXx change'], ...
-                  'fileTitle', ['txx-chg-on-txx.eps'], ...
-                  'plotXUnits', ['Change (' char(176) ')'], ...
+                  'plotRange', [-1 1], ...
+                  'cbXTicks', -1:.25:1, ...
+                  'plotTitle', ['Tx on T_W day minus warm season'], ...
+                  'fileTitle', ['tx-on-wb-chg-warm-season.eps'], ...
+                  'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'Reds'));
+                  'colormap', brewermap([],'*RdBu'), ...
+                  'statData', sigChg);
 plotFromDataFile(saveData);
