@@ -13,7 +13,7 @@ if ~exist('udelp')
     %cmip5t = loadMonthlyData(['e:/data/cmip5/output/access1-0/mon/r1i1p1/historical/tas/regrid/world'], 'tas', 'startYear', 1901, 'endYear', 2005); 
 end
 
-lat=udelt{1};
+lat=flipud(udelt{1});
 lon=udelt{2};
 
 [latIndsEthiopiaUdel, lonIndsEthiopiaUdel] = latLonIndexRange({lat,lon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
@@ -61,185 +61,206 @@ yieldBarleyEthiopia_dt = ethiopiaBarleyYield - smooth(ethiopiaBarleyYield, 10);
 yieldWheatEthiopia_dt = ethiopiaWheatYield - smooth(ethiopiaWheatYield, 10); 
 yieldSorghumEthiopia_dt = ethiopiaSorghumYield - smooth(ethiopiaSorghumYield, 10);
 yieldCerealsEthiopia_dt = ethiopiaCerealsYield - smooth(ethiopiaCerealsYield, 10);
-yieldMeanEthiopia_dt = ethiopiaMeanYield - smooth(ethiopiaMeanYield, 15);
+
 
 cattleEthiopia_dt = ethiopiaCattle - smooth(ethiopiaCattle, 10);
 goatsEthiopia_dt = ethiopiaGoats - smooth(ethiopiaGoats, 10);
-livestockEthiopia1_dt = ethiopiaMeanLivestock1- smooth(ethiopiaMeanLivestock1, 15);
-livestockEthiopia2_dt = ethiopiaMeanLivestock2- smooth(ethiopiaMeanLivestock2, 15);
+
 calEthiopia_dt = ethiopiaMeanCal- smooth(ethiopiaMeanCal, 10);
 
 cnt = 0;
-cnthd = 0;
+cnthd_neg = 0;
+cnthd_pos = 0;
 cntd = 0;
 cnth = 0;
 cntw = 0;
 
-for ph = 75%1:99
-    for pl = 50%1:99
-prcHigh = ph;
-prcLow = pl;
+for ph = 75%50:99
+    for pl = 50%1:50
+        prcHigh = ph;
+        prcLow = pl;
 
-threshTEthiopiaHigh = prctile(udeltAnnualEthiopiaOrig(1:60), prcHigh);
-threshTEthiopiaLow = prctile(udeltAnnualEthiopiaOrig(1:60), prcLow);
-threshPAnnualEthiopiaLow = prctile(udelpAnnualEthiopiaOrig(1:60), prcLow);
-threshPAnnualEthiopiaHigh = prctile(udelpAnnualEthiopiaOrig(1:60), prcHigh);
+        for s = 15%5:2:30
+        yieldMeanEthiopia_dt = ethiopiaMeanYield - smooth(ethiopiaMeanYield, s);
+        livestockEthiopia1_dt = ethiopiaMeanLivestock1- smooth(ethiopiaMeanLivestock1, s);
+        livestockEthiopia2_dt = ethiopiaMeanLivestock2- smooth(ethiopiaMeanLivestock2, s);
+        
+        threshTEthiopiaHigh = prctile(udeltAnnualEthiopiaOrig(1:60), prcHigh);
+        threshTEthiopiaLow = prctile(udeltAnnualEthiopiaOrig(1:60), prcLow);
+        threshPAnnualEthiopiaLow = prctile(udelpAnnualEthiopiaOrig(1:60), prcLow);
+        threshPAnnualEthiopiaHigh = prctile(udelpAnnualEthiopiaOrig(1:60), prcHigh);
 
-udeltAnnualEthiopia = udeltAnnualEthiopiaOrig(61:end-1);
-udelpAnnualEthiopia = udelpAnnualEthiopiaOrig(61:end-1);
+        udeltAnnualEthiopia = udeltAnnualEthiopiaOrig(61:end-1);
+        udelpAnnualEthiopia = udelpAnnualEthiopiaOrig(61:end-1);
 
-udeltAnnualSudan = udeltAnnualSudan(61:end-3);
-udelpAnnualSudan = udelpAnnualSudan(61:end-3);
+        wYearsEthiopia = find(udelpAnnualEthiopia > threshPAnnualEthiopiaHigh);
+        hYearsEthiopia = find(udeltAnnualEthiopia > threshTEthiopiaHigh);
+        cYearsEthiopia = find(udeltAnnualEthiopia  < threshTEthiopiaLow);
+        dYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia < threshTEthiopiaHigh);
+        cdYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia < threshTEthiopiaLow);
+        hdYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia > threshTEthiopiaHigh);
+        cwYearsEthiopia = find(udelpAnnualEthiopia > threshPAnnualEthiopiaHigh & udeltAnnualEthiopia < threshTEthiopiaLow);
 
-threshTSudan = prctile(udeltAnnualSudan, prcHigh);
-threshTSudanLow = prctile(udeltAnnualSudan, prcLow);
-threshPAnnualSudanLow = prctile(udelpAnnualSudan, prcLow);
-threshPAnnualSudanHigh = prctile(udelpAnnualSudan, prcHigh);
-
-wYearsEthiopia = find(udelpAnnualEthiopia > threshPAnnualEthiopiaHigh);
-hYearsEthiopia = find(udeltAnnualEthiopia > threshTEthiopiaHigh);
-cYearsEthiopia = find(udeltAnnualEthiopia  < threshTEthiopiaLow);
-dYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia < threshTEthiopiaHigh);
-cdYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia < threshTEthiopiaLow);
-hdYearsEthiopia = find(udelpAnnualEthiopia < threshPAnnualEthiopiaLow & udeltAnnualEthiopia > threshTEthiopiaHigh);
-cwYearsEthiopia = find(udelpAnnualEthiopia > threshPAnnualEthiopiaHigh & udeltAnnualEthiopia < threshTEthiopiaLow);
-
-if length(dYearsEthiopia) < 8 || length(hdYearsEthiopia) < 8 || abs(length(hdYearsEthiopia)-length(dYearsEthiopia)) > 2
-    continue;
-end
+        if length(dYearsEthiopia) < 4 || length(hdYearsEthiopia) < 4 || abs(length(hdYearsEthiopia)-length(dYearsEthiopia)) > 2
+            continue;
+        end
 
 
-nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia));
-nanmean(yieldMeanEthiopia_dt(dYearsEthiopia));
-% nanmean(yieldMeanEthiopia_dt(hYearsEthiopia))
-% nanmean(yieldMeanEthiopia_dt(wYearsEthiopia))
-[h_hd,p] = ttest(yieldMeanEthiopia_dt(hdYearsEthiopia))
-[h_d,p] = ttest(yieldMeanEthiopia_dt(dYearsEthiopia))
-[h_h,p] = ttest(yieldMeanEthiopia_dt(hYearsEthiopia));
-[h_w,p] = ttest(yieldMeanEthiopia_dt(wYearsEthiopia));
+        nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia));
+        nanmean(yieldMeanEthiopia_dt(dYearsEthiopia));
+        % nanmean(yieldMeanEthiopia_dt(hYearsEthiopia))
+        % nanmean(yieldMeanEthiopia_dt(wYearsEthiopia))
+        [h_hd,p_hd, ci_hd] = ttest(yieldMeanEthiopia_dt(hdYearsEthiopia));
+        [h_d,p, ci_d] = ttest(yieldMeanEthiopia_dt(dYearsEthiopia));
+        [h_h,p, ci_h] = ttest(yieldMeanEthiopia_dt(hYearsEthiopia));
+        [h_w,p, ci_w] = ttest(yieldMeanEthiopia_dt(wYearsEthiopia));
 
-cnt = cnt + 1;
-if h_hd
-    cnthd = cnthd + 1;
-end
-if h_d
-    cntd = cntd + 1;
-end
-if h_h
-    cnth = cnth + 1;
-end
-if h_w
-    cntw = cntw + 1;
-end
-%continue;
-live_hd = nanmean([livestockEthiopia1_dt(hdYearsEthiopia(hdYearsEthiopia<=32)); livestockEthiopia2_dt(hdYearsEthiopia(hdYearsEthiopia>32)-32)])
-live_d = nanmean([livestockEthiopia1_dt(dYearsEthiopia(dYearsEthiopia<=32)); livestockEthiopia2_dt(dYearsEthiopia(dYearsEthiopia>32)-32)])
-live_h = nanmean([livestockEthiopia1_dt(hYearsEthiopia(hYearsEthiopia<=32)); livestockEthiopia2_dt(hYearsEthiopia(hYearsEthiopia>32)-32)])
-live_w = nanmean([livestockEthiopia1_dt(wYearsEthiopia(wYearsEthiopia<=32)); livestockEthiopia2_dt(wYearsEthiopia(wYearsEthiopia>32)-32)])
-[h_lhd,p] = ttest([livestockEthiopia1_dt(hdYearsEthiopia(hdYearsEthiopia<=32)); livestockEthiopia2_dt(hdYearsEthiopia(hdYearsEthiopia>32)-32)])
-[h_ld,p] = ttest([livestockEthiopia1_dt(dYearsEthiopia(dYearsEthiopia<=32)); livestockEthiopia2_dt(dYearsEthiopia(dYearsEthiopia>32)-32)])
-[h_lh,p] = ttest([livestockEthiopia1_dt(hYearsEthiopia(hYearsEthiopia<=32)); livestockEthiopia2_dt(hYearsEthiopia(hYearsEthiopia>32)-32)])
-[h_lw,p] = ttest([livestockEthiopia1_dt(wYearsEthiopia(wYearsEthiopia<=32)); livestockEthiopia2_dt(wYearsEthiopia(wYearsEthiopia>32)-32)])
-% 
-% length(hdYearsEthiopia)
-% length(dYearsEthiopia)
-% length(hYearsEthiopia)
-% length(wYearsEthiopia)
+        cnt = cnt + 1;
+        if h_hd && nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia)) < 0
+            cnthd_neg = cnthd_neg + 1;
+         %   [p_hd,ph,pl,s]
+        elseif h_hd && nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia)) > 0
+            cnthd_pos = cnthd_pos + 1;
+        end
+        if h_d
+            cntd = cntd + 1;
+        end
+        if h_h
+            cnth = cnth + 1;
+        end
+        if h_w
+            cntw = cntw + 1;
+        end
+        
+        %continue;
+        
+        live_hd = nanmean([livestockEthiopia1_dt(hdYearsEthiopia(hdYearsEthiopia<=32)); livestockEthiopia2_dt(hdYearsEthiopia(hdYearsEthiopia>32)-32)])
+        live_d = nanmean([livestockEthiopia1_dt(dYearsEthiopia(dYearsEthiopia<=32)); livestockEthiopia2_dt(dYearsEthiopia(dYearsEthiopia>32)-32)])
+        live_h = nanmean([livestockEthiopia1_dt(hYearsEthiopia(hYearsEthiopia<=32)); livestockEthiopia2_dt(hYearsEthiopia(hYearsEthiopia>32)-32)])
+        live_w = nanmean([livestockEthiopia1_dt(wYearsEthiopia(wYearsEthiopia<=32)); livestockEthiopia2_dt(wYearsEthiopia(wYearsEthiopia>32)-32)])
+        [h_lhd,p, ci_lhd] = ttest([livestockEthiopia1_dt(hdYearsEthiopia(hdYearsEthiopia<=32)); livestockEthiopia2_dt(hdYearsEthiopia(hdYearsEthiopia>32)-32)])
+        [h_ld,p, ci_ld] = ttest([livestockEthiopia1_dt(dYearsEthiopia(dYearsEthiopia<=32)); livestockEthiopia2_dt(dYearsEthiopia(dYearsEthiopia>32)-32)])
+        [h_lh,p, ci_lh] = ttest([livestockEthiopia1_dt(hYearsEthiopia(hYearsEthiopia<=32)); livestockEthiopia2_dt(hYearsEthiopia(hYearsEthiopia>32)-32)])
+        [h_lw,p, ci_lw] = ttest([livestockEthiopia1_dt(wYearsEthiopia(wYearsEthiopia<=32)); livestockEthiopia2_dt(wYearsEthiopia(wYearsEthiopia>32)-32)])
 
+        figure('Color', [1,1,1]);
+        hold on;
+        grid on;
+        box on;
+        axis square;
 
-figure('Color', [1,1,1]);
-hold on;
-grid on;
-box on;
-axis square;
+        colorD = [160, 116, 46]./255.0;
+        colorHd = [216, 66, 19]./255.0;
+        colorH = [255, 91, 206]./255.0;
+        colorW = [68, 166, 226]./255.0;
 
-colorD = [160, 116, 46]./255.0;
-colorHd = [216, 66, 19]./255.0;
-colorH = [255, 91, 206]./255.0;
-colorW = [68, 166, 226]./255.0;
+        b = bar([1], [nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia))], .75, 'k');
+        if h_hd
+            set(b, 'facecolor', colorHd, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorHd);
+        end
+        plot(1, nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia)), 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(1, nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia)), nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia))-min(ci_hd), max(ci_hd)-nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia)));
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([1], [nanmean(yieldMeanEthiopia_dt(hdYearsEthiopia))], .75, 'k');
-if h_hd
-    set(b, 'facecolor', colorHd, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorHd);
-end
+        b = bar([2], [nanmean(yieldMeanEthiopia_dt(dYearsEthiopia))], .75, 'k');
+        if h_d
+            set(b, 'facecolor', colorD, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorD);
+        end
+        plot(2, nanmean(yieldMeanEthiopia_dt(dYearsEthiopia)), 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(2, nanmean(yieldMeanEthiopia_dt(dYearsEthiopia)), nanmean(yieldMeanEthiopia_dt(dYearsEthiopia))-min(ci_d), max(ci_d)-nanmean(yieldMeanEthiopia_dt(dYearsEthiopia)));
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([2], [nanmean(yieldMeanEthiopia_dt(dYearsEthiopia))], .75, 'k');
-if h_d
-    set(b, 'facecolor', colorD, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorD);
-end
+        b = bar([3], [nanmean(yieldMeanEthiopia_dt(hYearsEthiopia))], .75, 'k');
+        if h_h
+            set(b, 'facecolor', colorH, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorH);
+        end
+        plot(3, nanmean(yieldMeanEthiopia_dt(hYearsEthiopia)), 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(3, nanmean(yieldMeanEthiopia_dt(hYearsEthiopia)), nanmean(yieldMeanEthiopia_dt(hYearsEthiopia))-min(ci_h), max(ci_h)-nanmean(yieldMeanEthiopia_dt(hYearsEthiopia)));
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([3], [nanmean(yieldMeanEthiopia_dt(hYearsEthiopia))], .75, 'k');
-if h_h
-    set(b, 'facecolor', colorH, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorH);
-end
+        b = bar([4], [nanmean(yieldMeanEthiopia_dt(wYearsEthiopia))], .75, 'k');
+        if h_w
+            set(b, 'facecolor', colorW, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorW);
+        end
+        plot(4, nanmean(yieldMeanEthiopia_dt(wYearsEthiopia)), 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(4, nanmean(yieldMeanEthiopia_dt(wYearsEthiopia)), nanmean(yieldMeanEthiopia_dt(wYearsEthiopia))-min(ci_w), max(ci_w)-nanmean(yieldMeanEthiopia_dt(wYearsEthiopia)));
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([4], [nanmean(yieldMeanEthiopia_dt(wYearsEthiopia))], .75, 'k');
-if h_w
-    set(b, 'facecolor', colorW, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorW);
-end
+        title('T: 75%, P: 50%');
+        set(gca, 'fontsize', 36);
+        set(gca, 'XTick', [1 2 3 4], 'XTickLabels', {'Hot + Dry', 'Dry', 'Hot', 'Wet'});
+        ylim([-14 10] .* 1e-3);
+        set(gca, 'YTick', [-14:2:10] .* 1e-3, 'YTickLabels', -14:2:10);
+        ylabel('Normalized yield anomaly');
+        xtickangle(45);
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig(['crop-anomalies-75-50.eps']);
+        close all;
 
-title('T: 75%, P: 50%');
-set(gca, 'fontsize', 36);
-set(gca, 'XTick', [1 2 3 4], 'XTickLabels', {'Hot + Dry', 'Dry', 'Hot', 'Wet'});
-ylim([-10 4] .* 1e-3);
-set(gca, 'YTick', [-10:2:4] .* 1e-3, 'YTickLabels', -10:2:4);
-ylabel('Normalized yield anomaly');
-xtickangle(45);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['crop-anomalies-75-50.eps']);
-close all;
+        figure('Color', [1,1,1]);
+        hold on;
+        grid on;
+        box on;
+        axis square;
 
-figure('Color', [1,1,1]);
-hold on;
-grid on;
-box on;
-axis square;
+        b = bar([1], live_hd, .75, 'k');
+        if h_lhd
+            set(b, 'facecolor', colorHd, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorHd);
+        end
+        plot(1, live_hd, 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(1, live_hd, live_hd-min(ci_lhd), max(ci_lhd)-live_hd);
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([1], live_hd, .75, 'k');
-if h_lhd
-    set(b, 'facecolor', colorHd, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorHd);
-end
+        b = bar([2], live_d, .75, 'k');
+        if h_ld
+            set(b, 'facecolor', colorD, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorD);
+        end
+        plot(2, live_d, 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(2, live_d, live_d-min(ci_ld), max(ci_ld)-live_d);
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([2], live_d, .75, 'k');
-if h_ld
-    set(b, 'facecolor', colorD, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorD);
-end
+        b = bar([3], live_h, .75, 'k');
+        if h_lh
+            set(b, 'facecolor', colorH, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorH);
+        end
+        plot(3, live_h, 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(3, live_h, live_h-min(ci_lh), max(ci_lh)-live_h);
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([3], live_h, .75, 'k');
-if h_lh
-    set(b, 'facecolor', colorH, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorH);
-end
+        b = bar([4], live_w, .75, 'k');
+        if h_lw
+            set(b, 'facecolor', colorW, 'linewidth', 6);
+        else
+            set(b, 'facecolor', colorW);
+        end
+        plot(4, live_w, 'ko', 'markersize', 15, 'markerfacecolor', 'k');
+        e = errorbar(4, live_w, live_w-min(ci_lw), max(ci_lw)-live_w);
+        set(e, 'color', 'k', 'linewidth', 2);
 
-b = bar([4], live_w, .75, 'k');
-if h_lw
-    set(b, 'facecolor', colorW, 'linewidth', 6);
-else
-    set(b, 'facecolor', colorW);
-end
-
-title('T: 75%, P: 50%');
-set(gca, 'fontsize', 36);
-set(gca, 'XTick', [1 2 3 4], 'XTickLabels', {'Hot + Dry', 'Dry', 'Hot', 'Wet'});
-ylim([-10 4] .* 1e-3);
-set(gca, 'YTick', [-10:2:4] .* 1e-3, 'YTickLabels', -10:2:4);
-ylabel('Normalized livestock anomaly');
-xtickangle(45);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['livestock-anomalies-75-50.eps']);
-close all;
+        title('T: 75%, P: 50%');
+        set(gca, 'fontsize', 36);
+        set(gca, 'XTick', [1 2 3 4], 'XTickLabels', {'Hot + Dry', 'Dry', 'Hot', 'Wet'});
+        ylim([-14 10] .* 1e-3);
+        set(gca, 'YTick', [-14:2:10] .* 1e-3, 'YTickLabels', -14:2:10);
+        ylabel('Normalized livestock anomaly');
+        xtickangle(45);
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig(['livestock-anomalies-75-50.eps']);
+        close all;
+        end
     end
 end
