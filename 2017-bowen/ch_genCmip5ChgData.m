@@ -18,11 +18,11 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
           
-% for wb
+% for wb/ef
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+          'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 
 baseRcps = {'historical'};
@@ -86,12 +86,12 @@ if length(findstr(changeMetric, 'min')) > 0
     baseVar = 'tasmin';
     futureVar = 'tasmin';
 else
-    baseVar = 'wb-davies-jones-full';
-    futureVar = 'wb-davies-jones-full';
+    baseVar = 'ef';%'wb-davies-jones-full';
+    futureVar = 'ef';%'wb-davies-jones-full';
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
-thresh = 0:10:100;
+thresh = 0:5:100;
 
 numDays = 372;
 
@@ -109,9 +109,9 @@ for m = 1:length(models)
     load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
-%         continue;
-%     end
+    if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'file')
+        continue;
+    end
     
     % temperature data (thresh, ann-max, or daily-max)
     baseData = [];
@@ -540,7 +540,7 @@ for m = 1:length(models)
     end
 
     
-    if strcmp(changeMetric, 'thresh')
+    if strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
         curChg = chgData;
         for t = 1:size(chgData,4)
             chgData = squeeze(curChg(:,:,:,t));

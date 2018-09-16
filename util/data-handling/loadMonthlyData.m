@@ -168,7 +168,7 @@ for d = 1:length(dirNames)
             monthlyData{1} = lat;
             monthlyData{2} = lon;
         end
-        ['loading ' matFileNameNoExt]
+%        ['loading ' matFileNameNoExt]
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
         if gpcp || gpcc || udel

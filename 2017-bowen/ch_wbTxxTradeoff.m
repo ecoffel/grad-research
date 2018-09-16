@@ -116,7 +116,7 @@ hwb(nn) = [];
 ewb(nn) = [];
 wbwb(nn) = [];
 
-data = txxOnWb-txChgWarmSeason;
+data = wbOnTxx-wbChgWarmSeason;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -137,6 +137,9 @@ end
 
 sigChg(1:15,:) = 0;
 sigChg(75:90,:) = 0;
+
+length(find(nanmedian(data,3)>0)) / length(find(~waterGrid & ~isnan(nanmedian(data,3))))*100
+length(find(nanmedian(data,3)<0)) / length(find(~waterGrid & ~isnan(nanmedian(data,3))))*100
 
 result = {lat, lon, plotData};
 

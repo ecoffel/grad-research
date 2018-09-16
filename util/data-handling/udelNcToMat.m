@@ -143,7 +143,7 @@ for k = 1:length(ncFileNames)
         monthlyData = squeeze(monthlyData);
         monthlyData(monthlyData == missing_val) = NaN;
 
-        monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
+        monthlyDataSet = {lat, lon, squeeze(monthlyData)};
 
         % save the .mat file in the correct location and w/ the correct name
         fileName = [varName, '_', datestr(curStartDate, 'yyyy_mm_dd')];
