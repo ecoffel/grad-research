@@ -1,6 +1,6 @@
 
-useWb = true;
-useWarmSeason = true;
+useWb = false;
+useWarmSeason = false;
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
@@ -437,6 +437,8 @@ for m = 1:length(dmodels)
     twchgTPer_warming(:,:,m) = twchgT_warming(:,:,m) ./ twchgTot_warming(:,:,m);
     twchgHPer_warming(:,:,m) = twchgH_warming(:,:,m) ./ twchgTot_warming(:,:,m);
 end
+
+save('twchgTPer_warming_txx', 'twchgTPer_warming');
 
 result = {lat, lon, 100 .* nanmedian(twchgTPer_warming, 3)};
 

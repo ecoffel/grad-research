@@ -8,6 +8,8 @@ load lon;
 
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
+
+plotDistChg = false;
       
 threshChgTw = [];
 threshChgTx = [];
@@ -22,7 +24,7 @@ for m = 1:length(models)
         chgData(75:90,:) = NaN;
         threshChgTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-all-txx.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-warm-season.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -37,6 +39,7 @@ colorTxx = [216, 66, 19]./255.0;
 
 threshChgEf(abs(threshChgEf)>1) = NaN;
 
+if plotDistChg
 figure('Color', [1,1,1]);
 hold on;
 axis square;
@@ -61,12 +64,27 @@ end
 % yyaxis right;
 % plot(0:5:100, squeeze(nanmean(nanmean(nanmedian(threshChgEf,4),2),1)), 'ok', 'linewidth', 3);
 % ylim([-.05 .05]);
-ylim([2 5])
+ylim([2 5.2])
 xlim([-5 105]);
 set(gca, 'fontsize', 36);
-xlabel('Percentile');
+xlabel('Warm season percentile');
 set(gca, 'XTick', [0 25 50 75 100]);
 ylabel(['Change (' char(176) 'C)']);
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig(['txx-wb-dist-chg.eps']);
 close all;
+end
+
+
+
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2010.mat
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2060.mat
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2070.mat
+load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2060.mat
+load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2070.mat
+
+
+
+
+
+

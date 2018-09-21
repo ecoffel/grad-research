@@ -116,7 +116,7 @@ hwb(nn) = [];
 ewb(nn) = [];
 wbwb(nn) = [];
 
-data = wbOnTxx-wbChgWarmSeason;
+data = txxOnWb-txChgWarmSeason;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -128,7 +128,7 @@ for xlat = 1:size(lat, 1)
         med = nanmedian(data(xlat, ylon, :), 3);
         if ~isnan(med)
             plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
-            sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .75*size(data, 3);
+            sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
         else
             sigChg(xlat, ylon) = 1;
         end
@@ -137,6 +137,8 @@ end
 
 sigChg(1:15,:) = 0;
 sigChg(75:90,:) = 0;
+plotData(1:15,:) = NaN;
+plotData(75:90,:) = NaN;
 
 length(find(nanmedian(data,3)>0)) / length(find(~waterGrid & ~isnan(nanmedian(data,3))))*100
 length(find(nanmedian(data,3)<0)) / length(find(~waterGrid & ~isnan(nanmedian(data,3))))*100
@@ -148,7 +150,7 @@ saveData = struct('data', {result}, ...
                   'plotRange', [-1 1], ...
                   'cbXTicks', -1:.25:1, ...
                   'plotTitle', ['Tx on T_W day minus warm season'], ...
-                  'fileTitle', ['tx-on-wb-chg-warm-season.eps'], ...
+                  'fileTitle', ['tx-on-tw-chg-warm-season.eps'], ...
                   'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...
