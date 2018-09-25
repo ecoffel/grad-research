@@ -80,628 +80,415 @@ region = 1;
 [latInds, lonInds] = latLonIndexRange({lat, lon, []}, regions(region, [1 2]), regions(region, [3 4]));
 
 if showbar 
-    
-for m = 1:length(models)
 
-    load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
-   
-    efGroup(waterGrid) = NaN;
-    efGroup(1:15,:) = NaN;
-    efGroup(75:90,:) = NaN;
-    efGroup =  reshape(efGroup, [numel(efGroup),1]);
-    
-    cureftxx = efOnTxx(:, :, m);
-    cureftxx(waterGrid) = NaN;
-    cureftxx(1:15,:) = NaN;
-    cureftxx(75:90,:) = NaN;
-    cureftxx =  reshape(cureftxx, [numel(cureftxx),1]);
-    eftxx(:,m) = cureftxx;
-    
-    curefwb = efOnWb(:, :, m);
-    curefwb(waterGrid) = NaN;
-    curefwb(1:15,:) = NaN;
-    curefwb(75:90,:) = NaN;
-    curefwb =  reshape(curefwb, [numel(curefwb),1]);
-    efwb(:,m) = curefwb;
-    
-    curefwarm = efChgWarmSeason(:, :, m);
-    curefwarm(waterGrid) = NaN;
-    curefwarm(1:15,:) = NaN;
-    curefwarm(75:90,:) = NaN;
-    curefwarm =  reshape(curefwarm, [numel(curefwarm),1]);
-    efwarm(:,m) = curefwarm;
-    
-    curhusstxx = hussOnTxx(:, :, m);
-    curhusstxx(waterGrid) = NaN;
-    curhusstxx(1:15,:) = NaN;
-    curhusstxx(75:90,:) = NaN;
-    curhusstxx =  reshape(curhusstxx, [numel(curhusstxx),1]);
-    husstxx(:,m) = curhusstxx;
-    
-    curhusswb = hussOnWb(:, :, m);
-    curhusswb(waterGrid) = NaN;
-    curhusswb(1:15,:) = NaN;
-    curhusswb(75:90,:) = NaN;
-    curhusswb =  reshape(curhusswb, [numel(curhusswb),1]);
-    husswb(:,m) = curhusswb;
-    
-    curhusswarm = hussChgWarmSeason(:, :, m);
-    curhusswarm(waterGrid) = NaN;
-    curhusswarm(1:15,:) = NaN;
-    curhusswarm(75:90,:) = NaN;
-    curhusswarm =  reshape(curhusswarm, [numel(curhusswarm),1]);
-    husswarm(:,m) = curhusswarm;
-    
-    curwbtxx = wbOnTxx(:, :, m);
-    curwbtxx(waterGrid) = NaN;
-    curwbtxx(1:15,:) = NaN;
-    curwbtxx(75:90,:) = NaN;
-    curwbtxx =  reshape(curwbtxx, [numel(curwbtxx),1]);
-    wbtxx(:,m) = curwbtxx;
-    
-    curwbwb = wbChgOnWb(:, :, m);
-    curwbwb(waterGrid) = NaN;
-    curwbwb(1:15,:) = NaN;
-    curwbwb(75:90,:) = NaN;
-    curwbwb =  reshape(curwbwb, [numel(curwbwb),1]);
-    wbwb(:,m) = curwbwb;
-    
-    curwbwarm = wbChgWarmSeason(:, :, m);
-    curwbwarm(waterGrid) = NaN;
-    curwbwarm(1:15,:) = NaN;
-    curwbwarm(75:90,:) = NaN;
-    curwbwarm =  reshape(curwbwarm, [numel(curwbwarm),1]);
-    wbwarm(:,m) = curwbwarm;
-    
-    curtxxtxx = txxChgOnTxx(:, :, m);
-    curtxxtxx(waterGrid) = NaN;
-    curtxxtxx(1:15,:) = NaN;
-    curtxxtxx(75:90,:) = NaN;
-    curtxxtxx =  reshape(curtxxtxx, [numel(curtxxtxx),1]);
-    txxtxx(:,m) = curtxxtxx;
-    
-    curtxxwb = txxOnWb(:, :, m);
-    curtxxwb(waterGrid) = NaN;
-    curtxxwb(1:15,:) = NaN;
-    curtxxwb(75:90,:) = NaN;
-    curtxxwb =  reshape(curtxxwb, [numel(curtxxwb),1]);
-    txxwb(:,m) = curtxxwb;
-    
-    curtxxwarm = txChgWarmSeason(:, :, m);
-    curtxxwarm(waterGrid) = NaN;
-    curtxxwarm(1:15,:) = NaN;
-    curtxxwarm(75:90,:) = NaN;
-    curtxxwarm =  reshape(curtxxwarm, [numel(curtxxwarm),1]);
-    txxwarm(:,m) = curtxxwarm;
-end
+    for m = 1:length(models)
 
-names = {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'};
+        load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
 
-load twchgTPer_warming_warm;
-twchgTPer_warming_warm = twchgTPer_warming;
-load twchgTPer_warming_txx;
-twchgTPer_warming_txx = twchgTPer_warming;
-load twchgTPer_warming_tw;
-twchgTPer_warming_wb = twchgTPer_warming;
+        efGroup(waterGrid) = NaN;
+        efGroup(1:15,:) = NaN;
+        efGroup(75:90,:) = NaN;
+        efGroup =  reshape(efGroup, [numel(efGroup),1]);
 
-for e = 5
+        cureftxx = efOnTxx(:, :, m);
+        cureftxx(waterGrid) = NaN;
+        cureftxx(1:15,:) = NaN;
+        cureftxx(75:90,:) = NaN;
+        cureftxx =  reshape(cureftxx, [numel(cureftxx),1]);
+        eftxx(:,m) = cureftxx;
 
-    % all ef vals
-    if e == 5
-        nn = find(~isnan(efGroup));
-    else
-        % others
-        nn = find(efGroup == e);
+        curefwb = efOnWb(:, :, m);
+        curefwb(waterGrid) = NaN;
+        curefwb(1:15,:) = NaN;
+        curefwb(75:90,:) = NaN;
+        curefwb =  reshape(curefwb, [numel(curefwb),1]);
+        efwb(:,m) = curefwb;
+
+        curefwarm = efChgWarmSeason(:, :, m);
+        curefwarm(waterGrid) = NaN;
+        curefwarm(1:15,:) = NaN;
+        curefwarm(75:90,:) = NaN;
+        curefwarm =  reshape(curefwarm, [numel(curefwarm),1]);
+        efwarm(:,m) = curefwarm;
+
+        curhusstxx = hussOnTxx(:, :, m);
+        curhusstxx(waterGrid) = NaN;
+        curhusstxx(1:15,:) = NaN;
+        curhusstxx(75:90,:) = NaN;
+        curhusstxx =  reshape(curhusstxx, [numel(curhusstxx),1]);
+        husstxx(:,m) = curhusstxx;
+
+        curhusswb = hussOnWb(:, :, m);
+        curhusswb(waterGrid) = NaN;
+        curhusswb(1:15,:) = NaN;
+        curhusswb(75:90,:) = NaN;
+        curhusswb =  reshape(curhusswb, [numel(curhusswb),1]);
+        husswb(:,m) = curhusswb;
+
+        curhusswarm = hussChgWarmSeason(:, :, m);
+        curhusswarm(waterGrid) = NaN;
+        curhusswarm(1:15,:) = NaN;
+        curhusswarm(75:90,:) = NaN;
+        curhusswarm =  reshape(curhusswarm, [numel(curhusswarm),1]);
+        husswarm(:,m) = curhusswarm;
+
+        curwbtxx = wbOnTxx(:, :, m);
+        curwbtxx(waterGrid) = NaN;
+        curwbtxx(1:15,:) = NaN;
+        curwbtxx(75:90,:) = NaN;
+        curwbtxx =  reshape(curwbtxx, [numel(curwbtxx),1]);
+        wbtxx(:,m) = curwbtxx;
+
+        curwbwb = wbChgOnWb(:, :, m);
+        curwbwb(waterGrid) = NaN;
+        curwbwb(1:15,:) = NaN;
+        curwbwb(75:90,:) = NaN;
+        curwbwb =  reshape(curwbwb, [numel(curwbwb),1]);
+        wbwb(:,m) = curwbwb;
+
+        curwbwarm = wbChgWarmSeason(:, :, m);
+        curwbwarm(waterGrid) = NaN;
+        curwbwarm(1:15,:) = NaN;
+        curwbwarm(75:90,:) = NaN;
+        curwbwarm =  reshape(curwbwarm, [numel(curwbwarm),1]);
+        wbwarm(:,m) = curwbwarm;
+
+        curtxxtxx = txxChgOnTxx(:, :, m);
+        curtxxtxx(waterGrid) = NaN;
+        curtxxtxx(1:15,:) = NaN;
+        curtxxtxx(75:90,:) = NaN;
+        curtxxtxx =  reshape(curtxxtxx, [numel(curtxxtxx),1]);
+        txxtxx(:,m) = curtxxtxx;
+
+        curtxxwb = txxOnWb(:, :, m);
+        curtxxwb(waterGrid) = NaN;
+        curtxxwb(1:15,:) = NaN;
+        curtxxwb(75:90,:) = NaN;
+        curtxxwb =  reshape(curtxxwb, [numel(curtxxwb),1]);
+        txxwb(:,m) = curtxxwb;
+
+        curtxxwarm = txChgWarmSeason(:, :, m);
+        curtxxwarm(waterGrid) = NaN;
+        curtxxwarm(1:15,:) = NaN;
+        curtxxwarm(75:90,:) = NaN;
+        curtxxwarm =  reshape(curtxxwarm, [numel(curtxxwarm),1]);
+        txxwarm(:,m) = curtxxwarm;
     end
-    
-    cureftxx = (squeeze(eftxx(nn,:)));
-    curefwb = (squeeze(efwb(nn,:)));
-    curefwarm = (squeeze(efwarm(nn,:)));
-    curhusstxx = (squeeze(husstxx(nn,:)));
-    curhusswb = (squeeze(husswb(nn,:)));
-    curhusswarm = (squeeze(husswarm(nn,:)));
-    curwbtxx = (squeeze(wbtxx(nn,:)));
-    curwbwb = (squeeze(wbwb(nn,:)));
-    curwbwarm = (squeeze(wbwarm(nn,:)));
-    curtxxtxx = (squeeze(txxtxx(nn,:)));
-    curtxxwb = (squeeze(txxwb(nn,:)));
-    curtxxwarm = (squeeze(txxwarm(nn,:)));
-    
-   
-    prcWbPosWb = [];
-    prcWbNegWb = [];
-    prcWbPosTx = [];
-    prcWbNegTx = [];
-    curtxwarmPos = [];
-    curtxwarmNeg = [];
-    for m = 1:size(curwbwb, 2)
-        
-        curtwp = twchgTPer_warming_warm(:,:,m);
-        curtwp(waterGrid) = NaN;
-        curtwp(1:15,:) = NaN;
-        curtwp(75:90,:) = NaN;
-        curtwp = reshape(curtwp, [numel(curtwp),1]);
-        
-        %indWbPosWarm = find(curwbwarm(:,m)-nanmean(curwbwarm(:,m),1) > 0);
-        %indWbNegWarm = find(curwbwarm(:,m)-nanmean(curwbwarm(:,m),1) < 0);
-        
-        indWbPosWarm = find(curtwp(nn) > .50);
-        indWbNegWarm = find(curtwp(nn) <= .50);
-        
-        curtxwarmPos(m) = nanmean(curtxxwarm(indWbPosWarm, m));
-        curtxwarmNeg(m) = nanmean(curtxxwarm(indWbNegWarm, m));
-        
-        curefwarmPos(m) = nanmean(curefwarm(indWbPosWarm, m));
-        curefwarmNeg(m) = nanmean(curefwarm(indWbNegWarm, m));
-        
-        curhusswarmPos(m) = nanmean(curhusswarm(indWbPosWarm, m));
-        curhusswarmNeg(m) = nanmean(curhusswarm(indWbNegWarm, m));
-        
-%         indWbPosWb = find(curwbwb(:,m)-nanmean(curwbwarm(:,m),1) > 0);
-%         indWbNegWb = find(curwbwb(:,m)-nanmean(curwbwarm(:,m),1) < 0);
-        
-        curtwp = twchgTPer_warming_wb(:,:,m);
-        curtwp(waterGrid) = NaN;
-        curtwp(1:15,:) = NaN;
-        curtwp(75:90,:) = NaN;
-        curtwp = reshape(curtwp, [numel(curtwp),1]);
-        
-        indWbPosWb = find(curtwp(nn) > .50);
-        indWbNegWb = find(curtwp(nn) <= .50);
-        
-        prcWbPosWb(m) = length(indWbPosWb)/length(nn)*100;
-        prcWbNegWb(m) = length(indWbNegWb)/length(nn)*100;
-        
-        curtxwbPos(m) = nanmean(curtxxwb(indWbPosWb, m));
-        curtxwbNeg(m) = nanmean(curtxxwb(indWbNegWb, m));
-        
-        curefwbPos(m) = nanmean(curefwb(indWbPosWb, m));
-        curefwbNeg(m) = nanmean(curefwb(indWbNegWb, m));
-        
-        curhusswbPos(m) = nanmean(curhusswb(indWbPosWb, m));
-        curhusswbNeg(m) = nanmean(curhusswb(indWbNegWb, m));
-        
-        %indWbPosTxx = find(curwbtxx(:,m)-nanmean(curwbwarm(:,m),1) > 0);
-        %indWbNegTxx = find(curwbtxx(:,m)-nanmean(curwbwarm(:,m),1) < 0);
-        
-        curtwp = twchgTPer_warming_txx(:,:,m);
-        curtwp(waterGrid) = NaN;
-        curtwp(1:15,:) = NaN;
-        curtwp(75:90,:) = NaN;
-        curtwp = reshape(curtwp, [numel(curtwp),1]);
-        
-        indWbPosTxx = find(curtwp(nn) > .50);
-        indWbNegTxx = find(curtwp(nn) <= .50);
-        
-        prcWbPosTx(m) = length(indWbPosTxx)/length(nn)*100;
-        prcWbNegTx(m) = length(indWbNegTxx)/length(nn)*100;
-        
-        curtxtxxPos(m) = nanmean(curtxxtxx(indWbPosTxx, m));
-        curtxtxxNeg(m) = nanmean(curtxxtxx(indWbNegTxx, m));
-        
-        cureftxxPos(m) = nanmean(cureftxx(indWbPosTxx, m));
-        cureftxxNeg(m) = nanmean(cureftxx(indWbNegTxx, m));
-        
-        curhusstxxPos(m) = nanmean(curhusstxx(indWbPosTxx, m));
-        curhusstxxNeg(m) = nanmean(curhusstxx(indWbNegTxx, m));
+
+    names = {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'};
+
+    load twchgTPer_warming_warm;
+    twchgTPer_warming_warm = twchgTPer_warming;
+    load twchgTPer_warming_txx;
+    twchgTPer_warming_txx = twchgTPer_warming;
+    load twchgTPer_warming_tw;
+    twchgTPer_warming_wb = twchgTPer_warming;
+
+    for e = 5
+
+        % all ef vals
+        if e == 5
+            nn = find(~isnan(efGroup));
+        else
+            % others
+            nn = find(efGroup == e);
+        end
+
+        cureftxx = (squeeze(eftxx(nn,:)));
+        curefwb = (squeeze(efwb(nn,:)));
+        curefwarm = (squeeze(efwarm(nn,:)));
+        curhusstxx = (squeeze(husstxx(nn,:)));
+        curhusswb = (squeeze(husswb(nn,:)));
+        curhusswarm = (squeeze(husswarm(nn,:)));
+        curwbtxx = (squeeze(wbtxx(nn,:)));
+        curwbwb = (squeeze(wbwb(nn,:)));
+        curwbwarm = (squeeze(wbwarm(nn,:)));
+        curtxxtxx = (squeeze(txxtxx(nn,:)));
+        curtxxwb = (squeeze(txxwb(nn,:)));
+        curtxxwarm = (squeeze(txxwarm(nn,:)));
+
+
+        prcWbPosWb = [];
+        prcWbNegWb = [];
+        prcWbPosTx = [];
+        prcWbNegTx = [];
+        curtxwarmPos = [];
+        curtxwarmNeg = [];
+        for m = 1:size(curwbwb, 2)
+
+            curtwp = twchgTPer_warming_warm(:,:,m);
+            curtwp(waterGrid) = NaN;
+            curtwp(1:15,:) = NaN;
+            curtwp(75:90,:) = NaN;
+            curtwp = reshape(curtwp, [numel(curtwp),1]);
+
+            %indWbPosWarm = find(curwbwarm(:,m)-nanmean(curwbwarm(:,m),1) > 0);
+            %indWbNegWarm = find(curwbwarm(:,m)-nanmean(curwbwarm(:,m),1) < 0);
+
+            indWbPosWarm = find(curtwp(nn) > .50);
+            indWbNegWarm = find(curtwp(nn) <= .50);
+
+            curtxwarmPos(m) = nanmean(curtxxwarm(indWbPosWarm, m));
+            curtxwarmNeg(m) = nanmean(curtxxwarm(indWbNegWarm, m));
+
+            curefwarmPos(m) = nanmean(curefwarm(indWbPosWarm, m));
+            curefwarmNeg(m) = nanmean(curefwarm(indWbNegWarm, m));
+
+            curhusswarmPos(m) = nanmean(curhusswarm(indWbPosWarm, m));
+            curhusswarmNeg(m) = nanmean(curhusswarm(indWbNegWarm, m));
+
+    %         indWbPosWb = find(curwbwb(:,m)-nanmean(curwbwarm(:,m),1) > 0);
+    %         indWbNegWb = find(curwbwb(:,m)-nanmean(curwbwarm(:,m),1) < 0);
+
+            curtwp = twchgTPer_warming_wb(:,:,m);
+            curtwp(waterGrid) = NaN;
+            curtwp(1:15,:) = NaN;
+            curtwp(75:90,:) = NaN;
+            curtwp = reshape(curtwp, [numel(curtwp),1]);
+
+            indWbPosWb = find(curtwp(nn) > .50);
+            indWbNegWb = find(curtwp(nn) <= .50);
+
+            prcWbPosWb(m) = length(indWbPosWb)/length(nn)*100;
+            prcWbNegWb(m) = length(indWbNegWb)/length(nn)*100;
+
+            curtxwbPos(m) = nanmean(curtxxwb(indWbPosWb, m));
+            curtxwbNeg(m) = nanmean(curtxxwb(indWbNegWb, m));
+
+            curefwbPos(m) = nanmean(curefwb(indWbPosWb, m));
+            curefwbNeg(m) = nanmean(curefwb(indWbNegWb, m));
+
+            curhusswbPos(m) = nanmean(curhusswb(indWbPosWb, m));
+            curhusswbNeg(m) = nanmean(curhusswb(indWbNegWb, m));
+
+            %indWbPosTxx = find(curwbtxx(:,m)-nanmean(curwbwarm(:,m),1) > 0);
+            %indWbNegTxx = find(curwbtxx(:,m)-nanmean(curwbwarm(:,m),1) < 0);
+
+            curtwp = twchgTPer_warming_txx(:,:,m);
+            curtwp(waterGrid) = NaN;
+            curtwp(1:15,:) = NaN;
+            curtwp(75:90,:) = NaN;
+            curtwp = reshape(curtwp, [numel(curtwp),1]);
+
+            indWbPosTxx = find(curtwp(nn) > .50);
+            indWbNegTxx = find(curtwp(nn) <= .50);
+
+            prcWbPosTx(m) = length(indWbPosTxx)/length(nn)*100;
+            prcWbNegTx(m) = length(indWbNegTxx)/length(nn)*100;
+
+            curtxtxxPos(m) = nanmean(curtxxtxx(indWbPosTxx, m));
+            curtxtxxNeg(m) = nanmean(curtxxtxx(indWbNegTxx, m));
+
+            cureftxxPos(m) = nanmean(cureftxx(indWbPosTxx, m));
+            cureftxxNeg(m) = nanmean(cureftxx(indWbNegTxx, m));
+
+            curhusstxxPos(m) = nanmean(curhusstxx(indWbPosTxx, m));
+            curhusstxxNeg(m) = nanmean(curhusstxx(indWbNegTxx, m));
+        end
+
+
+        fig = figure('Color', [1,1,1]);
+        set(fig,'defaultAxesColorOrder',[colorTxx; colorHuss]);
+        hold on;
+        box on;
+        grid on;
+
+        pbaspect([1 2 1]);
+        yyaxis left;
+        b = bar([1 5], [nanmedian(curtxwbPos) nanmedian(curtxwbNeg)], .25, 'k');
+        set(b, 'facecolor', colorTxx, 'linewidth', 2);
+        er = errorbar(1, nanmedian(curtxwbPos), nanmedian(curtxwbPos)-min(curtxwbPos), max(curtxwbPos)-nanmedian(curtxwbPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(5, nanmedian(curtxwbNeg), nanmedian(curtxwbNeg)-min(curtxwbNeg), max(curtxwbNeg)-nanmedian(curtxwbNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        ylim([0 13]);
+        ylabel(['Tx change (' char(176) 'C)']);
+
+    %     b = bar([2 6], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .25, 'k');
+    %     set(b, 'facecolor', colorWarm, 'linewidth', 2);
+    %     er = errorbar(2, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+    %     er = errorbar(6, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+
+        yyaxis right;
+        b = bar([2 6], [nanmedian(curhusswbPos) nanmedian(curhusswbNeg)], .25, 'k');
+        set(b, 'facecolor', colorHuss, 'linewidth', 2);
+        er = errorbar(2, nanmedian(curhusswbPos), nanmedian(curhusswbPos)-min(curhusswbPos), max(curhusswbPos)-nanmedian(curhusswbPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(6, nanmedian(curhusswbNeg), nanmedian(curhusswbNeg)-min(curhusswbNeg), max(curhusswbNeg)-nanmedian(curhusswbNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        ylabel('Specific humidity change (g/kg)');
+        set(gca, 'XTick', [1.5 5.5], 'XTickLabels', {'T-dominated', 'H-dominated'});
+        xtickangle(45);
+        xlim([0 7]);
+        ylim([0 .005]);
+        set(gca, 'YTick', 0:.001:.005, 'YTickLabels', 0:5);
+        %title('Max T_W day');
+        set(gca, 'YTick', 0:.001:.005);
+        set(gca, 'fontsize', 36);
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig(['bar-prc-wb-' num2str(e) '.eps']);
+        close all;
+
+        fig = figure('Color', [1,1,1]);
+        set(fig,'defaultAxesColorOrder',[colorTxx; colorHuss]);
+        hold on;
+        box on;
+        grid on;
+
+        pbaspect([1 2 1]);
+        yyaxis left;
+        b = bar([1 5], [nanmedian(curtxtxxPos) nanmedian(curtxtxxNeg)], .25, 'k');
+        set(b, 'facecolor', colorTxx, 'linewidth', 2);
+        er = errorbar(1, nanmedian(curtxtxxPos), nanmedian(curtxtxxPos)-min(curtxtxxPos), max(curtxtxxPos)-nanmedian(curtxtxxPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(5, nanmedian(curtxtxxNeg), nanmedian(curtxtxxNeg)-min(curtxtxxNeg), max(curtxtxxNeg)-nanmedian(curtxtxxNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        ylim([0 13]);
+        ylabel(['Tx change (' char(176) 'C)']);
+
+    %     b = bar([2 6], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .25, 'k');
+    %     set(b, 'facecolor', colorWarm, 'linewidth', 2);
+    %     er = errorbar(2, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+    %     er = errorbar(6, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+
+        yyaxis right;
+        b = bar([2 6], [nanmedian(curhusstxxPos) nanmedian(curhusstxxNeg)], .25, 'k');
+        set(b, 'facecolor', colorHuss, 'linewidth', 2);
+        er = errorbar(2, nanmedian(curhusstxxPos), nanmedian(curhusstxxPos)-min(curhusstxxPos), max(curhusstxxPos)-nanmedian(curhusstxxPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(6, nanmedian(curhusstxxNeg), nanmedian(curhusstxxNeg)-min(curhusstxxNeg), max(curhusstxxNeg)-nanmedian(curhusstxxNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        ylabel('Specific humidity change (g/kg)');
+        set(gca, 'XTick', [1.5 5.5], 'XTickLabels', {'T-dominated', 'H-dominated'});
+        xtickangle(45);
+        xlim([0 7]);
+        ylim([0 .005]);
+        set(gca, 'YTick', 0:.001:.005, 'YTickLabels', 0:5);
+        %title('Max T_W day');
+        set(gca, 'YTick', 0:.001:.005);
+        set(gca, 'fontsize', 36);
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig(['bar-prc-txx-' num2str(e) '.eps']);
+        close all;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        fig = figure('Color', [1,1,1]);
+        hold on;
+        box on;
+        axis square;
+        grid on;
+
+        ns = 20;
+        b = bar([1 ns+1], [nanmedian(curtxwarmPos) nanmedian(curtxwarmNeg)], .05, 'k');
+        set(b, 'facecolor', colorTxx, 'linewidth', 2);
+        er = errorbar(1, nanmedian(curtxwarmPos), nanmedian(curtxwarmPos)-min(curtxwarmPos), max(curtxwarmPos)-nanmedian(curtxwarmPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+1, nanmedian(curtxwarmNeg), nanmedian(curtxwarmNeg)-min(curtxwarmNeg), max(curtxwarmNeg)-nanmedian(curtxwarmNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([6 ns+6], [nanmedian(curtxwbPos) nanmedian(curtxwbNeg)], .05, 'k');
+        set(b, 'facecolor', colorTxx, 'linewidth', 2);
+        er = errorbar(6, nanmedian(curtxwbPos), nanmedian(curtxwbPos)-min(curtxwbPos), max(curtxwbPos)-nanmedian(curtxwbPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+6, nanmedian(curtxwbNeg), nanmedian(curtxwbNeg)-min(curtxwbNeg), max(curtxwbNeg)-nanmedian(curtxwbNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([11 ns+11], [nanmedian(curtxtxxPos) nanmedian(curtxtxxNeg)], .05, 'k');
+        set(b, 'facecolor', colorTxx, 'linewidth', 2);
+        er = errorbar(11, nanmedian(curtxtxxPos), nanmedian(curtxtxxPos)-min(curtxtxxPos), max(curtxtxxPos)-nanmedian(curtxtxxPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+11, nanmedian(curtxtxxNeg), nanmedian(curtxtxxNeg)-min(curtxtxxNeg), max(curtxtxxNeg)-nanmedian(curtxtxxNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+
+        b = bar([2 ns+2], [nanmedian(curefwarmPos) nanmedian(curefwarmNeg)], .05, 'k');
+        set(b, 'facecolor', colorWarm, 'linewidth', 2);
+        er = errorbar(2, nanmedian(curefwarmPos), nanmedian(curefwarmPos)-min(curefwarmPos), max(curefwarmPos)-nanmedian(curefwarmPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+2, nanmedian(curefwarmNeg), nanmedian(curefwarmNeg)-min(curefwarmNeg), max(curefwarmNeg)-nanmedian(curefwarmNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([7 ns+7], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .05, 'k');
+        set(b, 'facecolor', colorWarm, 'linewidth', 2);
+        er = errorbar(7, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+7, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([12 ns+12], [nanmedian(cureftxxPos) nanmedian(cureftxxNeg)], .05, 'k');
+        set(b, 'facecolor', colorWarm, 'linewidth', 2);
+        er = errorbar(12, nanmedian(cureftxxPos), nanmedian(cureftxxPos)-min(cureftxxPos), max(cureftxxPos)-nanmedian(cureftxxPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+12, nanmedian(cureftxxNeg), nanmedian(cureftxxNeg)-min(cureftxxNeg), max(cureftxxNeg)-nanmedian(cureftxxNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([3 ns+3], [nanmedian(curhusswarmPos) nanmedian(curhusswarmNeg)], .05, 'k');
+        set(b, 'facecolor', colorHuss, 'linewidth', 2);
+        er = errorbar(3, nanmedian(curhusswarmPos), nanmedian(curhusswarmPos)-min(curhusswarmPos), max(curhusswarmPos)-nanmedian(curhusswarmPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+3, nanmedian(curhusswarmNeg), nanmedian(curhusswarmNeg)-min(curhusswarmNeg), max(curhusswarmNeg)-nanmedian(curhusswarmNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([8 ns+8], [nanmedian(curhusswbPos) nanmedian(curhusswbNeg)], .05, 'k');
+        set(b, 'facecolor', colorHuss, 'linewidth', 2);
+        er = errorbar(8, nanmedian(curhusswbPos), nanmedian(curhusswbPos)-min(curhusswbPos), max(curhusswbPos)-nanmedian(curhusswbPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+8, nanmedian(curhusswbNeg), nanmedian(curhusswbNeg)-min(curhusswbNeg), max(curhusswbNeg)-nanmedian(curhusswbNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        b = bar([13 ns+13], [nanmedian(curhusstxxPos) nanmedian(curhusstxxNeg)], .05, 'k');
+        set(b, 'facecolor', colorHuss, 'linewidth', 2);
+        er = errorbar(13, nanmedian(curhusstxxPos), nanmedian(curhusstxxPos)-min(curhusstxxPos), max(curhusstxxPos)-nanmedian(curhusstxxPos));
+        set(er, 'color', 'k', 'linewidth', 2);
+        er = errorbar(ns+13, nanmedian(curhusstxxNeg), nanmedian(curhusstxxNeg)-min(curhusstxxNeg), max(curhusstxxNeg)-nanmedian(curhusstxxNeg));
+        set(er, 'color', 'k', 'linewidth', 2);
+
+        %     er = errorbar(1, nanmedian(curtxxtxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+    %     er = errorbar(5, nanmedian(curtxxwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+    %     er = errorbar(9, nanmedian(curtxxwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
+    %     set(er, 'color', 'k', 'linewidth', 2);
+
+        ylabel('Normalized change');
+        set(gca, 'XTick', [7 7+ns], 'XTickLabels', {'T_W+', 'T_W-'});
+    %     ylim([0 7e-3]);
+    %     set(gca, 'YTick', 1e-3 .* [0:7], 'YTickLabels', 0:7);
+    %     xtickangle(45);
+        xlim([-2 36]);
+        set(gca, 'fontsize', 36);
+        title(names{e}, 'fontsize', 36);
+        set(gcf, 'Position', get(0,'Screensize'));
+        export_fig(['ef-wb-txx-rel-chg-bar-' num2str(e) '.eps']);
+        close all;
+
     end
-    
-    
-    fig = figure('Color', [1,1,1]);
-    set(fig,'defaultAxesColorOrder',[colorTxx; colorHuss]);
-    hold on;
-    box on;
-    grid on;
-    
-    pbaspect([1 2 1]);
-    yyaxis left;
-    b = bar([1 5], [nanmedian(curtxwbPos) nanmedian(curtxwbNeg)], .25, 'k');
-    set(b, 'facecolor', colorTxx, 'linewidth', 2);
-    er = errorbar(1, nanmedian(curtxwbPos), nanmedian(curtxwbPos)-min(curtxwbPos), max(curtxwbPos)-nanmedian(curtxwbPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(5, nanmedian(curtxwbNeg), nanmedian(curtxwbNeg)-min(curtxwbNeg), max(curtxwbNeg)-nanmedian(curtxwbNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    ylim([0 13]);
-    ylabel(['Tx change (' char(176) 'C)']);
-    
-%     b = bar([2 6], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .25, 'k');
-%     set(b, 'facecolor', colorWarm, 'linewidth', 2);
-%     er = errorbar(2, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(6, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
-%     set(er, 'color', 'k', 'linewidth', 2);
-
-    yyaxis right;
-    b = bar([2 6], [nanmedian(curhusswbPos) nanmedian(curhusswbNeg)], .25, 'k');
-    set(b, 'facecolor', colorHuss, 'linewidth', 2);
-    er = errorbar(2, nanmedian(curhusswbPos), nanmedian(curhusswbPos)-min(curhusswbPos), max(curhusswbPos)-nanmedian(curhusswbPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(6, nanmedian(curhusswbNeg), nanmedian(curhusswbNeg)-min(curhusswbNeg), max(curhusswbNeg)-nanmedian(curhusswbNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    ylabel('Specific humidity change (g/kg)');
-    set(gca, 'XTick', [1.5 5.5], 'XTickLabels', {'T-dominated', 'H-dominated'});
-    xtickangle(45);
-    xlim([0 7]);
-    ylim([0 .005]);
-    set(gca, 'YTick', 0:.001:.005, 'YTickLabels', 0:5);
-    %title('Max T_W day');
-    set(gca, 'YTick', 0:.001:.005);
-    set(gca, 'fontsize', 36);
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['bar-prc-wb-' num2str(e) '.eps']);
-    close all;
-    
-    fig = figure('Color', [1,1,1]);
-    set(fig,'defaultAxesColorOrder',[colorTxx; colorHuss]);
-    hold on;
-    box on;
-    grid on;
-    
-    pbaspect([1 2 1]);
-    yyaxis left;
-    b = bar([1 5], [nanmedian(curtxtxxPos) nanmedian(curtxtxxNeg)], .25, 'k');
-    set(b, 'facecolor', colorTxx, 'linewidth', 2);
-    er = errorbar(1, nanmedian(curtxtxxPos), nanmedian(curtxtxxPos)-min(curtxtxxPos), max(curtxtxxPos)-nanmedian(curtxtxxPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(5, nanmedian(curtxtxxNeg), nanmedian(curtxtxxNeg)-min(curtxtxxNeg), max(curtxtxxNeg)-nanmedian(curtxtxxNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    ylim([0 13]);
-    ylabel(['Tx change (' char(176) 'C)']);
-    
-%     b = bar([2 6], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .25, 'k');
-%     set(b, 'facecolor', colorWarm, 'linewidth', 2);
-%     er = errorbar(2, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(6, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
-%     set(er, 'color', 'k', 'linewidth', 2);
-
-    yyaxis right;
-    b = bar([2 6], [nanmedian(curhusstxxPos) nanmedian(curhusstxxNeg)], .25, 'k');
-    set(b, 'facecolor', colorHuss, 'linewidth', 2);
-    er = errorbar(2, nanmedian(curhusstxxPos), nanmedian(curhusstxxPos)-min(curhusstxxPos), max(curhusstxxPos)-nanmedian(curhusstxxPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(6, nanmedian(curhusstxxNeg), nanmedian(curhusstxxNeg)-min(curhusstxxNeg), max(curhusstxxNeg)-nanmedian(curhusstxxNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    ylabel('Specific humidity change (g/kg)');
-    set(gca, 'XTick', [1.5 5.5], 'XTickLabels', {'T-dominated', 'H-dominated'});
-    xtickangle(45);
-    xlim([0 7]);
-    ylim([0 .005]);
-    set(gca, 'YTick', 0:.001:.005, 'YTickLabels', 0:5);
-    %title('Max T_W day');
-    set(gca, 'YTick', 0:.001:.005);
-    set(gca, 'fontsize', 36);
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['bar-prc-txx-' num2str(e) '.eps']);
-    close all;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    fig = figure('Color', [1,1,1]);
-    hold on;
-    box on;
-    axis square;
-    grid on;
-    
-    ns = 20;
-    b = bar([1 ns+1], [nanmedian(curtxwarmPos) nanmedian(curtxwarmNeg)], .05, 'k');
-    set(b, 'facecolor', colorTxx, 'linewidth', 2);
-    er = errorbar(1, nanmedian(curtxwarmPos), nanmedian(curtxwarmPos)-min(curtxwarmPos), max(curtxwarmPos)-nanmedian(curtxwarmPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+1, nanmedian(curtxwarmNeg), nanmedian(curtxwarmNeg)-min(curtxwarmNeg), max(curtxwarmNeg)-nanmedian(curtxwarmNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([6 ns+6], [nanmedian(curtxwbPos) nanmedian(curtxwbNeg)], .05, 'k');
-    set(b, 'facecolor', colorTxx, 'linewidth', 2);
-    er = errorbar(6, nanmedian(curtxwbPos), nanmedian(curtxwbPos)-min(curtxwbPos), max(curtxwbPos)-nanmedian(curtxwbPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+6, nanmedian(curtxwbNeg), nanmedian(curtxwbNeg)-min(curtxwbNeg), max(curtxwbNeg)-nanmedian(curtxwbNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([11 ns+11], [nanmedian(curtxtxxPos) nanmedian(curtxtxxNeg)], .05, 'k');
-    set(b, 'facecolor', colorTxx, 'linewidth', 2);
-    er = errorbar(11, nanmedian(curtxtxxPos), nanmedian(curtxtxxPos)-min(curtxtxxPos), max(curtxtxxPos)-nanmedian(curtxtxxPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+11, nanmedian(curtxtxxNeg), nanmedian(curtxtxxNeg)-min(curtxtxxNeg), max(curtxtxxNeg)-nanmedian(curtxtxxNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    
-    b = bar([2 ns+2], [nanmedian(curefwarmPos) nanmedian(curefwarmNeg)], .05, 'k');
-    set(b, 'facecolor', colorWarm, 'linewidth', 2);
-    er = errorbar(2, nanmedian(curefwarmPos), nanmedian(curefwarmPos)-min(curefwarmPos), max(curefwarmPos)-nanmedian(curefwarmPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+2, nanmedian(curefwarmNeg), nanmedian(curefwarmNeg)-min(curefwarmNeg), max(curefwarmNeg)-nanmedian(curefwarmNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([7 ns+7], [nanmedian(curefwbPos) nanmedian(curefwbNeg)], .05, 'k');
-    set(b, 'facecolor', colorWarm, 'linewidth', 2);
-    er = errorbar(7, nanmedian(curefwbPos), nanmedian(curefwbPos)-min(curefwbPos), max(curefwbPos)-nanmedian(curefwbPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+7, nanmedian(curefwbNeg), nanmedian(curefwbNeg)-min(curefwbNeg), max(curefwbNeg)-nanmedian(curefwbNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([12 ns+12], [nanmedian(cureftxxPos) nanmedian(cureftxxNeg)], .05, 'k');
-    set(b, 'facecolor', colorWarm, 'linewidth', 2);
-    er = errorbar(12, nanmedian(cureftxxPos), nanmedian(cureftxxPos)-min(cureftxxPos), max(cureftxxPos)-nanmedian(cureftxxPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+12, nanmedian(cureftxxNeg), nanmedian(cureftxxNeg)-min(cureftxxNeg), max(cureftxxNeg)-nanmedian(cureftxxNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([3 ns+3], [nanmedian(curhusswarmPos) nanmedian(curhusswarmNeg)], .05, 'k');
-    set(b, 'facecolor', colorHuss, 'linewidth', 2);
-    er = errorbar(3, nanmedian(curhusswarmPos), nanmedian(curhusswarmPos)-min(curhusswarmPos), max(curhusswarmPos)-nanmedian(curhusswarmPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+3, nanmedian(curhusswarmNeg), nanmedian(curhusswarmNeg)-min(curhusswarmNeg), max(curhusswarmNeg)-nanmedian(curhusswarmNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([8 ns+8], [nanmedian(curhusswbPos) nanmedian(curhusswbNeg)], .05, 'k');
-    set(b, 'facecolor', colorHuss, 'linewidth', 2);
-    er = errorbar(8, nanmedian(curhusswbPos), nanmedian(curhusswbPos)-min(curhusswbPos), max(curhusswbPos)-nanmedian(curhusswbPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+8, nanmedian(curhusswbNeg), nanmedian(curhusswbNeg)-min(curhusswbNeg), max(curhusswbNeg)-nanmedian(curhusswbNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-    
-    b = bar([13 ns+13], [nanmedian(curhusstxxPos) nanmedian(curhusstxxNeg)], .05, 'k');
-    set(b, 'facecolor', colorHuss, 'linewidth', 2);
-    er = errorbar(13, nanmedian(curhusstxxPos), nanmedian(curhusstxxPos)-min(curhusstxxPos), max(curhusstxxPos)-nanmedian(curhusstxxPos));
-    set(er, 'color', 'k', 'linewidth', 2);
-    er = errorbar(ns+13, nanmedian(curhusstxxNeg), nanmedian(curhusstxxNeg)-min(curhusstxxNeg), max(curhusstxxNeg)-nanmedian(curhusstxxNeg));
-    set(er, 'color', 'k', 'linewidth', 2);
-
-    %     er = errorbar(1, nanmedian(curtxxtxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(5, nanmedian(curtxxwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(9, nanmedian(curtxxwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
-%     set(er, 'color', 'k', 'linewidth', 2);
-    
-    ylabel('Normalized change');
-    set(gca, 'XTick', [7 7+ns], 'XTickLabels', {'T_W+', 'T_W-'});
-%     ylim([0 7e-3]);
-%     set(gca, 'YTick', 1e-3 .* [0:7], 'YTickLabels', 0:7);
-%     xtickangle(45);
-    xlim([-2 36]);
-    set(gca, 'fontsize', 36);
-    title(names{e}, 'fontsize', 36);
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['ef-wb-txx-rel-chg-bar-' num2str(e) '.eps']);
-    close all;
-    
-%     fig = figure('Color', [1,1,1]);
-%     set(fig,'defaultAxesColorOrder',[colorTxx; colorHuss]);
-%     hold on;
-%     box on;
-%     axis square;
-%     grid on;
-%     yyaxis left;
-%     
-%     b = bar([1 5 9], [nanmedian(curtxxtxx) nanmedian(curtxxwarm) nanmedian(curtxxwb)], .25, 'k');
-%     set(b, 'facecolor', colorTxx, 'linewidth', 2);
-%     er = errorbar(1, nanmedian(curtxxtxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(5, nanmedian(curtxxwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     er = errorbar(9, nanmedian(curtxxwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
-%     set(er, 'color', 'k', 'linewidth', 2);
-%     
-%     
-%     b = bar([3 7 11], [nanmedian(curwbtxx) nanmedian(curwbwarm) nanmedian(curwbwb)], .25, 'k');
-%     set(b, 'facecolor', colorWb, 'linewidth', 2);
-%     er = errorbar(3, nanmedian(curwbtxx), nanmedian(curwbtxx)-min(curwbtxx), max(curwbtxx)-nanmedian(curwbtxx));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     er = errorbar(7, nanmedian(curwbwarm), nanmedian(curwbwarm)-min(curwbwarm), max(curwbwarm)-nanmedian(curwbwarm));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     er = errorbar(11, nanmedian(curwbwb), nanmedian(curwbwb)-min(curwbwb), max(curwbwb)-nanmedian(curwbwb));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     
-%     
-%     ylabel(['Temperature change (' char(176) 'C)']);
-%     ylim([0 13]);
-%     yyaxis right;
-%     b = bar([2 6 10], [nanmedian(curhusstxx) nanmedian(curhusswarm) nanmedian(curhusswb)], .25, 'k');
-%     set(b, 'facecolor', colorHuss, 'linewidth', 2);
-%     er = errorbar(2, nanmedian(curhusstxx), nanmedian(curhusstxx)-min(curhusstxx), max(curhusstxx)-nanmedian(curhusstxx));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     er = errorbar(6, nanmedian(curhusswarm), nanmedian(curhusswarm)-min(curhusswarm), max(curhusswarm)-nanmedian(curhusswarm));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     er = errorbar(10, nanmedian(curhusswb), nanmedian(curhusswb)-min(curhusswb), max(curhusswb)-nanmedian(curhusswb));
-%     set(er, 'color', 'k', 'linewidth', 2, 'markersize', .01);
-%     
-%     ylabel('Specific humidity change (g/kg)');
-%     set(gca, 'XTick', [2 6 10], 'XTickLabels', {'TXx day', 'Warm season', 'T_W day'});
-%     ylim([0 7e-3]);
-%     set(gca, 'YTick', 1e-3 .* [0:7], 'YTickLabels', 0:7);
-%     xtickangle(45);
-%     set(gca, 'fontsize', 30);
-%     title(names{e}, 'fontsize', 36);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['ef-wb-txx-chg-bar-' num2str(e) '.eps']);
-%     close all;
-    
-%     figure('Color', [1,1,1]);
-%     hold on;
-%     box on;
-%     axis square;
-%     grid on;
-%     er = errorbar(nanmedian(curwbwb), nanmedian(curefwb), nanmedian(curefwb)-min(curefwb), max(curefwb)-nanmedian(curefwb), nanmedian(curwbwb)-min(curwbwb), max(curwbwb)-nanmedian(curwbwb));
-%     set(er, 'color', colorWb, 'linewidth', 2);
-%     plot(nanmedian(curwbwb), nanmedian(curefwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curwbtxx), nanmedian(cureftxx), nanmedian(cureftxx)-min(cureftxx), max(cureftxx)-nanmedian(cureftxx), nanmedian(curwbtxx)-min(curwbtxx), max(curwbtxx)-nanmedian(curwbtxx));
-%     set(er, 'color', colorTxx, 'linewidth', 2);
-%     plot(nanmedian(curwbtxx), nanmedian(cureftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curwbwarm), nanmedian(curefwarm), nanmedian(curefwarm)-min(curefwarm), max(curefwarm)-nanmedian(curefwarm), nanmedian(curwbwarm)-min(curwbwarm), max(curwbwarm)-nanmedian(curwbwarm));
-%     set(er, 'color', colorWarm, 'linewidth', 2);
-%     plot(nanmedian(curwbwarm), nanmedian(curefwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curtxxwb), nanmedian(curefwb), nanmedian(curefwb)-min(curefwb), max(curefwb)-nanmedian(curefwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
-%     set(er, 'color', colorWb, 'linewidth', 2, 'linestyle', '--');
-%     plot(nanmedian(curtxxwb), nanmedian(curefwb), 'sk', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curtxxtxx), nanmedian(cureftxx), nanmedian(cureftxx)-min(cureftxx), max(cureftxx)-nanmedian(cureftxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
-%     set(er, 'color', colorTxx, 'linewidth', 2, 'linestyle', '--');
-%     plot(nanmedian(curtxxtxx), nanmedian(cureftxx), 'sk', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curtxxwarm), nanmedian(curefwarm), nanmedian(curefwarm)-min(curefwarm), max(curefwarm)-nanmedian(curefwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
-%     set(er, 'color', colorWarm, 'linewidth', 2, 'linestyle', '--');
-%     plot(nanmedian(curtxxwarm), nanmedian(curefwarm), 'sk', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
-% 
-%     
-%     title(names{e});
-%     xlabel(['Temperature change (' char(176) 'C)']);
-%     ylabel('EF change (Fraction)');
-%     set(gca, 'XTick', 0:2:12);
-%     set(gca, 'FontSize', 40);
-%     xlim([0 12]);
-%     ylim([-.1 .1]);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['ef-wb-txx-chg-' num2str(e) '.eps']);
-%     close all;
-% 
-%     figure('Color', [1,1,1]);
-%     hold on;
-%     box on;
-%     axis square;
-%     grid on;
-%     er = errorbar(nanmedian(curtxxwb), nanmedian(curefwb), nanmedian(curefwb)-min(curefwb), max(curefwb)-nanmedian(curefwb), nanmedian(curtxxwb)-min(curtxxwb), max(curtxxwb)-nanmedian(curtxxwb));
-%     set(er, 'color', colorWb, 'linewidth', 2);
-%     plot(nanmedian(curtxxwb), nanmedian(curefwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curtxxtxx), nanmedian(cureftxx), nanmedian(cureftxx)-min(cureftxx), max(cureftxx)-nanmedian(cureftxx), nanmedian(curtxxtxx)-min(curtxxtxx), max(curtxxtxx)-nanmedian(curtxxtxx));
-%     set(er, 'color', colorTxx, 'linewidth', 2);
-%     plot(nanmedian(curtxxtxx), nanmedian(cureftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
-% 
-%     er = errorbar(nanmedian(curtxxwarm), nanmedian(curefwarm), nanmedian(curefwarm)-min(curefwarm), max(curefwarm)-nanmedian(curefwarm), nanmedian(curtxxwarm)-min(curtxxwarm), max(curtxxwarm)-nanmedian(curtxxwarm));
-%     set(er, 'color', colorWarm, 'linewidth', 2);
-%     plot(nanmedian(curtxxwarm), nanmedian(curefwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
-% 
-%     title(names{e});
-%     xlabel(['TXx change (' char(176) 'C)']);
-%     ylabel('EF change (Fraction)');
-%     set(gca, 'XTick', 1.5:7);
-%     set(gca, 'FontSize', 40);
-%     xlim([1.5 7]);
-%     ylim([-.07 .03]);
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig(['ef-txx-chg-' num2str(e) '.eps']);
-%     close all;
-end
 end
     
-    
-    
-% eftxx = squeeze(nanmean(nanmean(efOnTxx(latInds, lonInds, :), 2), 1));
-% efwb = squeeze(nanmean(nanmean(efOnWb(latInds, lonInds, :), 2), 1));
-% efwarm = squeeze(nanmean(nanmean(efChgWarmSeason(latInds, lonInds, :), 2), 1));
-% wbtxx = squeeze(nanmean(nanmean(wbOnTxx(latInds, lonInds, :), 2), 1));
-% wbwb = squeeze(nanmean(nanmean(wbChgOnWb(latInds, lonInds, :), 2), 1));
-% wbwarm = squeeze(nanmean(nanmean(wbChgWarmSeason(latInds, lonInds, :), 2), 1));
-% txxtxx = squeeze(nanmean(nanmean(txxChgOnTxx(latInds, lonInds, :), 2), 1));
-% txxwb = squeeze(nanmean(nanmean(txxOnWb(latInds, lonInds, :), 2), 1));
-% txxwarm = squeeze(nanmean(nanmean(txChgWarmSeason(latInds, lonInds, :), 2), 1));
-
-% figure('Color', [1,1,1]);
-% hold on;
-% box on;
-% axis square;
-% grid on;
-% e = errorbar(nanmedian(wbwb), nanmedian(efwb), nanmedian(efwb)-min(efwb), max(efwb)-nanmedian(efwb), nanmedian(wbwb)-min(wbwb), max(wbwb)-nanmedian(wbwb));
-% set(e, 'color', colorWb, 'linewidth', 2);
-% plot(nanmedian(wbwb), nanmedian(efwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
-% 
-% e = errorbar(nanmedian(wbtxx), nanmedian(eftxx), nanmedian(eftxx)-min(eftxx), max(eftxx)-nanmedian(eftxx), nanmedian(wbtxx)-min(wbtxx), max(wbtxx)-nanmedian(wbtxx));
-% set(e, 'color', colorTxx, 'linewidth', 2);
-% plot(nanmedian(wbtxx), nanmedian(eftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
-% 
-% e = errorbar(nanmedian(wbwarm), nanmedian(efwarm), nanmedian(efwarm)-min(efwarm), max(efwarm)-nanmedian(efwarm), nanmedian(wbwarm)-min(wbwarm), max(wbwarm)-nanmedian(wbwarm));
-% set(e, 'color', colorWarm, 'linewidth', 2);
-% plot(nanmedian(wbwarm), nanmedian(efwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
-% 
-% title('Global');
-% xlabel(['T_W change (' char(176) 'C)']);
-% ylabel('EF change (Fraction)');
-% set(gca, 'XTick', 1.5:1:7);
-% set(gca, 'FontSize', 40);
-% xlim([1.5 7]);
-% ylim([-.07 .03]);
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig(['ef-wb-chg-global.eps']);
-% close all;
-% 
-% figure('Color', [1,1,1]);
-% hold on;
-% box on;
-% axis square;
-% grid on;
-% e = errorbar(nanmedian(txxwb), nanmedian(efwb), nanmedian(efwb)-min(efwb), max(efwb)-nanmedian(efwb), nanmedian(txxwb)-min(txxwb), max(txxwb)-nanmedian(txxwb));
-% set(e, 'color', colorWb, 'linewidth', 2);
-% plot(nanmedian(txxwb), nanmedian(efwb), 'ok', 'markersize', 15, 'markerfacecolor', colorWb, 'linewidth', 2);
-% 
-% e = errorbar(nanmedian(txxtxx), nanmedian(eftxx), nanmedian(eftxx)-min(eftxx), max(eftxx)-nanmedian(eftxx), nanmedian(txxtxx)-min(txxtxx), max(txxtxx)-nanmedian(txxtxx));
-% set(e, 'color', colorTxx, 'linewidth', 2);
-% plot(nanmedian(txxtxx), nanmedian(eftxx), 'ok', 'markersize', 15, 'markerfacecolor', colorTxx, 'linewidth', 2);
-% 
-% e = errorbar(nanmedian(txxwarm), nanmedian(efwarm), nanmedian(efwarm)-min(efwarm), max(efwarm)-nanmedian(efwarm), nanmedian(txxwarm)-min(txxwarm), max(txxwarm)-nanmedian(txxwarm));
-% set(e, 'color', colorWarm, 'linewidth', 2);
-% plot(nanmedian(txxwarm), nanmedian(efwarm), 'ok', 'markersize', 15, 'markerfacecolor', colorWarm, 'linewidth', 2);
-% 
-% title('Global');
-% xlabel(['TXx change (' char(176) 'C)']);
-% ylabel('EF change (Fraction)');
-% set(gca, 'XTick', 1.5:7);
-% set(gca, 'FontSize', 40);
-% xlim([1.5 7]);
-% ylim([-.07 .03]);
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig(['ef-txx-chg-global.eps']);
-% close all;
-% 
-% wbwblin = reshape(nanmedian(wbChgOnWb, 3), [numel(nanmedian(wbChgOnWb, 3)), 1]);
-% efwblin = reshape(nanmedian(efOnWb, 3), [numel(nanmedian(efOnWb, 3)), 1]);
-% ind = find(~isnan(wbwblin) & ~isnan(efwblin));
-% wbwblin = wbwblin(ind);
-% efwblin = efwblin(ind);
-% 
-% fwb = fit(wbwblin, efwblin, 'poly1');
-% plot([min(wbwb) max(wbwb)], [fwb(min(wbwb)) fwb(max(wbwb))], '--', 'Color', colorWb);
-% 
-% wbtxxlin = reshape(nanmedian(wbOnTxx, 3), [numel(nanmedian(wbOnTxx, 3)), 1]);
-% eftxxlin = reshape(nanmedian(efOnTxx, 3), [numel(nanmedian(efOnTxx, 3)), 1]);
-% ind = find(~isnan(wbtxxlin) & ~isnan(eftxxlin));
-% wbtxxlin = wbtxxlin(ind);
-% eftxxlin = eftxxlin(ind);
-% 
-% ftxx = fit(wbtxxlin, eftxxlin, 'poly1');
-% plot([nanmedian(wbtxx)-1 nanmedian(wbtxx)+1], [ftxx(nanmedian(wbtxx)-1) ftxx(nanmedian(wbtxx)+1)], '--', 'Color', colorTxx);
-% 
-% wbwarmlin = reshape(nanmedian(wbChgWarmSeason, 3), [numel(nanmedian(wbChgWarmSeason, 3)), 1]);
-% efwarmlin = reshape(nanmedian(efChgWarmSeason, 3), [numel(nanmedian(efChgWarmSeason, 3)), 1]);
-% ind = find(~isnan(wbwarmlin) & ~isnan(efwarmlin));
-% wbwarmlin = wbwarmlin(ind);
-% efwarmlin = efwarmlin(ind);
-% 
-% fwarm = fit(wbwarmlin, efwarmlin, 'poly1');
-% plot([min(wbwarm) max(wbwarm)], [fwarm(min(wbwarm)) fwarm(max(wbwarm))], '--', 'Color', colorWarm);
 
 amp = wbChgWarmSeason;
 driverRaw = txChgWarmSeason;
@@ -722,8 +509,9 @@ dchg = [];
 
 for m = 1:length(models)
 
-   load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
-
+   load(['E:\data\projects\bowen\derived-chg\var-stats\twGroup-' models{m} '.mat']);
+    efGroup = twGroup;
+    
     a = squeeze(amp(:,:,m));
     a(waterGrid) = NaN;
     a(1:15,:) = NaN;
@@ -770,10 +558,10 @@ for m = 1:length(models)
 
     efGroup(nn) = [];
 
-    for e = 1:5
+    for e = 1:6
 
         % all ef vals
-        if e == 5
+        if e == 6
             nn = 1:length(driver);
         else
             % others
@@ -837,8 +625,8 @@ end
 % dslopes = squeeze(dslopes);
 % dslopesP = squeeze(dslopesP);
 st = squeeze(dslopes);
-[f,gof] = fit((1:4)', nanmedian(st(1:4,:),2), 'poly3');
-fx = 1:.1:4;
+[f,gof] = fit((1:5)', nanmedian(st(1:5,:),2), 'poly3');
+fx = 1:.1:5;
 fy = f(fx);
 
 figure('Color',[1,1,1]);
@@ -895,15 +683,17 @@ plot(fx, fy, '--k', 'LineWidth', 2, 'Color', [.5 .5 .5]);
 %ylim(yrange);
 %set(gca, 'YTick', yticks);
 xlim([.5 5.5]);
-ylim([-.5 .5]);
+ylim([-.5 1]);
 set(gca, 'FontSize', 40);
-set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
-set(gca, 'YTick', -.5:.25:.5);
-xtickangle(45);
+%set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
+set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
+set(gca, 'YTick', -.5:.25:1);
+%xtickangle(45);
+xlabel('T_{W} Percentile');
 ylabel([char(176) 'C T_W per ' char(176) 'C Tx']);
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-wb-per-tx-chg-warm-season.eps']);
+export_fig(['spatial-wb-per-tx-chg-tw-perc.eps']);
 close all;
