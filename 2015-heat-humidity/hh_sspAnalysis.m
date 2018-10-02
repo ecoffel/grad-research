@@ -19,7 +19,7 @@ grid on;
 for ssp = ssps
     for d = 1:length(decades)
         decade = decades(d);
-        load(['C:\git-ecoffel\grad-research\2015-heat-humidity\ssp\ssp' num2str(ssp) '\output\ssp' num2str(ssp) '\regrid\ssp' num2str(ssp) '_' num2str(decade)]);
+        load(['E:\data\ssp-pop\ssp' num2str(ssp) '\output\ssp' num2str(ssp) '\regrid\ssp' num2str(ssp) '_' num2str(decade)]);
         eval(['curSsp = ssp' num2str(ssp) '_' num2str(decade) ';']);
         
         sspData(ssp, d) = sum(sum(curSsp{3}));

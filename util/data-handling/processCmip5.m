@@ -1,4 +1,4 @@
-vars = {'ts'};
+vars = {'mrros'};
 
 modelBaseDir = 'cmip5/raw';
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...

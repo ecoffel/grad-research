@@ -78,7 +78,7 @@ load lon;
 % no-warm-season-tx = change in non-warm season tx
 % thresh = changes above temperature thresholds specified in thresh
 % thresh-range = changes between two percentiles
-changeMetric = 'thresh-range';
+changeMetric = 'warm-season-tx';
 
 load(['2017-bowen/hottest-season-txx-rel-cmip5-' hottestSeasonType '.mat']);
 
@@ -86,8 +86,8 @@ if length(findstr(changeMetric, 'min')) > 0
     baseVar = 'tasmin';
     futureVar = 'tasmin';
 else
-    baseVar = 'ef';%'wb-davies-jones-full';
-    futureVar = 'ef';%'wb-davies-jones-full';
+    baseVar = 'tasmax';%'wb-davies-jones-full';
+    futureVar = 'tasmax';%'wb-davies-jones-full';
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
@@ -103,13 +103,13 @@ for m = 1:length(models)
     curModel = models{m};
     
     
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-historical-cmip5-1981-2005.mat']);
+    load(['2017-bowen/txx-timing/txx-months-' curModel '-historical-cmip5-1981-2005.mat']);
     txxMonthsHist = txxMonths;
 
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
+    load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-    if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'file')
+    if exist(['e:/data/projects/bowen/huss-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
         continue;
     end
     
@@ -448,10 +448,7 @@ for m = 1:length(models)
                 
                 % exclude tropics
                 if ~excludeTropics || (xlat <= 35 || xlat >= 55)
-                    if ~isnan(hottestSeason(xlat, ylon, m))
-%                         months = [hottestSeason(xlat, ylon, m)-1 hottestSeason(xlat, ylon, m) hottestSeason(xlat, ylon, m)+1];
-%                         months(months == 0) = 12;
-%                         months(months == 13) = 1;
+                    if length(find(isnan(curTxxMonthsHist))) == 0 && length(find(isnan(curTxxMonthsFut))) == 0
 
                         % average over hottest months for current model
                         baseWarmSeasonTx(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, curTxxMonthsHist), 3));
@@ -539,6 +536,7 @@ for m = 1:length(models)
 
     end
 
+    chgData = chgData;
     
     if strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
         curChg = chgData;
@@ -549,7 +547,8 @@ for m = 1:length(models)
     elseif excludeTropics
         save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-exclude-tropics' '-' hottestSeasonType '.mat'], 'chgData');
     else
-        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        %save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/bowen/huss-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
     end
 
 

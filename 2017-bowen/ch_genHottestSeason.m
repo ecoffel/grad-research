@@ -19,7 +19,7 @@ models = {''};
 hottestSeason = [];
 hottestSeasonLength = [];
 
-var = 'tasmax';
+var = 'wb-davies-jones-full';
 timePeriod = 'historical';
 
 
@@ -36,7 +36,7 @@ if ~exist('tasmax')
                     timePeriodStr = '2061-2085';
                 end
             elseif strcmp(dataset, 'era')
-                tasmax = loadDailyData(['e:/data/era-interim/output/mx2t/regrid/world'], 'startYear', 1981, 'endYear', 2016);
+                tasmax = loadDailyData(['e:/data/era-interim/output/wb-davies-jones-full/regrid/world'], 'startYear', 1981, 'endYear', 2016);
                 timePeriodStr = '1981-2016';
             end
             
@@ -118,8 +118,8 @@ if ~exist('tasmax')
                     save(['2017-bowen/txx-timing/txx-days-' models{m} '-' timePeriod '-' dataset '-' timePeriodStr '.mat'], 'txxDays');
                 end
             elseif strcmp(dataset, 'era')
-                save(['2017-bowen/txx-timing/txx-months-era-' timePeriodStr '.mat'], 'txxMonths');
-                save(['2017-bowen/txx-timing/txx-days-era-' timePeriodStr '.mat'], 'txxDays');
+                save(['2017-bowen/txx-timing/wb-davies-jones-full-months-era-' timePeriodStr '.mat'], 'txxMonths');
+                save(['2017-bowen/txx-timing/wb-davies-jones-full-days-era-' timePeriodStr '.mat'], 'txxDays');
             end
             
         end

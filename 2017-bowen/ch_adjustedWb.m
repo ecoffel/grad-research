@@ -187,7 +187,7 @@ if useWb
     driverRaw2 = efOnWb;
 else
     amp = txxChgOnTxx;
-    driverRaw = efOnTxx;
+    driverRaw = hussOnTxx;
 
     amp2 = hussOnTxx;
     driverRaw2 = efOnTxx;
@@ -382,60 +382,65 @@ hchgDueToEf(tchgDueToEf==0) = NaN;
 for m = 1:length(dmodels)
     load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
    
-	for xlat = 1:size(lat, 1)
-        for ylon = 1:size(lat, 2)
-            curGroup = efGroup(xlat, ylon);
-            if waterGrid(xlat, ylon) || isnan(curGroup) || isnan(efOnWb(xlat, ylon, m))
-                continue;
-            end
-            
-            if useWarmSeason
-                efChg = efChgWarmSeason;
-                curHistTxx = histTxWarmSeason;
-                curHistHuss = histHussWarmSeason;
-                txxChg = txChgWarmSeason;
-                hussChg = hussChgWarmSeason;
-            else
-                if useWb
-                    efChg = efOnWb;
-                    curHistTxx = histTxOnWb;
-                    curHistHuss = histHussOnWb;
-                    txxChg = txxOnWb;
-                    hussChg = hussOnWb;
-                else
-                    efChg = efOnTxx;
-                    curHistTxx = histTXx;
-                    curHistHuss = histHussOnTXx;
-                    txxChg = txxChgOnTxx;
-                    hussChg = hussOnTxx;
-                end
-            end
-            
-            if useWarmSeason
-                tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{3}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{3}, 0);
-                hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{4}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{4}, 0);
-            else
-                tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
-                hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
-            end
-            % using ef-chg predicted t/h chg
-            twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgTot_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-%             
-            % using total model projected t/h chg
-            twchgT_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgH_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
-            twchgTot_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+    for t = 5:10:95
 
+        
+        
+        for xlat = 1:size(lat, 1)
+            for ylon = 1:size(lat, 2)
+                curGroup = efGroup(xlat, ylon);
+                if waterGrid(xlat, ylon) || isnan(curGroup) || isnan(efOnWb(xlat, ylon, m))
+                    continue;
+                end
+
+                if useWarmSeason
+                    efChg = efChgWarmSeason;
+                    curHistTxx = histTxWarmSeason;
+                    curHistHuss = histHussWarmSeason;
+                    txxChg = txChgWarmSeason;
+                    hussChg = hussChgWarmSeason;
+                else
+                    if useWb
+                        efChg = efOnWb;
+                        curHistTxx = histTxOnWb;
+                        curHistHuss = histHussOnWb;
+                        txxChg = txxOnWb;
+                        hussChg = hussOnWb;
+                    else
+                        efChg = efOnTxx;
+                        curHistTxx = histTXx;
+                        curHistHuss = histHussOnTXx;
+                        txxChg = txxChgOnTxx;
+                        hussChg = hussOnTxx;
+                    end
+                end
+
+                if useWarmSeason
+                    tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{3}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{3}, 0);
+                    hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{4}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{4}, 0);
+                else
+                    tchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{1}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{1}, 0);
+                    hchgDueToEf(xlat, ylon, m) = predict(dmodels{m}{curGroup}{2}, efChg(xlat, ylon, m)) - predict(dmodels{m}{curGroup}{2}, 0);
+                end
+                % using ef-chg predicted t/h chg
+                twchgT_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+                twchgH_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+                twchgTot_efchg(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + tchgDueToEf(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hchgDueToEf(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+    %             
+                % using total model projected t/h chg
+                twchgT_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+                twchgH_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+                twchgTot_warming(xlat, ylon, m) = kopp_wetBulb(curHistTxx(xlat, ylon) + txxChg(xlat, ylon, m), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon, m))-kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+
+            end
         end
+
+        twchgTPer_efchg(:,:,m) = twchgT_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
+        twchgHPer_efchg(:,:,m) = twchgH_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
+
+        twchgTPer_warming(:,:,m) = twchgT_warming(:,:,m) ./ twchgTot_warming(:,:,m);
+        twchgHPer_warming(:,:,m) = twchgH_warming(:,:,m) ./ twchgTot_warming(:,:,m);
     end
-    
-    twchgTPer_efchg(:,:,m) = twchgT_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
-    twchgHPer_efchg(:,:,m) = twchgH_efchg(:,:,m) ./ twchgTot_efchg(:,:,m);
-    
-    twchgTPer_warming(:,:,m) = twchgT_warming(:,:,m) ./ twchgTot_warming(:,:,m);
-    twchgHPer_warming(:,:,m) = twchgH_warming(:,:,m) ./ twchgTot_warming(:,:,m);
 end
 
 save('twchgTPer_warming_txx', 'twchgTPer_warming');

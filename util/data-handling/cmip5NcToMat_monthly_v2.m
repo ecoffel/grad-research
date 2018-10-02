@@ -9,7 +9,7 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
     for k = 1:length(ncFileNames)
         ncFileName = ncFileNames{k}
 
-        if ~contains(ncFileName, 'Amon')
+        if ~contains(ncFileName, 'Amon') && ~contains(ncFileName, 'Lmon')
             continue;
         end
         

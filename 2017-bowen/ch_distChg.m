@@ -9,15 +9,19 @@ load lon;
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
 
-plotDistChg = false;
-      
+plotDistChg = true;
+
+plotSpatialChg = false;
+
 threshChgTw = [];
 threshChgTx = [];
 threshChgEf = [];
+humid = [];
 
 for m = 1:length(models)
+    
     tind = 1;
-    for t = 0:5:100
+    for t = 5:10:95
         load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-all-txx.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
@@ -37,53 +41,112 @@ end
 colorWb = [68, 166, 226]./255.0;
 colorTxx = [216, 66, 19]./255.0;
 
-threshChgEf(abs(threshChgEf)>1) = NaN;
+if plotSpatialChg
+    
+    twGroupChg = [];
+    txGroupChg = [];
+    
+    for m = 1:length(models)
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        chgData =  reshape(chgData, [numel(chgData),1]);
+        
+        load(['E:\data\projects\bowen\derived-chg\var-stats\twGroup-' models{m} '.mat']);
+        efGroup = twGroup;
+        efGroup(waterGrid) = NaN;
+        efGroup(1:15,:) = NaN;
+        efGroup(75:90,:) = NaN;
+        efGroup =  reshape(efGroup, [numel(efGroup),1]);
+        
+        for t = 1:10
+            twGroupChg(t, m) = nanmean(chgData(find(efGroup == t)));
+        end
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-tasmax-' models{m} '-rcp85-2061-2085']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        chgData =  reshape(chgData, [numel(chgData),1]);
+        
+        for t = 1:10
+            txGroupChg(t, m) = nanmean(chgData(find(efGroup == t)));
+        end
+        
+    end
+    
+    figure('Color', [1,1,1]);
+    hold on;
+    axis square;
+    grid on;
+    box on;
+
+    % yyaxis left;
+    trange = 5:10:95;
+    for t = 1:length(trange)
+        cury = squeeze(nanmedian(twGroupChg(t,:),2));
+        curyrange = squeeze(twGroupChg(t,:));
+        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
+        set(er, 'color', colorWb, 'linewidth', 2);
+
+        cury = squeeze(nanmedian(txGroupChg(t,:),2));
+        curyrange = squeeze(txGroupChg(t,:));
+        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
+        set(er, 'color', colorTxx, 'linewidth', 2);
+    end
+    % yyaxis right;
+    % plot(0:5:100, squeeze(nanmean(nanmean(nanmedian(threshChgEf,4),2),1)), 'ok', 'linewidth', 3);
+    % ylim([-.05 .05]);
+    ylim([2 6.5])
+    xlim([-5 105]);
+    set(gca, 'fontsize', 36);
+    xlabel('Global spatial percentile');
+    set(gca, 'XTick', 5:10:95);
+    ylabel(['Change (' char(176) 'C)']);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['txx-wb-spatial-dist-chg.eps']);
+    close all;
+    
+end
 
 if plotDistChg
-figure('Color', [1,1,1]);
-hold on;
-axis square;
-grid on;
-box on;
+    figure('Color', [1,1,1]);
+    hold on;
+    axis square;
+    grid on;
+    box on;
 
-% yyaxis left;
-trange = 0:5:100;
-for t = 1:length(trange)
-    cury = squeeze(nanmean(nanmean(nanmedian(threshChgTw(:,:,t,:),4),2),1));
-    curyrange = squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1));
-    er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
-    plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
-    set(er, 'color', colorWb, 'linewidth', 2);
-    
-    cury = squeeze(nanmean(nanmean(nanmedian(threshChgTx(:,:,t,:),4),2),1));
-    curyrange = squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1));
-    er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
-    plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
-    set(er, 'color', colorTxx, 'linewidth', 2);
+    % yyaxis left;
+    trange = 5:10:95;
+    for t = 1:length(trange)
+        cury = squeeze(nanmean(nanmean(nanmedian(threshChgTw(:,:,t,:),4),2),1));
+        curyrange = squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1));
+        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
+        set(er, 'color', colorWb, 'linewidth', 2);
+
+        cury = squeeze(nanmean(nanmean(nanmedian(threshChgTx(:,:,t,:),4),2),1));
+        curyrange = squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1));
+        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
+        set(er, 'color', colorTxx, 'linewidth', 2);
+    end
+    % yyaxis right;
+    % plot(0:5:100, squeeze(nanmean(nanmean(nanmedian(threshChgEf,4),2),1)), 'ok', 'linewidth', 3);
+    % ylim([-.05 .05]);
+    ylim([2 5.2])
+    xlim([-5 105]);
+    set(gca, 'fontsize', 36);
+    xlabel('Warm season percentile');
+    set(gca, 'XTick', 5:10:95);
+    ylabel(['Change (' char(176) 'C)']);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['txx-wb-dist-chg.eps']);
+    close all;
 end
-% yyaxis right;
-% plot(0:5:100, squeeze(nanmean(nanmean(nanmedian(threshChgEf,4),2),1)), 'ok', 'linewidth', 3);
-% ylim([-.05 .05]);
-ylim([2 5.2])
-xlim([-5 105]);
-set(gca, 'fontsize', 36);
-xlabel('Warm season percentile');
-set(gca, 'XTick', [0 25 50 75 100]);
-ylabel(['Change (' char(176) 'C)']);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['txx-wb-dist-chg.eps']);
-close all;
-end
-
-
-
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2010.mat
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2060.mat
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2070.mat
-load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2060.mat
-load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2070.mat
-
-
 
 
 

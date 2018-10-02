@@ -11,7 +11,7 @@ function [fg, cb] = plotFromDataFile(saveData)
         statDataExists = true;
     end
     
-    stippleInterval = 5;
+    stippleInterval = 10;
     if isfield(saveData, 'stippleInterval')
         stippleInterval = saveData.stippleInterval;
     end
@@ -99,7 +99,9 @@ function [fg, cb] = plotFromDataFile(saveData)
         set(cb, 'XTick', xticks);
         cbPos = get(cb, 'Position');
     end
-    title(saveData.plotTitle, 'FontSize', 36);
+    if length(saveData.plotTitle) > 0
+        title(saveData.plotTitle, 'FontSize', 36);
+    end
     
     set(gcf, 'Position', get(0,'Screensize'));
     ti = get(gca,'TightInset');
@@ -176,7 +178,7 @@ function [fg, cb] = plotFromDataFile(saveData)
                     
                     p = patch([tulX turX tbrX tblX], [tulY turY tbrY tblY], 'k');
                     set(p, 'FaceColor', 'none', 'EdgeColor', 'none');
-                    h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'k', 'HatchSpacing', stippleInterval);
+                    h = hatchfill2(p, 'single', 'HatchAngle', 45, 'HatchColor', 'k', 'HatchSpacing', stippleInterval, 'HatchLineWidth', 1.5);
                     
                     
                     

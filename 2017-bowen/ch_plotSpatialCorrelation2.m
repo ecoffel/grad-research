@@ -689,7 +689,7 @@ set(gca, 'FontSize', 40);
 set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
 set(gca, 'YTick', -.5:.25:1);
 %xtickangle(45);
-xlabel('T_{W} Percentile');
+xlabel('Global T_{W} Percentile');
 ylabel([char(176) 'C T_W per ' char(176) 'C Tx']);
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');

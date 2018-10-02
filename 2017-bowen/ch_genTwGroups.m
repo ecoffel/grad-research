@@ -46,7 +46,7 @@ for m = 1:length(models)
     
     warmSeasonMeanLin = reshape(warmSeasonMean, [numel(warmSeasonMean),1]);
     warmSeasonMeanP = [];
-    percRange = 0:20:100;
+    percRange = 0:10:100;
     for p = 1:length(percRange)
         warmSeasonMeanP(p) = prctile(warmSeasonMeanLin, percRange(p));
     end

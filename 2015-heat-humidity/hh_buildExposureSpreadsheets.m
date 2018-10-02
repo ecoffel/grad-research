@@ -13,7 +13,7 @@ for d = 1:length(decades)
         for m = 1:length(models)
             load(['C:\git-ecoffel\grad-research\2015-heat-humidity\selGrid\selGrid-' num2str(decades(d)) 's-rcp85-' num2str(threshold(t)) 'C-scenario-' num2str(models(m))]);
             
-            exposure(t, m) = sum(sum(ssp{3}(logical(selGrid))));            
+            exposure(t, m) = sum(sum(ssp{3}(logical(selGrid))));
         end
     end
     

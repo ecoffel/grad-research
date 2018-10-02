@@ -1,6 +1,6 @@
 load waterGrid-suitable
 
-fout = fopen('waterGrid.txt', 'w');
+fout = fopen('ssp5_2060.txt', 'w');
 
 lat = waterGrid{1};
 lon = waterGrid{2};
@@ -43,10 +43,10 @@ for x = 1:size(data, 1)
     for y = 1:size(data, 2)
         if y == size(data, 2)
             % no comma
-            fprintf(fout, '%d', round(data(x,y)));
+            fprintf(fout, '%d', data(x,y));
         else
             % comma
-            fprintf(fout, '%d,', round(data(x,y)));
+            fprintf(fout, '%d,', data(x,y));
         end
     end
     % new line after each row
