@@ -1,6 +1,6 @@
-decade = 2070;
-rcp = 'rcp45';
-thresh = 31;
+decade = [2060 2070];
+rcp = 'rcp85';
+thresh = 32;
 
 baseDir = '2015-heat-humidity/selGrid/';
 
@@ -16,11 +16,13 @@ end
 
 % loop through all scenarios
 for s = 1:numScenarios
-    load([baseDir 'selGrid-' num2str(decade) 's-' rcp '-' num2str(thresh) 'C-scenario-' num2str(s)]);
-    
-    mapData(:, :, s) = selGrid;
-    
-    clear selGrid;
+    for d = 1:length(decade)
+        load([baseDir 'selGrid-' num2str(decade(d)) 's-' rcp '-' num2str(thresh) 'C-scenario-' num2str(s)]);
+
+        mapData(:, :, d, s) = selGrid;
+
+        clear selGrid;
+    end
 end
 
 ind10 = round(0.1 * size(mapData, 3));
@@ -38,13 +40,15 @@ mapData(mapData == 0) = NaN;
 % plotFromDataFile(saveData);
 
 
-result = {lat, lon, round(nanmean(mapData, 3))};
+result = {lat, lon, nanmean(nanmean(mapData, 3), 4)};
+result{3} = round(result{3} .* 2) ./ 2;
+data=result{3};
 saveData = struct('data', {result}, ...
-                  'plotRegion', 'usa', ...
+                  'plotRegion', 'world', ...
                   'plotRange', [0 5], ...
                   'cbXTicks',  0:5, ...
-                  'plotTitle', [num2str(thresh) char(176) 'C, 2070-2080, RCP 4.5'], ...
-                  'fileTitle', ['exceedenceMap-' num2str(thresh) 'C-' rcp '-' num2str(thresh) 'c-' num2str(decade) '-mean.pdf'], ...
+                  'plotTitle', [], ...
+                  'fileTitle', ['exceedenceMap-' num2str(thresh) 'C-' rcp '-' num2str(thresh) 'c-' num2str(decade(1)) '-' num2str(decade(end)) '.pdf'], ...
                   'plotXUnits', 'Days per year', ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'Reds'), ...

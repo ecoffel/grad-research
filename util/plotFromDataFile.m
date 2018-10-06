@@ -11,7 +11,7 @@ function [fg, cb] = plotFromDataFile(saveData)
         statDataExists = true;
     end
     
-    stippleInterval = 10;
+    stippleInterval = 12;
     if isfield(saveData, 'stippleInterval')
         stippleInterval = saveData.stippleInterval;
     end

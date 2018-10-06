@@ -49,31 +49,33 @@ end
 colorWb = [68, 166, 226]./255.0;
 colorTxx = [216, 66, 19]./255.0;
 
-twtx = squeeze(nanmean(nanmean(threshPercTwTxFut,2),1))-squeeze(nanmean(nanmean(threshPercTwTxHist,2),1));
-txtw = squeeze(nanmean(nanmean(threshPercTxTwFut,2),1))-squeeze(nanmean(nanmean(threshPercTxTwHist,2),1));
+% twtx = squeeze(nanmean(nanmean(threshPercTwTxFut,2),1))-squeeze(nanmean(nanmean(threshPercTwTxHist,2),1));
+% txtw = squeeze(nanmean(nanmean(threshPercTxTwFut,2),1))-squeeze(nanmean(nanmean(threshPercTxTwHist,2),1));
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% axis square;
+% grid on;
+% box on;
+% 
+% for t = 1:size(twtx, 1)
+%     t = text(nanmedian(twtx(t,:),2)*10, nanmedian(txtw(t,:),2)*10, num2str(t*10-5), 'HorizontalAlignment', 'center', 'Color', 'k');
+%     t.FontSize = 26;
+% end
+% 
+% ylim([-2 2])
+% xlim([-2 2])
+% plot([-2 2], [0 0], '--k', 'linewidth', 2);
+% plot([0 0], [-2 2], '--k', 'linewidth', 2);
+% 
+% xlabel('Tx percentile change');
+% ylabel('T_W percentile change');
+% set(gca, 'fontsize', 36, 'xtick', -2:2, 'ytick', -2:2);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig(['tw-perc-tx-perc.eps']);
+% close all;
 
-figure('Color', [1,1,1]);
-hold on;
-axis square;
-grid on;
-box on;
 
-for t = 1:size(twtx, 1)
-    t = text(nanmedian(twtx(t,:),2)*10, nanmedian(txtw(t,:),2)*10, num2str(t*10-5), 'HorizontalAlignment', 'center', 'Color', 'k');
-    t.FontSize = 26;
-end
-
-ylim([-2 2])
-xlim([-2 2])
-plot([-2 2], [0 0], '--k', 'linewidth', 2);
-plot([0 0], [-2 2], '--k', 'linewidth', 2);
-
-xlabel('Tx percentile change');
-ylabel('T_W percentile change');
-set(gca, 'fontsize', 36, 'xtick', -2:2, 'ytick', -2:2);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['tw-perc-tx-perc.eps']);
-close all;
 
 if plotDistChg
     figure('Color', [1,1,1]);
@@ -82,16 +84,22 @@ if plotDistChg
     grid on;
     box on;
 
+    plot([0 100], [0 0], '--k', 'linewidth', 2);
     trange = 5:10:95;
     medchg = squeeze(nanmean(nanmean(nanmean(threshChgTxTw(:,:,5:6,:),3),2),1));
     for t = 1:length(trange)
         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTxTw(:,:,t,:), 2), 1))-medchg);
         curyrange = squeeze(nanmean(nanmean(threshChgTxTw(:,:,t,:), 2), 1))-medchg;
         er = errorbar(trange(t), cury, cury-min(curyrange), max(curyrange)-cury);
-        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
+        p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15);
+        if ttest(curyrange)
+            set(p, 'markerfacecolor', colorWb);
+        else
+            set(p, 'markerfacecolor', 'w');
+        end
         set(er, 'color', colorWb, 'linewidth', 2);
     end
-    plot([0 100], [0 0], '--k', 'linewidth', 2);
+    
     xlim([0 100]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season Tx percentile');
@@ -109,17 +117,22 @@ if plotDistChg
     grid on;
     box on;
 
+    plot([0 100], [0 0], '--k', 'linewidth', 2);
     trange = 5:10:95;
     medchg = squeeze(nanmean(nanmean(nanmean(threshChgTwTx(:,:,5:6,:),3),2),1));
     for t = 1:length(trange)
         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:), 2), 1))-medchg);
         curyrange = squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:), 2), 1))-medchg;
         er = errorbar(trange(t), cury, cury-min(curyrange), max(curyrange)-cury);
-        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
+        p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15);
+        if ttest(curyrange)
+            set(p, 'markerfacecolor', colorTxx);
+        else
+            set(p, 'markerfacecolor', 'w'); 
+        end
         set(er, 'color', colorTxx, 'linewidth', 2);
     end
     
-    plot([0 100], [0 0], '--k', 'linewidth', 2);
     xlim([0 100]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season T_W percentile');

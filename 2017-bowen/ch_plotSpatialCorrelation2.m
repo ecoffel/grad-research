@@ -490,7 +490,7 @@ if showbar
 end
     
 
-amp = wbChgWarmSeason;
+amp = hussChgWarmSeason .* 1000;
 driverRaw = txChgWarmSeason;
 % amp = wbOnTxx;
 % driverRaw = efOnTxx;
@@ -509,8 +509,8 @@ dchg = [];
 
 for m = 1:length(models)
 
-   load(['E:\data\projects\bowen\derived-chg\var-stats\twGroup-' models{m} '.mat']);
-    efGroup = twGroup;
+   load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+    %efGroup = twGroup;
     
     a = squeeze(amp(:,:,m));
     a(waterGrid) = NaN;
@@ -558,7 +558,7 @@ for m = 1:length(models)
 
     efGroup(nn) = [];
 
-    for e = 1:6
+    for e = 1:4
 
         % all ef vals
         if e == 6
@@ -592,12 +592,12 @@ for m = 1:length(models)
 
 end
 
-txxslopes=squeeze(dslopes(1,5,:));
-txxp=squeeze(dslopesP(1,5,:));
-if length(amp2) > 0
-    wbslopes=squeeze(dslopes(2,5,:))
-    wbp=squeeze(dslopesP(2,5,:));
-end
+% txxslopes=squeeze(dslopes(1,5,:));
+% txxp=squeeze(dslopesP(1,5,:));
+% if length(amp2) > 0
+%     wbslopes=squeeze(dslopes(2,5,:))
+%     wbp=squeeze(dslopesP(2,5,:));
+% end
 % 
 % figure('Color',[1,1,1]);
 % hold on; 
@@ -624,10 +624,10 @@ end
 
 % dslopes = squeeze(dslopes);
 % dslopesP = squeeze(dslopesP);
-st = squeeze(dslopes);
-[f,gof] = fit((1:5)', nanmedian(st(1:5,:),2), 'poly3');
-fx = 1:.1:5;
-fy = f(fx);
+% st = squeeze(dslopes);
+% [f,gof] = fit((1:5)', nanmedian(st(1:5,:),2), 'poly3');
+% fx = 1:.1:5;
+% fy = f(fx);
 
 figure('Color',[1,1,1]);
 hold on;
@@ -639,61 +639,69 @@ box on;
 %colorTxx = [160, 116, 46]./255.0;
 %colorWb = [68, 166, 226]./255.0;
 
-for e = 1:size(dslopes,2)
-    for m = 1:size(dslopes,3)
-        
-        displacement = 0;
-        if length(amp2) > 0
-            displacement = -.1;
-        end
-        
-        if dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) < 0
-            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
-        elseif dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) > 0
-            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
-        else
-            b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
-        end
-        
-        if length(amp2) > 0
-            if dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) < 0
-                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorTxx);
-            elseif dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) > 0
-                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorTxx);
-            else
-                b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
-            end
-        end
-    end
-    
-    if length(amp2) > 0
-        b = plot([e-.2 e], [squeeze(nanmean(dslopes(1, e,:),3)) squeeze(nanmean(dslopes(1, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
-        b = plot([e-.2 e], [squeeze(nanmedian(dslopes(1, e,:),3)) squeeze(nanmedian(dslopes(1, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
 
-        b = plot([e e+.2], [squeeze(nanmean(dslopes(2, e,:),3)) squeeze(nanmean(dslopes(2, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
-        b = plot([e e+.2], [squeeze(nanmedian(dslopes(2, e,:),3)) squeeze(nanmedian(dslopes(2, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
-    else
-        b = plot([e-.2 e+.2], [squeeze(nanmean(dslopes(1, e,:),3)) squeeze(nanmean(dslopes(1, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
-        b = plot([e-.2 e+.2], [squeeze(nanmedian(dslopes(1, e,:),3)) squeeze(nanmedian(dslopes(1, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
-    end
+b = boxplot(squeeze(dslopes)');
+for bind = 1:size(b, 2)
+    set(b(:,bind), {'LineWidth', 'Color'}, {2, colorWb})
+    lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 end
 
-plot([0 6], [0 0], '--k');
-plot(fx, fy, '--k', 'LineWidth', 2, 'Color', [.5 .5 .5]);
+% for e = 1:size(dslopes,2)
+%     for m = 1:size(dslopes,3)
+%         
+%         displacement = 0;
+%         if length(amp2) > 0
+%             displacement = -.1;
+%         end
+%         
+%         if dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) < 0
+%             b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
+%         elseif dslopesP(1, e, m) <= 0.05 && dslopes(1, e, m) > 0
+%             b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorWb);
+%         else
+%             b = plot(e+displacement, dslopes(1, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
+%         end
+%         
+%         if length(amp2) > 0
+%             if dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) < 0
+%                 b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorTxx);
+%             elseif dslopesP(2, e, m) <= 0.05 && dslopes(2, e, m) > 0
+%                 b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2, 'MarkerFaceColor', colorTxx);
+%             else
+%                 b = plot(e+.1, dslopes(2, e, m), 'ok', 'MarkerSize', 10, 'LineWidth', 2);
+%             end
+%         end
+%     end
+%     
+%     if length(amp2) > 0
+%         b = plot([e-.2 e], [squeeze(nanmean(dslopes(1, e,:),3)) squeeze(nanmean(dslopes(1, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
+%         b = plot([e-.2 e], [squeeze(nanmedian(dslopes(1, e,:),3)) squeeze(nanmedian(dslopes(1, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
+% 
+%         b = plot([e e+.2], [squeeze(nanmean(dslopes(2, e,:),3)) squeeze(nanmean(dslopes(2, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
+%         b = plot([e e+.2], [squeeze(nanmedian(dslopes(2, e,:),3)) squeeze(nanmedian(dslopes(2, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
+%     else
+%         b = plot([e-.2 e+.2], [squeeze(nanmean(dslopes(1, e,:),3)) squeeze(nanmean(dslopes(1, e,:),3))], '-b', 'Color', [224, 76, 60]./255, 'LineWidth', 3);
+%         b = plot([e-.2 e+.2], [squeeze(nanmedian(dslopes(1, e,:),3)) squeeze(nanmedian(dslopes(1, e,:),3))], '-r', 'Color', [44, 158, 99]./255, 'LineWidth', 3);
+%     end
+% end
+
+plot([0 6], [0 0], '--k', 'linewidth', 2);
+%plot(fx, fy, '--k', 'LineWidth', 2, 'Color', [.5 .5 .5]);
 %ylim(yrange);
 %set(gca, 'YTick', yticks);
-xlim([.5 5.5]);
-ylim([-.5 1]);
-set(gca, 'FontSize', 40);
-%set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
-set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
-set(gca, 'YTick', -.5:.25:1);
-%xtickangle(45);
-xlabel('Global T_{W} Percentile');
-ylabel([char(176) 'C T_W per ' char(176) 'C Tx']);
+xlim([.5 4.5]);
+%ylim([-.5 1]);
+set(gca, 'FontSize', 36);
+set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
+%set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
+set(gca, 'YTick', -.5:.1:.5);
+xtickangle(45);
+%xlabel('Climate zone');
+ylabel(['g/kg per ' char(176) 'C Tx']);
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-wb-per-tx-chg-tw-perc.eps']);
+export_fig(['spatial-huss-per-tx-chg-efgroup.eps']);
 close all;

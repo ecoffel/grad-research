@@ -14,8 +14,23 @@ plotDistChg = false;
 twChgPred = [];
 twChgFull = [];
 twChg = [];
+hussChgDueToT = [];
+hussChg = [];
 
 for m = 1:length(models)
+    
+    load(['E:\data\projects\bowen\huss-chg-data\chgData-cmip5-warm-season-tx-huss-' models{m} '-rcp85-2061-2085']);
+    chgData(waterGrid) = NaN;
+    chgData(1:15,:) = NaN;
+    chgData(75:90,:) = NaN;
+    hussChg(:, :, m) = chgData;
+    
+    load(['E:\data\projects\bowen\temp-chg-data\chgData-huss-med-temp-pred-' models{m} '-rcp85-2061-2085']);
+    chgData = hchgDueToMedT;
+    chgData(waterGrid) = NaN;
+    chgData(1:15,:) = NaN;
+    chgData(75:90,:) = NaN;
+    hussChgDueToT(:, :, m) = chgData;
     
         load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
         chgData = twchgMedT_predHuss;
@@ -38,7 +53,7 @@ for m = 1:length(models)
         twChg(:, :, m) = chgData;
 end
 
-data = twChg-twChgPred;
+data = (hussChg-hussChgDueToT) .* 1000;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -69,10 +84,10 @@ saveData = struct('data', {result}, ...
                   'plotRange', [-1 1], ...
                   'cbXTicks', -1:.25:1, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['tx-amp-effect-on-tw-chg-warm-season.eps'], ...
-                  'plotXUnits', ['Change (' char(176) 'C)'], ...
+                  'fileTitle', ['huss-chg-due-to-tamp.eps'], ...
+                  'plotXUnits', ['Change (g/kg)'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'*RdBu'), ...
+                  'colormap', brewermap([],'BrBG'), ...
                   'statData', sigChg);
 plotFromDataFile(saveData);
 

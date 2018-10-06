@@ -1,5 +1,5 @@
-decades = 2020:10:2070;
-threshold = 30:35;
+decades = 2060:10:2070;
+threshold = 35;
 models = 1:18;
 
 for d = 1:length(decades)
@@ -17,6 +17,6 @@ for d = 1:length(decades)
         end
     end
     
-    csvwrite(['exposure-' num2str(decades(d)) '.csv'], exposure);
+    %csvwrite(['exposure-' num2str(decades(d)) '.csv'], exposure);
 end
 

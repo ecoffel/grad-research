@@ -4,23 +4,31 @@ regionBoundsEthiopia = [[5.5 14.8]; [31, 40]];
 load E:\data\ssp-pop\ssp1\output\ssp1\ssp1_2010.mat;
 [latIndsEthiopiaSSP, lonIndsEthiopiaSSP] = latLonIndexRange({ssp1_2010{1},ssp1_2010{2},[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
 
-tas = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\tas', 'tas', 'startYear', 1900, 'endYear', 2005);
-pr = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\pr', 'pr', 'startYear', 1900, 'endYear', 2005);
-%mrros = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\mrros', 'mrros', 'startYear', 1900, 'endYear', 2005);
+tas = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\tas', 'tas', 'startYear', 1850, 'endYear', 2005);
+pr = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\pr', 'pr', 'startYear', 1850, 'endYear', 2005);
+mrros = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\historical\mrros', 'mrros', 'startYear', 1850, 'endYear', 2005);
 
-%mrros85 = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\rcp85\mrros', 'mrros', 'startYear', 2006, 'endYear', 2099);
-tasFut = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\rcp85\tas', 'tas', 'startYear', 2006, 'endYear', 2099);
-prFut = loadMonthlyData('E:\data\cmip5\output\access1-0\mon\r1i1p1\rcp85\pr', 'pr', 'startYear', 2006, 'endYear', 2099);
+mrrosFut = loadMonthlyData('E:\data\cmip5\output\csiro-mk3-6-0\mon\r1i1p1\rcp85\mrros', 'mrros', 'startYear', 2006, 'endYear', 2099);
+tasFut = loadMonthlyData('E:\data\cmip5\output\csiro-mk3-6-0\mon\r1i1p1\rcp85\tas', 'tas', 'startYear', 2006, 'endYear', 2099);
+prFut = loadMonthlyData('E:\data\cmip5\output\csiro-mk3-6-0\mon\r1i1p1\rcp85\pr', 'pr', 'startYear', 2006, 'endYear', 2099);
 
 [latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5] = latLonIndexRange({tas{1}, tas{2},[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
 
 t = nanmean(squeeze(nanmean(nanmean(tas{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)),2);
-%m = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)),2);
+m = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)),2);
 p = nanmean(squeeze(nanmean(nanmean(pr{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
 
 tf = nanmean(squeeze(nanmean(nanmean(tasFut{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
 pf = nanmean(squeeze(nanmean(nanmean(prFut{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
-%mf = nanmean(squeeze(nanmean(nanmean(mrros85{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
+mf = nanmean(squeeze(nanmean(nanmean(mrrosFut{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
+
+t = detrend(t);
+p = detrend(p);
+m = detrend(m);
+
+tf = detrend(tf);
+pf = detrend(pf);
+mf = detrend(mf);
 
 bwfpLat = [];
 bwfpLon = [];

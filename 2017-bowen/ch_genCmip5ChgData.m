@@ -78,7 +78,7 @@ load lon;
 % no-warm-season-tx = change in non-warm season tx
 % thresh = changes above temperature thresholds specified in thresh
 % thresh-range = changes between two percentiles
-changeMetric = 'warm-season-tx';
+changeMetric = 'thresh-range';
 
 load(['2017-bowen/hottest-season-txx-rel-cmip5-' hottestSeasonType '.mat']);
 
@@ -91,7 +91,7 @@ else
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
-thresh = 0:5:100;
+thresh = 0:10:100;
 
 numDays = 372;
 
@@ -135,7 +135,8 @@ for m = 1:length(models)
         if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
            ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
            ~strcmp(changeMetric, 'warm-season-tx-anom') && ~strcmp(changeMetric, 'warm-season-tx') && ...
-           ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx')
+           ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx') ...
+           && ~strcmp(changeMetric, 'thresh-range')
             % reshape to be 3D (x, y, day)
             baseDaily = reshape(baseDaily, [size(baseDaily, 1), size(baseDaily, 2), ...
                                                  size(baseDaily, 3)*size(baseDaily, 4)*size(baseDaily, 5)]);
@@ -159,21 +160,27 @@ for m = 1:length(models)
             % calculate base period thresholds
 
             % loop over all thresholds
-            for t = 1:length(thresh)
-                % over x coords
-                for xlat = 1:size(baseDaily, 1)
-                    % over y coords
-                    for ylon = 1:size(baseDaily, 2)
+            
+            % over x coords
+            for xlat = 1:size(baseDaily, 1)
+                % over y coords
+                for ylon = 1:size(baseDaily, 2)
+                    
+                    for t = 1:length(thresh)
 
-                        % skip if NaN (water)
-                        if isnan(baseDaily(xlat, ylon, 1))
+                        curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
+
+                        if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon)
                             baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = NaN;
                             continue;
                         end
 
+                        tmp = squeeze(baseDaily(xlat, ylon, :, curTxxMonthsHist, :));
+                        tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
+
                         % calculate threshold at current (x,y) and
                         % percentile 
-                        baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(squeeze(baseDaily(xlat, ylon, :)), thresh(t));
+                        baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(tmp, thresh(t));
                     end
                 end
             end
@@ -289,7 +296,8 @@ for m = 1:length(models)
         if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
            ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
            ~strcmp(changeMetric, 'warm-season-tx') && ~strcmp(changeMetric, 'warm-season-tx-anom') ...
-           && ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx')
+           && ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx') && ...
+           ~strcmp(changeMetric, 'thresh-range')
             % reshape to 3D (x, y, day)
             futureDaily = reshape(futureDaily, [size(futureDaily, 1), size(futureDaily, 2), ...
                                                      size(futureDaily, 3)*size(futureDaily, 4)*size(futureDaily, 5)]);
@@ -310,20 +318,25 @@ for m = 1:length(models)
 
         if strcmp(changeMetric, 'thresh') || strcmp(changeMetric, 'thresh-range')
             % loop over thresholds
-            for t = 1:length(thresh)
-                % latitude
-                for xlat = 1:size(futureDaily, 1)
-                    % longitude
-                    for ylon = 1:size(futureDaily, 2)
+            for xlat = 1:size(futureDaily, 1)
+                % over y coords
+                for ylon = 1:size(futureDaily, 2)
+                    
+                    for t = 1:length(thresh)
 
-                        if isnan(futureDaily(xlat, ylon, 1))
+                        curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
+
+                        if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
                             futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = NaN;
                             continue;
                         end
 
-                        % compute percentile threshold for this grid cell
-                        % and year
-                        futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = prctile(squeeze(futureDaily(xlat, ylon, :)), thresh(t));
+                        tmp = squeeze(futureDaily(xlat, ylon, :, curTxxMonthsFut, :));
+                        tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
+
+                        % calculate threshold at current (x,y) and
+                        % percentile 
+                        futureData(xlat, ylon, y-basePeriodYears(1)+1, t) = prctile(tmp, thresh(t));
                     end
                 end
             end

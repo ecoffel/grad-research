@@ -225,6 +225,8 @@ for m = 1:length(dmodels)
             if waterGrid(xlat, ylon) || isnan(curGroup)
                 twchgMedT_predHuss(xlat, ylon) = NaN;
                 twchgMedT_fullHuss(xlat, ylon) = NaN;
+                twchgMedT_noT(xlat, ylon) = NaN;
+                twchgMedT_noHuss(xlat, ylon) = NaN;
                 hchgDueToMedT(xlat, ylon) = NaN;
                 continue;
             end
@@ -238,10 +240,15 @@ for m = 1:length(dmodels)
             
             % using ef-chg predicted t/h chg
             twchgMedT_predHuss(xlat, ylon) = kopp_wetBulb(curHistTxx(xlat, ylon) + threshChgTx(xlat, ylon, 6), 100200, curHistHuss(xlat, ylon) + hchgDueToMedT(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgMedT_noT(xlat, ylon) = kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon) + hchgDueToMedT(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
+            twchgMedT_noHuss(xlat, ylon) = kopp_wetBulb(curHistTxx(xlat, ylon) + threshChgTx(xlat, ylon, 6), 100200, curHistHuss(xlat, ylon)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
             twchgMedT_fullHuss(xlat, ylon) = kopp_wetBulb(curHistTxx(xlat, ylon) + threshChgTx(xlat, ylon, 6), 100200, curHistHuss(xlat, ylon) + hussChg(xlat, ylon,m)) - kopp_wetBulb(curHistTxx(xlat, ylon), 100200, curHistHuss(xlat, ylon));
         end
     end
     
+    save(['E:\data\projects\bowen\temp-chg-data\chgData-huss-med-temp-pred-' models{m} '-rcp85-2061-2085.mat'], 'hchgDueToMedT');
     save(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat'], 'twchgMedT_predHuss');
     save(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-full-huss-' models{m} '-rcp85-2061-2085.mat'], 'twchgMedT_fullHuss');
+    save(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-no-huss-' models{m} '-rcp85-2061-2085.mat'], 'twchgMedT_noHuss');
+    save(['E:\data\projects\bowen\temp-chg-data\chgData-tw-no-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat'], 'twchgMedT_noT');
 end

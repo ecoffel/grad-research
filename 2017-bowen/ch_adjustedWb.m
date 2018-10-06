@@ -384,8 +384,6 @@ for m = 1:length(dmodels)
    
     for t = 5:10:95
 
-        
-        
         for xlat = 1:size(lat, 1)
             for ylon = 1:size(lat, 2)
                 curGroup = efGroup(xlat, ylon);

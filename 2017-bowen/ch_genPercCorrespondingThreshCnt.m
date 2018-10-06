@@ -60,7 +60,7 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-absThresh = 27;
+absThresh = 31;
 
 % load era
 if ~exist('twEra')
@@ -111,7 +111,7 @@ for m = 1:length(models)
     load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-range-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-warm-season.mat'], 'file')
+%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-55-' num2str(absThresh) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
 %         continue;
 %     end
     
@@ -229,9 +229,9 @@ for m = 1:length(models)
 %     futureVar2Daily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' var2 '/regrid/' region], 'startYear', futurePeriodYears(1), 'endYear', futurePeriodYears(end));
 %     futureVar2Daily = futureVar2Daily{3};
     
-%     load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
-%     chgData = twchgMedT_predHuss;
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+    load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
+    chgData = twchgMedT_predHuss;
+%    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
@@ -325,7 +325,7 @@ for m = 1:length(models)
     curChg = chgData;
     for t = 1:size(curChg,3)
         chgData = squeeze(curChg(:,:,t));
-        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-tw-count-chg-' num2str(thresh(t)) '-' num2str(absThresh) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(thresh(t)) '-' num2str(absThresh) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
     end
 end
 
