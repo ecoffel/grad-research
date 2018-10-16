@@ -490,8 +490,8 @@ if showbar
 end
     
 
-amp = hussChgWarmSeason .* 1000;
-driverRaw = txChgWarmSeason;
+amp = wbChgOnWb-wbChgWarmSeason;
+driverRaw = (hussOnWb-hussChgWarmSeason) .* 1000;
 % amp = wbOnTxx;
 % driverRaw = efOnTxx;
 
@@ -558,10 +558,10 @@ for m = 1:length(models)
 
     efGroup(nn) = [];
 
-    for e = 1:4
+    for e = 1:5
 
         % all ef vals
-        if e == 6
+        if e == 5
             nn = 1:length(driver);
         else
             % others
@@ -624,10 +624,10 @@ end
 
 % dslopes = squeeze(dslopes);
 % dslopesP = squeeze(dslopesP);
-% st = squeeze(dslopes);
-% [f,gof] = fit((1:5)', nanmedian(st(1:5,:),2), 'poly3');
-% fx = 1:.1:5;
-% fy = f(fx);
+st = squeeze(dslopes);
+[f,gof] = fit((1:4)', nanmedian(st(1:4,:),2), 'poly3');
+fx = 1:.1:4;
+fy = f(fx);
 
 figure('Color',[1,1,1]);
 hold on;
@@ -690,18 +690,18 @@ plot([0 6], [0 0], '--k', 'linewidth', 2);
 %plot(fx, fy, '--k', 'LineWidth', 2, 'Color', [.5 .5 .5]);
 %ylim(yrange);
 %set(gca, 'YTick', yticks);
-xlim([.5 4.5]);
+xlim([.5 5.5]);
 %ylim([-.5 1]);
 set(gca, 'FontSize', 36);
 set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
 %set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
-set(gca, 'YTick', -.5:.1:.5);
+set(gca, 'YTick', -.5:.1:1);
 xtickangle(45);
 %xlabel('Climate zone');
-ylabel(['g/kg per ' char(176) 'C Tx']);
+ylabel([char(176) 'C T_W per g/kg']);
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-huss-per-tx-chg-efgroup.eps']);
+export_fig(['spatial-tw-amp-huss-amp-efgroup.eps']);
 close all;

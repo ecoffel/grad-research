@@ -49,8 +49,8 @@ end
 load lat;
 load lon;
 
-var1 = 'wb-davies-jones-full';
-var2 = 'tasmax';
+var1 = 'tasmax';
+var2 = 'ef';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = 5:10:95;
@@ -70,7 +70,7 @@ for m = 1:length(models)
     load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-range-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-warm-season.mat'], 'file')
+%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-95-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
 %         continue;
 %     end
     
@@ -87,11 +87,11 @@ for m = 1:length(models)
     baseVar2Daily = baseVar2Daily{3};
 
     % if any kelvin values, convert to C
-    if nanmean(nanmean(nanmean(nanmean(nanmean(baseVar1Daily))))) > 100
+    if (strcmp(var1, 'tasmax') || strcmp(var1, 'wb-davies-jones-full')) && nanmean(nanmean(nanmean(nanmean(nanmean(baseVar1Daily))))) > 100
         baseVar1Daily = baseVar1Daily - 273.15;
     end
     
-    if nanmean(nanmean(nanmean(nanmean(nanmean(baseVar2Daily))))) > 100
+    if (strcmp(var2, 'tasmax') || strcmp(var2, 'wb-davies-jones-full')) && nanmean(nanmean(nanmean(nanmean(nanmean(baseVar2Daily))))) > 100
         baseVar2Daily = baseVar2Daily - 273.15;
     end
 
@@ -182,10 +182,10 @@ for m = 1:length(models)
     futureVar2Daily = futureVar2Daily{3};
 
     % convert any kelvin values to C
-    if nanmean(nanmean(nanmean(nanmean(nanmean(futureVar1Daily))))) > 100
+    if (strcmp(var1, 'tasmax') || strcmp(var1, 'wb-davies-jones-full')) && nanmean(nanmean(nanmean(nanmean(nanmean(futureVar1Daily))))) > 100
         futureVar1Daily = futureVar1Daily - 273.15;
     end
-    if nanmean(nanmean(nanmean(nanmean(nanmean(futureVar2Daily))))) > 100
+    if (strcmp(var2, 'tasmax') || strcmp(var2, 'wb-davies-jones-full')) && nanmean(nanmean(nanmean(nanmean(nanmean(futureVar2Daily))))) > 100
         futureVar2Daily = futureVar2Daily - 273.15;
     end
 

@@ -13,6 +13,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-esm2g', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'miroc5', 'mri-cgcm3', 'noresm1-m'};
+      
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+              'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 
 baseRcps = {'historical'};
@@ -49,7 +55,7 @@ end
 load lat;
 load lon;
 
-var1 = 'wb-davies-jones-full';
+var1 = 'tasmin';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = [0 5:10:95 100];
@@ -63,11 +69,17 @@ waterGrid = logical(waterGrid);
 for m = 1:length(models)
     curModel = models{m};
     
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-historical-cmip5-1981-2005.mat']);
-    txxMonthsHist = txxMonths;
+%     load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-historical-cmip5-1981-2005.mat']);
+%     txxMonthsHist = txxMonths;
+% 
+%     load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
+%     txxMonthsFut = txxMonths;
+    
+    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-historical-cmip5-1981-2005.mat']);
+    txxMonthsHist = tnnMonths;
 
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
-    txxMonthsFut = txxMonths;
+    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-future-cmip5-2061-2085.mat']);
+    txxMonthsFut = tnnMonths;
     
 %     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-range-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-warm-season.mat'], 'file')
 %         continue;
@@ -196,7 +208,7 @@ for m = 1:length(models)
     curChg = chgData;
     for t = 1:size(curChg,3)
         chgData = squeeze(curChg(:,:,t));
-        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/snow/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
     end
 end
 

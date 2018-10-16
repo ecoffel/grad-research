@@ -30,6 +30,32 @@ for m = 1:length(models)
         chgData(75:90,:) = NaN;
         threshChgTwTx(:, :, tind, m) = chgData;
         
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgTxHuss(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-huss-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgTwHuss(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        chgData(chgData > 1 | chgData < 0) = NaN;
+        threshChgTxEf(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-ef-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        chgData(chgData > 1 | chgData < 0) = NaN;
+        threshChgTwEf(:, :, tind, m) = chgData;
+        
         tind = tind+1;
     end
     
@@ -78,6 +104,10 @@ colorTxx = [216, 66, 19]./255.0;
 
 
 if plotDistChg
+    
+    thresh1 = threshChgTxEf;
+    thresh2 = threshChgTwEf;
+    
     figure('Color', [1,1,1]);
     hold on;
     axis square;
@@ -86,10 +116,10 @@ if plotDistChg
 
     plot([0 100], [0 0], '--k', 'linewidth', 2);
     trange = 5:10:95;
-    medchg = squeeze(nanmean(nanmean(nanmean(threshChgTxTw(:,:,5:6,:),3),2),1));
+    medchg = squeeze(nanmean(nanmean(nanmean(thresh1(:,:,5:6,:),3),2),1));
     for t = 1:length(trange)
-        cury = nanmedian(squeeze(nanmean(nanmean(threshChgTxTw(:,:,t,:), 2), 1))-medchg);
-        curyrange = squeeze(nanmean(nanmean(threshChgTxTw(:,:,t,:), 2), 1))-medchg;
+        cury = nanmedian(squeeze(nanmean(nanmean(thresh1(:,:,t,:), 2), 1))-medchg);
+        curyrange = squeeze(nanmean(nanmean(thresh1(:,:,t,:), 2), 1))-medchg;
         er = errorbar(trange(t), cury, cury-min(curyrange), max(curyrange)-cury);
         p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15);
         if ttest(curyrange)
@@ -103,11 +133,11 @@ if plotDistChg
     xlim([0 100]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season Tx percentile');
-    set(gca, 'XTick', 5:10:95);
-    ylabel(['T_W amplification (' char(176) 'C)']);
+    set(gca, 'XTick', 5:10:95, 'YTick', -.1:.02:.1);
+    ylabel(['EF amplification (Fraction)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['tw-chg-tx-perc.eps']);
+    export_fig(['ef-chg-tx-perc.eps']);
     close all;
     
     
@@ -119,60 +149,32 @@ if plotDistChg
 
     plot([0 100], [0 0], '--k', 'linewidth', 2);
     trange = 5:10:95;
-    medchg = squeeze(nanmean(nanmean(nanmean(threshChgTwTx(:,:,5:6,:),3),2),1));
+    medchg = squeeze(nanmean(nanmean(nanmean(thresh2(:,:,5:6,:),3),2),1));
     for t = 1:length(trange)
-        cury = nanmedian(squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:), 2), 1))-medchg);
-        curyrange = squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:), 2), 1))-medchg;
+        cury = nanmedian(squeeze(nanmean(nanmean(thresh2(:,:,t,:), 2), 1))-medchg);
+        curyrange = squeeze(nanmean(nanmean(thresh2(:,:,t,:), 2), 1))-medchg;
         er = errorbar(trange(t), cury, cury-min(curyrange), max(curyrange)-cury);
         p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15);
         if ttest(curyrange)
-            set(p, 'markerfacecolor', colorTxx);
+            set(p, 'markerfacecolor', colorWb);
         else
             set(p, 'markerfacecolor', 'w'); 
         end
-        set(er, 'color', colorTxx, 'linewidth', 2);
+        set(er, 'color', colorWb, 'linewidth', 2);
     end
     
     xlim([0 100]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season T_W percentile');
-    set(gca, 'XTick', 5:10:95);
-    ylabel(['Tx amplification (' char(176) 'C)']);
+    set(gca, 'XTick', 5:10:95, 'YTick', -.1:.02:.1);
+    ylabel(['EF amplification (Fraction)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['tx-chg-tw-perc.eps']);
+    export_fig(['ef-chg-tw-perc.eps']);
     close all;
     
     
     
-    
-    
-    figure('Color', [1,1,1]);
-    hold on;
-    axis square;
-    grid on;
-    box on;
-
-    trange = 5:10:95;
-    medchg = squeeze(nanmean(nanmean(nanmean(threshChgTwTx(:,:,5:6,:)))));
-    for t = 1:length(trange)
-        cury = nanmedian(squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:),2),1))-medchg);
-        curyrange = squeeze(nanmean(nanmean(threshChgTwTx(:,:,t,:),2),1))-medchg;
-        er = errorbar(trange(t), cury, cury-min(curyrange), max(curyrange)-cury);
-        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
-        set(er, 'color', colorTxx, 'linewidth', 2);
-    end
-    
-    plot([0 100], [0 0], '--k', 'linewidth', 2);
-    xlim([0 100]);
-    set(gca, 'fontsize', 36);
-    xlabel('Warm season T_W percentile');
-    set(gca, 'XTick', 5:10:95);
-    ylabel(['Tx amplification (' char(176) 'C)']);
-    
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['tx-chg-tw-perc.eps']);
-    close all;
 end
 
 

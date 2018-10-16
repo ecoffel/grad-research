@@ -17,12 +17,11 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-          
 % for wb/ef
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 
 baseRcps = {'historical'};
@@ -80,14 +79,12 @@ load lon;
 % thresh-range = changes between two percentiles
 changeMetric = 'thresh-range';
 
-load(['2017-bowen/hottest-season-txx-rel-cmip5-' hottestSeasonType '.mat']);
-
 if length(findstr(changeMetric, 'min')) > 0
     baseVar = 'tasmin';
     futureVar = 'tasmin';
 else
-    baseVar = 'tasmax';%'wb-davies-jones-full';
-    futureVar = 'tasmax';%'wb-davies-jones-full';
+    baseVar = 'tasmin';%'wb-davies-jones-full';
+    futureVar = 'tasmin';%'wb-davies-jones-full';
 end
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
@@ -109,7 +106,15 @@ for m = 1:length(models)
     load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-    if exist(['e:/data/projects/bowen/huss-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
+    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-historical-cmip5-1981-2005.mat']);
+    tnnMonthsHist = tnnMonths;
+
+    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-future-cmip5-2061-2085.mat']);
+    tnnMonthsFut = tnnMonths;
+    
+    
+    
+    if exist(['e:/data/projects/snow/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
         continue;
     end
     
@@ -134,7 +139,7 @@ for m = 1:length(models)
         % if we are not using a seasonal metric
         if ~strcmp(changeMetric, 'seasonal-monthly-max') && ~strcmp(changeMetric, 'seasonal-monthly-mean-max') && ...
            ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
-           ~strcmp(changeMetric, 'warm-season-tx-anom') && ~strcmp(changeMetric, 'warm-season-tx') && ...
+           ~strcmp(changeMetric, 'warm-season-tx-anom') && ~strcmp(changeMetric, 'warm-season-tx') && ~strcmp(changeMetric, 'cold-season-tn') && ...
            ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx') ...
            && ~strcmp(changeMetric, 'thresh-range')
             % reshape to be 3D (x, y, day)
@@ -168,7 +173,7 @@ for m = 1:length(models)
                     
                     for t = 1:length(thresh)
 
-                        curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
+                        curTxxMonthsHist = unique(squeeze(tnnMonthsHist(xlat, ylon, :)));
 
                         if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon)
                             baseData(xlat, ylon, y-basePeriodYears(1)+1, t) = NaN;
@@ -216,7 +221,7 @@ for m = 1:length(models)
             end
             
         elseif strcmp(changeMetric, 'warm-season-tx-anom') || strcmp(changeMetric, 'warm-season-tx') ...
-               || strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx')
+               || strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx') || strcmp(changeMetric, 'cold-season-tn')
             % calculate the seasonal mean daily minimum for each month
             
             % loop over months
@@ -263,7 +268,7 @@ for m = 1:length(models)
     elseif strcmp(changeMetric, 'seasonal-monthly-max') || strcmp(changeMetric, 'seasonal-monthly-mean-max') || ...
            strcmp(changeMetric, 'seasonal-monthly-min') || strcmp(changeMetric, 'seasonal-monthly-mean-min') || ...
            strcmp(changeMetric, 'warm-season-tx') || strcmp(changeMetric, 'warm-season-tx-anom') || ...
-           strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx')
+           strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx') || strcmp(changeMetric, 'cold-season-tn')
         % if computing seasonal metrics, average over all the annual
         % maximum or mean daily maximum, take the mean across all years
         % (baseData now 3D: (x, y, year, month))
@@ -297,7 +302,7 @@ for m = 1:length(models)
            ~strcmp(changeMetric, 'seasonal-monthly-min') && ~strcmp(changeMetric, 'seasonal-monthly-mean-min') && ...
            ~strcmp(changeMetric, 'warm-season-tx') && ~strcmp(changeMetric, 'warm-season-tx-anom') ...
            && ~strcmp(changeMetric, 'surrounding-season-tx') && ~strcmp(changeMetric, 'no-warm-season-tx') && ...
-           ~strcmp(changeMetric, 'thresh-range')
+           ~strcmp(changeMetric, 'thresh-range') && ~strcmp(changeMetric, 'cold-season-tn')
             % reshape to 3D (x, y, day)
             futureDaily = reshape(futureDaily, [size(futureDaily, 1), size(futureDaily, 2), ...
                                                      size(futureDaily, 3)*size(futureDaily, 4)*size(futureDaily, 5)]);
@@ -324,7 +329,7 @@ for m = 1:length(models)
                     
                     for t = 1:length(thresh)
 
-                        curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
+                        curTxxMonthsFut = unique(squeeze(tnnMonthsFut(xlat, ylon, :)));
 
                         if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
                             futureData(xlat, ylon, y-futurePeriodYears(1)+1, t) = NaN;
@@ -371,7 +376,7 @@ for m = 1:length(models)
             end
 
         elseif strcmp(changeMetric, 'warm-season-tx-anom') || strcmp(changeMetric, 'warm-season-tx') ...
-               || strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx')
+               || strcmp(changeMetric, 'surrounding-season-tx') || strcmp(changeMetric, 'no-warm-season-tx') || strcmp(changeMetric, 'cold-season-tn')
             % calculate the seasonal mean daily minimum for each month
 
             % loop over months
@@ -486,6 +491,38 @@ for m = 1:length(models)
         % change in warm season Tx 
         chgData = (futureWarmSeasonTx - baseWarmSeasonTx);
 
+    elseif  strcmp(changeMetric, 'cold-season-tn')
+
+        % take mean across all months & years
+        baseAnnTn = squeeze(nanmean(baseData, 3));
+        futureAnnTn = squeeze(nanmean(nanmean(futureData, 4), 3));
+
+        baseWarmSeasonTn = [];
+        futureWarmSeasonTn = [];
+        for xlat = 1:size(baseData, 1)
+            for ylon = 1:size(baseData, 2)
+                
+                curTnnMonthsHist = unique(squeeze(tnnMonthsHist(xlat, ylon, :)));
+                curTnnMonthsFut = unique(squeeze(tnnMonthsFut(xlat, ylon, :)));
+                
+                if length(find(isnan(curTnnMonthsHist))) == 0 && length(find(isnan(curTnnMonthsFut))) == 0
+
+                    % average over hottest months for current model
+                    baseWarmSeasonTn(xlat, ylon) = squeeze(nanmean(baseData(xlat, ylon, curTnnMonthsHist), 3));
+                    % average over all years & hottest months
+                    futureWarmSeasonTn(xlat, ylon) = squeeze(nanmean(nanmean(futureData(xlat, ylon, :, curTnnMonthsFut), 4), 3));
+                else
+
+                    % set to nans
+                    baseWarmSeasonTn(xlat, ylon) = NaN;
+                    futureWarmSeasonTn(xlat, ylon) = NaN;
+                end
+            end
+        end
+
+        % change in warm season Tx 
+        chgData = (futureWarmSeasonTn - baseWarmSeasonTn);
+        
     elseif  strcmp(changeMetric, 'no-warm-season-tx')
 
         % take mean across all months & years
@@ -555,13 +592,13 @@ for m = 1:length(models)
         curChg = chgData;
         for t = 1:size(chgData,4)
             chgData = squeeze(curChg(:,:,:,t));
-            save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' num2str(thresh(t)) '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'chgData');
+            save(['e:/data/projects/snow/chgData-cmip5-' changeMetric '-' num2str(thresh(t)) '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-' hottestSeasonType '.mat'], 'chgData');
         end
     elseif excludeTropics
         save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-exclude-tropics' '-' hottestSeasonType '.mat'], 'chgData');
     else
         %save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
-        save(['e:/data/projects/bowen/huss-chg-data/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/snow/chgData-cmip5-' changeMetric '-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
     end
 
 

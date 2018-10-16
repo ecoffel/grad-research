@@ -159,7 +159,7 @@ if plotDistChg
         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1)), 1);
         curyrange = squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1));
         er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
-        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
+        p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
         set(er, 'color', colorWb, 'linewidth', 2);
 
         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1)), 1);

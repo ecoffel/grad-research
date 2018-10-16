@@ -44,10 +44,10 @@ for m = 1:size(data, 3)
         for y = 1:size(data, 2)
             if y == size(data, 2)
                 % no comma
-                fprintf(fout, '%d', data(x,y,m));
+                fprintf(fout, '%f', data(x,y,m));
             else
                 % comma
-                fprintf(fout, '%d,', data(x,y,m));
+                fprintf(fout, '%f,', data(x,y,m));
             end
         end
         % new line after each row

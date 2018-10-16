@@ -76,6 +76,14 @@ function [fg, cb] = plotFromDataFile(saveData)
         xticks = false;
     end
     
+    if isfield(saveData, 'cbXTickLabels')
+        xticklabels = saveData.cbXTickLabels;
+    else
+        xticklabels = false;
+    end
+    
+    
+    
     if isfield(saveData, 'skipStatSignTransition')
         skipStatSignTransition = true;
     else
@@ -96,7 +104,10 @@ function [fg, cb] = plotFromDataFile(saveData)
     set(gca, 'FontSize', 36);
     if showColorbar
         xlabel(cb, saveData.plotXUnits, 'FontSize', 36);
-        set(cb, 'XTick', xticks);
+        set(cb, 'Ticks', xticks);
+        if xticklabels
+            set(cb, 'TickLabels', xticklabels);
+        end
         cbPos = get(cb, 'Position');
     end
     if length(saveData.plotTitle) > 0
