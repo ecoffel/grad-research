@@ -1,23 +1,20 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t90-p10.mat']);
-hotDryHistorical = hotDryFuture(:, :, [1:9 11:23]);
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-historical-1981-2005-t74-p34.mat']);
+hotDryHistorical = hotDryFuture;
 
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080.mat']);
 hotDryFutureLate45 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-cmip5-rcp85-2056-2080-t74-p34-tfull-pfull.mat']);
 hotDryFutureLate85 = hotDryFuture;
-
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2081-2099-t90-p10-tfull-pfull.mat']);
-hotDryFutureEnd85 = hotDryFuture;
 
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2031-2055.mat']);
 hotDryFutureEarly45 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2031-2055.mat']);
 hotDryFutureEarly85 = hotDryFuture;
 
-drawScatter = true;
-drawMap = false;
+drawScatter = false;
+drawMap = true;
 north = false;
 annual = true;
 
@@ -135,20 +132,18 @@ if drawMap
     latInds = curInds{1};
     lonInds = curInds{2};
     
-    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* nanmedian(squeeze(nanmean(hotDryHistorical, 3)), 3)}; 
+    result = {lat(latInds,lonInds), lon(latInds,lonInds), 100 .* (nanmedian((hotDryFutureLate85-hotDryHistorical)./hotDryHistorical, 3))}; 
     
     saveData = struct('data', {result}, ...
                       'plotRegion', 'nile', ...
-                      'plotRange', [0 20], ...
-                      'cbXTicks', 0:5:20, ...
+                      'plotRange', [-100 100], ...
+                      'cbXTicks', -100:40:100, ...
                       'plotTitle', [''], ...
-                      'fileTitle', ['hot-dry-historical-annual.eps'], ...
+                      'fileTitle', ['hot-dry-chg-prc.eps'], ...
                       'plotXUnits', ['% of years'], ...
                       'blockWater', true, ...
-                      'colormap', brewermap([], 'Oranges'), ...
-                      'plotCountries', true, ...
-                      'boxCoords', {[[13 32], [29, 34];
-                                     [2 13], [25 42]]});
+                      'colormap', brewermap([], '*RdBu'), ...
+                      'plotCountries', true);
     plotFromDataFile(saveData);
 end
 

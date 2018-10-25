@@ -48,23 +48,28 @@ regionBounds = [[2 32]; [25, 44]];
 regionBoundsSouth = [[2 13]; [25, 42]];
 regionBoundsNorth = [[13 32]; [29, 34]];
 
+regionBoundsBlue = [[9 14]; [34, 37.5]];
+regionBoundsWhite = [[9 14]; [30, 34]];
+
 [latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
 [latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+
+[latIndsBlue, lonIndsBlue] = latLonIndexRange({lat,lon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhite, lonIndsWhite] = latLonIndexRange({lat,lon,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 latIndsNorth = latIndsNorth - latInds(1) + 1;
 lonIndsNorth = lonIndsNorth - lonInds(1) + 1;
 latIndsSouth = latIndsSouth - latInds(1) + 1;
 lonIndsSouth = lonIndsSouth - lonInds(1) + 1;
+latIndsBlue = latIndsBlue - latInds(1) + 1;
+lonIndsBlue = lonIndsBlue - lonInds(1) + 1;
+latIndsWhite = latIndsWhite - latInds(1) + 1;
+lonIndsWhite = lonIndsWhite - lonInds(1) + 1;
 
 if drawScatter
     
-    if north
-        curLatInds = latIndsNorth;
-        curLonInds = lonIndsNorth;
-    else
-        curLatInds = latIndsSouth;
-        curLonInds = lonIndsSouth;
-    end
-    
+    curLatInds = latIndsBlue;
+    curLonInds = lonIndsBlue;
+
     hotEarly = squeeze(hotFutureEarly);
     hotEarly = hotEarly(curLatInds, curLonInds, :);
     hotEarly = squeeze(nanmean(nanmean(hotEarly,2),1));
@@ -109,7 +114,7 @@ if drawScatter
     grid on;
 
     for m = 1:length(dryLate)
-        t = text(dryLate(m)*100, wetLate(m)*100, num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+        t = text(dryLate(m)*100, hotdryLate(m)*100, num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
         t.FontSize = 18;
     end
 

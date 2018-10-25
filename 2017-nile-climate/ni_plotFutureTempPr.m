@@ -28,6 +28,8 @@ load lon;
 
 [regionInds, regions, regionNames] = ni_getRegions();
 
+
+
 seasonNames = {'DJF', 'MAM', 'JJA', 'SON'};
 seasons = [[12 1 2]; 
            [3 4 5];
@@ -67,7 +69,7 @@ for s = 1%:size(seasons, 1)
     latIndsRegion = curInds{1};
     lonIndsRegion = curInds{2};
     
-    curInds = regionInds('nile-north');
+    curInds = regionInds('nile-blue');
     latInds = curInds{1};
     lonInds = curInds{2};
     prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));

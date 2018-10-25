@@ -1,7 +1,7 @@
 function gpcpToMat(rawNcDir, outputDir, maxNum)
 
 varNames = ["Rainf_f_tavg", "Evap_tavg", "Qair_f_inst", "Qh_tavg", "Qle_tavg", "SoilMoi0_10cm_inst", ...
-            "SoilMoi10_40cm_inst", "SoilMoi100_200cm_inst", "SWE_inst", "Tair_f_inst"];
+            "SoilMoi10_40cm_inst", "SoilMoi100_200cm_inst", "SWE_inst", "Tair_f_inst", "Qs_acc", "Qsb_acc"];
 varIds = ones(size(varNames)) .* -1;
 
 ncFileNames = dir([rawNcDir, '/*.nc4']);

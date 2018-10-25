@@ -15,7 +15,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};  
 
-vars = {'zg'};
+vars = {'mrro'};
 rcps = {'historical', 'rcp45', 'rcp85'};
 %rcps = {''};
 ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1', 'r8i1p1', 'r9i1p1', 'r10i1p1',};
@@ -24,7 +24,7 @@ ensembles = {'r1i1p1', 'r2i1p1', 'r3i1p1', 'r4i1p1', 'r5i1p1', 'r6i1p1', 'r7i1p1
 % should we just remove the non-regridded data or the whole variable
 removeAll = true;
 
-monthly = false;
+monthly = true;
 
 % remove only this dir inside of regrid
 removeSubdir = '';

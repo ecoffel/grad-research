@@ -194,7 +194,7 @@ xlim([0 6]);
 set(gca,'TickLabelInterpreter', 'tex');    
 xtickangle(0);
 
-set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{75}/P_{25}', 'T_{80}/P_{20}', 'T_{85}/P_{15}', 'T_{90}/P_{10}', 'T_{95}/P_{5}'});
+set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{74}/P_{34}', 'T_{80}/P_{20}', 'T_{85}/P_{15}', 'T_{90}/P_{10}', 'T_{95}/P_{5}'});
 xtickangle(90);
 ylabel('Increase in frequency (multiple)');
 set(gca, 'FontSize', 36);

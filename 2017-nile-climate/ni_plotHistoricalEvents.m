@@ -3,6 +3,13 @@
 
 %[1988 1994 1996 1998 1999 2001 2003
 
+wars = [[1975 1978]; ...        % 
+        [1982 1983]; ...
+        [1984 1986];    ...    % resettlement of 1.5M peasants
+        [1991 1992]; ...
+        [1998 2000]; ...
+        [2006 2009]];
+
 regionBounds = [[2 32]; [25, 44]];
 %regionBoundsSouth = [[2 13]; [25, 42]];
 regionBoundsHighlands = [[8 13]; [34, 40]];
@@ -126,8 +133,8 @@ pbaspect([2 1 1])
 
 plot(x, meanYield, 'k', 'linewidth', 2);
 
-tprc = 75;
-pprc = 25;
+tprc = 74;
+pprc = 34;
 
 for i = 1:length(x)
     if annualPPrc(i) <= pprc & annualTPrc(i) >= tprc
@@ -168,14 +175,22 @@ set(s.mainLine, 'Color', colorW, 'LineWidth', 1);
 set(s.patch, 'FaceColor', colorW);
 set(s.edge, 'Color', 'w');
 
+for w = 1:size(wars,1)
+    s = shadedErrorBar([wars(w,1) wars(w,2)], [0 0], [1 1], [], 1);
+    set(s.mainLine, 'Color', 'W', 'LineWidth', 1);
+    set(s.patch, 'FaceColor', [.4 .4 .4]);
+    set(s.edge, 'Color', 'w');
+end
+
 % plot([x(1) x(end)], [yieldhd yieldhd], '-', 'color', colorHd, 'linewidth', 2);
 % plot([x(1) x(end)], [yieldd yieldd], '-', 'color', colorD, 'linewidth', 2);
 
 %ylim([-5100 7100]);
-%set(gca, 'YTick', [-4 -2 0 2 4 6] .* 1000);
+set(gca, 'YTick', -.3:.1:.3);
 xlim([1960 2015]);
+ylim([-.3 .3]);
 set(gca, 'fontsize', 36);
-ylabel('Normalized yield anaomaly');
+ylabel('Normalized yield anomaly');
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig historical-yields.png -m4;
 close all;

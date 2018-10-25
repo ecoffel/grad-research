@@ -1,24 +1,24 @@
-city = 'ny';
+city = 'chi';
 
 eval(['load ' city 'MortData.mat;']);       % loads into mortData
-eval(['load ' city 'Wx.mat;']);             % loads into wxTable
+eval(['load ' city 'WxLong.mat;']);             % loads into wxTable
 
 % add wb headers to the mortData headers list
 wbMinInd = length(mortData{1}) + 1;
 wbMaxInd = length(mortData{1}) + 2;
 wbMeanInd = length(mortData{1}) + 3;
 
-mortData{1}{wbMinInd} = 'wbmin';
-mortData{1}{wbMaxInd} = 'wbmax';
-mortData{1}{wbMeanInd} = 'wbmean';
+mortData{1}{wbMinInd} = 'isdWbmin';
+mortData{1}{wbMaxInd} = 'isdWbmax';
+mortData{1}{wbMeanInd} = 'isdWbmean';
 
 tempMinInd = length(mortData{1}) + 1;
 tempMaxInd = length(mortData{1}) + 2;
 tempMeanInd = length(mortData{1}) + 3;
 
-mortData{1}{tempMinInd} = 'ishTempMin';
-mortData{1}{tempMaxInd} = 'ishTempMax';
-mortData{1}{tempMeanInd} = 'ishTempMean';
+mortData{1}{tempMinInd} = 'isdTempMin';
+mortData{1}{tempMaxInd} = 'isdTempMax';
+mortData{1}{tempMeanInd} = 'isdTempMean';
 
 % lines in mort data file
 for i = 1:size(mortData{2}, 1)

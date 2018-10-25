@@ -85,13 +85,16 @@ for m = 1:length(models)
     end
 end
 
+slopesTwTx = sort(slopesTwTx, 1);
+slopesTxTw = sort(slopesTxTw, 1);
+
 figure('Color', [1,1,1]);
 hold on;
-axis square;
+pbaspect([2 1 1]);
 grid on;
 box on;
 
-b = boxplot(slopesTwTx);
+b = boxplot(slopesTwTx(round(.1*length(models)):round(.9*length(models)), :));
 
 for bind = 1:size(b, 2)
     set(b(:,bind), {'LineWidth', 'Color'}, {2, colorTxx})
@@ -102,7 +105,8 @@ plot([0 100], [0 0], '--k', 'linewidth', 2);
 xlabel('Warm season Tx percentile');
 ylabel([char(176) 'C T_W per ' char(176) 'C Tx']);
 set(gca, 'fontsize', 36);
-set(gca, 'ytick', -.1:.1:.7);
+ylim([-.15 .71]);
+set(gca, 'ytick', -.2:.1:.8);
 set(gca, 'xticklabels', 5:10:95);
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig(['tx-tw-tx-slopes.eps']);
@@ -112,11 +116,11 @@ close all;
 
 figure('Color', [1,1,1]);
 hold on;
-axis square;
+pbaspect([2 1 1]);
 grid on;
 box on;
 
-b = boxplot(slopesTxTw);
+b = boxplot(slopesTxTw(round(.1*length(models)):round(.9*length(models)), :));
 
 for bind = 1:size(b, 2)
     set(b(:,bind), {'LineWidth', 'Color'}, {2, colorWb})
@@ -124,8 +128,8 @@ for bind = 1:size(b, 2)
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 end
 
-ylim([-.15 .4]);
-set(gca, 'ytick', -.1:.1:.4);
+ylim([-.15 .71]);
+set(gca, 'ytick', -.2:.1:.8);
 plot([0 100], [0 0], '--k', 'linewidth', 2);
 xlabel('Warm season T_W percentile');
 ylabel([char(176) 'C T_W per ' char(176) 'C Tx']);

@@ -8,7 +8,7 @@ rcp = 'historical';
 timePeriod = [1981 2016];
 
 plotTempPTrends = true;
-plotHotDryTrends = false;
+plotHotDryTrends = true;
 
 if ~exist('eraTemp', 'var')
     fprintf('loading ERA...\n');
@@ -87,35 +87,38 @@ if ~exist('cpc', 'var')
     cpc = nanmean(cpc, 4);
 end
 
-north = true;
+blue = false;
 
-regionBounds = [[2 32]; [25, 44]];
-regionBoundsSouth = [[2 13]; [25, 42]];
-regionBoundsNorth = [[13 32]; [29, 34]];
+
+[regionInds, regions, regionNames] = ni_getRegions();
+regionBounds = regions('nile');
+regionBoundsBlue = regions('nile-blue');
+regionBoundsWhite = regions('nile-white');
 
 latGldas = gldasTemp{1};
 lonGldas = gldasTemp{2};
-[latIndsNorthGldas, lonIndsNorthGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouthGldas, lonIndsSouthGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
+[latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteGldas, lonIndsWhiteGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 
 [latIndsChirps, lonIndsChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBounds(1,:), regionBounds(2,:));
-[latIndsNorthChirps, lonIndsNorthChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouthChirps, lonIndsSouthChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-latIndsSouthChirpsRel = latIndsSouthChirps-latIndsChirps(1)+1;
-latIndsNorthChirpsRel = latIndsNorthChirps-latIndsChirps(1)+1;
-lonIndsSouthChirpsRel = lonIndsSouthChirps-lonIndsChirps(1)+1;
-lonIndsNorthChirpsRel = lonIndsNorthChirps-lonIndsChirps(1)+1;
+[latIndsBlueChirps, lonIndsBlueChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteChirps, lonIndsWhiteChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+latIndsWhiteChirpsRel = latIndsWhiteChirps-latIndsChirps(1)+1;
+latIndsBlueChirpsRel = latIndsBlueChirps-latIndsChirps(1)+1;
+lonIndsWhiteChirpsRel = lonIndsWhiteChirps-lonIndsChirps(1)+1;
+lonIndsBlueChirpsRel = lonIndsBlueChirps-lonIndsChirps(1)+1;
+
 
 load lat;
 load lon;
 
 [latInds, lonInds] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));
-[latIndsNorth, lonIndsNorth] = latLonIndexRange({lat,lon,[]}, regionBoundsNorth(1,:), regionBoundsNorth(2,:));
-[latIndsSouth, lonIndsSouth] = latLonIndexRange({lat,lon,[]}, regionBoundsSouth(1,:), regionBoundsSouth(2,:));
-latIndsSouthRel = latIndsSouth-latInds(1)+1;
-latIndsNorthRel = latIndsNorth-latInds(1)+1;
-lonIndsSouthRel = lonIndsSouth-lonInds(1)+1;
-lonIndsNorthRel = lonIndsNorth-lonInds(1)+1;
+[latIndsBlue, lonIndsBlue] = latLonIndexRange({lat,lon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhite, lonIndsWhite] = latLonIndexRange({lat,lon,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+latIndsWhiteRel = latIndsWhite-latInds(1)+1;
+latIndsBlueRel = latIndsBlue-latInds(1)+1;
+lonIndsWhiteRel = lonIndsWhite-lonInds(1)+1;
+lonIndsBlueRel = lonIndsBlue-lonInds(1)+1;
 
 
 if ~exist('cmip5Temp', 'var')
@@ -154,30 +157,30 @@ if ~exist('cmip5Pr', 'var')
     end
 end
 
-if north
-    curLatInds = latIndsNorth;
-    curLonInds = lonIndsNorth;
+if blue
+    curLatInds = latIndsBlue;
+    curLonInds = lonIndsBlue;
     
-    curLatIndsRel = latIndsNorthRel;
-    curLonIndsRel = lonIndsNorthRel;
+    curLatIndsRel = latIndsBlueRel;
+    curLonIndsRel = lonIndsBlueRel;
     
-    curLatIndsChirpsRel = latIndsNorthChirpsRel;
-    curLonIndsChirpsRel = lonIndsNorthChirpsRel;
+    curLatIndsChirpsRel = latIndsBlueChirpsRel;
+    curLonIndsChirpsRel = lonIndsBlueChirpsRel;
     
-    curLatIndsGldas = latIndsNorthGldas;
-    curLonIndsGldas = lonIndsNorthGldas;
+    curLatIndsGldas = latIndsBlueGldas;
+    curLonIndsGldas = lonIndsBlueGldas;
 else
-    curLatInds = latIndsSouth;
-    curLonInds = lonIndsSouth;
+    curLatInds = latIndsWhite;
+    curLonInds = lonIndsWhite;
     
-    curLatIndsRel = latIndsSouthRel;
-    curLonIndsRel = lonIndsSouthRel;
+    curLatIndsRel = latIndsWhiteRel;
+    curLonIndsRel = lonIndsWhiteRel;
     
-    curLatIndsChirpsRel = latIndsSouthChirpsRel;
-    curLonIndsChirpsRel = lonIndsSouthChirpsRel;
+    curLatIndsChirpsRel = latIndsWhiteChirpsRel;
+    curLonIndsChirpsRel = lonIndsWhiteChirpsRel;
     
-    curLatIndsGldas = latIndsSouthGldas;
-    curLonIndsGldas = lonIndsSouthGldas;
+    curLatIndsGldas = latIndsWhiteGldas;
+    curLonIndsGldas = lonIndsWhiteGldas;
 end
 
 plotMap = false;
@@ -188,8 +191,8 @@ seasons = [[12 1 2];
            [9 10 11]];
 
 load('hottest-season-ncep.mat');
-hottestSeasonNorth = mode(reshape(hottestSeason(latIndsNorth, lonIndsNorth), [numel(hottestSeason(latIndsNorth, lonIndsNorth)), 1]));
-hottestSeasonSouth = mode(reshape(hottestSeason(latIndsSouth, lonIndsSouth), [numel(hottestSeason(latIndsSouth, lonIndsSouth)), 1]));
+hottestSeasonBlue = mode(reshape(hottestSeason(latIndsBlue, lonIndsBlue), [numel(hottestSeason(latIndsBlue, lonIndsBlue)), 1]));
+hottestSeasonWhite = mode(reshape(hottestSeason(latIndsWhite, lonIndsWhite), [numel(hottestSeason(latIndsWhite, lonIndsWhite)), 1]));
        
 tempTrends = [];
 tempTrendsP = [];
@@ -348,10 +351,10 @@ if plotTempPTrends
     set(gca, 'YTick', -.3:.1:.3);
     legend(legItems, {'ERA-Interim', 'GLDAS', 'CPC', 'GPCP', 'CHIRPS-2'}, 'location', 'northeast');
     set(gcf, 'Position', get(0,'Screensize'));
-    if north
-        export_fig('annual-temp-pr-trends-north.eps');
+    if blue
+        export_fig('annual-temp-pr-trends-blue.eps');
     else
-        export_fig('annual-temp-pr-trends-south.eps');
+        export_fig('annual-temp-pr-trends-white.eps');
     end
     close all;
 end
@@ -431,7 +434,7 @@ if plotHotDryTrends
     legItems = [];
     hold on;
     box on;
-    axis square;
+    pbaspect([1 2 1]);
     grid on;
 
     displace = [-.15 -.05 .05];
@@ -459,12 +462,14 @@ if plotHotDryTrends
     set(gca, 'FontSize', 40);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.015:.005:.015);
-    legend(legItems, {'ERA-Interim', 'GLDAS', 'CPC-GPCP'}, 'location', 'southwest');
+    if blue
+        legend(legItems, {'ERA-Interim', 'GLDAS', 'CPC-GPCP'}, 'location', 'southwest');
+    end
     set(gcf, 'Position', get(0,'Screensize'));
-    if north
-        export_fig('annual-hot-dry-trends-north.eps');
+    if blue
+        export_fig('annual-hot-dry-trends-blue.eps');
     else
-        export_fig('annual-hot-dry-trends-south.eps');
+        export_fig('annual-hot-dry-trends-white.eps');
     end
     close all;
 end

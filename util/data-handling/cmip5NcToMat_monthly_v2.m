@@ -148,10 +148,18 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
             end
         end
 
-        lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
-        lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
+        if length(strfind(rawNcDir, 'cmcc-cesm')) > 0
+            lat = double(netcdf.getVar(ncid, varIdLat, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]));
+            lat = flipud(lat');
+            lon = double(netcdf.getVar(ncid, varIdLon, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]));
+            lon = lon';
+        else
+            lat = double(netcdf.getVar(ncid, varIdLat, [0], [dims{dimIdLat}{2}]));
+            lon = double(netcdf.getVar(ncid, varIdLon, [0], [dims{dimIdLon}{2}]));
+            [lon, lat] = meshgrid(lon, lat);
+        end
 
-        [lon, lat] = meshgrid(lon, lat);
+        
         %lat = flipud(lat);
 
         starttime = datenum([startYear startMonth startDay 00 00 00]);
@@ -217,7 +225,7 @@ function cmip5NcToMat(rawNcDir, outputDir, varName)
         end
 
         % save the final month
-        monthlyDataSet = {lat, lon, flipud(squeeze(data))};
+        monthlyDataSet = {lat, lon, squeeze(data)};
         fileName = [varName, '_', datestr(curStartDate, 'yyyy_mm_dd')];
         eval([fileName ' = monthlyDataSet;']);
         save([folDataTarget, '/', fileName, '.mat'], fileName);

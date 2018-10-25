@@ -6,17 +6,23 @@ hold on;
 axis off;
 box off;
 
-regionBoundsSouth = [[2 13]; [25, 42]];
-regionBoundsNorth = [[13 32]; [29, 34]];
+[regionInds, regions, regionNames] = ni_getRegions();
+regionBounds = regions('nile');
+regionBoundsBlue = regions('nile-blue');
+regionBoundsWhite = regions('nile-white');
+regionBoundsNorth = regions('nile-north');
 
 
-regions = [[[2 13 13 2], [25 25 42 42]]; ...
-           [[13 32 32 13], [29 29 34 34]]];
+regions = [[[regionBoundsBlue(1,1) regionBoundsBlue(1,2) regionBoundsBlue(1,2) regionBoundsBlue(1,1)], [regionBoundsBlue(2,1) regionBoundsBlue(2,1) regionBoundsBlue(2,2) regionBoundsBlue(2,2)]]; ...
+           [[regionBoundsWhite(1,1) regionBoundsWhite(1,2) regionBoundsWhite(1,2) regionBoundsWhite(1,1)], [regionBoundsWhite(2,1) regionBoundsWhite(2,1) regionBoundsWhite(2,2) regionBoundsWhite(2,2)]]];
+           %[[regionBoundsNorth(1,1) regionBoundsNorth(1,2) regionBoundsNorth(1,2) regionBoundsNorth(1,1)], [regionBoundsNorth(2,1) regionBoundsNorth(2,1) regionBoundsNorth(2,2) regionBoundsNorth(2,2)]]];
 
 worldmap('africa');
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
 countries = shaperead('countries', 'UseGeoCoords', true);
 geoshow(landmass, 'FaceColor', 'w', 'EdgeColor', 'k');
+rivers = shaperead('worldrivers', 'UseGeoCoords', true);
+geoshow(rivers, 'Color', 'blue')
 
 geoshow(countries, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none');
 tightmap;

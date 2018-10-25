@@ -1,11 +1,17 @@
 %[raw_city, raw_date, raw_dow, rawraw_tmpd, raw_tmax, raw_tmin, raw_tmean, raw_dptp] = textread('2016-heat-humid-mortality/mortality-data/ny8700.csv', '%s%s%s%s%s%s%s%s%*[^\n]', 'headerlines', 1, 'delimiter', ',');
 
-rawData = textread('2016-heat-humid-mortality/mortality-data/ny.csv', '%s', 'headerlines', 1, 'delimiter', '\n');
+cities = ["akr", "anch", "arlv", "bake", "batr", "bidd", "buff", "cayc", "cdrp", "clmg", "clmo", "colo", "corp", "covt", "dlft"];
 
-headers = {'city', 'date', 'dow', 'death', 'tmpd', 'tmax', 'tmin', 'tmean', 'dptp'};
+for city = cities
+
+    city = city{1};
+
+rawData = textread(['e:/data/projects/mortality/' city '.csv'], '%s', 'headerlines', 1, 'delimiter', '\n');
+
+headers = {'city', 'date', 'dow', 'death', 'tmpd', 'tmax', 'tmin', 'tmean', 'dptp', 'wbmean', 'wbmax'};
 cols = [2 3 4 9 14 15 16 17 18];
 
-dataHeaders = {'year', 'month', 'day', 'dow', 'death', 'tmpd', 'tmax', 'tmin', 'tmean', 'dptp'};
+dataHeaders = {'year', 'month', 'day', 'dow', 'death', 'tmpd', 'tmax', 'tmin', 'tmean', 'dptp', 'wbmean', 'wbmax'};
 data = [];
 
 for i = 1:length(rawData)
@@ -73,8 +79,16 @@ for i = 1:length(rawData)
         data(i, find(strcmp(dataHeaders, 'dptp'))) = -999;
     end
     
+    if ~strcmp(tmean, 'NA') & ~strcmp(dptp, 'NA')
+        data(i, length(dataHeaders)-1) = mo_wbFromDewpt((str2num(tmean)-32)*5/9, (str2num(dptp)-32)*5/9);
+    end
+    
+    if ~strcmp(tmax, 'NA') & ~strcmp(dptp, 'NA')
+        data(i, length(dataHeaders)) = mo_wbFromDewpt((str2num(tmax)-32)*5/9, (str2num(dptp)-32)*5/9);
+    end
+    
 end
 
 mortData = {dataHeaders, data};
-save('nyMortData', 'mortData');
-
+save([city 'MortData'], 'mortData');
+end

@@ -6,6 +6,16 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 load lat;
 load lon;
 
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2010.mat
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2060.mat
+load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2070.mat
+load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2060.mat
+load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2070.mat
+
+histPop = ssp3_2010{3};
+futurePop3 = (ssp3_2060{3}+ssp3_2070{3}) ./ 2;
+futurePop5 = (ssp5_2060{3}+ssp5_2070{3}) ./ 2;
+
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
 
@@ -94,24 +104,48 @@ data29 = squeeze(sum(threshChgTw29,3))-squeeze(sum(threshChgTwNoTxAmp29,3));
 data30 = squeeze(sum(threshChgTw30,3))-squeeze(sum(threshChgTwNoTxAmp30,3));
 data31 = squeeze(sum(threshChgTw31,3))-squeeze(sum(threshChgTwNoTxAmp31,3));
 
+exp27 = [];
+exp28 = [];
+exp29 = [];
+exp30 = [];
+exp31 = [];
+for m = 1:length(models)
+    exp27(m) = squeeze(nansum(nansum(data27(:,:,m) .* (futurePop5-histPop), 2), 1));
+    exp28(m) = squeeze(nansum(nansum(data28(:,:,m) .* (futurePop5-histPop), 2), 1));
+    exp29(m) = squeeze(nansum(nansum(data29(:,:,m) .* (futurePop5-histPop), 2), 1));
+    exp30(m) = squeeze(nansum(nansum(data30(:,:,m) .* (futurePop5-histPop), 2), 1));
+    exp31(m) = squeeze(nansum(nansum(data31(:,:,m) .* (futurePop5-histPop), 2), 1));
+end
+
+
 colorWb = [68, 166, 226]./255.0;
 colorTxx = [216, 66, 19]./255.0;
 
-figure('Color', [1,1,1]);
+fig = figure('Color', [1,1,1]);
+set(fig,'defaultAxesColorOrder',[colorTxx; [0 0 0]]);
 hold on;
 box on;
 axis square;
 grid on;
 
-d27 = squeeze(nanmean(nanmean(data27)));
-d28 = squeeze(nanmean(nanmean(data28)));
-d29 = squeeze(nanmean(nanmean(data29)));
-d30 = squeeze(nanmean(nanmean(data30)));
-d31 = squeeze(nanmean(nanmean(data31)));
+d27 = sort(squeeze(nanmean(nanmean(data27))));
+d28 = sort(squeeze(nanmean(nanmean(data28))));
+d29 = sort(squeeze(nanmean(nanmean(data29))));
+d30 = sort(squeeze(nanmean(nanmean(data30))));
+d31 = sort(squeeze(nanmean(nanmean(data31))));
 
+exp27 = sort(exp27);
+exp28 = sort(exp28);
+exp29 = sort(exp29);
+exp30 = sort(exp30);
+exp31 = sort(exp31);
+
+i1 = round(.1*length(models));
+i2 = round(.9*length(models));
+
+yyaxis left;
 plot([0 100], [0 0], '--k', 'linewidth', 2);
-
-b = boxplot([d27 d28 d29 d30 d31]);
+b = boxplot([d27(i1:i2) d28(i1:i2) d29(i1:i2) d30(i1:i2) d31(i1:i2)], 'positions', [.85 1.85 2.85 3.85 4.85], 'widths', .2);
 
 for bind = 1:size(b, 2)
     set(b(:,bind), {'LineWidth', 'Color'}, {2, colorTxx})
@@ -119,14 +153,26 @@ for bind = 1:size(b, 2)
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 end
 
+ylabel('Change (days per year)');
+
+yyaxis right;
+b = boxplot([exp27(i1:i2)' exp28(i1:i2)' exp29(i1:i2)' exp30(i1:i2)' exp31(i1:i2)'], 'positions', [1.15 2.15 3.15 4.15 5.15], 'widths', .2);
+
+for bind = 1:size(b, 2)
+    set(b(:,bind), {'LineWidth', 'Color'}, {2, [.1 .1 .1]})
+    lines = findobj(b(:, bind), 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+end
+
+ylabel('Change (person-days per year)');
+set(gca, 'yticklabels', {'-20B', '-10B', '0', '10B', '20B', '30B'});
 xlim([.5 5.5]);
 set(gca, 'fontsize', 36, 'xtick', [1 2 3 4 5], 'xticklabels', [27 28 29 30 31]);
-ylabel('Change (# days per year)');
+
 xlabel(['T_W threshold (' char(176) 'C)']);
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig(['thresh-cnt-boxplots.eps']);
 close all;
-
 
 data = squeeze(sum(threshChgTw27,3))-squeeze(sum(threshChgTwNoTxAmp27,3));
 plotData = [];

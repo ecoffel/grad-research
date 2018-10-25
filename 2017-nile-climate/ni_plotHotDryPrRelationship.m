@@ -119,48 +119,39 @@ dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1
 wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 hotDryFutureLate = squeeze(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 
-prChg = (squeeze(nanmean(prFut, 1) - nanmean(prHist, 1))) ./ squeeze(nanmean(prHist,1));
-prStd = (squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1))) ./ squeeze(nanstd(prHist,[],1));
+prChg = (squeeze(nanmean(prFut, 1) - nanmean(prHist, 1))) ./ squeeze(nanmean(prHist,1)) .* 100;
+prStd = (squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1))) ./ squeeze(nanstd(prHist,[],1)) .* 100;
 prCoVar = squeeze(nanstd(prFut, [], 1) ./ nanmean(prFut, 1)) - ...
           squeeze(nanstd(prHist, [], 1) ./ nanmean(prHist, 1));
 
 wet = true;
 std = true;
 
+prChg = prChg';
+prStd = prStd';
+
+[b,i] = sort(prChg);
+prChg = prChg(i);
+prStd = prStd(i);
+
 figure('Color', [1,1,1]);
 hold on;
 box on;
 grid on;
-axis square;
-
-if std
-    chgvar = prStd;
-else
-    chgvar = prChg;
-end
-
-if wet
-    seasonvar = wetFutureLate;
-else
-    seasonvar = dryFutureLate;
-end
-    
+pbaspect([2 1 1]);
 
 for m = 1:size(prFut, 2)
-    t = text(chgvar(m), seasonvar(m) * 100, num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+    t = text(prChg(m), prStd(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
     t.FontSize = 18;
 end
 
-[f, gof] = fit(chgvar', seasonvar .* 100, 'poly1');
+[f, gof] = fit(prChg(round(.1*length(models)):round(.9*length(models))), prStd(round(.1*length(models)):round(.9*length(models))), 'poly1');
 cint = confint(f);
-p = plot([min(chgvar) max(chgvar)], [f(min(chgvar)) f(max(chgvar))], '--b', 'LineWidth', 2);
+p = plot([prChg(round(.1*length(models))) prChg(round(.9*length(models)))], [f(prChg(round(.1*length(models)))) f(prChg(round(.9*length(models))))], '--b', 'LineWidth', 2);
 
-if std
-    corrval = partialcorr([seasonvar, prStd'], prChg');
-    corrval = corrval(2, 1);
-else
-    corrval = corr(seasonvar, chgvar');
-end
+xlim([-20 80])
+ylim([-50 100])
+
 
 xlim([-.4 1.2]);
 set(gca, 'XTick', -.4:.4:1.2)
@@ -173,9 +164,9 @@ else
 end
 
 if wet
-    ylabel('Future wet season frequency (%)');
+    ylabel('Hot and dry years (%)');
 else
-    ylabel('Future dry season frequency (%)');
+    ylabel('Dry years (%)');
 end
 set(gca, 'FontSize', 40);
 if std

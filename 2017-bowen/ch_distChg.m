@@ -131,6 +131,90 @@ if plotSpatialChg
 end
 
 if plotDistChg
+    trange = [5:10:95 100];
+    
+    
+    fig = figure('Color', [1,1,1]);
+    hold on;
+    pbaspect([2,1,1]);
+    grid on;
+    box on;
+
+    chgTxRange = sort(squeeze(nanmean(nanmean(chgTx,2),1)),1);
+    yval = nanmedian(chgTxRange);
+    yrange = [chgTxRange(round(.9*length(models)))-yval;
+              yval-chgTxRange(round(.1*length(models)))];
+    
+    yerr = [];
+    yerr(1,1,:)=yrange;
+    yerr(1,2,:)=yrange;
+    
+    s = mseb([0 101.25], [yval yval], [yerr], [], 1);
+    set(s.mainLine, 'Color', colorTxx, 'LineWidth', 2);
+    set(s.patch, 'FaceColor', colorTxx);
+    set(s.edge, 'Color', 'w');
+    
+    mrange = squeeze(nanmean(nanmean(threshChgTx, 2), 1))';
+    mrange = sort(mrange, 1);
+    
+    b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
+    set(b, {'LineWidth', 'Color'}, {2, colorTxx})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    ylim([2.5 5.7])
+    xlim([-5 105]);
+    set(gca, 'fontsize', 36);
+    xlabel('Warm season percentile');
+    set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
+    set(gca, 'YTick', 2.5:.5:5.5);
+    ylabel(['Change (' char(176) 'C)']);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['tx-dist-chg.png'], '-m5');
+    close all;
+    
+    
+    fig = figure('Color', [1,1,1]);
+    hold on;
+    pbaspect([2,1,1]);
+    grid on;
+    box on;
+
+    chgTwRange = sort(squeeze(nanmean(nanmean(chgTw,2),1)),1);
+    yval = nanmedian(chgTwRange);
+    yrange = [chgTwRange(round(.9*length(models)))-yval;
+              yval-chgTwRange(round(.1*length(models)))];
+    
+    yerr = [];
+    yerr(1,1,:)=yrange;
+    yerr(1,2,:)=yrange;
+    
+    
+    s = mseb([0 101.25], [yval yval], [yerr], [], 1);
+    set(s.mainLine, 'Color', colorWb, 'LineWidth', 2);
+    set(s.patch, 'FaceColor', colorWb);
+    set(s.edge, 'Color', 'w');
+    
+    mrange = squeeze(nanmean(nanmean(threshChgTw, 2), 1))';
+    mrange = sort(mrange, 1);
+    
+    b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
+    set(b, {'LineWidth', 'Color'}, {2, colorWb})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    ylim([1.75 3.5])
+    xlim([-5 105]);
+    set(gca, 'fontsize', 36);
+    xlabel('Warm season percentile');
+    set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
+    set(gca, 'YTick', 1.5:.5:5.5);
+    ylabel(['Change (' char(176) 'C)']);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['tw-dist-chg.png'], '-m5');
+    close all;
+    
+    
     fig = figure('Color', [1,1,1]);
     hold on;
     axis square;
@@ -154,20 +238,32 @@ if plotDistChg
     set(s.edge, 'Color', 'w');
     
     % yyaxis left;
-    trange = [5:10:95 100];
-    for t = 1:length(trange)
-        cury = nanmedian(squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1)), 1);
-        curyrange = squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1));
-        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
-        p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
-        set(er, 'color', colorWb, 'linewidth', 2);
+    
+%     for t = 1:length(trange)
+%         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1)), 1);
+%         curyrange = squeeze(nanmean(nanmean(threshChgTw(:,:,t,:),2),1));
+%         er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+%         p = plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorWb);
+%         set(er, 'color', colorWb, 'linewidth', 2);
+% 
+%         cury = nanmedian(squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1)), 1);
+%         curyrange = squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1));
+%         er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
+%         plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
+%         set(er, 'color', colorTxx, 'linewidth', 2);
+%     end
+    
+    yyaxis left;
+    b = boxplot((squeeze(nanmean(nanmean(threshChgTw, 2), 1)))');
 
-        cury = nanmedian(squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1)), 1);
-        curyrange = squeeze(nanmean(nanmean(threshChgTx(:,:,t,:),2),1));
-        er = errorbar(trange(t), cury, std(curyrange)/2, std(curyrange)/2);
-        plot(trange(t), cury, 'ok', 'linewidth', 2, 'markersize', 15, 'markerfacecolor', colorTxx);
-        set(er, 'color', colorTxx, 'linewidth', 2);
-    end
+    ylim([0 10]);
+    set(b, {'LineWidth', 'Color'}, {2, colorWb})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+    
+    yyaxis right;
+    b = boxplot((squeeze(nanmean(nanmean(threshChgTx, 2), 1)))');
+    ylim([0 10]);
     
     ylim([2 5.4])
     xlim([-5 105]);
