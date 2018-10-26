@@ -20,9 +20,9 @@ regionBoundsWhite = [[9 14]; [30, 34]];
 regionBoundsEthiopia = [[3.4 14.8]; [31, 45.5]];
 
 if ~exist('udelp')
-    udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1901, 'endYear', 2014);
+    udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1961, 'endYear', 2014);
     udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
-    udelt = loadMonthlyData('E:\data\udel\output\air\monthly\1900-2014', 'air', 'startYear', 1901, 'endYear', 2014);
+    udelt = loadMonthlyData('E:\data\udel\output\air\monthly\1900-2014', 'air', 'startYear', 1961, 'endYear', 2014);
     udelt = {udelt{1}, udelt{2}, flipud(udelt{3})};
     
     %cmip5p = loadMonthlyData(['e:/data/cmip5/output/access1-0/mon/r1i1p1/historical/pr/regrid/world'], 'pr', 'startYear', 1901, 'endYear', 2005); 
@@ -40,30 +40,62 @@ end
 
 lat=udelt{1};
 lon=udelt{2};
-[latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({lat,lon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
-[latIndsWhiteUdel, lonIndsWhiteUdel] = latLonIndexRange({lat,lon,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
-[latIndsEthiopiaUdel, lonIndsEthiopiaUdel] = latLonIndexRange({lat,lon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
 
-pdataset = squeeze(nanmean(nanmean(nansum(udelp{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, 61:end, :), 4), 2), 1));
-tdataset = squeeze(nanmean(nanmean(nanmean(udelt{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, 61:end, :), 4), 2), 1));
+[regionInds, regions, regionNames] = ni_getRegions();
+regionBoundsEthiopia = regions('nile-ethiopia');
 
-% pdataset = detrend(pdataset);
-% tdataset = detrend(tdataset);
+[latIndsEthiopiaUdel, lonIndsEthiopiaUdel] = latLonIndexRange({lat, lon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
+
+pdataset = squeeze(nanmean(nanmean(nansum(udelp{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, :, :), 4), 2), 1));
+tdataset = squeeze(nanmean(nanmean(nanmean(udelt{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, :, :), 4), 2), 1));
+
+load 2017-nile-climate\output\gldas_qs.mat
+load 2017-nile-climate\output\gldas_qsb.mat
+load 2017-nile-climate\output\gldas_pr.mat
+load 2017-nile-climate\output\gldas_t.mat
+
+latGldas = gldas_t{1};
+lonGldas = gldas_t{2};
+[latIndsEthiopiaGldas, lonIndsEthiopiaGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
+
+gldasRunoff = gldas_qs{3}(:, :, :, :) + gldas_qsb{3}(:, :, :, :);
+gldasRunoff = squeeze(nanmean(nanmean(nansum(gldasRunoff(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
+gldasT = squeeze(nanmean(nanmean(nanmean(gldas_t{3}(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
+gldasPr = squeeze(nanmean(nanmean(nanmean(gldas_pr{3}(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
 
 thresh = 0:5:100;
 
-prcT = prctile(tdataset(1:40), thresh);
-prcP = prctile(pdataset(1:40), thresh);
+prcTUdel = prctile(tdataset(1:40), thresh);
+prcPUdel = prctile(pdataset(1:40), thresh);
+
+prcTGldas = prctile(gldasT(1:40), thresh);
+prcPGldas = prctile(gldasPr(1:40), thresh);
+prcRGldas = prctile(gldasRunoff(1:40), thresh);
 
 annualPPrc = [];
 annualTPrc = [];
 
 for y = 1:length(pdataset)
-    prc = find(abs(pdataset(y)-prcP) == min(abs(pdataset(y)-prcP)));
+    prc = find(abs(pdataset(y)-prcPUdel) == min(abs(pdataset(y)-prcPUdel)));
     annualPPrc(y, 1) = thresh(prc);
     
-    prc = find(abs(tdataset(y)-prcT) == min(abs(tdataset(y)-prcT)));
+    prc = find(abs(tdataset(y)-prcTUdel) == min(abs(tdataset(y)-prcTUdel)));
     annualTPrc(y, 1) = thresh(prc);
+end
+
+annualPPrcGldas = [];
+annualTPrcGldas = [];
+annualRPrcGldas = [];
+
+for y = 1:length(gldasT)
+    prc = find(abs(gldasT(y)-prcTGldas) == min(abs(gldasT(y)-prcTGldas)));
+    annualTPrcGldas(y, 1) = thresh(prc);
+    
+    prc = find(abs(gldasPr(y)-prcPGldas) == min(abs(gldasPr(y)-prcPGldas)));
+    annualPPrcGldas(y, 1) = thresh(prc);
+    
+    prc = find(abs(gldasRunoff(y)-prcRGldas) == min(abs(gldasRunoff(y)-prcRGldas)));
+    annualRPrcGldas(y, 1) = thresh(prc);
 end
 
 
@@ -148,14 +180,25 @@ end
 yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)))
 yieldd = nanmean(meanYield(find(annualTPrc<=tprc & annualPPrc <= pprc)))
 
-tbad = annualTPrc(find(meanYield <= -std(meanYield)));
-pbad = annualPPrc(find(meanYield <= -std(meanYield)));
+indBad = find(meanYield <= -std(meanYield));
+indGood = find(meanYield >= std(meanYield));
+indNormal = find(meanYield > -std(meanYield) & meanYield < std(meanYield));
 
-tnormal = annualTPrc(find(meanYield > -std(meanYield) & meanYield < std(meanYield)));
-pnormal = annualPPrc(find(meanYield > -std(meanYield) & meanYield < std(meanYield)));
+indBad(indBad>50) = [];
+indGood(indGood>50) = [];
+indNormal(indNormal>50) = [];
 
-tgood = annualTPrc(find(meanYield >= std(meanYield)));
-pgood = annualPPrc(find(meanYield >= std(meanYield)));
+tbad = annualTPrc(indBad);
+pbad = annualPPrc(indBad);
+rbad = annualRPrcGldas(indBad);
+
+tnormal = annualTPrc(indNormal);
+pnormal = annualPPrc(indNormal);
+rnormal = annualRPrcGldas(indNormal);
+
+tgood = annualTPrc(indGood);
+pgood = annualPPrc(indGood);
+rgood = annualRPrcGldas(indGood);
 
 plot([x(1) x(end)], [0 0], '--k','linewidth', 2);
 % plot([x(1) x(end)], [-std(meanYield) -std(meanYield)], '--','linewidth', 2, 'color', colorHd);
@@ -192,7 +235,7 @@ ylim([-.3 .3]);
 set(gca, 'fontsize', 36);
 ylabel('Normalized yield anomaly');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig historical-yields.png -m4;
+%export_fig historical-yields.png -m4;
 close all;
 
 
@@ -202,8 +245,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([0 3], [50 50], '--k', 'linewidth', 2);
-b = boxplot([pgood tgood], 'widths', [.8 .8]);
+plot([0 4], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pgood tgood rgood], 'widths', [.8 .8]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -213,12 +256,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 3], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 3], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
+set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+plot([.6 4], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.6 4], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T'});
+set(gca, 'XTickLabels', {'P', 'T', 'R'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
@@ -232,8 +280,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([.1 3], [50 50], '--k', 'linewidth', 2);
-b = boxplot([pbad tbad], 'widths', [.8 .8]);
+plot([0 4], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pbad tbad rbad], 'widths', [.8 .8]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -243,13 +291,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 3], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 3], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
+set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
+plot([.6 4], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.6 4], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T'});
+set(gca, 'XTickLabels', {'P', 'T', 'R'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
@@ -263,8 +315,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([.1 3], [50 50], '--k', 'linewidth', 2);
-b = boxplot([pnormal tnormal], 'widths', [.8 .8]);
+plot([0 4], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pnormal tnormal rnormal], 'widths', [.8 .8]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -274,13 +326,18 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 3], [nanmean(pnormal) nanmean(pnormal)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 3], [nanmean(tnormal) nanmean(tnormal)], '--', 'color', colorHd, 'linewidth', 2);
+set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+plot([.6 4], [nanmean(pnormal) nanmean(pnormal)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.6 4], [nanmean(tnormal) nanmean(tnormal)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmean(rnormal) nanmean(rnormal)], '--', 'color', colorD, 'linewidth', 2);
 
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T'});
+set(gca, 'XTickLabels', {'P', 'T', 'R'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));

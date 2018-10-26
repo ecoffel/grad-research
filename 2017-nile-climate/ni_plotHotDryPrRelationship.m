@@ -91,7 +91,7 @@ curInds = regionInds('nile');
 latIndsRegion = curInds{1};
 lonIndsRegion = curInds{2};
 
-curInds = regionInds('nile-blue');
+curInds = regionInds('nile-white');
 
 latInds = curInds{1};
 lonInds = curInds{2};
@@ -134,59 +134,36 @@ prStd = prStd';
 prChg = prChg(i);
 prStd = prStd(i);
 
+corrval = corr(prChg(round(.1*length(models)):round(.9*length(models))), prStd(round(.1*length(models)):round(.9*length(models))));
+
 figure('Color', [1,1,1]);
 hold on;
 box on;
 grid on;
-pbaspect([2 1 1]);
+%pbaspect([2 1 1]);
+axis square;
 
 for m = 1:size(prFut, 2)
     t = text(prChg(m), prStd(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
-    t.FontSize = 18;
+    t.FontSize = 22;
 end
 
 [f, gof] = fit(prChg(round(.1*length(models)):round(.9*length(models))), prStd(round(.1*length(models)):round(.9*length(models))), 'poly1');
 cint = confint(f);
 p = plot([prChg(round(.1*length(models))) prChg(round(.9*length(models)))], [f(prChg(round(.1*length(models)))) f(prChg(round(.9*length(models))))], '--b', 'LineWidth', 2);
 
+plot([-20 80], [0 0], '--k', 'linewidth', 2);
+plot([0 0], [-60 100], '--k', 'linewidth', 2);
+
 xlim([-20 80])
-ylim([-50 100])
+ylim([-60 100])
 
+ylabel('P std. dev. change (%)');
+xlabel('Precipitation change (%)');
 
-xlim([-.4 1.2]);
-set(gca, 'XTick', -.4:.4:1.2)
-ylim([0 70]);
-set(gca, 'YTick', 0:10:70)
-if std
-    xlabel('P std. dev. change (mm/day)');
-else
-    xlabel('Precipitation change (mm/day)');
-end
-
-if wet
-    ylabel('Hot and dry years (%)');
-else
-    ylabel('Dry years (%)');
-end
 set(gca, 'FontSize', 40);
-if std
-    legend([p], {sprintf('Partial correlation = %.2f', corrval)}, 'location', 'northeast');
-else
-    legend([p], {sprintf('Correlation = %.2f', corrval)}, 'location', 'northeast');
-end
+legend([p], {sprintf('Correlation = %.2f', corrval)}, 'location', 'northeast');
 set(gcf, 'Position', get(0,'Screensize'));
-if wet
-    if std
-        export_fig prstd-wet-south-rcp85.eps;
-    else
-        export_fig prchg-wet-south-rcp85.eps;
-    end
-else
-    if std
-        export_fig prstd-dry-south-rcp85.eps;
-    else
-        export_fig prchg-dry-south-rcp85.eps;
-    end
-end
+export_fig pr-chg-std-white.eps;
 close all;
 
