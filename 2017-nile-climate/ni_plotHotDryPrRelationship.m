@@ -52,7 +52,6 @@ timePeriodBase = [1981 2005];
 timePeriodFuture = [2075 2099];
 
 annual = true;
-north = false;
 
 load lat;
 load lon;
@@ -144,7 +143,7 @@ grid on;
 axis square;
 
 for m = 1:size(prFut, 2)
-    t = text(prChg(m), prStd(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
+    t = text(prChg(m), prStd(m), num2str(i(m)), 'HorizontalAlignment', 'center', 'Color', 'k');
     t.FontSize = 22;
 end
 

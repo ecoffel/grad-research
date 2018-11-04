@@ -211,6 +211,7 @@ end
 % end
 
 xlim([0 6]);
+ylim([0 25]);
 
 set(gca,'TickLabelInterpreter', 'tex');    
 xtickangle(0);

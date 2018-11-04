@@ -7,7 +7,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 rcp = 'historical';
 timePeriod = [1981 2016];
 
-plotTempPTrends = true;
+plotTempPTrends = false;
 plotHotDryTrends = true;
 
 if ~exist('eraTemp', 'var')
@@ -87,8 +87,14 @@ if ~exist('cpc', 'var')
     cpc = nanmean(cpc, 4);
 end
 
-blue = false;
+if ~exist('udelt')
+    udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', timePeriod(1), 'endYear', 2014);
+    udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
+    udelt = loadMonthlyData('E:\data\udel\output\air\monthly\1900-2014', 'air', 'startYear', timePeriod(1), 'endYear', 2014);
+    udelt = {udelt{1}, udelt{2}, flipud(udelt{3})};
+end
 
+blue = false;
 
 [regionInds, regions, regionNames] = ni_getRegions();
 regionBounds = regions('nile');
@@ -99,6 +105,11 @@ latGldas = gldasTemp{1};
 lonGldas = gldasTemp{2};
 [latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 [latIndsWhiteGldas, lonIndsWhiteGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+
+latUdel = udelt{1};
+lonUdel = udelt{2};
+[latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteUdel, lonIndsWhiteUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 
 [latIndsChirps, lonIndsChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBounds(1,:), regionBounds(2,:));
 [latIndsBlueChirps, lonIndsBlueChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
@@ -169,6 +180,9 @@ if blue
     
     curLatIndsGldas = latIndsBlueGldas;
     curLonIndsGldas = lonIndsBlueGldas;
+    
+    curLatIndsUdel = latIndsBlueUdel;
+    curLonIndsUdel = lonIndsBlueUdel;
 else
     curLatInds = latIndsWhite;
     curLonInds = lonIndsWhite;
@@ -181,6 +195,9 @@ else
     
     curLatIndsGldas = latIndsWhiteGldas;
     curLonIndsGldas = lonIndsWhiteGldas;
+    
+    curLatIndsUdel = latIndsWhiteUdel;
+    curLonIndsUdel = lonIndsWhiteUdel;
 end
 
 plotMap = false;
@@ -362,18 +379,24 @@ end
 
 
 % hot/dry trends ----------------------------------------------------------
+tprc = 74;
+pprc = 34;
 
-prcTEra = prctile(eraTemp{3}(curLatInds, curLonInds, :), 90, 3);
-prcPEra = prctile(eraPr{3}(curLatInds, curLonInds, :), 10, 3);
 
-prcTGldas = prctile(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, :), 90, 3);
-prcPGldas = prctile(gldasPr{3}(curLatIndsGldas, curLonIndsGldas, :), 10, 3);
+prcTEra = prctile(eraTemp{3}(curLatInds, curLonInds, :), tprc, 3);
+prcPEra = prctile(eraPr{3}(curLatInds, curLonInds, :), pprc, 3);
 
-prcTCpc = prctile(cpc(curLatIndsRel, curLonIndsRel, :), 90, 3);
-prcPGpcp = prctile(gpcp{3}(curLatIndsRel, curLonIndsRel, :), 10, 3);
+prcTGldas = prctile(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, :), tprc, 3);
+prcPGldas = prctile(gldasPr{3}(curLatIndsGldas, curLonIndsGldas, :), pprc, 3);
 
-prcTCmip5 = squeeze(prctile(cmip5Temp(curLatIndsRel, curLonIndsRel, :, :), 90, 3));
-prcPCmip5 = squeeze(prctile(cmip5Pr(curLatIndsRel, curLonIndsRel, :, :), 10, 3));
+prcTCpc = prctile(cpc(curLatIndsRel, curLonIndsRel, :), tprc, 3);
+prcPGpcp = prctile(gpcp{3}(curLatIndsRel, curLonIndsRel, :), pprc, 3);
+
+prcTUdel = prctile(udelt{3}(curLatIndsUdel, curLonIndsUdel, :), tprc, 3);
+prcPUdel = prctile(udelp{3}(curLatIndsUdel, curLonIndsUdel, :), pprc, 3);
+
+prcTCmip5 = squeeze(prctile(cmip5Temp(curLatIndsRel, curLonIndsRel, :, :), tprc, 3));
+prcPCmip5 = squeeze(prctile(cmip5Pr(curLatIndsRel, curLonIndsRel, :, :), pprc, 3));
 
 % 1981 - 2016 time period
 for year = 1:(timePeriod(end)-timePeriod(1)+1)
@@ -386,6 +409,11 @@ for year = 1:size(gldasTemp{3}, 3)
     hotDryGldas(year) = numel(find(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, year) > prcTGldas & gldasPr{3}(curLatIndsGldas, curLonIndsGldas, year) < prcPGldas));
 end
 
+% 1981 - 2014
+for year = 1:size(udelt{3}, 3)
+    hotDryUdel(year) = numel(find(udelt{3}(curLatIndsUdel, curLonIndsUdel, year) > prcTUdel & udelp{3}(curLatIndsUdel, curLonIndsUdel, year) < prcPUdel));
+end
+
 for model = 1:size(cmip5Temp, 4)
     for year = 1:size(cmip5Temp, 3)
         hotDryCmip5(year, model) = numel(find(cmip5Temp(curLatIndsRel, curLonIndsRel, year, model) > prcTCmip5(:, :, model) & cmip5Pr(curLatIndsRel, curLonIndsRel, year, model) < prcPCmip5(:, :, model)));
@@ -395,6 +423,7 @@ end
 hotDryEra = normr(hotDryEra);
 hotDryCpcGpcp = normr(hotDryCpcGpcp);
 hotDryGldas = normr(hotDryGldas);
+hotDryUdel = normr(hotDryUdel);
 hotDryCmip5 = normc(hotDryCmip5);
 
 hdTrendsP = [];
@@ -419,6 +448,11 @@ hdTrendsP(3) = f.Coefficients.pValue(2);
 hdTrends(3) = f.Coefficients.Estimate(2);
 hdTrendsSE(3) = f.Coefficients.SE(2);
 
+f = fitlm((1:length(hotDryUdel))', hotDryUdel', 'linear');
+hdTrendsP(4) = f.Coefficients.pValue(2);
+hdTrends(4) = f.Coefficients.Estimate(2);
+hdTrendsSE(4) = f.Coefficients.SE(2);
+
 for model = 1:size(cmip5Temp, 4)
     f = fitlm((1:size(hotDryCmip5, 1))', hotDryCmip5(:, model), 'linear');
     hdTrendsCmip5P(model) = f.Coefficients.pValue(2);
@@ -437,7 +471,7 @@ if plotHotDryTrends
     pbaspect([1 2 1]);
     grid on;
 
-    displace = [-.15 -.05 .05];
+    displace = [-.2 -.1 0 .1];
     for d = 1:length(hdTrends)
         e = errorbar(1+displace(d), hdTrends(d), hdTrendsSE(d), 'Color', colors(d,:), 'LineWidth', 2);
         p = plot(1+displace(d), hdTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
@@ -449,7 +483,7 @@ if plotHotDryTrends
         end
     end
 
-    b = boxplot(hdTrendsCmip5', 'positions', [1.15], 'widths', [.1]);
+    b = boxplot(hdTrendsCmip5', 'positions', [1.2], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
@@ -463,7 +497,7 @@ if plotHotDryTrends
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.015:.005:.015);
     if blue
-        legend(legItems, {'ERA-Interim', 'GLDAS', 'CPC-GPCP'}, 'location', 'southwest');
+        legend(legItems, {'ERA-Interim', 'GLDAS', 'CPC-GPCP', 'UDel'}, 'location', 'southwest');
     end
     set(gcf, 'Position', get(0,'Screensize'));
     if blue

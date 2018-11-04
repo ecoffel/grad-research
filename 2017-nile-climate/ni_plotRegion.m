@@ -19,9 +19,9 @@ regions = [[[regionBoundsBlue(1,1) regionBoundsBlue(1,2) regionBoundsBlue(1,2) r
 
 worldmap('africa');
 landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
-countries = shaperead('countries', 'UseGeoCoords', true);
+countries = shaperead('2017-nile-climate/data/shape/countries/ne_50m_admin_0_countries.shp', 'UseGeoCoords', true);
 geoshow(landmass, 'FaceColor', 'w', 'EdgeColor', 'k');
-rivers = shaperead('worldrivers', 'UseGeoCoords', true);
+rivers = shaperead('2017-nile-climate/data/shape/rivers/world_rivers_dSe.shp', 'UseGeoCoords', true);
 geoshow(rivers, 'Color', 'blue')
 
 geoshow(countries, 'DisplayType', 'polygon', 'DefaultFaceColor', 'none');

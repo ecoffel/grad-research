@@ -10,8 +10,8 @@ regionBoundsAll = [[2 32]; [25, 44]];
 
 regionBoundsSouth = [[2 13]; [25, 42]];
 regionBoundsNorth = [[14.5 32]; [29, 34]];
-regionBoundsBlue = [[8 14]; [34, 40]];
-regionBoundsWhite = [[3 14]; [27, 33.5]];
+regionBoundsBlue = [[7 14]; [34, 40]];
+regionBoundsWhite = [[4 12]; [25, 33.5]];
 regionBoundsEthiopia = [[3.4 14.8]; [31, 45.5]];
 
 
