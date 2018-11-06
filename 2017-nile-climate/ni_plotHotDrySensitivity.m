@@ -33,7 +33,7 @@ hotDryFutureLate90 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t95-p5.mat']);
 hotDryFutureLate95 = hotDryFuture;
 
-region = 'blue';
+region = 'total';
 
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
@@ -49,9 +49,20 @@ curInds = regionInds('nile');
 latIndsRegion = curInds{1};
 lonIndsRegion = curInds{2};
 
-curInds = regionInds(['nile-' region]);
-curLatInds = curInds{1} - latIndsRegion(1) + 1;
-curLonInds = curInds{2} - lonIndsRegion(1) + 1;
+if strcmp(region, 'total')
+    curIndsBlue = regionInds(['nile-blue']);
+    curIndsWhite = regionInds(['nile-white']);
+    curLatIndsBlue = curIndsBlue{1} - latIndsRegion(1) + 1;
+    curLonIndsBlue = curIndsBlue{2} - lonIndsRegion(1) + 1;
+    curLatIndsWhite = curIndsWhite{1} - latIndsRegion(1) + 1;
+    curLonIndsWhite = curIndsWhite{2} - lonIndsRegion(1) + 1;
+    curLatInds = [curLatIndsBlue curLatIndsWhite];
+    curLonInds = [curLonIndsBlue curLonIndsWhite];
+else
+    curInds = regionInds(['nile-' region]);
+    curLatInds = curInds{1} - latIndsRegion(1) + 1;
+    curLonInds = curInds{2} - lonIndsRegion(1) + 1;
+end
 
 % regionBounds = [[2 32]; [25, 44]];
 % [latInds, lonInds] = latLonIndexRange({lat,lon,[]}, regionBounds(1,:), regionBounds(2,:));

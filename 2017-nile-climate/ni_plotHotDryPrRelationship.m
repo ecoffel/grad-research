@@ -90,50 +90,64 @@ curInds = regionInds('nile');
 latIndsRegion = curInds{1};
 lonIndsRegion = curInds{2};
 
+curInds = regionInds('nile-blue');
+latIndsBlue = curInds{1};
+lonIndsBlue = curInds{2};
+
 curInds = regionInds('nile-white');
+latIndsWhite = curInds{1};
+lonIndsWhite = curInds{2};
 
-latInds = curInds{1};
-lonInds = curInds{2};
+latIndsTotal = [latIndsBlue, latIndsWhite];
+lonIndsTotal = [lonIndsBlue, lonIndsWhite];
 
-prFut = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
-prHist = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
+prFutTotal = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latIndsTotal, lonIndsTotal, :, months, :), 4), 2), 1));
+prHistTotal = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :), 4), 2), 1));
 
-dryHist = squeeze(nanmean(nanmean(dryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-wetHist = squeeze(nanmean(nanmean(wetHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-hotDryHist = squeeze(nanmean(nanmean(hotDryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+prFutBlue = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latIndsBlue, lonIndsBlue, :, months, :), 4), 2), 1));
+prHistBlue = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latIndsBlue, lonIndsBlue, :, months, :), 4), 2), 1));
 
-dryFuture25 = squeeze(nanmean(nanmean(dryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-wetFuture25 = squeeze(nanmean(nanmean(wetFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-hotDryFuture25 = squeeze(nanmean(nanmean(hotDryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+prFutWhite = squeeze(nanmean(nanmean(nanmean(prFutCmip5(latIndsWhite, lonIndsWhite, :, months, :), 4), 2), 1));
+prHistWhite = squeeze(nanmean(nanmean(nanmean(prHistCmip5(latIndsWhite, lonIndsWhite, :, months, :), 4), 2), 1));
 
-dryFuture50 = squeeze(nanmean(nanmean(dryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-wetFuture50 = squeeze(nanmean(nanmean(wetFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-hotDryFuture50 = squeeze(nanmean(nanmean(hotDryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% 
+% dryHist = squeeze(nanmean(nanmean(dryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% wetHist = squeeze(nanmean(nanmean(wetHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% hotDryHist = squeeze(nanmean(nanmean(hotDryHist(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% 
+% dryFuture25 = squeeze(nanmean(nanmean(dryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% wetFuture25 = squeeze(nanmean(nanmean(wetFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% hotDryFuture25 = squeeze(nanmean(nanmean(hotDryFuture25(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% 
+% dryFuture50 = squeeze(nanmean(nanmean(dryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% wetFuture50 = squeeze(nanmean(nanmean(wetFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% hotDryFuture50 = squeeze(nanmean(nanmean(hotDryFuture50(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% 
+% dryFuture75 = squeeze(nanmean(nanmean(dryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% wetFuture75 = squeeze(nanmean(nanmean(wetFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% hotDryFuture75 = squeeze(nanmean(nanmean(hotDryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% 
+% dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+% hotDryFutureLate = squeeze(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
 
-dryFuture75 = squeeze(nanmean(nanmean(dryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-wetFuture75 = squeeze(nanmean(nanmean(wetFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-hotDryFuture75 = squeeze(nanmean(nanmean(hotDryFuture75(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
+prChgBlue = (squeeze(nanmean(prFutBlue, 1) - nanmean(prHistBlue, 1))) ./ squeeze(nanmean(prHistBlue,1)) .* 100;
+prStdBlue = (squeeze(nanstd(prFutBlue, [], 1) - nanstd(prHistBlue, [], 1))) ./ squeeze(nanstd(prHistBlue,[],1)) .* 100;
 
-dryFutureLate = squeeze(nanmean(nanmean(dryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-wetFutureLate = squeeze(nanmean(nanmean(wetFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-hotDryFutureLate = squeeze(nanmean(nanmean(hotDryFutureLate(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, :), 2), 1));
-
-prChg = (squeeze(nanmean(prFut, 1) - nanmean(prHist, 1))) ./ squeeze(nanmean(prHist,1)) .* 100;
-prStd = (squeeze(nanstd(prFut, [], 1) - nanstd(prHist, [], 1))) ./ squeeze(nanstd(prHist,[],1)) .* 100;
-prCoVar = squeeze(nanstd(prFut, [], 1) ./ nanmean(prFut, 1)) - ...
-          squeeze(nanstd(prHist, [], 1) ./ nanmean(prHist, 1));
+prChgTotal = (squeeze(nanmean(prFutTotal, 1) - nanmean(prHistTotal, 1))) ./ squeeze(nanmean(prHistTotal,1)) .* 100;
+prStdTotal = (squeeze(nanstd(prFutTotal, [], 1) - nanstd(prHistTotal, [], 1))) ./ squeeze(nanstd(prHistTotal,[],1)) .* 100;
 
 wet = true;
 std = true;
 
-prChg = prChg';
-prStd = prStd';
+prChgTotal = prChgTotal';
+prStdTotal = prStdTotal';
 
-[b,i] = sort(prChg);
-prChg = prChg(i);
-prStd = prStd(i);
+[b,i] = sort(prChgTotal);
+prChgTotal = prChgTotal(i);
+prStdTotal = prStdTotal(i);
 
-corrval = corr(prChg(round(.1*length(models)):round(.9*length(models))), prStd(round(.1*length(models)):round(.9*length(models))));
+corrval = corr(prChgTotal(round(.1*length(models)):round(.9*length(models))), prStdTotal(round(.1*length(models)):round(.9*length(models))));
 
 figure('Color', [1,1,1]);
 hold on;
@@ -142,20 +156,20 @@ grid on;
 %pbaspect([2 1 1]);
 axis square;
 
-for m = 1:size(prFut, 2)
-    t = text(prChg(m), prStd(m), num2str(i(m)), 'HorizontalAlignment', 'center', 'Color', 'k');
+xlim([-20 60])
+ylim([-50 100])
+
+for m = 1:length(prChgTotal)
+    t = text(prChgTotal(m), prStdTotal(m), num2str(i(m)), 'HorizontalAlignment', 'center', 'Color', 'k');
     t.FontSize = 22;
 end
 
-[f, gof] = fit(prChg(round(.1*length(models)):round(.9*length(models))), prStd(round(.1*length(models)):round(.9*length(models))), 'poly1');
+[f, gof] = fit(prChgTotal(round(.1*length(models)):round(.9*length(models))), prStdTotal(round(.1*length(models)):round(.9*length(models))), 'poly1');
 cint = confint(f);
-p = plot([prChg(round(.1*length(models))) prChg(round(.9*length(models)))], [f(prChg(round(.1*length(models)))) f(prChg(round(.9*length(models))))], '--b', 'LineWidth', 2);
+p = plot([prChgTotal(round(.1*length(models))) prChgTotal(round(.9*length(models)))], [f(prChgTotal(round(.1*length(models)))) f(prChgTotal(round(.9*length(models))))], '--b', 'LineWidth', 2);
 
 plot([-20 80], [0 0], '--k', 'linewidth', 2);
 plot([0 0], [-60 100], '--k', 'linewidth', 2);
-
-xlim([-20 80])
-ylim([-60 100])
 
 ylabel('P std. dev. change (%)');
 xlabel('Precipitation change (%)');
@@ -163,6 +177,6 @@ xlabel('Precipitation change (%)');
 set(gca, 'FontSize', 40);
 legend([p], {sprintf('Correlation = %.2f', corrval)}, 'location', 'northeast');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig pr-chg-std-white.eps;
+export_fig pr-chg-std-total.eps;
 close all;
 

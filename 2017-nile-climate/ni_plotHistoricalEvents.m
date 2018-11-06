@@ -245,8 +245,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([0 4], [50 50], 'k', 'linewidth', 2);
-b = boxplot([pgood tgood rgood], 'widths', [.8 .8]);
+plot([0 3], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pgood tgood], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -256,17 +256,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
-lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+% set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+% lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 4], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 4], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
-plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 3], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 3], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
+%plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T', 'R'});
+set(gca, 'XTickLabels', {'P', 'T'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
@@ -280,8 +280,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([0 4], [50 50], 'k', 'linewidth', 2);
-b = boxplot([pbad tbad rbad], 'widths', [.8 .8]);
+plot([0 3], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pbad tbad], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -291,17 +291,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
-lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+% set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+% lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 4], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 4], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
-plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 3], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 3], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
+%plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T', 'R'});
+set(gca, 'XTickLabels', {'P', 'T'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));

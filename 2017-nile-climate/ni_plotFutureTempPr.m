@@ -80,8 +80,33 @@ for s = 1%:size(seasons, 1)
         curInds = regionInds('nile');
         latInds = curInds{1};
         lonInds = curInds{2};
+        
         chg = squeeze(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, :, :), 4), 3)) - ...
               squeeze(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, :, :), 4), 3));
+        
+        
+        prStdChg = [];
+        
+        for xlat = 1:length(latInds)
+            for ylon = 1:length(lonInds)
+                histStd = nanstd(squeeze(nanmean(prHistCmip5(latInds(xlat), lonInds(ylon), :, :, :), 4)), 1);
+                futStd = nanstd(squeeze(nanmean(prFutCmip5(latInds(xlat), lonInds(ylon), :, :, :), 4)), 1);
+                prStdChg(xlat, ylon, :) = (futStd - histStd);
+            end
+        end
+        
+        prStdSig = [];
+        for xlat = 1:size(prStdChg, 1)
+            for ylon = 1:size(prStdChg, 2)
+                prStdSig(xlat, ylon) = length(find(sign(prStdChg(xlat, ylon, :)) == sign(nanmedian(prStdChg(xlat, ylon), 3))));
+            end
+        end
+        
+        coords1 = regions('nile-blue');
+        coords1 = [coords1(1,:) coords1(2,:)];
+        coords2 = regions('nile-white');
+        coords2 = [coords2(1,:) coords2(2,:)];
+        
         result = {lat(latInds,lonInds), lon(latInds,lonInds), nanmedian(chg, 3)}; 
         sig = [];
         for xlat = 1:size(chg, 1)
@@ -89,11 +114,6 @@ for s = 1%:size(seasons, 1)
                 sig(xlat, ylon) = length(find(sign(chg(xlat, ylon, :)) == sign(nanmedian(chg(xlat, ylon), 3))));
             end
         end
-
-        coords1 = regions('nile-blue');
-        coords1 = [coords1(1,:) coords1(2,:)];
-        coords2 = regions('nile-white');
-        coords2 = [coords2(1,:) coords2(2,:)];
         
         saveData = struct('data', {result}, ...
                           'plotRegion', 'nile', ...
@@ -106,6 +126,24 @@ for s = 1%:size(seasons, 1)
                           'colormap', brewermap([], 'BrBG'), ...
                           'plotCountries', true, ...
                           'statData', sig <= .67*length(models), ...
+                          'stippleInterval', 30, ...
+                          'boxCoords', {[coords1;
+                                         coords2]});
+        plotFromDataFile(saveData);
+        
+        
+        result = {lat(latInds,lonInds), lon(latInds,lonInds), nanmedian(prStdChg, 3)}; 
+        saveData = struct('data', {result}, ...
+                          'plotRegion', 'nile', ...
+                          'plotRange', [-.1 .1], ...
+                          'cbXTicks', -.1:.05:.1, ...
+                          'plotTitle', [''], ...
+                          'fileTitle', ['pr-std-chg-rcp85-annual.eps'], ...
+                          'plotXUnits', ['mm/day'], ...
+                          'blockWater', true, ...
+                          'colormap', brewermap([], 'BrBG'), ...
+                          'plotCountries', true, ...
+                          'statData', prStdSig <= .67*length(models), ...
                           'stippleInterval', 30, ...
                           'boxCoords', {[coords1;
                                          coords2]});
