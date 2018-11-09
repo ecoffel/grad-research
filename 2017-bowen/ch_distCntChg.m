@@ -98,11 +98,11 @@ for m = 1:length(models)
     end
 end
 
-data27 = squeeze(sum(threshChgTw27,3))-squeeze(sum(threshChgTwNoTxAmp27,3));
-data28 = squeeze(sum(threshChgTw28,3))-squeeze(sum(threshChgTwNoTxAmp28,3));
-data29 = squeeze(sum(threshChgTw29,3))-squeeze(sum(threshChgTwNoTxAmp29,3));
-data30 = squeeze(sum(threshChgTw30,3))-squeeze(sum(threshChgTwNoTxAmp30,3));
-data31 = squeeze(sum(threshChgTw31,3))-squeeze(sum(threshChgTwNoTxAmp31,3));
+data27 = squeeze(sum(threshChgTw27,3));%-squeeze(sum(threshChgTwNoTxAmp27,3));
+data28 = squeeze(sum(threshChgTw28,3));%-squeeze(sum(threshChgTwNoTxAmp28,3));
+data29 = squeeze(sum(threshChgTw29,3));%-squeeze(sum(threshChgTwNoTxAmp29,3));
+data30 = squeeze(sum(threshChgTw30,3));%-squeeze(sum(threshChgTwNoTxAmp30,3));
+data31 = squeeze(sum(threshChgTw31,3));%-squeeze(sum(threshChgTwNoTxAmp31,3));
 
 exp27 = [];
 exp28 = [];
@@ -110,11 +110,11 @@ exp29 = [];
 exp30 = [];
 exp31 = [];
 for m = 1:length(models)
-    exp27(m) = squeeze(nansum(nansum(data27(:,:,m) .* (futurePop5-histPop), 2), 1));
-    exp28(m) = squeeze(nansum(nansum(data28(:,:,m) .* (futurePop5-histPop), 2), 1));
-    exp29(m) = squeeze(nansum(nansum(data29(:,:,m) .* (futurePop5-histPop), 2), 1));
-    exp30(m) = squeeze(nansum(nansum(data30(:,:,m) .* (futurePop5-histPop), 2), 1));
-    exp31(m) = squeeze(nansum(nansum(data31(:,:,m) .* (futurePop5-histPop), 2), 1));
+    exp27(m) = squeeze(nansum(nansum(data27(:,:,m) .* (futurePop3-histPop), 2), 1));
+    exp28(m) = squeeze(nansum(nansum(data28(:,:,m) .* (futurePop3-histPop), 2), 1));
+    exp29(m) = squeeze(nansum(nansum(data29(:,:,m) .* (futurePop3-histPop), 2), 1));
+    exp30(m) = squeeze(nansum(nansum(data30(:,:,m) .* (futurePop3-histPop), 2), 1));
+    exp31(m) = squeeze(nansum(nansum(data31(:,:,m) .* (futurePop3-histPop), 2), 1));
 end
 
 
@@ -144,7 +144,7 @@ i1 = round(.1*length(models));
 i2 = round(.9*length(models));
 
 yyaxis left;
-plot([0 100], [0 0], '--k', 'linewidth', 2);
+%plot([0 100], [0 0], '--k', 'linewidth', 2);
 b = boxplot([d27(i1:i2) d28(i1:i2) d29(i1:i2) d30(i1:i2) d31(i1:i2)], 'positions', [.85 1.85 2.85 3.85 4.85], 'widths', .2);
 
 for bind = 1:size(b, 2)
@@ -153,6 +153,10 @@ for bind = 1:size(b, 2)
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 end
 
+ylim([0 30]);
+set(gca, 'ytick', 0:5:30);
+% ylim([-1.5 3.1]);
+% set(gca, 'ytick', -1:3);
 ylabel('Change (days per year)');
 
 yyaxis right;
@@ -165,13 +169,17 @@ for bind = 1:size(b, 2)
 end
 
 ylabel('Change (person-days per year)');
-set(gca, 'yticklabels', {'-20B', '-10B', '0', '10B', '20B', '30B'});
+% ylim([-1e10 2.6e10]);
+% set(gca, 'ytick', [-1:.5:2.5].*1e10, 'yticklabels', {'-10B', '-5B', '0', '5B', '10B', '15B', '20B', '25B'});
+ylim([0 1.8e11]);
+set(gca, 'ytick', [0:.25:2].*1e11, 'yticklabels', {'0', '25B', '50B', '75B', '100B', '125B', '150B', '175B', '200B'});
+
 xlim([.5 5.5]);
 set(gca, 'fontsize', 36, 'xtick', [1 2 3 4 5], 'xticklabels', [27 28 29 30 31]);
 
 xlabel(['T_W threshold (' char(176) 'C)']);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['thresh-cnt-boxplots.eps']);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig(['thresh-cnt-boxplots-all.eps']);
 close all;
 
 data = squeeze(sum(threshChgTw27,3))-squeeze(sum(threshChgTwNoTxAmp27,3));
@@ -195,6 +203,7 @@ end
 
 sigChg(1:15,:) = 0;
 sigChg(75:90,:) = 0;
+plotData(plotData == 0) = NaN;
 plotData(1:15,:) = NaN;
 plotData(75:90,:) = NaN;
 
@@ -205,9 +214,10 @@ saveData = struct('data', {result}, ...
                   'plotRange', [-10 10], ...
                   'cbXTicks', -10:2:10, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['tw-cnt-27-tx-amp.eps'], ...
+                  'fileTitle', ['tw-cnt-27.eps'], ...
                   'plotXUnits', ['# days per year above a T_W of 27' char(176) 'C'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...
+                  'colorbarArrow', 'both', ...
                   'statData', sigChg);
 plotFromDataFile(saveData);

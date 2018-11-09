@@ -558,7 +558,7 @@ if plotHotDryTrends
 
     plot([0 2], [0 0], '--k');
 
-    ylabel(['% Land area per year']);
+    ylabel(['% Land area per decade']);
     ylim([-1 20]);
     xlim([.5 1.5]);
     set(gca, 'FontSize', 36);

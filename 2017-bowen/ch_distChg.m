@@ -16,7 +16,9 @@ plotSpatialChg = false;
 chgTw = [];
 chgTx = [];
 threshChgTw = [];
+threshChgTw50 = [];
 threshChgTx = [];
+threshChgTx50 = [];
 threshChgEf = [];
 humid = [];
 groups = [];
@@ -54,6 +56,7 @@ for m = 1:length(models)
         
         tind = tind+1;
     end
+    
 end
 
 colorWb = [68, 166, 226]./255.0;
@@ -140,27 +143,33 @@ if plotDistChg
     grid on;
     box on;
 
-    chgTxRange = sort(squeeze(nanmean(nanmean(chgTx,2),1)),1);
-    yval = nanmedian(chgTxRange);
-    yrange = [chgTxRange(round(.9*length(models)))-yval;
-              yval-chgTxRange(round(.1*length(models)))];
+    %chgTxRange = sort(squeeze(nanmean(nanmean(chgTx,2),1)),1);
+%     yval = nanmedian(chgTxRange);
+%     yrange = [chgTxRange(round(.9*length(models)))-yval;
+%               yval-chgTxRange(round(.1*length(models)))];
     
-    yerr = [];
-    yerr(1,1,:)=yrange;
-    yerr(1,2,:)=yrange;
     
-    s = mseb([0 101.25], [yval yval], [yerr], [], 1);
-    set(s.mainLine, 'Color', colorTxx, 'LineWidth', 2);
-    set(s.patch, 'FaceColor', colorTxx);
-    set(s.edge, 'Color', 'w');
+%     yerr = [];
+%     yerr(1,1,:)=yrange;
+%     yerr(1,2,:)=yrange;
+%     
+%     s = mseb([0 101.25], [yval yval], [yerr], [], 1);
+%     set(s.mainLine, 'Color', colorTxx, 'LineWidth', 2);
+%     set(s.patch, 'FaceColor', colorTxx);
+%     set(s.edge, 'Color', 'w');
     
     mrange = squeeze(nanmean(nanmean(threshChgTx, 2), 1))';
     mrange = sort(mrange, 1);
+    
+    yval = sort(squeeze(nanmean(nanmean(nanmean(threshChgTx(:, :, 5:6, :), 3), 2), 1))');
+    yval = nanmedian(yval(round(.1*length(models)):round(.9*length(models))));
     
     b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
     set(b, {'LineWidth', 'Color'}, {2, colorTxx})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    plot([0 101.25], [yval yval], 'color', colorTxx, 'linewidth', 2);
     
     ylim([2.5 5.7])
     xlim([-5 105]);
@@ -170,7 +179,7 @@ if plotDistChg
     set(gca, 'YTick', 2.5:.5:5.5);
     ylabel(['Change (' char(176) 'C)']);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['tx-dist-chg.png'], '-m5');
+    export_fig(['tx-dist-chg.eps']);
     close all;
     
     
@@ -180,28 +189,33 @@ if plotDistChg
     grid on;
     box on;
 
-    chgTwRange = sort(squeeze(nanmean(nanmean(chgTw,2),1)),1);
-    yval = nanmedian(chgTwRange);
-    yrange = [chgTwRange(round(.9*length(models)))-yval;
-              yval-chgTwRange(round(.1*length(models)))];
+%     chgTwRange = sort(squeeze(nanmean(nanmean(chgTw,2),1)),1);
+%     yval = nanmedian(chgTwRange);
+%     yrange = [chgTwRange(round(.9*length(models)))-yval;
+%               yval-chgTwRange(round(.1*length(models)))];
+%     
+%     yerr = [];
+%     yerr(1,1,:)=yrange;
+%     yerr(1,2,:)=yrange;
     
-    yerr = [];
-    yerr(1,1,:)=yrange;
-    yerr(1,2,:)=yrange;
     
-    
-    s = mseb([0 101.25], [yval yval], [yerr], [], 1);
-    set(s.mainLine, 'Color', colorWb, 'LineWidth', 2);
-    set(s.patch, 'FaceColor', colorWb);
-    set(s.edge, 'Color', 'w');
+%     s = mseb([0 101.25], [yval yval], [yerr], [], 1);
+%     set(s.mainLine, 'Color', colorWb, 'LineWidth', 2);
+%     set(s.patch, 'FaceColor', colorWb);
+%     set(s.edge, 'Color', 'w');
     
     mrange = squeeze(nanmean(nanmean(threshChgTw, 2), 1))';
     mrange = sort(mrange, 1);
+    
+    yval = sort(squeeze(nanmean(nanmean(nanmean(threshChgTw(:, :, 5:6, :), 3), 2), 1))');
+    yval = nanmedian(yval(round(.1*length(models)):round(.9*length(models))));
     
     b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
     set(b, {'LineWidth', 'Color'}, {2, colorWb})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    plot([0 101.25], [yval yval], 'color', colorWb, 'linewidth', 2);
     
     ylim([1.75 3.5])
     xlim([-5 105]);
@@ -211,7 +225,7 @@ if plotDistChg
     set(gca, 'YTick', 1.5:.5:5.5);
     ylabel(['Change (' char(176) 'C)']);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['tw-dist-chg.png'], '-m5');
+    export_fig(['tw-dist-chg.eps']);
     close all;
     
     

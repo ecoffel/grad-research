@@ -59,8 +59,8 @@ end
 load lat;
 load lon;
 
-baseVar = 'wb-davies-jones-full';
-futureVar = 'wb-davies-jones-full';
+baseVar = 'huss';
+futureVar = 'huss';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = 0:5:100;
@@ -74,10 +74,10 @@ waterGrid = logical(waterGrid);
 for m = 1:length(models)
     curModel = models{m};
     
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-historical-cmip5-1981-2005.mat']);
+    load(['2017-bowen/txx-timing/txx-months-' curModel '-historical-cmip5-1981-2005.mat']);
     txxMonthsHist = txxMonths;
 
-    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
+    load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-range-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-warm-season.mat'], 'file')
@@ -95,9 +95,9 @@ for m = 1:length(models)
     baseDaily = baseDaily{3};
 
     % if any kelvin values, convert to C
-    if nanmean(nanmean(nanmean(nanmean(nanmean(baseDaily))))) > 100
-        baseDaily = baseDaily - 273.15;
-    end
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(baseDaily))))) > 100
+%         baseDaily = baseDaily - 273.15;
+%     end
 
     % set water grid cells to NaN
     % include loops for month and day (5D) in case we are using
@@ -155,9 +155,9 @@ for m = 1:length(models)
     futureDaily = futureDaily{3};
 
     % convert any kelvin values to C
-    if nanmean(nanmean(nanmean(nanmean(nanmean(futureDaily))))) > 100
-        futureDaily = futureDaily - 273.15;
-    end
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(futureDaily))))) > 100
+%         futureDaily = futureDaily - 273.15;
+%     end
 
     % set water grid cells to NaN
     % include loops for month and day (5D) in case we are using

@@ -28,6 +28,12 @@ function [fg, cb] = plotFromDataFile(saveData)
         showColorbar = true;
     end
     
+    if isfield(saveData, 'colorbarArrow')
+        colorbarArrow = saveData.colorbarArrow;
+    else
+        colorbarArrow = 'none';
+    end
+    
     if isfield(saveData, 'vectorData')
         vectorData = saveData.vectorData;
     else
@@ -109,6 +115,7 @@ function [fg, cb] = plotFromDataFile(saveData)
             set(cb, 'TickLabels', xticklabels);
         end
         cbPos = get(cb, 'Position');
+
     end
     if length(saveData.plotTitle) > 0
         title(saveData.plotTitle, 'FontSize', 36);
@@ -237,6 +244,12 @@ function [fg, cb] = plotFromDataFile(saveData)
             plotm([lat2; lat1], [lon2; lon2], 'LineWidth', 2, 'Color', 'k');
             plotm([lat1; lat1], [lon2; lon1], 'LineWidth', 2, 'Color', 'k');
         end
+    end
+    
+    if strcmp(colorbarArrow, 'both')
+        cbarrow;
+    elseif ~strcmp(colorbarArrow, 'none')
+        cbarrow(colorbarArrow);
     end
     
     if magnify

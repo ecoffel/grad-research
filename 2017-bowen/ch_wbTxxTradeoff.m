@@ -27,7 +27,35 @@ pEfTxx = [];
 sEfWb = [];
 pEfWb = [];
 
+threshChgTw = [];
+threshChgTx = [];
+threshChgHuss = [];
+
 for m = 1:length(models)
+    
+    tind = 1;
+    for t = [5:10:95 100]
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgTw(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgTx(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-huss-' models{m} '-rcp85-2061-2085-warm-season.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgHuss(:, :, tind, m) = chgData;
+        
+        tind = tind+1;
+    end
+    
     load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
     txxChgWarmSeason(:, :, m) = txChgWarm;
     
@@ -116,7 +144,7 @@ hwb(nn) = [];
 ewb(nn) = [];
 wbwb(nn) = [];
 
-data = (hussOnTxx-hussChgWarmSeason) .* 1000;
+data = (hussOnTxx - squeeze(nanmean(threshChgHuss(:, :, 5:6, :), 3))) .* 1000;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -150,8 +178,8 @@ saveData = struct('data', {result}, ...
                   'plotRange', [-2 2], ...
                   'cbXTicks', -2:.5:2, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['huss-on-tx-warm-season-.eps'], ...
-                  'plotXUnits', ['Change (g/kg)'], ...
+                  'fileTitle', ['huss-on-txx-huss50.eps'], ...
+                  'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'BrBG'), ...
                   'statData', sigChg);
