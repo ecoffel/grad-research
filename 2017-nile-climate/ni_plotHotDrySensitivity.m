@@ -3,13 +3,13 @@ base = 'cmip5';
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t74-p34.mat']);
 hotDryHistorical75 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t80-p20.mat']);
-hotDryHistorical80 = hotDryFuture;
+hotDryHistorical80 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t85-p15.mat']);
-hotDryHistorical85 = hotDryFuture;
+hotDryHistorical85 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004.mat']);
-hotDryHistorical90 = hotDryFuture;
+hotDryHistorical90 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t95-p5.mat']);
-hotDryHistorical95 = hotDryFuture;
+hotDryHistorical95 = hotDryFuture(:, :, [1:9 11:23]);
 
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t74-p34-tfull-pfull.mat']);
 hotDryFuture45Late75 = hotDryFuture;
@@ -25,13 +25,13 @@ hotDryFuture45Late95 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t74-p34-tfull-pfull.mat']);
 hotDryFutureLate75 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t80-p20.mat']);
-hotDryFutureLate80 = hotDryFuture;
+hotDryFutureLate80 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t85-p15.mat']);
-hotDryFutureLate85 = hotDryFuture;
+hotDryFutureLate85 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080.mat']);
-hotDryFutureLate90 = hotDryFuture;
+hotDryFutureLate90 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t95-p5.mat']);
-hotDryFutureLate95 = hotDryFuture;
+hotDryFutureLate95 = hotDryFuture(:, :, [1:9 11:23]);
 
 region = 'total';
 
@@ -93,6 +93,7 @@ hotdryHist75 = hotdryHist75(curLatInds, curLonInds, :);
 hotdryHist75 = squeeze(nanmean(nanmean(hotdryHist75,2),1));
 hotdry75 = hotdry75 ./ hotdryHist75;
 hotdry75(isinf(hotdry75)) = NaN;
+hotdry75(hotdryHist75 < .01) = NaN;
 hotdry75 = sort(hotdry75);
 
 hotdry45_75 = hotDryFuture45Late75;
@@ -103,6 +104,7 @@ hotdryHist75 = hotdryHist75(curLatInds, curLonInds);
 hotdryHist75 = squeeze(nanmean(nanmean(hotdryHist75,2),1));
 hotdry45_75 = hotdry45_75 ./ hotdryHist75;
 hotdry45_75(isinf(hotdry45_75)) = NaN;
+hotdry45_75(hotdryHist75 < .01) = NaN;
 hotdry45_75 = sort(hotdry45_75);
 
 hotdry80 = hotDryFutureLate80;
@@ -113,16 +115,18 @@ hotdryHist80 = hotdryHist80(curLatInds, curLonInds, :);
 hotdryHist80 = squeeze(nanmean(nanmean(hotdryHist80,2),1));
 hotdry80 = hotdry80 ./ hotdryHist80;
 hotdry80(isinf(hotdry80)) = NaN;
+hotdry80(hotdryHist80 < .01) = NaN;
 hotdry80 = sort(hotdry80);
 
 hotdry45_80 = hotDryFuture45Late80;
 hotdry45_80 = hotdry45_80(curLatInds, curLonInds, :);
 hotdry45_80 = squeeze(nanmean(nanmean(hotdry45_80,2),1));
 hotdryHist80 = hotDryHistorical80;
-hotdryHist80 = hotdryHist80(curLatInds, curLonInds, [1:9 11:end]);
+hotdryHist80 = hotdryHist80(curLatInds, curLonInds, :);
 hotdryHist80 = squeeze(nanmean(nanmean(hotdryHist80,2),1));
 hotdry45_80 = hotdry45_80 ./ hotdryHist80;
 hotdry45_80(isinf(hotdry45_80)) = NaN;
+hotdry45_80(hotdryHist80 < .01) = NaN;
 hotdry45_80 = sort(hotdry45_80);
 
 hotdry85 = hotDryFutureLate85;
@@ -133,16 +137,18 @@ hotdryHist85 = hotdryHist85(curLatInds, curLonInds, :);
 hotdryHist85 = squeeze(nanmean(nanmean(hotdryHist85,2),1));
 hotdry85 = hotdry85 ./ hotdryHist85;
 hotdry85(isinf(hotdry85)) = NaN;
+hotdry85(hotdryHist85 < .01) = NaN;
 hotdry85 = sort(hotdry85);
 
 hotdry45_85 = hotDryFuture45Late85;
 hotdry45_85 = hotdry45_85(curLatInds, curLonInds, :);
 hotdry45_85 = squeeze(nanmean(nanmean(hotdry45_85,2),1));
 hotdryHist85 = hotDryHistorical85;
-hotdryHist85 = hotdryHist85(curLatInds, curLonInds, [1:9 11:end]);
+hotdryHist85 = hotdryHist85(curLatInds, curLonInds, :);
 hotdryHist85 = squeeze(nanmean(nanmean(hotdryHist85,2),1));
 hotdry45_85 = hotdry45_85 ./ hotdryHist85;
 hotdry45_85(isinf(hotdry45_85)) = NaN;
+hotdry45_85(hotdryHist85 < .01) = NaN;
 hotdry45_85 = sort(hotdry45_85);
 
 hotdry90 = hotDryFutureLate90;
@@ -153,16 +159,18 @@ hotdryHist90 = hotdryHist90(curLatInds, curLonInds, :);
 hotdryHist90 = squeeze(nanmean(nanmean(hotdryHist90,2),1));
 hotdry90 = hotdry90 ./ hotdryHist90;
 hotdry90(isinf(hotdry90)) = NaN;
+hotdry90(hotdryHist90 < .01) = NaN;
 hotdry90 = sort(hotdry90);
 
 hotdry45_90 = hotDryFuture45Late90;
 hotdry45_90 = hotdry45_90(curLatInds, curLonInds, :);
 hotdry45_90 = squeeze(nanmean(nanmean(hotdry45_90,2),1));
 hotdryHist90 = hotDryHistorical90;
-hotdryHist90 = hotdryHist90(curLatInds, curLonInds, [1:9 11:end]);
+hotdryHist90 = hotdryHist90(curLatInds, curLonInds, :);
 hotdryHist90 = squeeze(nanmean(nanmean(hotdryHist90,2),1));
 hotdry45_90 = hotdry45_90 ./ hotdryHist90;
 hotdry45_90(isinf(hotdry45_90)) = NaN;
+hotdry45_90(hotdryHist90 < .01) = NaN;
 hotdry45_90 = sort(hotdry45_90);
 
 hotdry95 = hotDryFutureLate95;
@@ -173,20 +181,69 @@ hotdryHist95 = hotdryHist95(curLatInds, curLonInds, :);
 hotdryHist95 = squeeze(nanmean(nanmean(hotdryHist95,2),1));
 hotdry95 = hotdry95 ./ hotdryHist95;
 hotdry95(isinf(hotdry95)) = NaN;
+hotdry95(hotdryHist95 < .01) = NaN;
 hotdry95 = sort(hotdry95);
 
 hotdry45_95 = hotDryFuture45Late95;
 hotdry45_95 = hotdry45_95(curLatInds, curLonInds, :);
 hotdry45_95 = squeeze(nanmean(nanmean(hotdry45_95,2),1));
 hotdryHist95 = hotDryHistorical95;
-hotdryHist95 = hotdryHist95(curLatInds, curLonInds, [1:9 11:end]);
+hotdryHist95 = hotdryHist95(curLatInds, curLonInds, :);
 hotdryHist95 = squeeze(nanmean(nanmean(hotdryHist95,2),1));
 hotdry45_95 = hotdry45_95 ./ hotdryHist95;
 hotdry45_95(isinf(hotdry45_95)) = NaN;
+hotdry45_95(hotdryHist95 < .01) = NaN;
 hotdry45_95 = sort(hotdry45_95);
 
-ind1 = round(.1*length(models));
-ind2 = round(.9*length(models));
+ind1_75 = round(.1*length(hotdry75));
+ind2_75 = round(.9*length(hotdry75));
+%hotdry75(1:ind1_75) = NaN;
+hotdry75(ind2_75:end) = NaN;
+
+ind1_80 = round(.1*length(hotdry80));
+ind2_80 = round(.9*length(hotdry80));
+%hotdry80(1:ind1_80) = NaN;
+hotdry80(ind2_80:end) = NaN;
+
+ind1_85 = round(.1*length(hotdry85));
+ind2_85 = round(.9*length(hotdry85));
+%hotdry85(1:ind1_85) = NaN;
+hotdry85(ind2_85:end) = NaN;
+
+ind1_90 = round(.1*length(hotdry90));
+ind2_90 = round(.9*length(hotdry90));
+%hotdry90(1:ind1_90) = NaN;
+hotdry90(ind2_90:end) = NaN;
+
+ind1_95 = round(.1*length(hotdry95));
+ind2_95 = round(.9*length(hotdry95));
+%hotdry95(1:ind1_95) = NaN;
+hotdry95(ind2_95:end) = NaN;
+
+ind1_45_75 = round(.1*length(hotdry45_75));
+ind2_45_75 = round(.9*length(hotdry45_75));
+%hotdry45_75(1:ind1_45_75) = NaN;
+hotdry45_75(ind2_45_75:end) = NaN;
+
+ind1_45_80 = round(.1*length(hotdry45_80));
+ind2_45_80 = round(.9*length(hotdry45_80));
+%hotdry45_80(1:ind1_45_80) = NaN;
+hotdry45_80(ind2_45_80:end) = NaN;
+
+ind1_45_85 = round(.1*length(hotdry45_85));
+ind2_45_85 = round(.9*length(hotdry45_85));
+%hotdry45_85(1:ind1_45_85) = NaN;
+hotdry45_85(ind2_45_85:end) = NaN;
+
+ind1_45_90 = round(.1*length(hotdry45_90));
+ind2_45_90 = round(.9*length(hotdry45_90));
+%hotdry45_90(1:ind1_45_90) = NaN;
+hotdry45_90(ind2_45_90:end) = NaN;
+
+ind1_45_95 = round(.1*length(hotdry45_95));
+ind2_45_95 = round(.9*length(hotdry45_95));
+%hotdry45_95(1:ind1_45_95) = NaN;
+hotdry45_95(ind2_45_95:end) = NaN;
 
 figure('Color', [1,1,1]);
 hold on;
@@ -194,8 +251,8 @@ box on;
 grid on;
 axis square;
 
-b1 = boxplot([hotdry75(ind1:ind2) hotdry80(ind1:ind2) hotdry85(ind1:ind2) hotdry90(ind1:ind2) hotdry95(ind1:ind2)], 'positions', [1.2 2.2 3.2 4.2 5.2], 'widths', [.2 .2 .2 .2 .2]);
-b2 = boxplot([hotdry45_75(ind1:ind2) hotdry45_80(ind1:ind2) hotdry45_85(ind1:ind2) hotdry45_90(ind1:ind2) hotdry45_95(ind1:ind2)], 'positions', [.8 1.8 2.8 3.8 4.8], 'widths', [.2 .2 .2 .2 .2]);
+b1 = boxplot([hotdry75 hotdry80 hotdry85 hotdry90 hotdry95], 'positions', [1.2 2.2 3.2 4.2 5.2], 'widths', [.2 .2 .2 .2 .2]);
+b2 = boxplot([hotdry45_75 hotdry45_80 hotdry45_85 hotdry45_90 hotdry45_95], 'positions', [.8 1.8 2.8 3.8 4.8], 'widths', [.2 .2 .2 .2 .2]);
 
 colors = brewermap(10, 'Reds');
 
@@ -222,7 +279,7 @@ end
 % end
 
 xlim([0 6]);
-ylim([0 25]);
+ylim([0 8]);
 
 set(gca,'TickLabelInterpreter', 'tex');    
 xtickangle(0);
@@ -231,7 +288,7 @@ set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{74}/P_{34}', 'T_{80}/P_{20}', 'T_{85}
 xtickangle(90);
 ylabel('Increase in frequency (multiple)');
 set(gca, 'FontSize', 36);
-set(gca, 'YTick', [1 3 5 10 15 20 25 30]);
+set(gca, 'YTick', [1:8]);
 set(gcf, 'Position', get(0,'Screensize'));
 
 export_fig(['hot-dry-freq-multiplier-' base '-' region '.eps']);

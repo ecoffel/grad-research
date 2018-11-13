@@ -7,7 +7,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 rcp = 'historical';
 timePeriod = [1981 2016];
 
-plotTempPTrends = false;
+plotTempPTrends = true;
 plotHotDryTrends = true;
 
 if ~exist('eraTemp', 'var')
@@ -87,6 +87,16 @@ if ~exist('cpc', 'var')
     cpc = nanmean(cpc, 4);
 end
 
+if ~exist('beTemp')
+    beTemp = loadMonthlyData('E:\data\BerkeleyEarth\output\temperature\monthly', 'temperature', 'startYear', 1901, 'endYear', 2017);
+end
+
+if ~exist('hadcrutTemp')
+    hadcrutTemp = loadMonthlyData('E:\data\HadCRUT4\output\temperature_anomaly\monthly', 'temperature_anomaly', 'startYear', 1901, 'endYear', 2017);
+end
+
+
+
 if ~exist('udelt')
     udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1901, 'endYear', 2014);
     udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
@@ -110,6 +120,16 @@ latUdel = udelt{1};
 lonUdel = udelt{2};
 [latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 [latIndsWhiteUdel, lonIndsWhiteUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+
+latBe = beTemp{1};
+lonBe = beTemp{2};
+[latIndsBlueBe, lonIndsBlueBe] = latLonIndexRange({latBe,lonBe,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteBe, lonIndsWhiteBe] = latLonIndexRange({latBe,lonBe,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+
+latHadcrut = hadcrutTemp{1};
+lonHadcrut = hadcrutTemp{2};
+[latIndsBlueHadcrut, lonIndsBlueHadcrut] = latLonIndexRange({latHadcrut,lonHadcrut,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteHadcrut, lonIndsWhiteHadcrut] = latLonIndexRange({latHadcrut,lonHadcrut,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 
 [latIndsChirps, lonIndsChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBounds(1,:), regionBounds(2,:));
 [latIndsBlueChirps, lonIndsBlueChirps] = latLonIndexRange({latChirps,lonChirps,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
@@ -135,7 +155,7 @@ if ~exist('cmip5Temp', 'var')
     cmip5Temp = [];
     for m = 1:length(models)
         fprintf('processing %s...\n', models{m});
-        t = loadMonthlyData(['E:\data\cmip5\output\' models{m} '\mon\r1i1p1\historical\tas\regrid\world'], 'tas', 'startYear', 1901, 'endYear', 2005);
+        t = loadMonthlyData(['E:\data\cmip5\output\' models{m} '\mon\r1i1p1\historical\tas\regrid\world'], 'tas', 'startYear', 1981, 'endYear', 2004);
         %t2 = loadDailyData(['E:\data\cmip5\output\' models{m} '\r1i1p1\rcp85\tasmax\regrid\world'], 'startYear', 2006, 'endYear', 2016);
         %t = dailyToMonthly(t);
         %t2 = dailyToMonthly(t2);
@@ -156,7 +176,7 @@ if ~exist('cmip5Pr', 'var')
     cmip5Pr = [];
     for m = 1:length(models)
         fprintf('processing %s...\n', models{m});
-        p = loadMonthlyData(['E:\data\cmip5\output\' models{m} '\mon\r1i1p1\historical\pr\regrid\world'], 'pr', 'startYear', 1901, 'endYear', 2005);
+        p = loadMonthlyData(['E:\data\cmip5\output\' models{m} '\mon\r1i1p1\historical\pr\regrid\world'], 'pr', 'startYear', 1981, 'endYear', 2004);
         %p2 = loadMonthlyData(['E:\data\cmip5\output\' models{m} '\mon\r1i1p1\rcp85\pr\regrid\world'], 'pr', 'startYear', 2006, 'endYear', 2016);
         p{3} = p{3} .* 3600 .* 24;
         %p2{3} = p2{3} .* 3600 .* 24;
@@ -182,6 +202,12 @@ if blue
     
     curLatIndsUdel = latIndsBlueUdel;
     curLonIndsUdel = lonIndsBlueUdel;
+    
+    curLatIndsHadcrut = latIndsBlueHadcrut;
+    curLonIndsHadcrut = lonIndsBlueHadcrut;
+    
+    curLatIndsBe = latIndsBlueBe;
+    curLonIndsBe = lonIndsBlueBe;
 else
     curLatInds = latIndsWhite;
     curLonInds = lonIndsWhite;
@@ -197,6 +223,12 @@ else
     
     curLatIndsUdel = latIndsWhiteUdel;
     curLonIndsUdel = lonIndsWhiteUdel;
+    
+    curLatIndsHadcrut = latIndsWhiteHadcrut;
+    curLonIndsHadcrut = lonIndsWhiteHadcrut;
+    
+    curLatIndsBe = latIndsWhiteBe;
+    curLonIndsBe = lonIndsWhiteBe;
 end
 
 curLatInds = [latIndsBlue latIndsWhite];
@@ -214,6 +246,12 @@ curLonIndsGldas = [lonIndsBlueGldas lonIndsWhiteGldas];
 curLatIndsUdel = [latIndsBlueUdel latIndsWhiteUdel];
 curLonIndsUdel = [lonIndsBlueUdel lonIndsWhiteUdel];
 
+curLatIndsHadcrut = [latIndsBlueHadcrut latIndsWhiteHadcrut];
+curLonIndsHadcrut = [lonIndsBlueHadcrut lonIndsWhiteHadcrut];
+
+curLatIndsBe = [latIndsBlueBe latIndsWhiteBe];
+curLonIndsBe = [lonIndsBlueBe lonIndsWhiteBe];
+
 plotMap = false;
 
 seasons = [[12 1 2]; 
@@ -227,10 +265,12 @@ tempTrendsCmip5 = [];
 tempTrendsPCmip5 = [];
 tempSE = [];
        
-regionalTEra = squeeze(nanmean(nanmean(eraTemp{3}(curLatInds, curLonInds, :), 2), 1));
-regionalTGldas = squeeze(nanmean(nanmean(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, :), 2), 1));
-regionalTCpc = squeeze(nanmean(nanmean(cpc(curLatIndsRel, curLonIndsRel, :), 2), 1));
-regionalTUdel = squeeze(nanmean(nanmean(udelt{3}(curLatIndsUdel, curLonIndsUdel, :), 2), 1));
+regionalTEra = squeeze(nanmean(nanmean(nanmean(eraTemp{3}(curLatInds, curLonInds, :, :), 2), 1), 4));
+regionalTGldas = squeeze(nanmean(nanmean(nanmean(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, :, :), 2), 1), 4));
+regionalTCpc = squeeze(nanmean(nanmean(nanmean(cpc(curLatIndsRel, curLonIndsRel, :, :), 2), 1), 4));
+regionalTUdel = squeeze(nanmean(nanmean(nanmean(udelt{3}(curLatIndsUdel, curLonIndsUdel, :, :), 2), 1), 4));
+regionalTHadcrut = squeeze(nanmean(nanmean(nanmean(hadcrutTemp{3}(curLatIndsHadcrut, curLonIndsHadcrut, :, :), 2), 1), 4));
+regionalTBe = squeeze(nanmean(nanmean(nanmean(beTemp{3}(curLatIndsBe, curLonIndsBe, :, :), 2), 1), 4));
 regionalTCmip5 = squeeze(nanmean(nanmean(cmip5Temp(curLatIndsRel, curLonIndsRel, :, :), 2), 1));
 
 f = fitlm((1:length(regionalTEra))', regionalTEra, 'linear');
@@ -248,11 +288,20 @@ tempTrendsP(3) = f.Coefficients.pValue(2);
 tempTrends(3) = f.Coefficients.Estimate(2);
 tempSE(3) = f.Coefficients.SE(2);
 
-
-f = fitlm((1:length(regionalTCpc))', regionalTCpc, 'linear');
+f = fitlm((1:length(regionalTHadcrut))', regionalTHadcrut, 'linear');
 tempTrendsP(4) = f.Coefficients.pValue(2);
 tempTrends(4) = f.Coefficients.Estimate(2);
 tempSE(4) = f.Coefficients.SE(2);
+
+f = fitlm((1:length(regionalTBe))', regionalTBe, 'linear');
+tempTrendsP(5) = f.Coefficients.pValue(2);
+tempTrends(5) = f.Coefficients.Estimate(2);
+tempSE(5) = f.Coefficients.SE(2);
+
+f = fitlm((1:length(regionalTCpc))', regionalTCpc, 'linear');
+tempTrendsP(6) = f.Coefficients.pValue(2);
+tempTrends(6) = f.Coefficients.Estimate(2);
+tempSE(6) = f.Coefficients.SE(2);
 
 
 for m = 1:size(regionalTCmip5, 2)
@@ -273,11 +322,11 @@ prTrends = [];
 prTrendsP = [];
 prSE = [];
        
-regionalPEra = squeeze(nanmean(nanmean(eraPr{3}(curLatInds, curLonInds, :), 2), 1));
-regionalPGldas = squeeze(nanmean(nanmean(gldasPr{3}(curLatIndsGldas, curLonIndsGldas, :), 2), 1));
-regionalPGpcp = squeeze(nanmean(nanmean(gpcp{3}(curLatInds, curLonInds, :), 2), 1));
-regionalPChirps = squeeze(nanmean(nanmean(chirps(curLatIndsChirpsRel, curLonIndsChirpsRel, :), 2), 1));
-regionalPUdel = squeeze(nanmean(nanmean(udelp{3}(curLatIndsUdel, curLonIndsUdel, :), 2), 1));
+regionalPEra = squeeze(nanmean(nanmean(nanmean(eraPr{3}(curLatInds, curLonInds, :, :), 2), 1), 4));
+regionalPGldas = squeeze(nanmean(nanmean(nanmean(gldasPr{3}(curLatIndsGldas, curLonIndsGldas, :, :), 2), 1), 4));
+regionalPGpcp = squeeze(nanmean(nanmean(nanmean(gpcp{3}(curLatInds, curLonInds, :, :), 2), 1), 4));
+regionalPChirps = squeeze(nanmean(nanmean(nanmean(chirps(curLatIndsChirpsRel, curLonIndsChirpsRel, :, :), 2), 1), 4));
+regionalPUdel = squeeze(nanmean(nanmean(nanmean(udelp{3}(curLatIndsUdel, curLonIndsUdel, :, :), 2), 1), 4));
 regionalPCmip5 = squeeze(nanmean(nanmean(cmip5Pr(curLatIndsRel, curLonIndsRel, :, :), 2), 1));
 
 f = fitlm((1:length(regionalPEra))', regionalPEra, 'linear');
@@ -305,8 +354,6 @@ prTrendsP(5) = f.Coefficients.pValue(2);
 prTrends(5) = f.Coefficients.Estimate(2);
 prSE(5) = f.Coefficients.SE(2);
 
-
-
 for m = 1:size(regionalPCmip5, 2)
     p = regionalPCmip5(:,m)';
     f = fitlm((1:length(p))', p, 'linear');
@@ -321,12 +368,11 @@ prTrends = prTrends .* 10;
 prSE = prSE .* 10;
 
 
-
 if plotTempPTrends
     
     fig = figure('Color',[1,1,1]);
     
-    colors = get(fig, 'defaultaxescolororder');
+    colors = distinguishable_colors(9) .* .75;% get(fig, 'defaultaxescolororder');
     
     legItems = [];
     hold on;
@@ -335,19 +381,22 @@ if plotTempPTrends
     grid on;
 
     yyaxis left;
-    displace = [-.2 -.1 0 .1];
+    displace = [-.35 -.25 -.15 -.05 .05 .15];
     for d = 1:length(tempTrendsP)
         e = errorbar(1+displace(d), tempTrends(d), tempSE(d), 'Color', colors(d,:), 'LineWidth', 2);
         p = plot(1+displace(d), tempTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
 
         legItems(end+1) = p;
+        set(legItems(end), 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
 
         if tempTrendsP(d) < .05
-            plot(1+displace(d), tempTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+            plot(1+displace(d), tempTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :), 'LineWidth', 2);
+        else
+            plot(1+displace(d), tempTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', 'w', 'Color', colors(d, :), 'LineWidth', 2);
         end
     end
 
-    b = boxplot(tempTrendsCmip5', 'positions', [1.2], 'widths', [.1]);
+    b = boxplot(tempTrendsCmip5', 'positions', [1.25], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
@@ -358,8 +407,8 @@ if plotTempPTrends
 
     % skip color 4 (for cpc) so that 2 unique pr datasets have their own
     % colors
-    colors(4,:)=colors(5,:);
-    colors(5,:)=colors(6,:);
+    colors(4,:)=colors(7,:);
+    colors(5,:)=colors(8,:);
 
     yyaxis right;
     displace = [-.25 -.15 -.05 .05 .15];
@@ -368,9 +417,12 @@ if plotTempPTrends
             p = plot(2+displace(d), prTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
             if d >= 4
                 legItems(end+1) = p;
+                set(legItems(end), 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
             end
             if prTrendsP(d) < .05
-                plot(2+displace(d), prTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+                plot(2+displace(d), prTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :), 'LineWidth', 2);
+            else
+                plot(2+displace(d), prTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', 'w', 'Color', colors(d, :), 'LineWidth', 2);
             end
     end
 
@@ -388,10 +440,9 @@ if plotTempPTrends
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1 2], 'XTickLabels', {'Temperature', 'Precipitation'});
     set(gca, 'YTick', -.3:.1:.3);
-    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'CPC', 'GPCP', 'CHIRPS-2'}, 'location', 'northeast');
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig('annual-temp-pr-trends-total.eps');
-    close all;
+%     set(gcf, 'Position', get(0,'Screensize'));
+%     export_fig('annual-temp-pr-trends-total.eps');
+%     close all;
 %     if blue
 %         export_fig('annual-temp-pr-trends-blue.eps');
 %     else
@@ -407,85 +458,64 @@ tprc = 74;
 pprc = 34;
 
 
-prcTEraBlue = prctile(eraTemp{3}(latIndsBlue, lonIndsBlue, :), tprc, 3);
-prcPEraBlue = prctile(eraPr{3}(latIndsBlue, lonIndsBlue, :), pprc, 3);
+prcTEra = prctile(regionalTEra, tprc);
+prcPEra = prctile(regionalPEra, pprc);
 
-prcTGldasBlue = prctile(gldasTemp{3}(latIndsBlueGldas, lonIndsBlueGldas, :), tprc, 3);
-prcPGldasBlue = prctile(gldasPr{3}(latIndsBlueGldas, lonIndsBlueGldas, :), pprc, 3);
+prcTGldas = prctile(regionalTGldas, tprc);
+prcPGldas = prctile(regionalPGldas, pprc);
 
-prcTCpcBlue = prctile(cpc(latIndsBlueRel, lonIndsBlueRel, :), tprc, 3);
-prcPGpcpBlue = prctile(gpcp{3}(latIndsBlueRel, lonIndsBlueRel, :), pprc, 3);
+prcTCpc = prctile(regionalTCpc, tprc);
+prcPGpcp = prctile(regionalPGpcp, pprc);
 
-prcTUdelBlue = prctile(udelt{3}(latIndsBlueUdel, lonIndsBlueUdel, :), tprc, 3);
-prcPUdelBlue = prctile(udelp{3}(latIndsBlueUdel, lonIndsBlueUdel, :), pprc, 3);
+prcTUdel = prctile(regionalTUdel, tprc);
+prcPUdel = prctile(regionalPUdel, pprc);
 
-prcTCmip5Blue = squeeze(prctile(cmip5Temp(latIndsBlueRel, lonIndsBlueRel, :, :), tprc, 3));
-prcPCmip5Blue = squeeze(prctile(cmip5Pr(latIndsBlueRel, lonIndsBlueRel, :, :), pprc, 3));
+prcTHadcrut = prctile(regionalTHadcrut, tprc);
+prcTBe = prctile(regionalTBe, tprc);
 
-prcTEraWhite = prctile(eraTemp{3}(latIndsWhite, lonIndsWhite, :), tprc, 3);
-prcPEraWhite = prctile(eraPr{3}(latIndsWhite, lonIndsWhite, :), pprc, 3);
-
-prcTGldasWhite = prctile(gldasTemp{3}(latIndsWhiteGldas, lonIndsWhiteGldas, :), tprc, 3);
-prcPGldasWhite = prctile(gldasPr{3}(latIndsWhiteGldas, lonIndsWhiteGldas, :), pprc, 3);
-
-prcTCpcWhite = prctile(cpc(latIndsWhiteRel, lonIndsWhiteRel, :), tprc, 3);
-prcPGpcpWhite = prctile(gpcp{3}(latIndsWhiteRel, lonIndsWhiteRel, :), pprc, 3);
-
-prcTUdelWhite = prctile(udelt{3}(latIndsWhiteUdel, lonIndsWhiteUdel, :), tprc, 3);
-prcPUdelWhite = prctile(udelp{3}(latIndsWhiteUdel, lonIndsWhiteUdel, :), pprc, 3);
-
-prcTCmip5White = squeeze(prctile(cmip5Temp(latIndsWhiteRel, lonIndsWhiteRel, :, :), tprc, 3));
-prcPCmip5White = squeeze(prctile(cmip5Pr(latIndsWhiteRel, lonIndsWhiteRel, :, :), pprc, 3));
+prcTCmip5 = prctile(regionalTCmip5, tprc, 1);
+prcPCmip5 = prctile(regionalPCmip5, pprc, 1);
 
 % 1981 - 2016 time period
-for year = 1:(timePeriod(end)-timePeriod(1)+1)
-    hotDryEraBlue(year) = numel(find(eraTemp{3}(latIndsBlue, lonIndsBlue, year) > prcTEraBlue & eraPr{3}(latIndsBlue, lonIndsBlue, year) < prcPEraBlue));
-    hotDryEraWhite(year) = numel(find(eraTemp{3}(latIndsWhite, lonIndsWhite, year) > prcTEraWhite & eraPr{3}(latIndsWhite, lonIndsWhite, year) < prcPEraWhite));
-    
-    hotDryCpcGpcpBlue(year) = numel(find(cpc(latIndsBlueRel, lonIndsBlueRel, year) > prcTCpcBlue & gpcp{3}(latIndsBlueRel, lonIndsBlueRel, year) < prcPGpcpBlue));
-    hotDryCpcGpcpWhite(year) = numel(find(cpc(latIndsWhiteRel, lonIndsWhiteRel, year) > prcTCpcWhite & gpcp{3}(latIndsWhiteRel, lonIndsWhiteRel, year) < prcPGpcpWhite));
-end
-
-hotDryEra = (hotDryEraBlue + hotDryEraWhite) ./ (length(latIndsBlue)*length(lonIndsBlue) + length(latIndsWhite)*length(lonIndsWhite));
-hotDryCpcGpcp = (hotDryCpcGpcpBlue + hotDryCpcGpcpWhite) ./ (length(latIndsBlueRel)*length(lonIndsBlueRel) + length(latIndsWhiteRel)*length(lonIndsWhiteRel));
+hotDryEra = regionalTEra > prcTEra & regionalPEra < prcPEra;
+hotDryCpcGpcp = regionalTCpc > prcTCpc & regionalPGpcp < prcPGpcp;
 
 % 1981 - 2010
-for year = 1:size(gldasTemp{3}, 3)
-    hotDryGldasBlue(year) = numel(find(gldasTemp{3}(latIndsBlueGldas, lonIndsBlueGldas, year) > prcTGldasBlue & gldasPr{3}(latIndsBlueGldas, lonIndsBlueGldas, year) < prcPGldasBlue));
-    hotDryGldasWhite(year) = numel(find(gldasTemp{3}(latIndsWhiteGldas, lonIndsWhiteGldas, year) > prcTGldasWhite & gldasPr{3}(latIndsWhiteGldas, lonIndsWhiteGldas, year) < prcPGldasWhite));
-end
-
-hotDryGldas = (hotDryGldasBlue + hotDryGldasWhite) ./ (length(latIndsBlueGldas)*length(lonIndsBlueGldas) + length(latIndsWhiteGldas)*length(lonIndsWhiteGldas));
+hotDryGldas = regionalTGldas > prcTGldas & regionalPGldas < prcPGldas;
 
 % 1981 - 2014
-for year = 1:size(udelt{3}, 3)
-    hotDryUdelBlue(year) = numel(find(udelt{3}(latIndsBlueUdel, lonIndsBlueUdel, year) > prcTUdelBlue & udelp{3}(latIndsBlueUdel, lonIndsBlueUdel, year) < prcPUdelBlue));
-    hotDryUdelWhite(year) = numel(find(udelt{3}(latIndsWhiteUdel, lonIndsWhiteUdel, year) > prcTUdelWhite & udelp{3}(latIndsWhiteUdel, lonIndsWhiteUdel, year) < prcPUdelWhite));
+hotDryUdel = regionalTUdel > prcTUdel & regionalPUdel < prcPUdel;
+
+hotDryCmip5 = [];
+for model = 1:size(cmip5Temp, 4)
+    hotDryCmip5(:, model) = regionalTCmip5(:, model) > prcTCmip5(model) & regionalPCmip5(:, model) < prcPCmip5(model);
 end
 
-hotDryUdel = (hotDryUdelBlue + hotDryUdelWhite) ./ (length(latIndsBlueUdel)*length(lonIndsBlueUdel) + length(latIndsWhiteUdel)*length(lonIndsWhiteUdel));
+tSuper = [regionalTEra(1:2010-1981+1), regionalTGldas(1981-1960+1:end), regionalTUdel(1981-1901+1:2010-1901+1), ...
+          regionalTCpc(1:2010-1981+1), regionalTHadcrut(1981-1901+1:2010-1901+1), regionalTBe(1981-1901+1:2010-1901+1)];
+      
+tSuperPrc = [prctile(regionalTEra(1:2010-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:end), tprc), prctile(regionalTUdel(1981-1901+1:2010-1901+1), tprc), ...
+             prctile(regionalTCpc(1:2010-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2010-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2010-1901+1), tprc)];
 
-for model = 1:size(cmip5Temp, 4)
-    for year = 1:size(cmip5Temp, 3)
-        hotDryCmip5Blue(year, model) = numel(find(cmip5Temp(latIndsBlueRel, lonIndsBlueRel, year, model) > prcTCmip5Blue(:, :, model) & cmip5Pr(latIndsBlueRel, lonIndsBlueRel, year, model) < prcPCmip5Blue(:, :, model)));
-        hotDryCmip5White(year, model) = numel(find(cmip5Temp(latIndsWhiteRel, lonIndsWhiteRel, year, model) > prcTCmip5White(:, :, model) & cmip5Pr(latIndsWhiteRel, lonIndsWhiteRel, year, model) < prcPCmip5White(:, :, model)));
+pSuper = [regionalPEra(1:2010-1981+1), regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
+          regionalPGpcp(1:2010-1981+1), regionalPChirps(1:2010-1981+1)];
+      
+pSuperPrc = [prctile(regionalPEra(1:2010-1981+1), pprc), prctile(regionalPGldas(1981-1960+1:end), pprc), prctile(regionalPUdel(1981-1901+1:2010-1901+1), pprc), ...
+             prctile(regionalPGpcp(1:2010-1981+1), pprc), prctile(regionalPChirps(1:2010-1981+1), pprc)];
+
+         
+hdTrendsSuper = [];
+hdTrendsSuperP = [];
+hdTrendsSuperSE = [];
+for t = 1:size(tSuper, 2)
+    for p = 1:size(pSuper, 2)
+        curHd = tSuper(:, t) > tSuperPrc(t) & pSuper(:, p) < pSuperPrc(p);
+        f = fitlm((1:length(curHd))', curHd', 'linear');
+        hdTrendsSuperP(t, p) = f.Coefficients.pValue(2);
+        hdTrendsSuper(t, p) = f.Coefficients.Estimate(2);
+        hdTrendsSuperSE(t, p) = f.Coefficients.SE(2);
     end
 end
-
-hotDryCmip5 = (hotDryCmip5Blue + hotDryCmip5Blue) ./ (length(latIndsBlueRel)*length(lonIndsBlueRel) + length(latIndsWhiteRel)*length(lonIndsWhiteRel));
-
-% covert to % land area per year
-hotDryEra = hotDryEra .* 100;
-hotDryCpcGpcp = hotDryCpcGpcp .* 100;
-hotDryGldas = hotDryGldas .* 100;
-hotDryUdel = hotDryUdel .* 100;
-hotDryCmip5 = hotDryCmip5 .* 100;
-
-% hotDryEra = normr(hotDryEra);
-% hotDryCpcGpcp = normr(hotDryCpcGpcp);
-% hotDryGldas = normr(hotDryGldas);
-% hotDryUdel = normr(hotDryUdel);
-% hotDryCmip5 = normc(hotDryCmip5);
 
 hdTrendsP = [];
 hdTrends = [];
@@ -514,8 +544,6 @@ hdTrendsP(4) = f.Coefficients.pValue(2);
 hdTrends(4) = f.Coefficients.Estimate(2);
 hdTrendsSE(4) = f.Coefficients.SE(2);
 
-
-
 for model = 1:size(cmip5Temp, 4)
     f = fitlm((1:size(hotDryCmip5, 1))', hotDryCmip5(:, model), 'linear');
     hdTrendsCmip5P(model) = f.Coefficients.pValue(2);
@@ -528,45 +556,58 @@ hdTrends = hdTrends .* 10;
 hdTrendsSE = hdTrendsSE .* 10;
 hdTrendsCmip5 = hdTrendsCmip5 .* 10;
 hdSECmip5 = hdSECmip5 .* 10;
+hdTrendsSuper = hdTrendsSuper .* 10;
+hdTrendsSuperSE = hdTrendsSuperSE .* 10;
 
 if plotHotDryTrends
 
-    figure('Color',[1,1,1]);
+    fig2 = figure('Color',[1,1,1]);
     colors = get(gca, 'colororder');
-    legItems = [];
+    %legItems = [];
     hold on;
     box on;
     pbaspect([1 2 1]);
     grid on;
 
-    displace = [-.2 -.1 0 .1];
+    displace = [-.3 -.18 -.07 .05];
     for d = 1:length(hdTrends)
         e = errorbar(1+displace(d), hdTrends(d), hdTrendsSE(d), 'Color', colors(d,:), 'LineWidth', 2);
         p = plot(1+displace(d), hdTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
 
-        legItems(end+1) = p;
+        % add cpc-gpcp to legend
+        if d == 4
+            legItems(end+1) = p;
+        end
 
         if hdTrendsP(d) < .05
             plot(1+displace(d), hdTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
         end
     end
 
-    b = boxplot(hdTrendsCmip5', 'positions', [1.2], 'widths', [.1]);
+    b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.15], 'widths', [.1]);
+    set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
+    
+    b = boxplot(hdTrendsCmip5', 'positions', [1.3], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
 
     plot([0 2], [0 0], '--k');
 
-    ylabel(['% Land area per decade']);
-    ylim([-1 20]);
+    ylabel(['# Years per decade']);
+    ylim([-.3 .4]);
     xlim([.5 1.5]);
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
-    set(gca, 'YTick', -5:5:20);
-    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'CPC-GPCP'}, 'location', 'southwest');
+    set(gca, 'YTick', -.3:.1:.4);
+    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'});
+    %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'CPC-GPCP'}, 'location', 'southwest');
 
-    set(gcf, 'Position', get(0,'Screensize'));
-    export_fig('annual-hot-dry-trends-total.eps');
-    close all;
+%     set(gcf, 'Position', get(0,'Screensize'));
+%     export_fig('annual-hot-dry-trends-total.eps');
+%     close all;
 end
+
+

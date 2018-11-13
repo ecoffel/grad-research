@@ -56,6 +56,8 @@ for d = 1:length(dirNames)
     era = false;
     chirps = false;
     udel = false;
+    be = false;
+    hadcrut = false;
     
     if strfind(curDir, 'cmip5') ~= 0
         cmip5 = true;
@@ -79,6 +81,10 @@ for d = 1:length(dirNames)
         era = true;
     elseif strfind(curDir, 'chirps') ~= 0
         chirps = true;
+    elseif strfind(curDir, 'BerkeleyEarth') ~= 0
+        be = true;
+    elseif strfind(curDir, 'HadCRUT') ~= 0
+        hadcrut = true;
     end
         
 
@@ -129,9 +135,12 @@ for d = 1:length(dirNames)
         elseif gpcp
             dataYear = str2num(matFileNameParts{2});
             dataMonth = str2num(matFileNameParts{3});
-        elseif gpcc || udel
+        elseif gpcc || udel || be
             dataYear = str2num(matFileNameParts{2});
             dataMonth = str2num(matFileNameParts{3});
+        elseif hadcrut
+            dataYear = str2num(matFileNameParts{3});
+            dataMonth = str2num(matFileNameParts{4});
         elseif gldas
             dataYear = str2num(matFileNameParts{end-2});
             dataMonth = str2num(matFileNameParts{end-1});
@@ -171,7 +180,7 @@ for d = 1:length(dirNames)
 %        ['loading ' matFileNameNoExt]
         curMonthlyData = double(eval([matFileNameNoExt, '{3}']));
         
-        if gpcp || gpcc || udel
+        if gpcp || gpcc || udel || be || hadcrut
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);
         elseif gldas || chirps
             monthlyData{3}(:,:,yearInd,dataMonth) = squeeze(curMonthlyData);

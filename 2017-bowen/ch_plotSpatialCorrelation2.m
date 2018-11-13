@@ -490,8 +490,8 @@ if showbar
 end
     
 
-amp = wbChgOnWb-wbChgWarmSeason;
-driverRaw = (hussOnWb-hussChgWarmSeason) .* 1000;
+amp = hussChgWarmSeason .* 1000;
+driverRaw = txChgWarmSeason;
 % amp = wbOnTxx;
 % driverRaw = efOnTxx;
 
@@ -698,10 +698,10 @@ set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropica
 set(gca, 'YTick', -.5:.1:1);
 xtickangle(45);
 %xlabel('Climate zone');
-ylabel([char(176) 'C T_W per g/kg']);
+ylabel(['g/kg per ' char(176) 'C Tx']);
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-tw-amp-huss-amp-efgroup.eps']);
+export_fig(['spatial-huss-per-tx-chg-efgroup.eps']);
 close all;

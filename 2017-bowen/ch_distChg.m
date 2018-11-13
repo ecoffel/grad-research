@@ -171,12 +171,12 @@ if plotDistChg
     
     plot([0 101.25], [yval yval], 'color', colorTxx, 'linewidth', 2);
     
-    ylim([2.5 5.7])
+    ylim([1.75 5.7])
     xlim([-5 105]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    set(gca, 'YTick', 2.5:.5:5.5);
+    set(gca, 'YTick', 1.5:.5:5.5);
     ylabel(['Change (' char(176) 'C)']);
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['tx-dist-chg.eps']);
@@ -217,7 +217,7 @@ if plotDistChg
     
     plot([0 101.25], [yval yval], 'color', colorWb, 'linewidth', 2);
     
-    ylim([1.75 3.5])
+    ylim([1.75 5.7])
     xlim([-5 105]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season percentile');
@@ -279,7 +279,7 @@ if plotDistChg
     b = boxplot((squeeze(nanmean(nanmean(threshChgTx, 2), 1)))');
     ylim([0 10]);
     
-    ylim([2 5.4])
+    ylim([1.75 5.4])
     xlim([-5 105]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season percentile');

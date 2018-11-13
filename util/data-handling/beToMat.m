@@ -1,4 +1,4 @@
-function hadcrutToMat(rawNcDir, outputDir, varName, maxNum)
+function beToMat(rawNcDir, outputDir, varName, maxNum)
 
 ncFileNames = dir([rawNcDir, '/', varName, '*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -102,14 +102,14 @@ for k = 1:length(ncFileNames)
     [lon, lat] = meshgrid(lon, lat);
     lat = flipud(lat);
     
-    starttime = datenum([1850 01 01 00 00 00]);
+    starttime = datenum([1850 01 15 00 00 00]);
     time = [];
     
     % days since 1850
 	timestep = netcdf.getVar(ncid, varIdTime-1, [0], [dims{dimIdTime}{2}]);
     
-    for t = 1:length(timestep)
-        time(t) = addtodate(starttime, round(timestep(t)), 'day');
+    for t = 0:length(timestep)-1
+        time(t+1) = addtodate(starttime, t, 'month');
     end
     
     % check for output folder and make it if it doesn't exist

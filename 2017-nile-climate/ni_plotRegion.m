@@ -4,7 +4,7 @@ set(gcf,'renderer','opengl');
 
 hold on;
 axis off;
-box off;
+box on;
 
 [regionInds, regions, regionNames] = ni_getRegions();
 regionBounds = regions('nile');
