@@ -440,7 +440,7 @@ if plotTempPTrends
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1 2], 'XTickLabels', {'Temperature', 'Precipitation'});
     set(gca, 'YTick', -.3:.1:.3);
-%     set(gcf, 'Position', get(0,'Screensize'));
+    set(gcf, 'Position', get(0,'Screensize'));
 %     export_fig('annual-temp-pr-trends-total.eps');
 %     close all;
 %     if blue
@@ -572,7 +572,7 @@ if plotHotDryTrends
     displace = [-.3 -.18 -.07 .05];
     for d = 1:length(hdTrends)
         e = errorbar(1+displace(d), hdTrends(d), hdTrendsSE(d), 'Color', colors(d,:), 'LineWidth', 2);
-        p = plot(1+displace(d), hdTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', [1,1,1]);
+        p = plot(1+displace(d), hdTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', colors(d, :));
 
         % add cpc-gpcp to legend
         if d == 4
@@ -580,12 +580,14 @@ if plotHotDryTrends
         end
 
         if hdTrendsP(d) < .05
-            plot(1+displace(d), hdTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :));
+            plot(1+displace(d), hdTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :), 'LineWidth', 2);
+        else
+            plot(1+displace(d), hdTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', [1 1 1], 'Color', colors(d, :), 'LineWidth', 2);
         end
     end
 
     b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.15], 'widths', [.1]);
-    set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
+    set(b, {'LineWidth', 'Color'}, {2, [0 0 0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
     
@@ -602,12 +604,11 @@ if plotHotDryTrends
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.3:.1:.4);
-    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'});
-    %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'CPC-GPCP'}, 'location', 'southwest');
+    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'}, 'numColumns', 5);
 
-%     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig('annual-hot-dry-trends-total.eps');
-%     close all;
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig('annual-hot-dry-trends-total.eps');
+    close all;
 end
 
 

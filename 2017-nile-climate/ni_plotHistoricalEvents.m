@@ -10,15 +10,6 @@ wars = [[1975 1978]; ...        %
         [1998 2000]; ...
         [2006 2009]];
 
-regionBounds = [[2 32]; [25, 44]];
-%regionBoundsSouth = [[2 13]; [25, 42]];
-regionBoundsHighlands = [[8 13]; [34, 40]];
-regionBoundsNorth = [[13 32]; [29, 34]];
-
-regionBoundsBlue = [[9 14]; [34, 37.5]];
-regionBoundsWhite = [[9 14]; [30, 34]];
-regionBoundsEthiopia = [[3.4 14.8]; [31, 45.5]];
-
 if ~exist('udelp')
     udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1961, 'endYear', 2014);
     udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
@@ -43,11 +34,13 @@ lon=udelt{2};
 
 [regionInds, regions, regionNames] = ni_getRegions();
 regionBoundsEthiopia = regions('nile-ethiopia');
+regionBoundsBlue = regions('nile-blue');
 
 [latIndsEthiopiaUdel, lonIndsEthiopiaUdel] = latLonIndexRange({lat, lon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
+[latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({lat, lon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 
-pdataset = squeeze(nanmean(nanmean(nansum(udelp{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, :, :), 4), 2), 1));
-tdataset = squeeze(nanmean(nanmean(nanmean(udelt{3}(latIndsEthiopiaUdel, lonIndsEthiopiaUdel, :, :), 4), 2), 1));
+pdataset = squeeze(nanmean(nanmean(nansum(udelp{3}(latIndsBlueUdel, lonIndsBlueUdel, :, :), 4), 2), 1));
+tdataset = squeeze(nanmean(nanmean(nanmean(udelt{3}(latIndsBlueUdel, lonIndsBlueUdel, :, :), 4), 2), 1));
 
 load 2017-nile-climate\output\gldas_qs.mat
 load 2017-nile-climate\output\gldas_qsb.mat
@@ -57,11 +50,12 @@ load 2017-nile-climate\output\gldas_t.mat
 latGldas = gldas_t{1};
 lonGldas = gldas_t{2};
 [latIndsEthiopiaGldas, lonIndsEthiopiaGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
+[latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 
 gldasRunoff = gldas_qs{3}(:, :, :, :) + gldas_qsb{3}(:, :, :, :);
-gldasRunoff = squeeze(nanmean(nanmean(nansum(gldasRunoff(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
-gldasT = squeeze(nanmean(nanmean(nanmean(gldas_t{3}(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
-gldasPr = squeeze(nanmean(nanmean(nanmean(gldas_pr{3}(latIndsEthiopiaGldas, lonIndsEthiopiaGldas,:,5:9),4),2),1));
+gldasRunoff = squeeze(nanmean(nanmean(nansum(gldasRunoff(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
+gldasT = squeeze(nanmean(nanmean(nanmean(gldas_t{3}(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
+gldasPr = squeeze(nanmean(nanmean(nanmean(gldas_pr{3}(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
 
 thresh = 0:5:100;
 
@@ -190,15 +184,39 @@ indNormal(indNormal>50) = [];
 
 tbad = annualTPrc(indBad);
 pbad = annualPPrc(indBad);
-rbad = annualRPrcGldas(indBad);
+rbad = [];
+for i = 1:length(indBad)
+    % find inds with the same p percentile as in the bad year
+    possibleP = find(abs(annualPPrc(indBad(i))-annualPPrcGldas) == min(abs(annualPPrc(indBad(i))-annualPPrcGldas)));
+    
+    %now out of those years with the right precip, find the T that is
+    %closest to the obs
+    rbad(i) = nanmean(annualRPrcGldas(possibleP(find(abs(annualTPrc(indBad(i))-annualTPrcGldas(possibleP)) == min(abs(annualTPrc(indBad(i))-annualTPrcGldas(possibleP)))))));
+end
 
 tnormal = annualTPrc(indNormal);
 pnormal = annualPPrc(indNormal);
-rnormal = annualRPrcGldas(indNormal);
+rnormal = [];
+for i = 1:length(indNormal)
+    % find inds with the same p percentile as in the bad year
+    possibleP = find(abs(annualPPrc(indNormal(i))-annualPPrcGldas) == min(abs(annualPPrc(indNormal(i))-annualPPrcGldas)));
+    
+    %now out of those years with the right precip, find the T that is
+    %closest to the obs
+    rnormal(i) = nanmean(annualRPrcGldas(possibleP(find(abs(annualTPrc(indNormal(i))-annualTPrcGldas(possibleP)) == min(abs(annualTPrc(indNormal(i))-annualTPrcGldas(possibleP)))))));
+end
 
 tgood = annualTPrc(indGood);
 pgood = annualPPrc(indGood);
-rgood = annualRPrcGldas(indGood);
+rgood = [];
+for i = 1:length(indGood)
+    % find inds with the same p percentile as in the bad year
+    possibleP = find(abs(annualPPrc(indGood(i))-annualPPrcGldas) == min(abs(annualPPrc(indGood(i))-annualPPrcGldas)));
+    
+    %now out of those years with the right precip, find the T that is
+    %closest to the obs
+    rgood(i) = nanmean(annualRPrcGldas(possibleP(find(abs(annualTPrc(indGood(i))-annualTPrcGldas(possibleP)) == min(abs(annualTPrc(indGood(i))-annualTPrcGldas(possibleP)))))));
+end
 
 plot([x(1) x(end)], [0 0], '--k','linewidth', 2);
 % plot([x(1) x(end)], [-std(meanYield) -std(meanYield)], '--','linewidth', 2, 'color', colorHd);
@@ -235,7 +253,7 @@ ylim([-.3 .3]);
 set(gca, 'fontsize', 36);
 ylabel('Normalized yield anomaly');
 set(gcf, 'Position', get(0,'Screensize'));
-%export_fig historical-yields.png -m4;
+export_fig historical-yields.png -m4;
 close all;
 
 
@@ -245,8 +263,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([0 3], [50 50], 'k', 'linewidth', 2);
-b = boxplot([pgood tgood], 'widths', [.6 .6]);
+plot([0 4], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pgood tgood rgood'], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -256,17 +274,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-% set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
-% lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-% set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.7 3], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.7 3], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
-%plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 4], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 4], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T'});
+set(gca, 'XTickLabels', {'P', 'T', 'R'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
@@ -280,8 +298,8 @@ box on;
 grid on;
 pbaspect([1 3 1])
 
-plot([0 3], [50 50], 'k', 'linewidth', 2);
-b = boxplot([pbad tbad], 'widths', [.6 .6]);
+plot([0 4], [50 50], 'k', 'linewidth', 2);
+b = boxplot([pbad tbad rbad'], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -291,17 +309,17 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-% set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
-% lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-% set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
+lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.7 3], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.7 3], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
-%plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 4], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 4], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T'});
+set(gca, 'XTickLabels', {'P', 'T', 'R'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));

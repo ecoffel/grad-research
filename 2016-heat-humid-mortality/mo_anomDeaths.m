@@ -30,13 +30,19 @@ for city = cities
     mdata(nn)=[];
     wbthresh = [20:29];
 
+    bstrapLen = 0;
+    
     wind = 1;
     for w = wbthresh
-        if w<29
+        if w == 27
+            ind = find(wbMax>w);
+            bstrapLen = length(ind);
+        elseif w<29
             ind = find(wbMax>w & wbMax<w+1);
         else
             ind = find(wbMax>w);
         end
+        % mean # days with this thresh (div by # years)
         wbdays(wind,cind) = length(ind)/14;
         if length(ind) == 0
             wbanom(wind,cind) = NaN;
@@ -54,6 +60,39 @@ for city = cities
         wind=wind+1;
     end
     mdataall(:,cind) = mdata;
+    
+    
+    % run bootstrap to compare 20-28c anoms using the same sample size as
+    % for 27+
+    if bstrapLen > 0
+        wind = 1;
+        for w = wbthresh
+            if w<29
+                ind = find(wbMax>w & wbMax<w+1);
+            else
+                ind = find(wbMax>w);
+            end
+
+            if length(ind) == 0
+                wbanomBootstrp(wind,cind) = NaN;
+                wind = wind+1;
+                continue;
+            end
+
+            binds = randi([1 length(ind)], 100, min(bstrapLen, length(ind)));
+            means = [];
+            for i = 1:size(binds, 1)
+                if kstest(madj(ind(binds(i, :))))
+                    means(i) = (nanmean(madj(ind(binds(i, :))))-nanmean(madj))/nanmean(mdata)*100;
+                end
+            end
+            wbanomBootstrp(wind,cind) = nanmean(means);
+            wind=wind+1;
+        end
+    else
+        wbanomBootstrp(1:length(wbthresh),cind) = NaN;
+    end
+    
     cind = cind+1;
      
 %     figure;
@@ -73,7 +112,7 @@ yyaxis left;
 plot([0 30], [0 0], '--k', 'linewidth', 2);
 %plot(wbthresh,nanmean(wbanom,2),'or','color', colorTxx,'markersize', 15, 'linewidth', 3)
 
-b = boxplot(wbanom', 'widths', .8);
+b = boxplot(wbanomBootstrp', 'widths', .6);
 set(b, {'LineWidth', 'Color'}, {2, colorTxx})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
@@ -87,11 +126,11 @@ ylim([-100 180]);
 set(gca, 'YTick', -90:30:180);
 
 yyaxis right;
-plot(1:10, nanmean(wbdays,2), 'k');
+plot(1:10, nanmean(wbdays,2), 'k', 'linewidth', 2);
 ylabel('Mean # days per year');
 ylim([-10 18])
 set(gca, 'YTick', 0:4:16);
 
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['heat-mort-us.eps']);
+export_fig(['heat-mort-us-bootstrap.eps']);
 close all;
