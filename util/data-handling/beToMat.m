@@ -98,9 +98,10 @@ for k = 1:length(ncFileNames)
     
     lat = double(netcdf.getVar(ncid, varIdLat-1, [0], [dims{dimIdLat}{2}]));
     lon = double(netcdf.getVar(ncid, varIdLon-1, [0], [dims{dimIdLon}{2}]));
+    lon = circshift(lon,length(lon)/2);
+    lon(lon<0) = lon(lon<0)+360;
     
     [lon, lat] = meshgrid(lon, lat);
-    lat = flipud(lat);
     
     starttime = datenum([1850 01 15 00 00 00]);
     time = [];
@@ -132,6 +133,7 @@ for k = 1:length(ncFileNames)
         data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
         data = permute(data, [2 1]);
         data(data < -1e10) = NaN;
+        data = circshift(data, 180, 2);
         
         curMonth = month(time(ind+1));
         monthlyData = data;
@@ -143,7 +145,7 @@ for k = 1:length(ncFileNames)
             continue;
         end
         
-        monthlyDataSet = {lat, lon, flipud(squeeze(monthlyData))};
+        monthlyDataSet = {lat, lon, squeeze(monthlyData)};
 
         % save the .mat file in the correct location and w/ the correct name
         fileName = [varName, '_', datestr(time(ind+1), 'yyyy_mm_dd')];

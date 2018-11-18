@@ -21,7 +21,7 @@ waterGrid = logical(waterGrid);
 
 plotDistChg = false;
       
-threshChgTw27 = [];
+threshChgTwTxAmp27 = [];
 threshChgTwNoTxAmp27 = [];
 threshChgTw28 = [];
 threshChgTwNoTxAmp28 = [];
@@ -34,75 +34,75 @@ for m = 1:length(models)
     tind = 1;
     for t = 5:10:95
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp27(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
-        threshChgTw27(:, :, tind, m) = chgData;
+        threshChgTwTxAmp27(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp28(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
-        threshChgTw28(:, :, tind, m) = chgData;
-%         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        threshChgTwTxAmp28(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp29(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
-        threshChgTw29(:, :, tind, m) = chgData;
-%         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        threshChgTwTxAmp29(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp30(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
-        threshChgTw30(:, :, tind, m) = chgData;
+        threshChgTwTxAmp30(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-pred-huss-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp31(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
-        threshChgTw31(:, :, tind, m) = chgData;
+        threshChgTwTxAmp31(:, :, tind, m) = chgData;
         
         tind = tind+1;
     end
 end
 
-data27 = squeeze(sum(threshChgTw27,3));%-squeeze(sum(threshChgTwNoTxAmp27,3));
-data28 = squeeze(sum(threshChgTw28,3));%-squeeze(sum(threshChgTwNoTxAmp28,3));
-data29 = squeeze(sum(threshChgTw29,3));%-squeeze(sum(threshChgTwNoTxAmp29,3));
-data30 = squeeze(sum(threshChgTw30,3));%-squeeze(sum(threshChgTwNoTxAmp30,3));
-data31 = squeeze(sum(threshChgTw31,3));%-squeeze(sum(threshChgTwNoTxAmp31,3));
+data27 = squeeze(sum(threshChgTwTxAmp27,3))-squeeze(sum(threshChgTwNoTxAmp27,3));
+data28 = squeeze(sum(threshChgTwTxAmp28,3))-squeeze(sum(threshChgTwNoTxAmp28,3));
+data29 = squeeze(sum(threshChgTwTxAmp29,3))-squeeze(sum(threshChgTwNoTxAmp29,3));
+data30 = squeeze(sum(threshChgTwTxAmp30,3))-squeeze(sum(threshChgTwNoTxAmp30,3));
+data31 = squeeze(sum(threshChgTwTxAmp31,3))-squeeze(sum(threshChgTwNoTxAmp31,3));
 
 exp27 = [];
 exp28 = [];
@@ -153,10 +153,10 @@ for bind = 1:size(b, 2)
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 end
 
-ylim([0 30]);
-set(gca, 'ytick', 0:5:30);
-% ylim([-1.5 3.1]);
-% set(gca, 'ytick', -1:3);
+% ylim([0 30]);
+% set(gca, 'ytick', 0:5:30);
+ylim([-1.5 1.5]);
+set(gca, 'ytick', -1.5:.5:1.5);
 ylabel('Change (days per year)');
 
 yyaxis right;
@@ -169,20 +169,22 @@ for bind = 1:size(b, 2)
 end
 
 ylabel('Change (person-days per year)');
-% ylim([-1e10 2.6e10]);
-% set(gca, 'ytick', [-1:.5:2.5].*1e10, 'yticklabels', {'-10B', '-5B', '0', '5B', '10B', '15B', '20B', '25B'});
-ylim([0 1.8e11]);
-set(gca, 'ytick', [0:.25:2].*1e11, 'yticklabels', {'0', '25B', '50B', '75B', '100B', '125B', '150B', '175B', '200B'});
+ylim([-4e9 4e9]);
+set(gca, 'ytick', [-4:1:4].*1e9, 'yticklabels', {'-4B', '-3B', '-2B', '1B', '0', '1B', '2B', '3B', '4B'});
+% ylim([0 1.8e11]);
+% set(gca, 'ytick', [0:.25:2].*1e11, 'yticklabels', {'0', '25B', '50B', '75B', '100B', '125B', '150B', '175B', '200B'});
 
 xlim([.5 5.5]);
 set(gca, 'fontsize', 36, 'xtick', [1 2 3 4 5], 'xticklabels', [27 28 29 30 31]);
 
-xlabel(['T_W threshold (' char(176) 'C)']);
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig(['thresh-cnt-boxplots-all.eps']);
+plot([0 6], [0 0], '--k', 'linewidth', 2);
+
+xlabel(['Tx threshold (' char(176) 'C)']);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['thresh-cnt-tx-tx-amp.eps']);
 close all;
 
-data = (squeeze(sum(threshChgTw27,3))-squeeze(sum(threshChgTwNoTxAmp27,3))) ./ squeeze(sum(threshChgTw27,3)) .* 100;
+data = data27;
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -212,11 +214,11 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-50 50], ...
-                  'cbXTicks', -50:10:50, ...
+                  'plotRange', [-5 5], ...
+                  'cbXTicks', -5:1:5, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['tw-cnt-27-tx-amp-prc.eps'], ...
-                  'plotXUnits', ['% humid-heat days caused by Tx amplification'], ...
+                  'fileTitle', ['tw-cnt-27-tx-amp.eps'], ...
+                  'plotXUnits', ['# days per year with T_W > 27' char(176) 'C due to Tx amplification'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...
                   'colorbarArrow', 'both', ...

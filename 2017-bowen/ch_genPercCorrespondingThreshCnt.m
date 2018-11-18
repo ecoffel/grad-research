@@ -38,14 +38,6 @@ futurePeriodYears = 2061:2085;
 baseDir = 'e:/data';
 yearStep = 1;
 
-if strcmp(season, 'summer')
-    months = [6 7 8];
-elseif strcmp(season, 'winter')
-    months = [12 1 2];
-elseif strcmp(season, 'all')
-    months = 1:12;
-end
-
 load lat;
 load lon;
 
@@ -60,7 +52,7 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-absThresh = 31;
+absThresh = 27;
 
 % load era
 if ~exist('twEra')

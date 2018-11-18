@@ -16,18 +16,24 @@ if ~exist('udelp')
     udelt = loadMonthlyData('E:\data\udel\output\air\monthly\1900-2014', 'air', 'startYear', 1961, 'endYear', 2014);
     udelt = {udelt{1}, udelt{2}, flipud(udelt{3})};
     
-    %cmip5p = loadMonthlyData(['e:/data/cmip5/output/access1-0/mon/r1i1p1/historical/pr/regrid/world'], 'pr', 'startYear', 1901, 'endYear', 2005); 
-    %cmip5t = loadMonthlyData(['e:/data/cmip5/output/access1-0/mon/r1i1p1/historical/tas/regrid/world'], 'tas', 'startYear', 1901, 'endYear', 2005); 
+    load nile-super-ensemble-blue.mat;
+    superTDatasets = superEnsemble{1};
+    superTPrc = superEnsemble{2};
+    superPDatasets = superEnsemble{3};
+    superPPrc = superEnsemble{4};
+    
+    superT = [];
+    superP = [];
+    
+    ind = 1;
+    for t = 1:size(superTDatasets, 2)
+        for p = 1:size(superPDatasets, 2)
+            superT(:, ind) = superTDatasets(:, t);
+            superP(:, ind) = superPDatasets(:, p);
+            ind = ind+1;
+        end
+    end
 end
-% 
-% c = [];
-% for xlat = 1:size(lat,1)
-%     for ylon = 1:size(lat,2)
-%         t = squeeze(nanmean(udelt{3}(xlat, ylon, :, 5:9),4));
-%         p = squeeze(nanmean(udelp{3}(xlat, ylon, :, 5:9),4));
-%         c(xlat, ylon) = corr(t,p);
-%     end
-% end
 
 lat=udelt{1};
 lon=udelt{2};
@@ -75,6 +81,33 @@ for y = 1:length(pdataset)
     
     prc = find(abs(tdataset(y)-prcTUdel) == min(abs(tdataset(y)-prcTUdel)));
     annualTPrc(y, 1) = thresh(prc);
+end
+
+annualPPrcSuper = [];
+annualTPrcSuper = [];
+
+prcTSuper = [];
+for d = 1:size(superT, 2)
+    prcTSuper(:,d) = prctile(superT(:,d), thresh);
+end
+
+prcPSuper = [];
+for d = 1:size(superP, 2)
+    prcPSuper(:,d) = prctile(superP(:,d), thresh);
+end
+
+for y = 1:size(superT, 1)
+    for d = 1:size(superT, 2)
+        prc = find(abs(superT(y, d)-prcTSuper(:,d)) == min(abs(superT(y, d)-prcTSuper(:,d))));
+        annualTPrcSuper(y, d) = thresh(prc);
+    end
+end
+
+for y = 1:size(superP, 1)
+    for d = 1:size(superP, 2)
+        prc = find(abs(superP(y, d)-prcPSuper(:,d)) == min(abs(superP(y, d)-prcPSuper(:,d))));
+        annualPPrcSuper(y, d) = thresh(prc);
+    end
 end
 
 annualPPrcGldas = [];
@@ -162,14 +195,33 @@ plot(x, meanYield, 'k', 'linewidth', 2);
 tprc = 74;
 pprc = 34;
 
-for i = 1:length(x)
-    if annualPPrc(i) <= pprc & annualTPrc(i) >= tprc
-        plot(x(i), meanYield(i), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
-    elseif annualPPrc(i) <= pprc & annualTPrc(i) <= tprc
-        plot(x(i), meanYield(i), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
-    end
-    
+hdSuperYears = [];
+for d = 1:size(annualTPrcSuper, 2)
+    hdSuperYears(:,d) = annualTPrcSuper(:, d) >= tprc & annualPPrcSuper(:, d) <= pprc;
+    dSuperYears(:,d) = annualTPrcSuper(:, d) <= tprc & annualPPrcSuper(:, d) <= pprc;
 end
+
+for i = 1:size(hdSuperYears, 1)
+    hd = sum(hdSuperYears(i,:)) >= .5*size(hdSuperYears,2);
+    d = sum(dSuperYears(i,:)) >= .5*size(dSuperYears,2);
+    
+    if hd
+        plot(x(i+21), meanYield(i+21), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
+    elseif d
+        plot(x(i+21), meanYield(i+21), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
+    end
+end
+
+% for i = 1:length(x)
+%     
+% 
+%     if annualPPrc(i) <= pprc & annualTPrc(i) >= tprc
+%         plot(x(i), meanYield(i), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
+%     elseif annualPPrc(i) <= pprc & annualTPrc(i) <= tprc
+%         plot(x(i), meanYield(i), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
+%     end
+%     
+% end
 
 yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)))
 yieldd = nanmean(meanYield(find(annualTPrc<=tprc & annualPPrc <= pprc)))

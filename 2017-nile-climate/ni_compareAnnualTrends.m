@@ -95,8 +95,6 @@ if ~exist('hadcrutTemp')
     hadcrutTemp = loadMonthlyData('E:\data\HadCRUT4\output\temperature_anomaly\monthly', 'temperature_anomaly', 'startYear', 1901, 'endYear', 2017);
 end
 
-
-
 if ~exist('udelt')
     udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1901, 'endYear', 2014);
     udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
@@ -104,7 +102,7 @@ if ~exist('udelt')
     udelt = {udelt{1}, udelt{2}, flipud(udelt{3})};
 end
 
-blue = false;
+blue = true;
 
 [regionInds, regions, regionNames] = ni_getRegions();
 regionBounds = regions('nile');
@@ -230,27 +228,27 @@ else
     curLatIndsBe = latIndsWhiteBe;
     curLonIndsBe = lonIndsWhiteBe;
 end
-
-curLatInds = [latIndsBlue latIndsWhite];
-curLonInds = [lonIndsBlue lonIndsWhite];
-
-curLatIndsRel = [latIndsBlueRel latIndsWhiteRel];
-curLonIndsRel = [lonIndsBlueRel lonIndsWhiteRel];
-
-curLatIndsChirpsRel = [latIndsBlueChirpsRel latIndsWhiteChirpsRel];
-curLonIndsChirpsRel = [lonIndsBlueChirpsRel lonIndsWhiteChirpsRel];
-
-curLatIndsGldas = [latIndsBlueGldas latIndsWhiteGldas];
-curLonIndsGldas = [lonIndsBlueGldas lonIndsWhiteGldas];
-
-curLatIndsUdel = [latIndsBlueUdel latIndsWhiteUdel];
-curLonIndsUdel = [lonIndsBlueUdel lonIndsWhiteUdel];
-
-curLatIndsHadcrut = [latIndsBlueHadcrut latIndsWhiteHadcrut];
-curLonIndsHadcrut = [lonIndsBlueHadcrut lonIndsWhiteHadcrut];
-
-curLatIndsBe = [latIndsBlueBe latIndsWhiteBe];
-curLonIndsBe = [lonIndsBlueBe lonIndsWhiteBe];
+% 
+% curLatInds = [latIndsBlue latIndsWhite];
+% curLonInds = [lonIndsBlue lonIndsWhite];
+% 
+% curLatIndsRel = [latIndsBlueRel latIndsWhiteRel];
+% curLonIndsRel = [lonIndsBlueRel lonIndsWhiteRel];
+% 
+% curLatIndsChirpsRel = [latIndsBlueChirpsRel latIndsWhiteChirpsRel];
+% curLonIndsChirpsRel = [lonIndsBlueChirpsRel lonIndsWhiteChirpsRel];
+% 
+% curLatIndsGldas = [latIndsBlueGldas latIndsWhiteGldas];
+% curLonIndsGldas = [lonIndsBlueGldas lonIndsWhiteGldas];
+% 
+% curLatIndsUdel = [latIndsBlueUdel latIndsWhiteUdel];
+% curLonIndsUdel = [lonIndsBlueUdel lonIndsWhiteUdel];
+% 
+% curLatIndsHadcrut = [latIndsBlueHadcrut latIndsWhiteHadcrut];
+% curLonIndsHadcrut = [lonIndsBlueHadcrut lonIndsWhiteHadcrut];
+% 
+% curLatIndsBe = [latIndsBlueBe latIndsWhiteBe];
+% curLonIndsBe = [lonIndsBlueBe lonIndsWhiteBe];
 
 plotMap = false;
 
@@ -367,14 +365,12 @@ prTrendsCmip5 = prTrendsCmip5 .* 10;
 prTrends = prTrends .* 10;
 prSE = prSE .* 10;
 
-
+colors = distinguishable_colors(9) .* .75;% get(fig, 'defaultaxescolororder');
+legItems = [];
 if plotTempPTrends
     
     fig = figure('Color',[1,1,1]);
     
-    colors = distinguishable_colors(9) .* .75;% get(fig, 'defaultaxescolororder');
-    
-    legItems = [];
     hold on;
     box on;
     axis square;
@@ -441,8 +437,8 @@ if plotTempPTrends
     set(gca, 'XTick', [1 2], 'XTickLabels', {'Temperature', 'Precipitation'});
     set(gca, 'YTick', -.3:.1:.3);
     set(gcf, 'Position', get(0,'Screensize'));
-%     export_fig('annual-temp-pr-trends-total.eps');
-%     close all;
+    export_fig('annual-temp-pr-trends-total.eps');
+    %close all;
 %     if blue
 %         export_fig('annual-temp-pr-trends-blue.eps');
 %     else
@@ -493,17 +489,16 @@ end
 
 tSuper = [regionalTEra(1:2010-1981+1), regionalTGldas(1981-1960+1:end), regionalTUdel(1981-1901+1:2010-1901+1), ...
           regionalTCpc(1:2010-1981+1), regionalTHadcrut(1981-1901+1:2010-1901+1), regionalTBe(1981-1901+1:2010-1901+1)];
-      
 tSuperPrc = [prctile(regionalTEra(1:2010-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:end), tprc), prctile(regionalTUdel(1981-1901+1:2010-1901+1), tprc), ...
-             prctile(regionalTCpc(1:2010-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2010-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2010-1901+1), tprc)];
+          prctile(regionalTCpc(1:2010-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2010-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2010-1901+1), tprc)];
 
-pSuper = [regionalPEra(1:2010-1981+1), regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
+pSuper = [regionalPEra(1:2010-1981+1) regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
           regionalPGpcp(1:2010-1981+1), regionalPChirps(1:2010-1981+1)];
-      
-pSuperPrc = [prctile(regionalPEra(1:2010-1981+1), pprc), prctile(regionalPGldas(1981-1960+1:end), pprc), prctile(regionalPUdel(1981-1901+1:2010-1901+1), pprc), ...
-             prctile(regionalPGpcp(1:2010-1981+1), pprc), prctile(regionalPChirps(1:2010-1981+1), pprc)];
+pSuperPrc = [prctile(regionalPEra(1:2010-1981+1), pprc) prctile(regionalPGldas(1981-1960+1:end), pprc), prctile(regionalPUdel(1981-1901+1:2010-1901+1), pprc), ...
+          prctile(regionalPGpcp(1:2010-1981+1), pprc), prctile(regionalPChirps(1:2010-1981+1), pprc)];
+%superEnsemble = {tSuper, tSuperPrc, pSuper, pSuperPrc};
+%save('nile-super-ensemble-blue.mat', 'superEnsemble');
 
-         
 hdTrendsSuper = [];
 hdTrendsSuperP = [];
 hdTrendsSuperSE = [];
@@ -560,15 +555,16 @@ hdTrendsSuper = hdTrendsSuper .* 10;
 hdTrendsSuperSE = hdTrendsSuperSE .* 10;
 
 if plotHotDryTrends
-
+    colors = distinguishable_colors(9) .* .75;% get(fig, 'defaultaxescolororder');
+    
     fig2 = figure('Color',[1,1,1]);
-    colors = get(gca, 'colororder');
-    %legItems = [];
     hold on;
     box on;
     pbaspect([1 2 1]);
     grid on;
 
+    colors(4,:) = colors(9,:);
+    
     displace = [-.3 -.18 -.07 .05];
     for d = 1:length(hdTrends)
         e = errorbar(1+displace(d), hdTrends(d), hdTrendsSE(d), 'Color', colors(d,:), 'LineWidth', 2);
@@ -604,7 +600,7 @@ if plotHotDryTrends
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.3:.1:.4);
-    legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'}, 'numColumns', 5);
+    %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'}, 'numColumns', 5);
 
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig('annual-hot-dry-trends-total.eps');

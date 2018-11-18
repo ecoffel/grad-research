@@ -17,43 +17,83 @@ twChg = [];
 hussChgDueToT = [];
 hussChg = [];
 
+
 for m = 1:length(models)
     
-    load(['E:\data\projects\bowen\huss-chg-data\chgData-cmip5-warm-season-tx-huss-' models{m} '-rcp85-2061-2085']);
-    chgData(waterGrid) = NaN;
-    chgData(1:15,:) = NaN;
-    chgData(75:90,:) = NaN;
-    hussChg(:, :, m) = chgData;
-    
+    tind = 1;
+    for t = 5:10:95
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-all-txx.mat']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgTx(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        threshChgHuss(:, :, tind, m) = chgData;
+        
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        chgData(waterGrid) = NaN;
+        chgData(1:15,:) = NaN;
+        chgData(75:90,:) = NaN;
+        twChg(:, :, tind, m) = chgData;
+        
+        tind = tind+1;
+    end
+        
     load(['E:\data\projects\bowen\temp-chg-data\chgData-huss-med-temp-pred-' models{m} '-rcp85-2061-2085']);
     chgData = hchgDueToMedT;
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
     hussChgDueToT(:, :, m) = chgData;
-    
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
-        chgData = twchgMedT_predHuss;
-        chgData(waterGrid) = NaN;
-        chgData(1:15,:) = NaN;
-        chgData(75:90,:) = NaN;
-        twChgPred(:, :, m) = chgData;
-        
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-med-temp-full-huss-' models{m} '-rcp85-2061-2085.mat']);
-        chgData = twchgMedT_fullHuss;
-        chgData(waterGrid) = NaN;
-        chgData(1:15,:) = NaN;
-        chgData(75:90,:) = NaN;
-        twChgFull(:, :, m) = chgData;
-        
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
-        chgData(waterGrid) = NaN;
-        chgData(1:15,:) = NaN;
-        chgData(75:90,:) = NaN;
-        twChg(:, :, m) = chgData;
+
+    load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-temp-dist-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
+    chgData = twchgMedT_predHuss;
+    chgData(waterGrid) = NaN;
+    chgData(1:15,:) = NaN;
+    chgData(75:90,:) = NaN;
+    twChgPred(:, :, :, m) = chgData;
+
+    load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-temp-dist-full-huss-' models{m} '-rcp85-2061-2085.mat']);
+    chgData = twchgMedT_fullHuss;
+    chgData(waterGrid) = NaN;
+    chgData(1:15,:) = NaN;
+    chgData(75:90,:) = NaN;
+    twChgFull(:, :, :, m) = chgData;
+
+    load(['E:\data\projects\bowen\huss-chg-data\chgData-cmip5-warm-season-tx-huss-' models{m} '-rcp85-2061-2085']);
+    chgData(waterGrid) = NaN;
+    chgData(1:15,:) = NaN;
+    chgData(75:90,:) = NaN;
+    hussChg(:, :, m) = chgData;
+
 end
 
-data = (hussChg-hussChgDueToT) .* 1000;
+
+txFullChg = squeeze(nanmean(threshChgTx, 3));
+txTxNoAmpChg = threshChgTx;
+for t = 6:10
+    txTxNoAmpChg(:,:,t,:) = txTxNoAmpChg(:,:,5,:);
+end
+
+hussFullChg = squeeze(nanmean(threshChgHuss, 3));
+hussTxNoAmpChg = threshChgHuss;
+for t = 6:10
+    hussTxNoAmpChg(:,:,t,:) = hussTxNoAmpChg(:,:,5,:);
+end
+
+twFullChg = squeeze(nanmean(twChg, 3));
+twNoTxAmpChg = twChg;
+for t = 6:10
+    twNoTxAmpChg(:,:,t,:) = twNoTxAmpChg(:,:,5,:);
+end
+
+%data = (hussFullChg - squeeze(nanmean(hussTxNoAmpChg, 3))) .* 1000;
+%data = (twFullChg - squeeze(nanmean(twNoTxAmpChg, 3)));
+data = squeeze(nanmean(twFullChg(:,:,5:10,:),3) - twFullChg(:,:,5,:));
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -81,13 +121,14 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-1 1], ...
-                  'cbXTicks', -1:.25:1, ...
+                  'plotRange', [-.5 .5], ...
+                  'cbXTicks', -.5:.1:.5, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['huss-chg-due-to-tamp.eps'], ...
-                  'plotXUnits', ['Change (g/kg)'], ...
+                  'fileTitle', ['tx-chg-due-to-tamp-new.eps'], ...
+                  'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'BrBG'), ...
+                  'colormap', brewermap([],'*RdBu'), ...
+                  'colorbarArrow', 'both', ...
                   'statData', sigChg);
 plotFromDataFile(saveData);
 
