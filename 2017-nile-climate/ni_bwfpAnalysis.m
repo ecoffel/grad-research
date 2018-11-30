@@ -80,22 +80,10 @@ end
 
 earthradius = almanac('earth','radius','meters');
 
-if ~exist('bwSupplyPcHistBlue')
-    bwSupplyPcHistBlue = zeros(length(1900:2005), length(models), 5);
-    bwSupplyPcSpatialHistBlue = [];
-    bwSupplyPcSpatialHistWhite = [];
-    bwSupplyPcFutBlue = zeros(length(2006:2085), length(models), 5);
-    bwSupplyPcSpatialFutBlue = [];
-    bwSupplyPcSpatialFutWhite = [];
+if ~exist('bwSupplyHistTotalNoPw')
     
-    bwSupplyPcHistWhite = zeros(length(1900:2005), length(models), 5);
-    bwSupplyPcFutWhite = zeros(length(2006:2085), length(models), 5);
-    
-    bwSupplyPcHistTotal = zeros(length(1900:2005), length(models), 5);
-    bwSupplyPcFutTotal = zeros(length(2006:2085), length(models), 5);
-    
-    bwSupplyHistTotal = zeros(length(1900:2005), length(models), 5);
-    bwSupplyFutTotal = zeros(length(2006:2085), length(models), 5);
+    bwSupplyHistTotalNoPw = zeros(length(1900:2005), length(models));
+    bwSupplyFutTotalNoPw = zeros(length(2006:2099), length(models));
     
     monthLengths = [31 28 31 30 31 30 31 31 30 31 30 31];
     
@@ -154,160 +142,79 @@ if ~exist('bwSupplyPcHistBlue')
             end
         end
             
-        fprintf('computing bw supply...\n');
-        for s = 1:5
-            
-            for year = 1:size(mrros{3}, 3)
-                % blue nile
-                for xind = 1:length(latIndsBlueSSP)
-                    xlat = latIndsBlueSSP(xind);
-                    for yind = 1:length(lonIndsBlueSSP)
-                        ylon = lonIndsBlueSSP(yind);
-                        
-                        bwSupplyPcSpatialHistBlue(xind, yind, year, mind, s) = areaTableBlue(xind, yind) * ...
-                                                                       nansum(squeeze(mrros{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 ...
-                                                                       / ssp(xlat, ylon, 1, s);
-                        
-                        ittr = (areaTableBlue(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, 1, s)) * ...
-                                                     (ssp(xlat, ylon, 1, s) / nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))));
-                                                 
-                        % could be nan if div by 0 pop
-                        if ~isnan(ittr)
-                            bwSupplyPcHistBlue(year, mind, s) = bwSupplyPcHistBlue(year, mind, s) + ittr;
-                        end
-                        
-                        ittrTotal = (areaTableBlue(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, 1, s)) * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        
-                        if ~isnan(ittrTotal)
-                            bwSupplyPcHistTotal(year, mind, s) = bwSupplyPcHistTotal(year, mind, s) + ittrTotal;
-                        end
-                        
-                        % not pc
-                        ittrTotal = areaTableBlue(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
+        fprintf('computing bw supply...\n');            
+        for year = 1:size(mrros{3}, 3)
+            % blue nile
+            for xind = 1:length(latIndsBlueSSP)
+                xlat = latIndsBlueSSP(xind);
+                for yind = 1:length(lonIndsBlueSSP)
+                    ylon = lonIndsBlueSSP(yind);
 
-                        if ~isnan(ittrTotal)
-                            bwSupplyHistTotal(year, mind, s) = bwSupplyHistTotal(year, mind, s) + ittrTotal;
-                        end
+                    % not population weighted
+                    ittrTotalNoPw = areaTableBlue(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw)
+                        bwSupplyHistTotalNoPw(year, mind) = bwSupplyHistTotalNoPw(year, mind) + ittrTotalNoPw;
                     end
                 end
-                
-                % white nile
-                for xind = 1:length(latIndsWhiteSSP)
-                    xlat = latIndsWhiteSSP(xind);
-                    for yind = 1:length(lonIndsWhiteSSP)
-                        ylon = lonIndsWhiteSSP(yind);
-                        
-                        bwSupplyPcSpatialHistWhite(xind, yind, year, mind, s) = areaTableWhite(xind, yind) * ...
-                                                                       nansum(squeeze(mrros{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 ...
-                                                                       / ssp(xlat, ylon, 1, s);
-                        
-                        ittr = (areaTableWhite(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, 1, s)) * ...
-                                                     (ssp(xlat, ylon, 1, s) / nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))));
-                                                 
-                        % could be nan if div by 0 pop
-                        if ~isnan(ittr)
-                            bwSupplyPcHistWhite(year, mind, s) = bwSupplyPcHistWhite(year, mind, s) + ittr;
-                        end               
-                        
-                        ittrTotal = (areaTableWhite(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, 1, s)) * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        % could be nan if div by 0 pop
-                        if ~isnan(ittrTotal)
-                            bwSupplyPcHistTotal(year, mind, s) = bwSupplyPcHistTotal(year, mind, s) + ittrTotal;
-                        end
-                        
-                        
-                        % not pc
-                        ittrTotal = areaTableWhite(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        if ~isnan(ittrTotal)
-                            bwSupplyHistTotal(year, mind, s) = bwSupplyHistTotal(year, mind, s) + ittrTotal;
-                        end
-                    end
-                end
-                
             end
-            
-            for year = 1:(2085-2006)+1
-                decind = (round(year + 2006 - 1, -1) - 2010)/10+1;
-                for xind = 1:length(latIndsBlueSSP)
-                    xlat = latIndsBlueSSP(xind);
-                    for yind = 1:length(lonIndsBlueSSP)
-                        ylon = lonIndsBlueSSP(yind);
-                        
-                        bwSupplyPcSpatialFutBlue(xind, yind, year, mind, s) = areaTableBlue(xind, yind) * ...
-                                                                       nansum(squeeze(mrrosFut{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 ...
-                                                                       / ssp(xlat, ylon, decind, s);
-                        
-                        ittr = (areaTableBlue(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, decind, s)) * ...
-                                                     (ssp(xlat, ylon, decind, s) / nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, s))));
-                        if ~isnan(ittr)
-                            bwSupplyPcFutBlue(year, mind, s) = bwSupplyPcFutBlue(year, mind, s) + ittr;
-                        end
-                        
-                        ittrTotal = (areaTableBlue(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, decind, s)) * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        % could be nan if div by 0 pop
-                        if ~isnan(ittrTotal)
-                            bwSupplyPcFutTotal(year, mind, s) = bwSupplyPcFutTotal(year, mind, s) + ittrTotal;
-                        end
-                        
-                        % not pc
-                        ittrTotal = areaTableBlue(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3 * ...
-                                                     (ssp(xlat, ylon, 1, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        if ~isnan(ittrTotal)
-                            bwSupplyFutTotal(year, mind, s) = bwSupplyFutTotal(year, mind, s) + ittrTotal;
-                        end
-                                                     
+
+            % white nile
+            for xind = 1:length(latIndsWhiteSSP)
+                xlat = latIndsWhiteSSP(xind);
+                for yind = 1:length(lonIndsWhiteSSP)
+                    ylon = lonIndsWhiteSSP(yind);
+
+
+                    % not population weighted
+                    ittrTotalNoPw = areaTableWhite(xind, yind) * nansum(squeeze(mrros{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw)
+                        bwSupplyHistTotalNoPw(year, mind) = bwSupplyHistTotalNoPw(year, mind) + ittrTotalNoPw;
                     end
                 end
-                
-                % white nile
-                for xind = 1:length(latIndsWhiteSSP)
-                    xlat = latIndsWhiteSSP(xind);
-                    for yind = 1:length(lonIndsWhiteSSP)
-                        ylon = lonIndsWhiteSSP(yind);
-                        
-                        bwSupplyPcSpatialFutWhite(xind, yind, year, mind, s) = areaTableWhite(xind, yind) * ...
-                                                                       nansum(squeeze(mrrosFut{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 ...
-                                                                       / ssp(xlat, ylon, decind, s);
-                        
-                        ittr = (areaTableWhite(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, decind, s)) * ...
-                                                     (ssp(xlat, ylon, decind, s) / nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, s))));
-                        if ~isnan(ittr)
-                            bwSupplyPcFutWhite(year, mind, s) = bwSupplyPcFutWhite(year, mind, s) + ittr;
-                        end
-                        
-                        ittrTotal = (areaTableWhite(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 / ssp(xlat, ylon, decind, s)) * ...
-                                                     (ssp(xlat, ylon, decind, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        % could be nan if div by 0 pop
-                        if ~isnan(ittrTotal)
-                            bwSupplyPcFutTotal(year, mind, s) = bwSupplyPcFutTotal(year, mind, s) + ittrTotal;
-                        end
-                        
-                        % not pc
-                        ittrTotal = areaTableWhite(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3 * ...
-                                                     (ssp(xlat, ylon, decind, s) / (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                                                 
-                        if ~isnan(ittrTotal)
-                            bwSupplyFutTotal(year, mind, s) = bwSupplyFutTotal(year, mind, s) + ittrTotal;
-                        end
-                                                     
+            end
+
+        end
+
+        for year = 1:size(mrrosFut{3}, 3)
+            for xind = 1:length(latIndsBlueSSP)
+                xlat = latIndsBlueSSP(xind);
+                for yind = 1:length(lonIndsBlueSSP)
+                    ylon = lonIndsBlueSSP(yind);
+
+                    % not population weighted
+                    ittrTotalNoPw = areaTableBlue(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw)
+                        bwSupplyFutTotalNoPw(year, mind) = bwSupplyFutTotalNoPw(year, mind) + ittrTotalNoPw;
                     end
+
+                end
+            end
+
+            % white nile
+            for xind = 1:length(latIndsWhiteSSP)
+                xlat = latIndsWhiteSSP(xind);
+                for yind = 1:length(lonIndsWhiteSSP)
+                    ylon = lonIndsWhiteSSP(yind);
+
+                    % not population weighted
+                    ittrTotalNoPw = areaTableWhite(xind, yind) * nansum(squeeze(mrrosFut{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw)
+                        bwSupplyFutTotalNoPw(year, mind) = bwSupplyFutTotalNoPw(year, mind) + ittrTotalNoPw;
+                    end
+
                 end
             end
         end
-                
 
+                
         mdataEthiopia(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
         mdataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
         mdataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
@@ -362,13 +269,17 @@ if ~exist('bwfpEthiopia')
     sspEthiopiaLat = ssp1_2010{1}(latIndsEthiopiaSSP, lonIndsEthiopiaSSP);
     sspEthiopia = ssp1_2010{3}(latIndsEthiopiaSSP, lonIndsEthiopiaSSP);
 
+    % load domind bwfp
+    load E:\data\bgwfp\output\domind\bwfp\bwfp_1.mat
+    bwfpDomind = bwfp_1;
+    
     for m = 1:12
         fprintf('loading bwfp/gwfp month %d...\n', m);
 
-        load(['E:\data\bgwfp\output\bwfp\bwfp_' num2str(m)]);
+        load(['E:\data\bgwfp\output\ag\bwfp\bwfp_' num2str(m)]);
         eval(['bwfp(:, :, ' num2str(m) ') = bwfp_' num2str(m) '{3};']);
 
-        load(['E:\data\bgwfp\output\gwfp\gwfp_' num2str(m)]);
+        load(['E:\data\bgwfp\output\ag\gwfp\gwfp_' num2str(m)]);
         eval(['gwfp(:, :, ' num2str(m) ') = gwfp_' num2str(m) '{3};']);
 
         if m == 1
@@ -378,8 +289,13 @@ if ~exist('bwfpEthiopia')
             [latIndsEthiopiaBW, lonIndsEthiopiaBW] = latLonIndexRange({bwfpLat,bwfpLon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
             [latIndsBlueBW, lonIndsBlueBW] = latLonIndexRange({bwfpLat,bwfpLon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
             [latIndsWhiteBW, lonIndsWhiteBW] = latLonIndexRange({bwfpLat,bwfpLon,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+            
+            bwfpDomind = regridGriddata(bwfpDomind, {bwfpLat, bwfpLon, []}, false); 
         end
 
+        % add domind onto ag bwfp
+        bwfp(:,:,m) = bwfp(:,:,m)+bwfpDomind{3};
+        
         % ethiopia
         tmp = regridGriddata({bwfpLat(latIndsEthiopiaBW, lonIndsEthiopiaBW), bwfpLon(latIndsEthiopiaBW, lonIndsEthiopiaBW), gwfp(latIndsEthiopiaBW, lonIndsEthiopiaBW, m)}, ...
                              {ssp1_2010{1}(latIndsEthiopiaSSP,lonIndsEthiopiaSSP), ssp1_2010{2}(latIndsEthiopiaSSP,lonIndsEthiopiaSSP), ssp1_2010{3}(latIndsEthiopiaSSP,lonIndsEthiopiaSSP)}, ...
@@ -418,12 +334,7 @@ if ~exist('bwfpEthiopia')
     end
 end
 
-pcBwfpBlue = 0;
-pcBwfpBlueSpatial = [];
-pcBwfpWhite = 0;
-pcBwfpWhiteSpatial = [];
-pcBwfpTotal = 0;
-bwfpTotal = 0;
+bwfpTotalNoPopWeight = 0;
 
 % bwfp and ssp are on same grid now
 latBwfpBlue = ssp1_2010{1}(latIndsBlueSSP,lonIndsBlueSSP);
@@ -441,22 +352,11 @@ for s = 1:5
         for ylon = 1:size(bwfpBlue, 2)
             curArea = areaTableBlue(xlat, ylon);
             
-            pcBwfpBlueSpatial(xlat, ylon) = curArea * nansum(squeeze(bwfpBlue(xlat, ylon, :))) * 1e-3 / ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), 1, s);
-            bwfpBlueSpatial(xlat, ylon) = curArea * nansum(squeeze(bwfpBlue(xlat, ylon, :))) * 1e-3;
-                                   
-            ittrBlue = (curArea * nansum(squeeze(bwfpBlue(xlat, ylon, :))) * 1e-3 / ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), 1, s)) * ...
-                                       (ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), 1, s) / nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))));
+            % no pop weight
+            ittrTotalNoPopWeight = (curArea * nansum(squeeze(bwfpBlue(xlat, ylon, :))) * 1e-3);
 
-            if ~isnan(ittrBlue)
-                pcBwfpBlue = pcBwfpBlue + ittrBlue;
-            end
-            
-            ittrTotal = (curArea * nansum(squeeze(bwfpBlue(xlat, ylon, :))) * 1e-3 / ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), 1, s)) * ...
-                                       (ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), 1, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                 nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-
-            if ~isnan(ittrTotal)
-                pcBwfpTotal = pcBwfpTotal + ittrTotal;
+            if ~isnan(ittrTotalNoPopWeight)
+                bwfpTotalNoPopWeight = bwfpTotalNoPopWeight + ittrTotalNoPopWeight;
             end
         end
     end
@@ -468,185 +368,47 @@ for s = 1:5
 
             curArea = areaTableWhite(xlat, ylon);
             
-            % pc
-            pcBwfpWhiteSpatial(xlat, ylon) = curArea * nansum(squeeze(bwfpWhite(xlat, ylon, :))) * 1e-3 / ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), 1, s);
-            bwfpWhiteSpatial(xlat, ylon) = curArea * nansum(squeeze(bwfpWhite(xlat, ylon, :))) * 1e-3;
-                      
-            ittrWhite = (curArea * nansum(squeeze(bwfpWhite(xlat, ylon, :))) * 1e-3 / ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), 1, s)) * ...
-                                       (ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), 1, s) / nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
+            % no pop weight
+            ittrTotalNoPopWeight = (curArea * nansum(squeeze(bwfpWhite(xlat, ylon, :))) * 1e-3);
 
-            if ~isnan(ittrWhite)
-                pcBwfpWhite = pcBwfpWhite + ittrWhite;
-            end
-            
-            
-            % pc
-            ittrTotal = (curArea * nansum(squeeze(bwfpWhite(xlat, ylon, :))) * 1e-3 / ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), 1, s)) * ...
-                                       (ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), 1, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                 nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-
-            if ~isnan(ittrTotal)
-                pcBwfpTotal = pcBwfpTotal + ittrTotal;
+            if ~isnan(ittrTotalNoPopWeight)
+                bwfpTotalNoPopWeight = bwfpTotalNoPopWeight + ittrTotalNoPopWeight;
             end
         end
     end
 end
 
+for s = 1:5
+    bwfpPc(s) = bwfpTotalNoPopWeight / nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, s)));
+end
+
 fprintf('calculating future per capita bw demand...\n');
-pcBwfpBlueSpatialFut = [];
-bwfpBlueSpatialFut = [];
-pcBwfpBlueFut = zeros(length(2010:10:2080), 5);
-pcBwfpWhiteSpatialFut = [];
-bwfpWhiteSpatialFut = [];
-pcBwfpWhiteFut = zeros(length(2010:10:2080), 5);
-pcBwfpTotalFut = zeros(length(2010:10:2080), 5);
 bwfpTotalFut = zeros(length(2010:10:2080), 5);
-
-
-noWaterBlueFut = zeros(length(2010:10:2080), length(models), 5);
-noWaterSpatialBlueFut = zeros(length(2010:10:2080), length(models), 5);
-noWaterWhiteFut = zeros(length(2010:10:2080), length(models), 5);
-noWaterSpatialWhiteFut = zeros(length(2010:10:2080), length(models), 5);
-noWaterTotalFut = zeros(length(2010:10:2080), length(models), 5);
 
 for s = 1:5
     decind = 1;
     for dec = 2010:10:2080
-        pcBwfpBlueSpatialFut(:, :, decind, s) = pcBwfpBlueSpatial .* ...
-                                                (ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, s) ...
-                                                 ./ ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s));
-        bwfpBlueSpatialFut(:, :, decind, s) = bwfpBlueSpatial .* ...
-                                                (ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, s) ...
-                                                 ./ ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s));
-
-        for xlat = 1:size(bwfpBlue, 1)
-            latdiff = latBwfpBlue(2,1)-latBwfpBlue(1,1);
-            londiff = lonBwfpBlue(1,2)-lonBwfpBlue(1,1);
         
-            for ylon = 1:size(bwfpBlue, 2)
-
-                curArea = areaTableBlue(xlat, ylon);
-                
-                ittr = pcBwfpBlueSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), decind, s) / nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))));
-                
-                if ~isnan(ittr)
-                    pcBwfpBlueFut(decind, s) = pcBwfpBlueFut(decind, s) + ittr;
-                end
-                
-                ittrTotal = pcBwfpBlueSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), decind, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                   nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-                
-                if ~isnan(ittrTotal)
-                    pcBwfpTotalFut(decind, s) = pcBwfpTotalFut(decind, s) + ittrTotal;
-                end
-                
-                % no pc - total demand
-                ittrTotal = bwfpBlueSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsBlueSSP(xlat), lonIndsBlueSSP(ylon), decind, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                   nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-                
-                if ~isnan(ittrTotal)
-                    bwfpTotalFut(decind, s) = bwfpTotalFut(decind, s) + ittrTotal;
-                end
-                
-            end
-        end
-        
-     
-        pcBwfpWhiteSpatialFut(:, :, decind, s) = pcBwfpWhiteSpatial .* ...
-                                                (ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, s)  ...
-                                                 ./ ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s));
-                                             
-        bwfpWhiteSpatialFut(:, :, decind, s) = bwfpWhiteSpatial .* ...
-                                                (ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, s)  ...
-                                                 ./ ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s));
-                                             
-        for xlat = 1:size(bwfpWhite, 1)
-            latdiff = latBwfpWhite(2,1)-latBwfpWhite(1,1);
-            londiff = lonBwfpWhite(1,2)-lonBwfpWhite(1,1);
-        
-            for ylon = 1:size(bwfpWhite, 2)
-
-                curArea = areaTableWhite(xlat, ylon);
-
-                ittr = pcBwfpWhiteSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), decind, s) / nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s)))));
-                
-                if ~isnan(ittr)
-                    pcBwfpWhiteFut(decind, s) = pcBwfpWhiteFut(decind, s) + ittr;
-                end
-                
-                ittrTotal = pcBwfpWhiteSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), decind, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                   nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-                
-                if ~isnan(ittrTotal)
-                    pcBwfpTotalFut(decind, s) = pcBwfpTotalFut(decind, s) + ittrTotal;
-                end
-                
-                
-                % no pc
-                ittrTotal = bwfpWhiteSpatialFut(xlat, ylon, decind, s) * ...
-                                    (ssp(latIndsWhiteSSP(xlat), lonIndsWhiteSSP(ylon), decind, s) / (nansum(nansum(squeeze(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, s)))) + ...
-                                                                                                   nansum(nansum(squeeze(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, s))))));
-                
-                if ~isnan(ittrTotal)
-                    bwfpTotalFut(decind, s) = bwfpTotalFut(decind, s) + ittrTotal;
-                end
-            end
-        end
-        
-        % calculate # people water short
-        for model = 1:length(models)
-            for year = dec-2006+1:dec+10-2006+1
-                if year > 80
-                    continue;
-                end
-                
-                noWaterSpatialBlueFut(decind, model, s) = noWaterSpatialBlueFut(decind, model, s) + ...
-                                                   nansum(nansum((pcBwfpBlueSpatialFut(:, :, decind, s) > bwSupplyPcSpatialFutBlue(:, :, year, model, s)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, s)));
-                noWaterSpatialWhiteFut(decind, model, s) = noWaterSpatialWhiteFut(decind, model, s) + ...
-                                                   nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decind, s) > bwSupplyPcSpatialFutWhite(:, :, year, model, s)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, s)));
-                
-                noWaterBlueFut(decind, model, s) = noWaterBlueFut(decind, model, s) + ...
-                                                   nansum(nansum((pcBwfpBlueSpatialFut(:, :, decind, s) > bwSupplyPcFutBlue(year, model, s)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, s)));
-                noWaterWhiteFut(decind, model, s) = noWaterWhiteFut(decind, model, s) + ...
-                                                   nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decind, s) > bwSupplyPcFutWhite(year, model, s)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, s)));
-            end
-            nyears = 10;
-            if dec == 2080
-                nyears = 5;
-            end
-            
-            % divide by 10 years to give ppl per year
-            noWaterBlueFut(decind, model, s) = noWaterBlueFut(decind, model, s) / nyears;
-            noWaterWhiteFut(decind, model, s) = noWaterWhiteFut(decind, model, s) / nyears;
-            noWaterTotalFut(decind, model, s) = noWaterBlueFut(decind, model, s) + noWaterWhiteFut(decind, model, s);
-            
-            noWaterSpatialBlueFut(decind, model, s) = noWaterSpatialBlueFut(decind, model, s) / nyears;
-            noWaterSpatialWhiteFut(decind, model, s) = noWaterSpatialWhiteFut(decind, model, s) / nyears;
-            noWaterSpatialTotalFut(decind, model, s) = noWaterSpatialBlueFut(decind, model, s) + noWaterSpatialWhiteFut(decind, model, s);
-        end
+        bwfpTotalFut(decind, s) = bwfpPc(s) * nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decind, s)));
         
         decind = decind+1;
     end
 end
 
 dind = 1;
-bwSupplyPcMeanFutWhite = [];
-bwSupplyPcMeanFutBlue = [];
-for dec = 2010:10:2070
-    bwSupplyPcMeanFutWhite(dind, :, :) = squeeze(squeeze(nanmean(bwSupplyPcFutWhite(dec-2006+1:dec+10-2006+1, :, :), 1)));
-    bwSupplyPcMeanFutBlue(dind, :, :) = squeeze(squeeze(nanmean(bwSupplyPcFutBlue(dec-2006+1:dec+10-2006+1, :, :), 1)));
-    bwSupplyPcMeanFutTotal(dind, :, :) = squeeze(squeeze(nanmean(bwSupplyPcFutTotal(dec-2006+1:dec+10-2006+1, :, :), 1)));
-    bwSupplyMeanFutTotal(dind, :, :) = squeeze(squeeze(nanmean(bwSupplyFutTotal(dec-2006+1:dec+10-2006+1, :, :), 1)));
+bwSupplyMeanFut = [];
+noWaterFut = [];
+for dec = 2010:10:2080
+    bwSupplyMeanFut(dind, :) = squeeze(squeeze(nanmean(bwSupplyFutTotalNoPw(dec-2006+1:dec+10-2006+1, :), 1)));
+    
+    for s = 1:5
+        noWaterFut(dind, :, s) = (1-min(bwSupplyMeanFut(dind, :) ./ bwfpTotalFut(dind, s),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)));
+    end
     dind = dind+1;
 end
 
-bwSupplyPcMeanFutTotal = sort(bwSupplyPcMeanFutTotal, 2);
-noWaterTotalFut = sort(noWaterTotalFut, 2);
+bwSupplyMeanFutSorted = sort(bwSupplyMeanFut, 2);
+noWaterFutSorted = sort(noWaterFut, 2);
 
 colorD = [160, 116, 46]./255.0;
 colorHd = [216, 66, 19]./255.0;
@@ -663,7 +425,7 @@ grid on;
 pbaspect([2 1 1]);
 
 yyaxis left;
-b = boxplot(bwSupplyMeanFutTotal(:,il:ih,3)', 'width', .15, 'positions', [1:7] - .12)
+b = boxplot(bwSupplyMeanFutSorted(2:8,il:ih)', 'width', .15, 'positions', [1:7] - .12)
 
 set(b, {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
@@ -671,184 +433,107 @@ set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
 p = plot([1:7]-.12, bwfpTotalFut(2:8,3), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorD, 'linewidth', 3);
 
-ylim([0 2e8]);
+ylim([0 1.2e12]);
 ylabel('BW (m^3/year)');
+set(gca, 'YTick', [0 .3 .6 .9 1.2] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '900B', '1.2T'});
 
 legend([p], {'BW demand'});
 legend boxoff;
 
 yyaxis right;
-b = boxplot(noWaterSpatialTotalFut(2:8,il:ih,3)', 'width', .15, 'positions', [1:7] + .12)
+b = boxplot(noWaterFutSorted(2:8,il:ih,3)', 'width', .15, 'positions', [1:7] + .12)
 
 set(b, {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
 set(gca, 'fontsize', 36);
-ylim([0 2e8]);
+ylim([0 4e8]);
 set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
-set(gca, 'YTick', [0 .5 1 1.5 2] .* 1e8, 'YTickLabels', {'0', '50M', '100M', '150M', '200M'});
-xlim([.5 7.5]);
-ylabel('Unmet demand (people/year)');
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bw-supply-demand-3.eps;
-close all;
-
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-pbaspect([2 1 1]);
-
-yyaxis left;
-b = boxplot(bwSupplyPcMeanFutTotal(:,il:ih,5)', 'width', .15, 'positions', [1:7] - .12)
-
-set(b, {'LineWidth', 'Color'}, {3, colorW})
-lines = findobj(b, 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
-
-p = plot([1:7]-.12, pcBwfpTotalFut(2:8,5), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorD, 'linewidth', 3);
-
-ylim([0 12000]);
-ylabel('BW (m^3/year/person)');
-
-%legend([p], {'BW demand (m^3/year/person)'});
-
-yyaxis right;
-b = boxplot(noWaterSpatialTotalFut(2:8,il:ih,5)', 'width', .15, 'positions', [1:7] + .12)
-
-set(b, {'LineWidth', 'Color'}, {3, colorHd})
-lines = findobj(b, 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
-
-set(gca, 'fontsize', 36);
-set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
-ylim([0 1.1e8]);
-set(gca, 'YTick', [0 .25 .5 .75 1] .* 1e8, 'YTickLabels', {'0', '25M', '50M', '75M', '100M'});
+set(gca, 'YTick', [0 1 2 3 4] .* 1e8, 'YTickLabels', {'0', '100M', '200M', '300M', '400M'});
 xlim([.5 7.5]);
 ylabel('Unmet demand (people/year)');
 % set(gcf, 'Position', get(0,'Screensize'));
-% export_fig bw-supply-demand-5.eps;
+% export_fig bw-supply-demand-3.eps;
 close all;
 
 
 
 
+ihdAnomHist = [];
+idAnomHist = [];
+ihAnomHist = [];
+ihdNoWaterAnomHist = [];
+idNoWaterAnomHist = [];
+ihNoWaterAnomHist = [];
 
-
-
-
-
+ihdAnomFut = [];
+idAnomFut = [];
+ihAnomFut = [];
+ihdNoWaterAnomFut = [];
+idNoWaterAnomFut = [];
+ihNoWaterAnomFut = [];
 
 tprc = 74;
 pprc = 34;
 
 % find hot/dry years and show bw supply anomalies
 for mind = 1:length(models)
-    ihdBlue = find(tdataBlue(:, mind) > prctile(tdataBlue(:, mind), tprc) & pdataBlue(:, mind) < prctile(pdataBlue(:, mind), pprc));
-    idBlue = find(tdataBlue(:, mind) < prctile(tdataBlue(:, mind), tprc) & pdataBlue(:, mind) < prctile(pdataBlue(:, mind), pprc));
-    ihBlue = find(tdataBlue(:, mind) > prctile(tdataBlue(:, mind), tprc) & pdataBlue(:, mind) > prctile(pdataBlue(:, mind), pprc));
+    ihdTotal = find(detrend(tdataTotal(:, mind)) > prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) < prctile(detrend(pdataTotal(:, mind)), pprc));
+    idTotal = find(detrend(tdataTotal(:, mind)) < prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) < prctile(detrend(pdataTotal(:, mind)), pprc));
+    ihTotal = find(detrend(tdataTotal(:, mind)) > prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) > prctile(detrend(pdataTotal(:, mind)), pprc));
     
-    ihdWhite = find(tdataWhite(:, mind) > prctile(tdataWhite(:, mind), tprc) & pdataWhite(:, mind) < prctile(pdataWhite(:, mind), pprc));
-    idWhite = find(tdataWhite(:, mind) < prctile(tdataWhite(:, mind), tprc) & pdataWhite(:, mind) < prctile(pdataWhite(:, mind), pprc));
-    ihWhite = find(tdataWhite(:, mind) > prctile(tdataWhite(:, mind), tprc) & pdataWhite(:, mind) > prctile(pdataWhite(:, mind), pprc));
-    
-    popfracHistBlue = (ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3) ./ (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))));
-    popfracHistWhite = (ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3) ./ (nansum(nansum(ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3))) + nansum(nansum(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))));
-    
-    ihdAnomHist(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, ihdBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, :, mind, 3), 3))) .* popfracHistBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, ihdWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, :, mind, 3), 3))) .* popfracHistWhite)));
+    ihdAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
+    idAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(idTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
+    ihAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
                 
-    idAnomHist(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, idBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, :, mind, 3), 3))) .* popfracHistBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, idWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, :, mind, 3), 3))) .* popfracHistWhite)));
+    meanNoWater = (1-min(nanmean(bwSupplyHistTotalNoPw(:, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3)));
                 
-    ihAnomHist(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, ihBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistBlue(:, :, :, mind, 3), 3))) .* popfracHistBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, ihWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialHistWhite(:, :, :, mind, 3), 3))) .* popfracHistWhite)));
+    ihdNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
+                                meanNoWater;
+    idNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(idTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
+                                meanNoWater;
+    ihNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
+                                meanNoWater;
+
+                            
                 
+    ihdTotal = find(detrend(tfdataTotal(:, mind)) > prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) < prctile(detrend(pfdataTotal(:, mind)), pprc));
+    idTotal = find(detrend(tfdataTotal(:, mind)) < prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) < prctile(detrend(pfdataTotal(:, mind)), pprc));
+    ihTotal = find(detrend(tfdataTotal(:, mind)) > prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) > prctile(detrend(pfdataTotal(:, mind)), pprc));
     
-    % find no water for historical
-    meanNoWaterBlueHist = nansum(nansum(nansum((pcBwfpBlueSpatial(:, :) > bwSupplyPcSpatialHistBlue(:, :, :, mind, 3)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3)))) / size(bwSupplyPcSpatialHistBlue,3);
-    meanNoWaterWhiteHist = nansum(nansum(nansum((pcBwfpWhiteSpatial(:, :) > bwSupplyPcSpatialHistWhite(:, :, :, mind, 3)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))) / size(bwSupplyPcSpatialHistWhite,3);
-    
-    ihdNoWaterAnomHist(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatial(:, :) > bwSupplyPcSpatialHistBlue(:, :, ihdBlue, mind, 3)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3)))) / length(ihdBlue) - meanNoWaterBlueHist) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatial(:, :) > bwSupplyPcSpatialHistWhite(:, :, ihdWhite, mind, 3)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))) / length(ihdWhite) - meanNoWaterWhiteHist);
-                     
-    idNoWaterAnomHist(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatial(:, :) > bwSupplyPcSpatialHistBlue(:, :, idBlue, mind, 3)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3)))) / length(idBlue) - meanNoWaterBlueHist) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatial(:, :) > bwSupplyPcSpatialHistWhite(:, :, idWhite, mind, 3)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))) / length(idWhite) - meanNoWaterWhiteHist);
-                     
-    ihNoWaterAnomHist(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatial(:, :) > bwSupplyPcSpatialHistBlue(:, :, ihBlue, mind, 3)) .* ssp(latIndsBlueSSP, lonIndsBlueSSP, 1, 3)))) / length(ihBlue) - meanNoWaterBlueHist) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatial(:, :) > bwSupplyPcSpatialHistWhite(:, :, ihWhite, mind, 3)) .* ssp(latIndsWhiteSSP, lonIndsWhiteSSP, 1, 3)))) / length(ihWhite) - meanNoWaterWhiteHist);
-    
-    
-                    
-    ihdBlue = find(tfdataBlue(1:80, mind) > prctile(tfdataBlue(1:80, mind), tprc) & pfdataBlue(1:80, mind) < prctile(pfdataBlue(1:80, mind), pprc));
-    idBlue = find(tfdataBlue(1:80, mind) < prctile(tfdataBlue(1:80, mind), tprc) & pfdataBlue(1:80, mind) < prctile(pfdataBlue(1:80, mind), pprc));
-    ihBlue = find(tfdataBlue(1:80, mind) > prctile(tfdataBlue(1:80, mind), tprc) & pfdataBlue(1:80, mind) > prctile(pfdataBlue(1:80, mind), pprc));
-    
-    ihdWhite = find(tfdataWhite(1:80, mind) > prctile(tfdataWhite(1:80, mind), tprc) & pfdataWhite(1:80, mind) < prctile(pfdataWhite(1:80, mind), pprc));
-    idWhite = find(tfdataWhite(1:80, mind) < prctile(tfdataWhite(1:80, mind), tprc) & pfdataWhite(1:80, mind) < prctile(pfdataWhite(1:80, mind), pprc));
-    ihWhite = find(tfdataWhite(1:80, mind) > prctile(tfdataWhite(1:80, mind), tprc) & pfdataWhite(1:80, mind) > prctile(pfdataWhite(1:80, mind), pprc));
-    
-    popfracFutBlue = (nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, end-2:end, 3), 3) ./ (nansum(nansum(nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, end-2:end, 3), 3))) + nansum(nansum(nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, end-2:end, 3), 3)))));
-    popfracFutWhite = (nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, end-2:end, 3), 3) ./ (nansum(nansum(nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, end-2:end, 3), 3))) + nansum(nansum(nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, end-2:end, 3), 3)))));
-    
-    ihdAnomFut(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, ihdBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, :, mind, 3), 3))) .* popfracFutBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, ihdWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, :, mind, 3), 3))) .* popfracFutWhite)));
-                
-    idAnomFut(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, idBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, :, mind, 3), 3))) .* popfracFutBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, idWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, :, mind, 3), 3))) .* popfracFutWhite)));
-                
-    ihAnomFut(mind) = (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, ihBlue, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutBlue(:, :, :, mind, 3), 3))) .* popfracFutBlue))) + ...
-                        (nansum(nansum((squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, ihWhite, mind, 3), 3)) - squeeze(nanmean(bwSupplyPcSpatialFutWhite(:, :, :, mind, 3), 3))) .* popfracFutWhite)));
-              
+    ihdAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(ihdTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
+    idAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(idTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
+    ihAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(ihTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
                     
     % find no water for historical
     
-    yearRange = [2010 + 10*(decind-1):2010 + 10*(decind-1)+9] - 2006;
-    yearRange(yearRange>80) = [];
-
-    decIndBlueIhd = (round(ihdBlue+2006,-1)-2000)/10;
-    decIndBlueIhd(decIndBlueIhd > 8) = 8;
-    decIndWhiteIhd = (round(ihdWhite+2006,-1)-2000)/10;
-    decIndWhiteIhd(decIndWhiteIhd > 8) = 8;
+    decIndTotalIhd = (round(ihdTotal+2006,-1)-2000)/10;
+    decIndTotalIhd(decIndTotalIhd > 8) = 8;
     
-    decIndBlueId = (round(idBlue+2006,-1)-2000)/10;
-    decIndBlueId(decIndBlueId > 8) = 8;
-    decIndWhiteId = (round(idWhite+2006,-1)-2000)/10;
-    decIndWhiteId(decIndWhiteId > 8) = 8;
+    decIndTotalId = (round(idTotal+2006,-1)-2000)/10;
+    decIndTotalId(decIndTotalId > 8) = 8;
     
-    decIndBlueIh = (round(ihBlue+2006,-1)-2000)/10;
-    decIndBlueIh(decIndBlueIh > 8) = 8;
-    decIndWhiteIh = (round(ihWhite+2006,-1)-2000)/10;
-    decIndWhiteIh(decIndWhiteIh > 8) = 8;
+    decIndTotalIh = (round(ihTotal+2006,-1)-2000)/10;
+    decIndTotalIh(decIndTotalIh > 8) = 8;
 
-    decinds = (round(2006:2085,-1)-2010)/10+1;
+    decinds = (round(2006:2090,-1)-2010)/10+1;
     decinds(decinds > 8) = 8;
 
-    meanNoWaterBlueFut = nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decinds, 3) > bwSupplyPcSpatialFutBlue(:, :, :, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decinds, 3), 3)))) / size(bwSupplyPcSpatialFutBlue, 3);
-    meanNoWaterWhiteFut = nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decinds, 3) > bwSupplyPcSpatialFutWhite(:, :, :, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decinds, 3), 3)))) / size(bwSupplyPcSpatialFutWhite,3);
-
-    ihdNoWaterAnomFut(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decIndBlueIhd, 3) > bwSupplyPcSpatialFutBlue(:, :, ihdBlue, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decIndBlueIhd, 3), 3)))) / length(ihdBlue) - meanNoWaterBlueFut) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decIndWhiteIhd, 3) > bwSupplyPcSpatialFutWhite(:, :, ihdWhite, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decIndWhiteIhd, 3), 3)))) / length(ihdWhite) - meanNoWaterWhiteFut);
-
-    idNoWaterAnomFut(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decIndBlueId, 3) > bwSupplyPcSpatialFutBlue(:, :, idBlue, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decIndBlueId, 3), 3)))) / length(idBlue) - meanNoWaterBlueFut) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decIndWhiteId, 3) > bwSupplyPcSpatialFutWhite(:, :, idWhite, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decIndWhiteId, 3), 3)))) / length(idWhite) - meanNoWaterWhiteFut);
-
-    ihNoWaterAnomFut(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decIndBlueIh, 3) > bwSupplyPcSpatialFutBlue(:, :, ihBlue, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decIndBlueIh, 3), 3)))) / length(ihBlue) - meanNoWaterBlueFut) + ...
-                         (nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decIndWhiteIh, 3) > bwSupplyPcSpatialFutWhite(:, :, ihWhite, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decIndWhiteIh, 3), 3)))) / length(ihWhite) - meanNoWaterWhiteFut);
-
-%     idNoWaterAnomFut(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decind, 3) > bwSupplySpatialFutBlue(:, :, idBlue, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, 3), 3)))) / length(idBlue) - meanNoWaterBlueFut) + ...
-%                          (nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decind, 3) > bwSupplySpatialFutWhite(:, :, idWhite, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, 3), 3)))) / length(idWhite) - meanNoWaterWhiteFut);
-% 
-%     ihNoWaterAnomFut(mind) = (nansum(nansum(nansum((pcBwfpBlueSpatialFut(:, :, decind, 3) > bwSupplySpatialFutBlue(:, :, ihBlue, mind, 3)) .* nanmean(ssp(latIndsBlueSSP, lonIndsBlueSSP, decind, 3), 3)))) / length(ihBlue) - meanNoWaterBlueFut) + ...
-%                          (nansum(nansum(nansum((pcBwfpWhiteSpatialFut(:, :, decind, 3) > bwSupplySpatialFutWhite(:, :, ihWhite, mind, 3)) .* nanmean(ssp(latIndsWhiteSSP, lonIndsWhiteSSP, decind, 3), 3)))) / length(ihWhite) - meanNoWaterWhiteFut);
-
+    meanNoWater = squeeze(1-min(nanmean(bwSupplyMeanFut(:, mind), 1) ./ bwfpTotalFut(:, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 2:9, 3))));
+    
+    ihdNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihdTotal, mind) ./ bwfpTotalFut(decIndTotalIhd, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIhd, 3)))) - ...
+                                meanNoWater(decIndTotalIhd),1);
+    idNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(idTotal, mind) ./ bwfpTotalFut(decIndTotalId, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalId, 3)))) - ...
+                                meanNoWater(decIndTotalId),1);
+    ihNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihTotal, mind) ./ bwfpTotalFut(decIndTotalIh, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIh, 3)))) - ...
+                                meanNoWater(decIndTotalIh),1);
 end
 
 ihdAnomHist = sort(ihdAnomHist);
 idAnomHist = sort(idAnomHist);
 ihAnomHist = sort(ihAnomHist);
+
 ihdAnomFut = sort(ihdAnomFut);
 idAnomFut = sort(idAnomFut);
 ihAnomFut = sort(ihAnomFut);
@@ -856,11 +541,10 @@ ihAnomFut = sort(ihAnomFut);
 ihdNoWaterAnomHist = sort(ihdNoWaterAnomHist);
 idNoWaterAnomHist = sort(idNoWaterAnomHist);
 ihNoWaterAnomHist = sort(ihNoWaterAnomHist);
+
 ihdNoWaterAnomFut = sort(ihdNoWaterAnomFut);
 idNoWaterAnomFut = sort(idNoWaterAnomFut);
 ihNoWaterAnomFut = sort(ihNoWaterAnomFut);
-
-
 
 il = round(.1*length(models));
 ih = round(.9*length(models));
@@ -910,9 +594,10 @@ end
 
 plot([0 4], [0 0], '--k', 'linewidth', 2);
 xlim([.5 3.5]);
-ylim([-2500 750]);
+ylim([-1.25 .5].*1e11);
+set(gca, 'ytick', [-1.25:.25:.5] .* 1e11, 'yticklabels', {'-125B', '-100B', '-75B', '-50B', '-25B', '0', '25B', '50B'});
 set(gca, 'fontsize', 36);
-ylabel('BW anomaly (m^3/person)');
+ylabel('BW anomaly (m^3/year)');
 set(gca, 'xtick', [1 2 3], 'xticklabels', {'Hot & dry', 'Dry', 'Hot'});
 xtickangle(45);
 set(gcf, 'Position', get(0,'Screensize'));
@@ -968,10 +653,10 @@ end
 
 plot([0 4], [0 0], '--k', 'linewidth', 2);
 xlim([.5 3.5]);
-ylim([-3e7 7e7]);
-set(gca, 'ytick', [-2 -1 0 1 2 3 4 5 6] .* 1e7, 'yticklabels', {'-20M', '-10M', '0', '10M', '20M', '30M', '40M', '50M', '60M'});
+ylim([-4e7 3e7]);
+set(gca, 'ytick', [-4:1:3] .* 1e7, 'yticklabels', {'-40M', '-30M', '-20M', '-10M', '0M', '10M', '20M', '30M'});
 set(gca, 'fontsize', 36);
-ylabel('Unmet demand (people)');
+ylabel('Unmet demand (people/year)');
 set(gca, 'xtick', [1 2 3], 'xticklabels', {'Hot & dry', 'Dry', 'Hot'});
 xtickangle(45);
 set(gcf, 'Position', get(0,'Screensize'));

@@ -67,11 +67,13 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 for m = 1:length(models)
     curModel = models{m};
 
-    if exist(['E:/data/projects/bowen/temp-huss-regressions/temp-huss-regression-' curModel '-historical.mat'], 'file')
-        load(['E:/data/projects/bowen/temp-huss-regressions/temp-huss-regression-' curModel '-historical.mat']);
-        txHussIntercept(:, :, m) = regression{1};
-        txHussSlope(:, :, m) = regression{2};
-        txHussR2(:, :, m) = regression{3};
+    if exist(['E:/data/projects/bowen/temp-huss-regressions/temp-ef-huss-regression-' curModel '-historical.mat'], 'file')
+        load(['E:/data/projects/bowen/temp-huss-regressions/temp-ef-huss-regression-' curModel '-historical.mat']);
+        txHussIntercept(:, :, :, m) = regression{1};
+        txHussSlope(:, :, :, m) = regression{2};
+        efHussSlope(:, :, :, m) = regression{3};
+        interceptSlope(:, :, :, m) = regression{4};
+        txHussR2(:, :, :, m) = regression{5};
         continue;
     end
 
@@ -82,38 +84,29 @@ for m = 1:length(models)
     txxMonthsFut = txxMonths;
 
     % temperature data (thresh, ann-max, or daily-max)
-    baseSlope = [];
+    baseSlopeTxHuss = [];
+    baseSlopeEfHuss = [];
+    baseSlopeInteraction = [];
     baseIntercept = [];
     baseR2 = [];
-    
-    futSlope = [];
-    futIntercept = [];
-    futR2 = [];
 
     fprintf('loading base model %s...\n', curModel);
 
     baseTx = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2004);
     baseHuss = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/historical/huss/regrid/world'], 'startYear', 1981, 'endYear', 2004);
+    baseEf = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/historical/ef/regrid/world'], 'startYear', 1981, 'endYear', 2004);
     
-    fprintf('loading future model %s...\n', curModel);
-    futureTx = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
-    futureHuss = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/rcp85/huss/regrid/world'], 'startYear', 2061, 'endYear', 2085);
-
     baseTx = baseTx{3};
     baseHuss = baseHuss{3};
+    baseEf = baseEf{3};
     
-    futureTx = futureTx{3};
-    futureHuss = futureHuss{3};
-
     % if any kelvin values, convert to C
     if nanmean(nanmean(nanmean(nanmean(nanmean(baseTx))))) > 100
         baseTx = baseTx - 273.15;
     end
     
-    if nanmean(nanmean(nanmean(nanmean(nanmean(futureTx))))) > 100
-        futureTx = futureTx - 273.15;
-    end
-
+    baseEf(baseEf < 0 | baseEf > 1) = NaN;
+   
     % set water grid cells to NaN
     % include loops for month and day (5D) in case we are using
     % seasonal change metric
@@ -127,24 +120,14 @@ for m = 1:length(models)
                 curGrid = baseHuss(:, :, i, j, k);
                 curGrid(waterGrid) = NaN;
                 baseHuss(:, :, i, j, k) = curGrid;
+                
+                curGrid = baseEf(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                baseEf(:, :, i, j, k) = curGrid;
             end
         end
     end
     
-    for i = 1:size(futureTx, 3)
-        for j = 1:size(futureTx, 4)
-            for k = 1:size(futureTx, 5)
-                curGrid = futureTx(:, :, i, j, k);
-                curGrid(waterGrid) = NaN;
-                futureTx(:, :, i, j, k) = curGrid;
-
-                curGrid = futureHuss(:, :, i, j, k);
-                curGrid(waterGrid) = NaN;
-                futureHuss(:, :, i, j, k) = curGrid;
-            end
-        end
-    end
-
     % calculate base period thresholds
 
     histTx = {};
@@ -166,10 +149,12 @@ for m = 1:length(models)
 
             curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
 
-            if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon)
-                baseSlope(xlat, ylon) = NaN;
-                baseIntercept(xlat, ylon) = NaN;
-                baseR2(xlat, ylon) = NaN;
+            if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon) || xlat < 15 || xlat > 75
+                baseSlopeTxHuss(xlat, ylon, 1:10) = NaN;
+                baseSlopeEfHuss(xlat, ylon, 1:10) = NaN;
+                baseSlopeInteraction(xlat, ylon, 1:10) = NaN;
+                baseIntercept(xlat, ylon, 1:10) = NaN;
+                baseR2(xlat, ylon, 1:10) = NaN;
                 continue;
             end
 
@@ -178,12 +163,11 @@ for m = 1:length(models)
 
             huss = squeeze(baseHuss(xlat, ylon, :, curTxxMonthsHist, :));
             huss = reshape(huss, [size(huss,1)*size(huss,2)*size(huss,3), 1]);
+            
+            ef = squeeze(baseEf(xlat, ylon, :, curTxxMonthsHist, :));
+            ef = reshape(ef, [size(ef,1)*size(ef,2)*size(ef,3), 1]);
 
-            % compute historical wet bulb
-            tw = [];
-            for d = 1:length(tx)
-                tw(d) = kopp_wetBulb(tx(d), 100200, huss(d));
-            end
+            
 
             thresh = 5:10:95;
             txPrc = prctile(squeeze(tx), thresh);
@@ -203,82 +187,72 @@ for m = 1:length(models)
                 end
             end
 
+            % compute historical wet bulb
+            tw = [];
+            for t = 1:10
+                tw(t) = kopp_wetBulb(nanmean(tx(txPrc == t)), 100200, nanmean(huss(txPrc == t)));
+            end
+            
             for t = 1:length(thresh)
                 ind = find(txPrc == t);
-                histTx{xlat}{ylon}{t} = tx(ind);
-                histHuss{xlat}{ylon}{t} = huss(ind);
-                histTw{xlat}{ylon}{t} = tw(ind);
+                histTx{xlat}{ylon}{t} = nanmean(tx(ind));
+                histHuss{xlat}{ylon}{t} = nanmean(huss(ind));
+                histTw{xlat}{ylon}{t} = tw(t);
             end
 
             % skip if NaN (water)
             if length(find(~isnan(huss))) == 0 || length(find(~isnan(tx))) == 0
-                baseSlope(xlat, ylon) = NaN;
-                baseIntercept(xlat, ylon) = NaN;
-                baseR2(xlat, ylon) = NaN;
+                baseSlopeTxHuss(xlat, ylon, 1:10) = NaN;
+                baseSlopeEfHuss(xlat, ylon, 1:10) = NaN;
+                baseSlopeInteraction(xlat, ylon, 1:10) = NaN;
+                baseIntercept(xlat, ylon, 1:10) = NaN;
+                baseR2(xlat, ylon, 1:10) = NaN;
                 continue;
             end
 
-            f = fitlm(tx, huss);
-            baseSlope(xlat, ylon) = f.Coefficients.Estimate(2);
-            baseIntercept(xlat, ylon) = f.Coefficients.Estimate(1);
-            baseR2(xlat, ylon) = f.Rsquared.Ordinary;
-            
-            
-            % -------------------------------------------------------------
-            
-            curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
-
-            if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
-                futSlope(xlat, ylon) = NaN;
-                futIntercept(xlat, ylon) = NaN;
-                futR2(xlat, ylon) = NaN;
-                continue;
+            for t = 1:length(thresh)
+                ind = find(txPrc == t);
+                if length(ind) > 50
+                f = fitlm([tx(ind), ef(ind)], huss(ind), 'interactions');
+                baseSlopeTxHuss(xlat, ylon, t) = f.Coefficients.Estimate(2);
+                baseSlopeEfHuss(xlat, ylon, t) = f.Coefficients.Estimate(3);
+                baseSlopeInteraction(xlat, ylon, t) = f.Coefficients.Estimate(4);
+                baseIntercept(xlat, ylon, t) = f.Coefficients.Estimate(1);
+                baseR2(xlat, ylon, t) = f.Rsquared.Ordinary;
+                else
+                    baseSlopeTxHuss(xlat, ylon, t) = NaN;
+                    baseSlopeEfHuss(xlat, ylon, t) = NaN;
+                    baseSlopeInteraction(xlat, ylon, t) = NaN;
+                    baseIntercept(xlat, ylon, t) = NaN;
+                    baseR2(xlat, ylon, t) = NaN;
+                end
             end
-
-            tx = squeeze(futureTx(xlat, ylon, :, curTxxMonthsFut, :));
-            tx = reshape(tx, [size(tx,1)*size(tx,2)*size(tx,3), 1]);
-
-            huss = squeeze(futureHuss(xlat, ylon, :, curTxxMonthsFut, :));
-            huss = reshape(huss, [size(huss,1)*size(huss,2)*size(huss,3), 1]);
-
-            % skip if NaN (water)
-            if length(find(~isnan(huss))) == 0 || length(find(~isnan(tx))) == 0
-                futSlope(xlat, ylon) = NaN;
-                futIntercept(xlat, ylon) = NaN;
-                futR2(xlat, ylon) = NaN;
-                continue;
-            end
-
-            f = fitlm(tx, huss);
-            futSlope(xlat, ylon) = f.Coefficients.Estimate(2);
-            futIntercept(xlat, ylon) = f.Coefficients.Estimate(1);
-            futR2(xlat, ylon) = f.Rsquared.Ordinary;
-
+            
+            
         end
     end
 
-    regression = {baseIntercept, baseSlope, baseR2};
-    save(['e:/data/projects/bowen/temp-huss-regressions/temp-huss-regression-' curModel '-historical.mat'], 'regression');
+    regression = {baseIntercept, baseSlopeTxHuss, baseSlopeEfHuss, baseSlopeInteraction, baseR2};
+    save(['e:/data/projects/bowen/temp-huss-regressions/temp-ef-huss-regression-' curModel '-historical.mat'], 'regression');
     save(['e:/data/projects/bowen/temp-huss-regressions/hist-tx-tx-deciles-' curModel '-historical.mat'], 'histTx');
     save(['e:/data/projects/bowen/temp-huss-regressions/hist-tw-tx-deciles-' curModel '-historical.mat'], 'histTw');
     save(['e:/data/projects/bowen/temp-huss-regressions/hist-huss-tx-deciles-' curModel '-historical.mat'], 'histHuss');
 end
-
-
-
 
 % load load future model and calc tx-induced huss for each future
 % day
 for m = 1:length(models)
     curModel = models{m};
 
-    if exist(['e:/data/projects/bowen/temp-huss-regressions/tx-predicted-huss-future-' curModel '.mat'])
+    if exist(['e:/data/projects/bowen/temp-huss-regressions/tx-ef-predicted-huss-future-' curModel '.mat'])
         continue;
     end
     
-    load(['e:/data/projects/bowen/temp-huss-regressions/temp-huss-regression-' curModel '-historical.mat']);
-    txHussIntercept = regression{1};
-    txHussSlope = regression{2};
+    load(['e:/data/projects/bowen/temp-huss-regressions/temp-ef-huss-regression-' curModel '-historical.mat']);
+    baseIntercept = regression{1};
+    baseSlopeTxHuss = regression{2};
+    baseSlopeEfHuss = regression{3};
+    baseSlopeInteraction = regression{4};
     
     load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
@@ -287,6 +261,11 @@ for m = 1:length(models)
 
     futTx = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/rcp85/tasmax/regrid/world'], 'startYear', 2061, 'endYear', 2085);
     futTx = futTx{3};
+    
+    futEf = loadDailyData(['e:/data/cmip5/output/' curModel '/r1i1p1/rcp85/ef/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+    futEf = futEf{3};
+    
+    futEf(futEf < 0 | futEf > 1) = NaN;
     
     % if any kelvin values, convert to C
     if nanmean(nanmean(nanmean(nanmean(nanmean(futTx))))) > 100
@@ -302,34 +281,55 @@ for m = 1:length(models)
                 curGrid = futTx(:, :, i, j, k);
                 curGrid(waterGrid) = NaN;
                 futTx(:, :, i, j, k) = curGrid;
+                
+                curGrid = futEf(:, :, i, j, k);
+                curGrid(waterGrid) = NaN;
+                futEf(:, :, i, j, k) = curGrid;
             end
         end
     end
 
     % calculate base period thresholds
 
-    txHussFut = {};
-    twFut = {};
+    twDueToEf = zeros(size(lat,1), size(lat,2), 10);
+    twDueToEf(twDueToEf == 0) = NaN;
+    twDueToTx = zeros(size(lat,1), size(lat,2), 10);
+    twDueToTx(twDueToTx == 0) = NaN;
+    twTotal = zeros(size(lat,1), size(lat,2), 10);
+    twTotal(twTotal == 0) = NaN;
+
+    hussDueToEf = zeros(size(lat,1), size(lat,2), 10);
+    hussDueToEf(hussDueToEf == 0) = NaN;
+    hussDueToTx = zeros(size(lat,1), size(lat,2), 10);
+    hussDueToTx(hussDueToTx == 0) = NaN;
+    hussTotal = zeros(size(lat,1), size(lat,2), 10);
+    hussTotal(hussTotal == 0) = NaN;
+    
     fprintf('calculating future huss, tw...\n');
     % over x coords
     for xlat = 1:size(futTx, 1)
-        txHussFut{xlat} = {};
-        twFut{xlat} = {};
+
         % over y coords
         for ylon = 1:size(futTx, 2)
-            twFut{xlat}{ylon} = {};
-            txHussFut{xlat}{ylon} = {};
             
             curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
 
             if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
-                txHussFut{xlat}{ylon} = NaN;
-                twFut{xlat}{ylon} = NaN;
+                twDueToEf(xlat, ylon, 1:10) = NaN;
+                twDueToTx(xlat, ylon, 1:10) = NaN;
+                twTotal(xlat, ylon, 1:10) = NaN;
+                
+                hussDueToEf(xlat, ylon, 1:10) = NaN;
+                hussDueToTx(xlat, ylon, 1:10) = NaN;
+                hussTotal(xlat, ylon, 1:10) = NaN;
                 continue;
             end
             
             tx = squeeze(futTx(xlat, ylon, :, curTxxMonthsFut, :));
             tx = reshape(tx, [size(tx,1)*size(tx,2)*size(tx,3), 1]);
+            
+            ef = squeeze(futEf(xlat, ylon, :, curTxxMonthsFut, :));
+            ef = reshape(ef, [size(ef,1)*size(ef,2)*size(ef,3), 1]);
             
             thresh = 5:10:95;
             txPrc = prctile(squeeze(tx), thresh);
@@ -350,89 +350,65 @@ for m = 1:length(models)
             end
             
             % predict future huss due to tx variation
-            hussPred = txHussIntercept(xlat, ylon) + [(ones(size(tx)) .* txHussSlope(xlat, ylon)) .* tx];
-            twPred = [];
-            for d = 1:length(hussPred)
-                 twPred(d) = kopp_wetBulb(tx(d), 100200, hussPred(d));
-            end
-            
-            % group all days by tx decile
             for t = 1:10
                 ind = find(txPrc == t);
-                txHussFut{xlat}{ylon}{t} = hussPred(ind);
-                twFut{xlat}{ylon}{t} = twPred(ind);
+                hussDueToTx(xlat, ylon, t) = nanmean(baseIntercept(xlat, ylon, t) + ...
+                                            ([(ones(size(tx(ind))) .* baseSlopeTxHuss(xlat, ylon, t)) .* tx(ind)]) + ...
+                                            ([(ones(size(tx(ind))) .* baseSlopeInteraction(xlat, ylon, t)) .* tx(ind) .* nanmean(ef(ind))]));
+                hussDueToEf(xlat, ylon, t) = nanmean(baseIntercept(xlat, ylon, t) + ...
+                                             ([(ones(size(ef(ind))) .* baseSlopeEfHuss(xlat, ylon, t)) .* ef(ind)]) + ...
+                                             ([(ones(size(ef(ind))) .* baseSlopeInteraction(xlat, ylon, t)) .* ef(ind) .* nanmean(tx(ind))]));
+                hussTotal(xlat, ylon, t) = nanmean(baseIntercept(xlat, ylon, t) + ...
+                                           ([(ones(size(tx(ind))) .* baseSlopeTxHuss(xlat, ylon, t)) .* tx(ind)]) + ...
+                                           ([(ones(size(ef(ind))) .* baseSlopeEfHuss(xlat, ylon, t)) .* ef(ind)]) + ...
+                                           ([(ones(size(ef(ind))) .* baseSlopeInteraction(xlat, ylon, t)) .* ef(ind) .* tx(ind)]));
+                twDueToTx(xlat, ylon, t) = kopp_wetBulb(nanmean(tx(ind)), 100200, hussDueToTx(xlat, ylon, t));
+                twDueToEf(xlat, ylon, t) = kopp_wetBulb(nanmean(tx(ind)), 100200, hussDueToEf(xlat, ylon, t));
+                twTotal(xlat, ylon, t) = kopp_wetBulb(nanmean(tx(ind)), 100200, hussTotal(xlat, ylon, t));
+            
             end
+
         end
     end
     
-    save(['e:/data/projects/bowen/temp-huss-regressions/tx-predicted-huss-future-' curModel '.mat'], 'txHussFut');
-    save(['e:/data/projects/bowen/temp-huss-regressions/tx-predicted-tw-future-' curModel '.mat'], 'twFut');
+    hussFut = {hussDueToTx, hussDueToEf, hussTotal};
+    twFut = {twDueToTx, twDueToEf, twTotal};
+    save(['e:/data/projects/bowen/temp-huss-regressions/tx-ef-predicted-huss-future-' curModel '.mat'], 'hussFut');
+    save(['e:/data/projects/bowen/temp-huss-regressions/tx-ef-predicted-tw-future-' curModel '.mat'], 'twFut');
     
 end
 
 % calc tx amplification
-hussChgTxAmp = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
-hussChgTxAmp(hussChgTxAmp == 0) = NaN;
-hussChgNoTxAmp = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
-hussChgNoTxAmp(hussChgNoTxAmp == 0) = NaN;
-twChgTxAmp = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
-twChgTxAmp(twChgTxAmp == 0) = NaN;
-twChgNoTxAmp = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
-twChgNoTxAmp(twChgNoTxAmp == 0) = NaN;
+hussChgTx = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+hussChgTx(hussChgTx == 0) = NaN;
+hussChgEf = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+hussChgEf(hussChgEf == 0) = NaN;
+hussChgTotal = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+hussChgTotal(hussChgTotal == 0) = NaN;
 
-twFutDiff = [];
-hussFutDiff = [];
+twChgTx = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+twChgTx(twChgTx == 0) = NaN;
+twChgEf = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+twChgEf(twChgEf == 0) = NaN;
+twChgTotal = zeros([size(lat, 1), size(lat, 2), 10, length(models)]);
+twChgTotal(twChgTotal == 0) = NaN;
 
+futHussModel = [];
+futHussReg = [];
+threshChgHuss = [];
 fprintf('calculating tx amplification effects...\n');
 for m = 1:length(models)
     curModel = models{m};
-    load(['e:/data/projects/bowen/temp-huss-regressions/tx-predicted-huss-future-' curModel '.mat']);
-    load(['e:/data/projects/bowen/temp-huss-regressions/tx-predicted-tw-future-' curModel '.mat']);
-    load(['e:/data/projects/bowen/temp-huss-regressions/hist-tx-tx-deciles-' curModel '-historical.mat']);
-    load(['e:/data/projects/bowen/temp-huss-regressions/hist-tw-tx-deciles-' curModel '-historical.mat']);
-    load(['e:/data/projects/bowen/temp-huss-regressions/hist-huss-tx-deciles-' curModel '-historical.mat']);
+    load(['e:/data/projects/bowen/temp-huss-regressions/tx-ef-predicted-huss-future-' curModel '.mat']);
     
-    for xlat = 1:length(histTx)
-        for ylon = 1:length(histTx{xlat})
-            for t = 1:10
-                
-                if length(txHussFut{xlat}{ylon})>1 && length(histHuss{xlat}{ylon})>1
-                    hussChgTxAmp(xlat, ylon, t, m) = nanmean(txHussFut{xlat}{ylon}{t}) - nanmean(histHuss{xlat}{ylon}{t});
-                    hussFutDiff(xlat, ylon, t, m) = nanmean(txHussFut{xlat}{ylon}{t});
-                end
-                
-                if length(twFut{xlat}{ylon})>1 && length(histTw{xlat}{ylon})>1
-                    twChgTxAmp(xlat, ylon, t, m) = nanmean(twFut{xlat}{ylon}{t}) - nanmean(histTw{xlat}{ylon}{t});
-                    twFutDiff(xlat, ylon, t, m) = nanmean(twFut{xlat}{ylon}{t});
-                end
-                
-                if t <= 5
-                    if length(txHussFut{xlat}{ylon})>1 && length(histHuss{xlat}{ylon})>1
-                        hussChgNoTxAmp(xlat, ylon, t, m) = nanmean(txHussFut{xlat}{ylon}{t}) - nanmean(histHuss{xlat}{ylon}{t});
-                    end
-                    
-                    if length(twFut{xlat}{ylon})>1 && length(histTw{xlat}{ylon})>1
-                        twChgNoTxAmp(xlat, ylon, t, m) = nanmean(twFut{xlat}{ylon}{t}) - nanmean(histTw{xlat}{ylon}{t});
-                    end
-                else
-                    % remove tx amp by constraining future change to median
-                    % change
-                    if length(txHussFut{xlat}{ylon})>1 && length(histHuss{xlat}{ylon})>1
-                        hussChgNoTxAmp(xlat, ylon, t, m) = nanmean(txHussFut{xlat}{ylon}{5}) - nanmean(histHuss{xlat}{ylon}{t});
-                    end
-                    
-                    if length(twFut{xlat}{ylon})>1 && length(histTw{xlat}{ylon})>1
-                        twChgNoTxAmp(xlat, ylon, t, m) = nanmean(twFut{xlat}{ylon}{5}) - nanmean(histTw{xlat}{ylon}{t});
-                    end
-                end
-            end
-        end
-    end
-        
-     
-end
-
-for m = 1:length(models)
+%     futHuss = loadDailyData(['e:/data/cmip5/output/access1-0/r1i1p1/rcp85/huss/regrid/world'], 'startYear', 2061, 'endYear', 2085);
+%     futHussModel(:,:,m) = nanmean(nanmean(nanmean(futHuss{3},5),4),3);
+%     
+    hussDueToTx = hussFut{1};
+    hussDueToEf = hussFut{2};
+    hussTotal = hussFut{3};
+    
+    futHussReg(:,:,:,m) = hussTotal;
     
     tind = 1;
     for t = 5:10:95
@@ -441,17 +417,45 @@ for m = 1:length(models)
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgHuss(:, :, tind, m) = chgData;
-        
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
-        chgData(waterGrid) = NaN;
-        chgData(1:15,:) = NaN;
-        chgData(75:90,:) = NaN;
-        twChg(:, :, tind, m) = chgData;
-        
-        tind = tind+1;
+        tind=tind+1;
     end
+    
+    load(['e:/data/projects/bowen/temp-huss-regressions/tx-ef-predicted-tw-future-' curModel '.mat']);
+    twDueToTx = twFut{1};
+    twDueToEf = twFut{2};
+    twTotal = twFut{3};
+    
+    load(['e:/data/projects/bowen/temp-huss-regressions/hist-tx-tx-deciles-' curModel '-historical.mat']);
+    load(['e:/data/projects/bowen/temp-huss-regressions/hist-tw-tx-deciles-' curModel '-historical.mat']);
+    load(['e:/data/projects/bowen/temp-huss-regressions/hist-huss-tx-deciles-' curModel '-historical.mat']);
+    
+    for xlat = 1:length(histTx)
+        for ylon = 1:length(histTx{xlat})
+            for t = 1:10
+                
+                if length(histHuss{xlat}{ylon}) == 10
+                    hussChgTx(xlat, ylon, t, m) = hussDueToTx(xlat, ylon, t) - nanmean(histHuss{xlat}{ylon}{t});
+                    hussChgEf(xlat, ylon, t, m) = hussDueToEf(xlat, ylon, t) - nanmean(histHuss{xlat}{ylon}{t});
+                    hussChgTotal(xlat, ylon, t, m) = hussTotal(xlat, ylon, t) - nanmean(histHuss{xlat}{ylon}{t});
+                end
+                
+                if length(histTw{xlat}{ylon}) == 10
+                    twChgTx(xlat, ylon, t, m) = twDueToTx(xlat, ylon, t) - nanmean(histTw{xlat}{ylon}{t});
+                    twChgEf(xlat, ylon, t, m) = twDueToEf(xlat, ylon, t) - nanmean(histTw{xlat}{ylon}{t});
+                    twChgTotal(xlat, ylon, t, m) = twTotal(xlat, ylon, t) - nanmean(histTw{xlat}{ylon}{t});
+                end
+                
+            end
+        end
+    end
+        
+     
 end
-data = (squeeze(nanmean(twChgTxAmp(:,:,5:10,:),3))-squeeze(twChgTxAmp(:,:,5,:)));
+
+
+        
+        
+data = 1000.*(squeeze(nanmean(hussChgTotal(:,:,5:10,:),3))-squeeze(hussChgTotal(:,:,5,:)));
 
 plotData = [];
 for xlat = 1:size(lat, 1)
@@ -480,13 +484,19 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-1 1], ...
-                  'cbXTicks', -1:.25:1, ...
+                  'plotRange', [-2 2], ...
+                  'cbXTicks', -2:.5:2, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['tw-chg-due-to-tx-amp.eps'], ...
+                  'fileTitle', ['huss-chg-due-to-tx-amp-reg-total-decile.eps'], ...
                   'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'*RdBu'), ...
+                  'colormap', brewermap([],'BrBG'), ...
                   'colorbarArrow', 'both', ...
                   'statData', sigChg);
 plotFromDataFile(saveData);
+
+
+
+
+
+

@@ -84,8 +84,13 @@ for k = 1:length(ncFileNames)
     
     [lon, lat] = meshgrid(lon, lat);
     
-    data = double(netcdf.getVar(ncid, varIdMain, [0 0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2} 12]));
-    data = permute(data, [2 1 3]);
+    if length(findstr(outputDir, 'domind')) ~= 0
+        data = double(netcdf.getVar(ncid, varIdMain, [0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2}]));
+        data = permute(data, [2 1]);
+    else
+        data = double(netcdf.getVar(ncid, varIdMain, [0 0 0], [dims{dimIdLon}{2} dims{dimIdLat}{2} 12]));
+        data = permute(data, [2 1 3]);
+    end
     
     % remove missing values
     data(abs(data) > 2e+09) = NaN;

@@ -7,7 +7,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
 rcp = 'historical';
 timePeriod = [1981 2016];
 
-plotTempPTrends = true;
+plotTempPTrends = false;
 plotHotDryTrends = true;
 
 if ~exist('eraTemp', 'var')
@@ -450,8 +450,8 @@ end
 
 
 % hot/dry trends ----------------------------------------------------------
-tprc = 74;
-pprc = 34;
+tprc = 76;
+pprc = 29;
 
 
 prcTEra = prctile(regionalTEra, tprc);
@@ -595,11 +595,11 @@ if plotHotDryTrends
     plot([0 2], [0 0], '--k');
 
     ylabel(['# Years per decade']);
-    ylim([-.3 .4]);
+    ylim([-.2 .3]);
     xlim([.5 1.5]);
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
-    set(gca, 'YTick', -.3:.1:.4);
+    set(gca, 'YTick', -.2:.1:.3);
     %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'}, 'numColumns', 5);
 
     set(gcf, 'Position', get(0,'Screensize'));

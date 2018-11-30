@@ -122,16 +122,16 @@ if plotDistChg
     mrange = sort(mrange, 1);
     
     b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
-    set(b, {'LineWidth', 'Color'}, {2, colorWb})
+    set(b, {'LineWidth', 'Color'}, {2, colorTxx})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
     
     xlim([0 100]);
-    %ylim([-.3 .6]);
+    ylim([-.05 .06]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season Tx percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    ylabel(['EF amplification (Fraction)']);
+    ylabel(['EF change (Fraction)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['ef-chg-tx-perc.eps']);
@@ -157,17 +157,91 @@ if plotDistChg
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
     
     xlim([0 100]);
-    %ylim([-.6 .4]);
+    ylim([-.05 .06]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season T_W percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    ylabel(['EF amplification (Fraction)']);
+    ylabel(['EF change (Fraction)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['ef-chg-tw-perc.eps']);
     close all;
     
     
+    
+    
+    
+    
+    
+    % -----------------------------------------------------------------
+    
+    
+    
+    thresh1 = threshChgTxHuss .* 1000;
+    thresh2 = threshChgTwHuss .* 1000;
+    
+    
+    
+    figure('Color', [1,1,1]);
+    hold on;
+    pbaspect([2 1 1]);
+    grid on;
+    box on;
+
+    plot([0 100], [0 0], '--k', 'linewidth', 2);
+    trange = 5:10:95;
+    medchg = squeeze(nanmean(nanmean(nanmean(thresh1(:,:,5:6,:),3),2),1));
+    
+    mrange = squeeze(nanmean(nanmean(thresh1, 2), 1))'-medchg;
+    mrange = sort(mrange, 1);
+    
+    b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
+    set(b, {'LineWidth', 'Color'}, {2, colorTxx})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    xlim([0 100]);
+    ylim([-.8 1]);
+    set(gca, 'fontsize', 36);
+    xlabel('Warm season Tx percentile');
+    set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
+    set(gca, 'YTick', -.8:.2:1);
+    ylabel(['Specific humidity change (g/kg)']);
+    
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['huss-chg-tx-perc.eps']);
+    close all;
+    
+    
+    figure('Color', [1,1,1]);
+    hold on;
+    pbaspect([2 1 1]);
+    grid on;
+    box on;
+
+    plot([0 100], [0 0], '--k', 'linewidth', 2);
+    trange = 5:10:95;
+    medchg = squeeze(nanmean(nanmean(nanmean(thresh2(:,:,5:6,:),3),2),1));
+
+    mrange = squeeze(nanmean(nanmean(thresh2, 2), 1))'-medchg;
+    mrange = sort(mrange, 1);
+    
+    b = boxplot(mrange(round(.1*length(models)):round(.9*length(models)), :), 'Positions', trange);
+    set(b, {'LineWidth', 'Color'}, {2, colorWb})
+    lines = findobj(b, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
+    
+    xlim([0 100]);
+    ylim([-.8 1]);
+    set(gca, 'fontsize', 36);
+    xlabel('Warm season T_W percentile');
+    set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
+    set(gca, 'YTick', -.8:.2:1);
+    ylabel(['Specific humidity change (g/kg)']);
+    
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig(['huss-chg-tw-perc.eps']);
+    close all;
     
 end
 

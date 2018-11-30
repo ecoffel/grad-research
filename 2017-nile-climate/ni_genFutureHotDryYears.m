@@ -5,9 +5,9 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
           %'cmcc-cesm'
 %models = {'access1-0', 'access1-3'};
-rcp = 'historical';
+rcp = 'rcp45';
 timePeriod = [2056 2080];
-timePeriod = [1981 2005];
+%timePeriod = [1981 2005];
 
 % 75-99, 50-74, 25-49
 
@@ -28,9 +28,9 @@ else
     historicalTempThresh = [];
     historicalPrThreshLow = [];
     historicalPrThreshHigh = [];
-    pThreshPrcLow = 34;
+    pThreshPrcLow = 29;
     pThreshPrcHigh = 90;
-    tThreshPrc = 74;
+    tThreshPrc = 76;
 end
 
 load lat;

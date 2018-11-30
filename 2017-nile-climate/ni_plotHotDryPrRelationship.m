@@ -160,6 +160,13 @@ xlim([-20 60])
 ylim([-50 100])
 
 for m = 1:length(prChgTotal)
+    prSig = kstest2(squeeze(prFutTotal(:, m)), squeeze(prHistTotal(:, m)));
+
+    if prSig
+        plot(prChgTotal(m), prStdTotal(m), 'o', 'MarkerSize', 30, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+    else
+        %plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
+    end
     t = text(prChgTotal(m), prStdTotal(m), num2str(i(m)), 'HorizontalAlignment', 'center', 'Color', 'k');
     t.FontSize = 22;
 end

@@ -47,8 +47,8 @@ numDays = 372;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
-absThreshRange = 35:40;
-tw = false;
+absThreshRange = 27:31;
+tw = true;
 
 var1 = 'tasmax';
 if tw
