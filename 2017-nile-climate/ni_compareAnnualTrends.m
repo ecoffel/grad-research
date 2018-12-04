@@ -450,8 +450,8 @@ end
 
 
 % hot/dry trends ----------------------------------------------------------
-tprc = 76;
-pprc = 29;
+tprc = 83;
+pprc = 25;
 
 
 prcTEra = prctile(regionalTEra, tprc);
@@ -489,22 +489,22 @@ end
 
 tSuper = [regionalTEra(1:2010-1981+1), regionalTGldas(1981-1960+1:end), regionalTUdel(1981-1901+1:2010-1901+1), ...
           regionalTCpc(1:2010-1981+1), regionalTHadcrut(1981-1901+1:2010-1901+1), regionalTBe(1981-1901+1:2010-1901+1)];
-tSuperPrc = [prctile(regionalTEra(1:2010-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:end), tprc), prctile(regionalTUdel(1981-1901+1:2010-1901+1), tprc), ...
-          prctile(regionalTCpc(1:2010-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2010-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2010-1901+1), tprc)];
+tSuperPrc = [prctile(regionalTEra(1:2005-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:2005-1981+1), tprc), prctile(regionalTUdel(1981-1901+1:2005-1901+1), tprc), ...
+          prctile(regionalTCpc(1:2005-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2005-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2005-1901+1), tprc)];
 
 pSuper = [regionalPEra(1:2010-1981+1) regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
           regionalPGpcp(1:2010-1981+1), regionalPChirps(1:2010-1981+1)];
-pSuperPrc = [prctile(regionalPEra(1:2010-1981+1), pprc) prctile(regionalPGldas(1981-1960+1:end), pprc), prctile(regionalPUdel(1981-1901+1:2010-1901+1), pprc), ...
-          prctile(regionalPGpcp(1:2010-1981+1), pprc), prctile(regionalPChirps(1:2010-1981+1), pprc)];
-%superEnsemble = {tSuper, tSuperPrc, pSuper, pSuperPrc};
-%save('nile-super-ensemble-blue.mat', 'superEnsemble');
+pSuperPrc = [prctile(regionalPEra(1:2005-1981+1), pprc) prctile(regionalPGldas(1981-1960+1:2005-1960+1), pprc), prctile(regionalPUdel(1981-1901+1:2005-1901+1), pprc), ...
+          prctile(regionalPGpcp(1:2005-1981+1), pprc), prctile(regionalPChirps(1:2005-1981+1), pprc)];
+superEnsemble = {tSuper, tSuperPrc, pSuper, pSuperPrc};
+save('nile-super-ensemble-blue.mat', 'superEnsemble');
 
 hdTrendsSuper = [];
 hdTrendsSuperP = [];
 hdTrendsSuperSE = [];
 for t = 1:size(tSuper, 2)
     for p = 1:size(pSuper, 2)
-        curHd = tSuper(:, t) > tSuperPrc(t) & pSuper(:, p) < pSuperPrc(p);
+        curHd = tSuper(1:end-5, t) > tSuperPrc(t) & pSuper(1:end-5, p) < pSuperPrc(p);
         f = fitlm((1:length(curHd))', curHd', 'linear');
         hdTrendsSuperP(t, p) = f.Coefficients.pValue(2);
         hdTrendsSuper(t, p) = f.Coefficients.Estimate(2);
@@ -534,11 +534,6 @@ hdTrendsP(3) = f.Coefficients.pValue(2);
 hdTrends(3) = f.Coefficients.Estimate(2);
 hdTrendsSE(3) = f.Coefficients.SE(2);
 
-f = fitlm((1:length(hotDryCpcGpcp))', hotDryCpcGpcp', 'linear');
-hdTrendsP(4) = f.Coefficients.pValue(2);
-hdTrends(4) = f.Coefficients.Estimate(2);
-hdTrendsSE(4) = f.Coefficients.SE(2);
-
 for model = 1:size(cmip5Temp, 4)
     f = fitlm((1:size(hotDryCmip5, 1))', hotDryCmip5(:, model), 'linear');
     hdTrendsCmip5P(model) = f.Coefficients.pValue(2);
@@ -565,15 +560,10 @@ if plotHotDryTrends
 
     colors(4,:) = colors(9,:);
     
-    displace = [-.3 -.18 -.07 .05];
+    displace = [-.25 -.13 -.01];
     for d = 1:length(hdTrends)
         e = errorbar(1+displace(d), hdTrends(d), hdTrendsSE(d), 'Color', colors(d,:), 'LineWidth', 2);
         p = plot(1+displace(d), hdTrends(d), 'o', 'Color', colors(d, :), 'MarkerSize', 15, 'LineWidth', 2, 'MarkerFaceColor', colors(d, :));
-
-        % add cpc-gpcp to legend
-        if d == 4
-            legItems(end+1) = p;
-        end
 
         if hdTrendsP(d) < .05
             plot(1+displace(d), hdTrends(d), 'o', 'MarkerSize', 15, 'MarkerFaceColor', colors(d, :), 'Color', colors(d, :), 'LineWidth', 2);
@@ -582,12 +572,12 @@ if plotHotDryTrends
         end
     end
 
-    b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.15], 'widths', [.1]);
+    b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.11], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [0 0 0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
     
-    b = boxplot(hdTrendsCmip5', 'positions', [1.3], 'widths', [.1]);
+    b = boxplot(hdTrendsCmip5', 'positions', [1.24], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
@@ -600,7 +590,7 @@ if plotHotDryTrends
     set(gca, 'FontSize', 36);
     set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.2:.1:.3);
-    %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2', 'CPC-GPCP'}, 'numColumns', 5);
+    %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2'}, 'numColumns', 5);
 
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig('annual-hot-dry-trends-total.eps');

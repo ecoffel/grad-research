@@ -1,6 +1,6 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t76-p29.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t83-p25.mat']);
 hotDryHistorical75 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t80-p20.mat']);
 hotDryHistorical80 = hotDryFuture(:, :, [1:9 11:23]);
@@ -11,7 +11,7 @@ hotDryHistorical90 = hotDryFuture(:, :, [1:9 11:23]);
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t95-p5.mat']);
 hotDryHistorical95 = hotDryFuture(:, :, [1:9 11:23]);
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t76-p29-tfull-pfull.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t83-p25-tfull-pfull.mat']);
 hotDryFuture45Late75 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t80-p20.mat']);
 hotDryFuture45Late80 = hotDryFuture;
@@ -22,7 +22,7 @@ hotDryFuture45Late90 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t95-p5.mat']);
 hotDryFuture45Late95 = hotDryFuture;
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t76-p29-tfull-pfull.mat']);
+load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t83-p25-tfull-pfull.mat']);
 hotDryFutureLate75 = hotDryFuture;
 load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t80-p20.mat']);
 hotDryFutureLate80 = hotDryFuture(:, :, [1:9 11:23]);
@@ -284,7 +284,7 @@ ylim([0 8]);
 set(gca,'TickLabelInterpreter', 'tex');    
 xtickangle(0);
 
-set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{76}/P_{29}', 'T_{80}/P_{20}', 'T_{85}/P_{15}', 'T_{90}/P_{10}', 'T_{95}/P_{5}'});
+set(gca, 'XTick', 1:5, 'XTickLabels', {'T_{83}/P_{25}', 'T_{80}/P_{20}', 'T_{85}/P_{15}', 'T_{90}/P_{10}', 'T_{95}/P_{5}'});
 xtickangle(90);
 ylabel('Increase in frequency (multiple)');
 set(gca, 'FontSize', 36);

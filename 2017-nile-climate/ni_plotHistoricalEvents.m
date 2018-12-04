@@ -304,8 +304,8 @@ xlim([1960 2015]);
 ylim([-.3 .3]);
 set(gca, 'fontsize', 36);
 ylabel('Normalized yield anomaly');
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig historical-yields.png -m4;
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig historical-yields.png -m4;
 close all;
 
 
@@ -320,19 +320,19 @@ b = boxplot([pgood tgood rgood'], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorW, 'LineWidth', 2);
 
 set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorHd, 'LineWidth', 2);
 
 set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
 lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorD, 'LineWidth', 2);
 
-plot([.7 4], [nanmean(pgood) nanmean(pgood)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.7 4], [nanmean(tgood) nanmean(tgood)], '--', 'color', colorHd, 'linewidth', 2);
-plot([2.6 4], [nanmean(rgood) nanmean(rgood)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 4], [nanmedian(pgood) nanmedian(pgood)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 4], [nanmedian(tgood) nanmedian(tgood)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmedian(rgood) nanmedian(rgood)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
@@ -355,19 +355,19 @@ b = boxplot([pbad tbad rbad'], 'widths', [.6 .6]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorW, 'LineWidth', 2);
 
 set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorHd, 'LineWidth', 2);
 
 set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
 lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(lines, 'Color', colorD, 'LineWidth', 2);
 
-plot([.7 4], [nanmean(pbad) nanmean(pbad)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.7 4], [nanmean(tbad) nanmean(tbad)], '--', 'color', colorHd, 'linewidth', 2);
-plot([2.6 4], [nanmean(rbad) nanmean(rbad)], '--', 'color', colorD, 'linewidth', 2);
+plot([.7 4], [nanmedian(pbad) nanmedian(pbad)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.7 4], [nanmedian(tbad) nanmedian(tbad)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.7 4], [nanmedian(rbad) nanmedian(rbad)], '--', 'color', colorD, 'linewidth', 2);
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
