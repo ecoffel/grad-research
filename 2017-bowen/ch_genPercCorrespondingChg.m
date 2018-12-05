@@ -38,18 +38,11 @@ futurePeriodYears = 2061:2085;
 baseDir = 'e:/data';
 yearStep = 1;
 
-if strcmp(season, 'summer')
-    months = [6 7 8];
-elseif strcmp(season, 'winter')
-    months = [12 1 2];
-elseif strcmp(season, 'all')
-    months = 1:12;
-end
 
 load lat;
 load lon;
 
-var1 = 'tasmax';
+var1 = 'wb-davies-jones-full';
 var2 = 'ef';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
@@ -64,20 +57,26 @@ waterGrid = logical(waterGrid);
 for m = 1:length(models)
     curModel = models{m};
     
-    load(['2017-bowen/txx-timing/txx-months-' curModel '-historical-cmip5-1981-2005.mat']);
+%     load(['2017-bowen/txx-timing/txx-months-' curModel '-historical-cmip5-1981-2005.mat']);
+%     txxMonthsHist = txxMonths;
+% 
+%     load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
+%     txxMonthsFut = txxMonths;
+%     
+    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-historical-cmip5-1981-2005.mat']);
     txxMonthsHist = txxMonths;
 
-    load(['2017-bowen/txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
+    load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
     txxMonthsFut = txxMonths;
     
-%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-95-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
-%         continue;
-%     end
+    if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-95-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-each-year.mat'], 'file')
+        continue;
+    end
     
     % temperature data (thresh, ann-max, or daily-max)
     baseData = [];
    
-    ['loading base model ' curModel '...']
+    fprintf('loading base data for %s...\n', curModel);
 
     baseVar1Daily = loadDailyData([baseDir '/' baseDataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' var1 '/regrid/' region], 'startYear', basePeriodYears(1), 'endYear', basePeriodYears(end));
     baseVar2Daily = loadDailyData([baseDir '/' baseDataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' var2 '/regrid/' region], 'startYear', basePeriodYears(1), 'endYear', basePeriodYears(end));
@@ -114,51 +113,54 @@ for m = 1:length(models)
 
     % calculate base period thresholds
 
+    fprintf('processing base data for %s...\n', curModel);
     % over x coords
     for xlat = 1:size(baseVar1Daily, 1)
         % over y coords
         for ylon = 1:size(baseVar1Daily, 2)
 
             curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
-
             if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon)
-                baseData(xlat, ylon, 1:length(thresh)) = NaN;
+                baseData(xlat, ylon, 1:size(baseVar1Daily, 3), 1:length(thresh)) = NaN;
                 continue;
             end
             
-            tmp = squeeze(baseVar1Daily(xlat, ylon, :, curTxxMonthsHist, :));
-            tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
-            
-            tmpVar2 = squeeze(baseVar2Daily(xlat, ylon, :, curTxxMonthsHist, :));
-            tmpVar2 = reshape(tmpVar2, [size(tmpVar2,1)*size(tmpVar2,2)*size(tmpVar2,3), 1]);
+            for year = 1:size(baseVar1Daily, 3)
 
-            % skip if NaN (water)
-            if length(find(~isnan(tmpVar2))) == 0 || length(find(~isnan(tmp))) == 0
-                baseData(xlat, ylon, 1:length(thresh)) = NaN;
-                continue;
-            end
-            
-            prc = prctile(squeeze(tmp), thresh);
-            
-            tmpMatch = [];
-            
-            for t = 1:length(thresh)
-                tmpMatch(:,t) = tmp-prc(t);
-            end
-            
-            prcInd = [];
-            
-            for d = 1:size(tmpMatch,1)
-                ind = find(abs(tmpMatch(d,:)) == min(abs(tmpMatch(d,:))));
-                if length(ind) > 0
-                    prcInd(d) = ind(1);
-                else
-                    prcInd(d) = NaN;
+                tmp = squeeze(baseVar1Daily(xlat, ylon, year, curTxxMonthsHist, :));
+                tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
+
+                tmpVar2 = squeeze(baseVar2Daily(xlat, ylon, year, curTxxMonthsHist, :));
+                tmpVar2 = reshape(tmpVar2, [size(tmpVar2,1)*size(tmpVar2,2)*size(tmpVar2,3), 1]);
+
+                % skip if NaN (water)
+                if length(find(~isnan(tmpVar2))) == 0 || length(find(~isnan(tmp))) == 0
+                    baseData(xlat, ylon, 1:size(baseVar1Daily, 3), 1:length(thresh)) = NaN;
+                    continue;
                 end
-            end
-            
-            for t = 1:length(thresh)
-                baseData(xlat, ylon, t) = nanmean(tmpVar2(find(prcInd==t)));
+
+                prc = prctile(squeeze(tmp), thresh);
+
+                tmpMatch = [];
+
+                for t = 1:length(thresh)
+                    tmpMatch(:,t) = tmp-prc(t);
+                end
+
+                prcInd = [];
+
+                for d = 1:size(tmpMatch,1)
+                    ind = find(abs(tmpMatch(d,:)) == min(abs(tmpMatch(d,:))));
+                    if length(ind) > 0
+                        prcInd(d) = ind(1);
+                    else
+                        prcInd(d) = NaN;
+                    end
+                end
+
+                for t = 1:length(thresh)
+                    baseData(xlat, ylon, year, t) = nanmean(tmpVar2(find(prcInd==t)));
+                end
             end
         end
     end
@@ -173,7 +175,7 @@ for m = 1:length(models)
     futureData = [];
     chgData = [];
 
-    ['loading future model ' curModel '...']
+    fprintf('loading future data for %s...\n', curModel);
 
     futureVar1Daily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' var1 '/regrid/' region], 'startYear', futurePeriodYears(1), 'endYear', futurePeriodYears(end));
     futureVar1Daily = futureVar1Daily{3};
@@ -206,6 +208,7 @@ for m = 1:length(models)
         end
     end
 
+    fprintf('processing future data for %s...\n', curModel);
     % over x coords
     for xlat = 1:size(futureVar1Daily, 1)
         % over y coords
@@ -214,54 +217,56 @@ for m = 1:length(models)
             curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
 
             if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
-                futureData(xlat, ylon, 1:length(thresh)) = NaN;
+                futureData(xlat, ylon, 1:size(futureVar1Daily, 3), 1:length(thresh)) = NaN;
                 continue;
             end
             
-            tmp = squeeze(futureVar1Daily(xlat, ylon, :, curTxxMonthsFut, :));
-            tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
-            
-            tmpVar2 = squeeze(futureVar2Daily(xlat, ylon, :, curTxxMonthsFut, :));
-            tmpVar2 = reshape(tmpVar2, [size(tmpVar2,1)*size(tmpVar2,2)*size(tmpVar2,3), 1]);
+            for year = 1:size(futureVar1Daily, 3)
+                tmp = squeeze(futureVar1Daily(xlat, ylon, year, curTxxMonthsFut, :));
+                tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
 
-            % skip if NaN (water)
-            if length(find(~isnan(tmpVar2))) == 0 || length(find(~isnan(tmp))) == 0
-                futureData(xlat, ylon, 1:length(thresh)) = NaN;
-                continue;
-            end
-            
-            prc = prctile(squeeze(tmp), thresh);
-            
-            tmpMatch = [];
-            
-            for t = 1:length(thresh)
-                tmpMatch(:,t) = tmp-prc(t);
-            end
-            
-            prcInd = [];
-            
-            for d = 1:size(tmpMatch,1)
-                ind = find(abs(tmpMatch(d,:)) == min(abs(tmpMatch(d,:))));
-                if length(ind) > 0
-                    prcInd(d) = ind(1);
-                else
-                    prcInd(d) = NaN;
+                tmpVar2 = squeeze(futureVar2Daily(xlat, ylon, year, curTxxMonthsFut, :));
+                tmpVar2 = reshape(tmpVar2, [size(tmpVar2,1)*size(tmpVar2,2)*size(tmpVar2,3), 1]);
+
+                % skip if NaN (water)
+                if length(find(~isnan(tmpVar2))) == 0 || length(find(~isnan(tmp))) == 0
+                    futureData(xlat, ylon, 1:size(futureVar1Daily, 3), 1:length(thresh)) = NaN;
+                    continue;
                 end
-            end
-            
-            for t = 1:length(thresh)
-                futureData(xlat, ylon, t) = nanmean(tmpVar2(find(prcInd==t)));
+
+                prc = prctile(squeeze(tmp), thresh);
+
+                tmpMatch = [];
+
+                for t = 1:length(thresh)
+                    tmpMatch(:,t) = tmp-prc(t);
+                end
+
+                prcInd = [];
+
+                for d = 1:size(tmpMatch,1)
+                    ind = find(abs(tmpMatch(d,:)) == min(abs(tmpMatch(d,:))));
+                    if length(ind) > 0
+                        prcInd(d) = ind(1);
+                    else
+                        prcInd(d) = NaN;
+                    end
+                end
+
+                for t = 1:length(thresh)
+                    futureData(xlat, ylon, year, t) = nanmean(tmpVar2(find(prcInd==t)));
+                end
             end
         end
     end
     clear futureVar1Daily futureVar2Daily;
 
-    chgData = futureData - baseData;
+    chgData = squeeze(nanmean(futureData, 3)) - squeeze(nanmean(baseData, 3));
     
     curChg = chgData;
     for t = 1:size(curChg,3)
         chgData = squeeze(curChg(:,:,t));
-        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-each-year.mat'], 'chgData');
     end
 end
 

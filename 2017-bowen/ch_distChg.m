@@ -42,13 +42,13 @@ for m = 1:length(models)
     
     tind = 1;
     for t = [5:10:95 100]
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;

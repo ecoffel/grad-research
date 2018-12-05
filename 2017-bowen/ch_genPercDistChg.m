@@ -18,19 +18,19 @@ threshChgEf = [];
 for m = 1:length(models)
     tind = 1;
     for t = 5:10:95
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTxTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTx(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -42,7 +42,7 @@ for m = 1:length(models)
         chgData(75:90,:) = NaN;
         threshChgTwHuss(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -105,8 +105,8 @@ colorTxx = [216, 66, 19]./255.0;
 
 if plotDistChg
     
-    thresh1 = threshChgTxEf;
-    thresh2 = threshChgTwEf;
+    thresh1 = threshChgTxHuss .* 1000;
+    thresh2 = threshChgTxTw;
     
     figure('Color', [1,1,1]);
     hold on;
@@ -127,14 +127,15 @@ if plotDistChg
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
     
     xlim([0 100]);
-    ylim([-.05 .06]);
+    ylim([-.4 .5]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season Tx percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    ylabel(['EF change (Fraction)']);
+    set(gca, 'YTick', -.4:.1:.5);
+    ylabel(['Specific hum. amplification (g/kg)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['ef-chg-tx-perc.eps']);
+    export_fig(['huss-chg-tx-perc.eps']);
     close all;
     
     
@@ -157,14 +158,14 @@ if plotDistChg
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
     
     xlim([0 100]);
-    ylim([-.05 .06]);
+    ylim([-.7 .5]);
     set(gca, 'fontsize', 36);
-    xlabel('Warm season T_W percentile');
+    xlabel('Warm season Tx percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    ylabel(['EF change (Fraction)']);
+    ylabel(['T_W amplification (' char(176) 'C)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig(['ef-chg-tw-perc.eps']);
+    export_fig(['tw-chg-tx-perc.eps']);
     close all;
     
     

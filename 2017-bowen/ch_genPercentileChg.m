@@ -14,11 +14,11 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'miroc5', 'mri-cgcm3', 'noresm1-m'};
       
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+%               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
+%               'inmcm4', 'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', ...
+%               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 
 baseRcps = {'historical'};
@@ -55,7 +55,7 @@ end
 load lat;
 load lon;
 
-var1 = 'tasmin';
+var1 = 'tasmax';
 
 % if changeMetric == 'thresh', look at change above these base period temperature percentiles
 thresh = [0 5:10:95 100];
@@ -75,20 +75,20 @@ for m = 1:length(models)
 %     load(['2017-bowen/txx-timing/wb-davies-jones-full-months-' curModel '-future-cmip5-2061-2085.mat']);
 %     txxMonthsFut = txxMonths;
     
-    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-historical-cmip5-1981-2005.mat']);
-    txxMonthsHist = tnnMonths;
+    load(['2017-bowen\txx-timing/txx-months-' curModel '-historical-cmip5-1981-2005.mat']);
+    txxMonthsHist = txxMonths;
 
-    load(['E:\data\projects\snow\tnn-timing/tnn-months-' curModel '-future-cmip5-2061-2085.mat']);
-    txxMonthsFut = tnnMonths;
+    load(['2017-bowen\txx-timing/txx-months-' curModel '-future-cmip5-2061-2085.mat']);
+    txxMonthsFut = txxMonths;
     
-%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-range-100-' baseVar '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-warm-season.mat'], 'file')
-%         continue;
-%     end
+    if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-100-' var1 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-each-year.mat'], 'file')
+        continue;
+    end
     
     % temperature data (thresh, ann-max, or daily-max)
     baseData = [];
    
-    ['loading base model ' curModel '...']
+    fprintf('loading base data for %s...\n', curModel);
 
     baseVar1Daily = loadDailyData([baseDir '/' baseDataset '/output/' curModel '/' baseEnsemble '/' baseRcps{1} '/' var1 '/regrid/' region], 'startYear', basePeriodYears(1), 'endYear', basePeriodYears(end));
 
@@ -115,6 +115,7 @@ for m = 1:length(models)
 
     % calculate base period thresholds
 
+    fprintf('processing base data for %s...\n', curModel);
     % over x coords
     for xlat = 1:size(baseVar1Daily, 1)
         % over y coords
@@ -123,21 +124,21 @@ for m = 1:length(models)
             curTxxMonthsHist = unique(squeeze(txxMonthsHist(xlat, ylon, :)));
 
             if length(find(isnan(curTxxMonthsHist))) > 0 || waterGrid(xlat, ylon)
-                baseData(xlat, ylon, 1:length(thresh)) = NaN;
+                baseData(xlat, ylon, 1:size(baseVar1Daily, 3), 1:length(thresh)) = NaN;
                 continue;
             end
             
-            tmp = squeeze(baseVar1Daily(xlat, ylon, :, curTxxMonthsHist, :));
-            tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
-            
-            % skip if NaN (water)
-            if length(find(~isnan(tmp))) == 0
-                baseData(xlat, ylon, 1:length(thresh)) = NaN;
-                continue;
-            end
-            
-            for t = 1:length(thresh)
-                baseData(xlat, ylon, t) = prctile(squeeze(tmp), thresh(t));
+            for year = 1:size(baseVar1Daily, 3)
+                tmp = squeeze(baseVar1Daily(xlat, ylon, year, curTxxMonthsHist, :));
+                tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
+
+                % skip if NaN (water)
+                if length(find(~isnan(tmp))) == 0
+                    baseData(xlat, ylon, year, 1:length(thresh)) = NaN;
+                    continue;
+                end
+                
+                baseData(xlat, ylon, year, :) = prctile(squeeze(tmp), thresh);
             end
         end
     end
@@ -152,7 +153,7 @@ for m = 1:length(models)
     futureData = [];
     chgData = [];
 
-    ['loading future model ' curModel '...']
+    fprintf('loading future data for %s...\n', curModel);
 
     futureVar1Daily = loadDailyData([baseDir '/' futureDataset '/output/' curModel '/' futureEnsemble '/' futureRcps{1} '/' var1 '/regrid/' region], 'startYear', futurePeriodYears(1), 'endYear', futurePeriodYears(end));
     futureVar1Daily = futureVar1Daily{3};
@@ -175,6 +176,7 @@ for m = 1:length(models)
         end
     end
 
+    fprintf('processing future data for %s...\n', curModel);
     % over x coords
     for xlat = 1:size(futureVar1Daily, 1)
         % over y coords
@@ -183,32 +185,33 @@ for m = 1:length(models)
             curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
 
             if length(find(isnan(curTxxMonthsFut))) > 0 || waterGrid(xlat, ylon)
-                futureData(xlat, ylon, 1:length(thresh)) = NaN;
+                futureData(xlat, ylon, 1:size(futureVar1Daily, 3), 1:length(thresh)) = NaN;
                 continue;
             end
             
-            tmp = squeeze(futureVar1Daily(xlat, ylon, :, curTxxMonthsFut, :));
-            tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
+            for year = 1:size(futureVar1Daily, 3)
+                tmp = squeeze(futureVar1Daily(xlat, ylon, year, curTxxMonthsFut, :));
+                tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);
 
-            % skip if NaN (water)
-            if length(find(~isnan(tmp))) == 0
-                futureData(xlat, ylon, 1:length(thresh)) = NaN;
-                continue;
-            end
-            
-            for t = 1:length(thresh)
-                futureData(xlat, ylon, t) = prctile(squeeze(tmp), thresh(t));
+                % skip if NaN (water)
+                if length(find(~isnan(tmp))) == 0
+                    futureData(xlat, ylon, year, 1:length(thresh)) = NaN;
+                    continue;
+                end
+
+                futureData(xlat, ylon, year, :) = prctile(squeeze(tmp), thresh);
+                
             end
         end
     end
     clear futureVar1Daily;
 
-    chgData = futureData - baseData;
+    chgData = squeeze(nanmean(futureData,3)) - squeeze(nanmean(baseData, 3));
     
     curChg = chgData;
     for t = 1:size(curChg,3)
         chgData = squeeze(curChg(:,:,t));
-        save(['e:/data/projects/snow/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'chgData');
+        save(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-percentile-chg-' num2str(thresh(t)) '-' var1 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '-each-year.mat'], 'chgData');
     end
 end
 
