@@ -28,9 +28,9 @@ else
     historicalTempThresh = [];
     historicalPrThreshLow = [];
     historicalPrThreshHigh = [];
-    pThreshPrcLow = 25;
+    pThreshPrcLow = 5;
     pThreshPrcHigh = 90;
-    tThreshPrc = 83;
+    tThreshPrc = 95;
 end
 
 load lat;

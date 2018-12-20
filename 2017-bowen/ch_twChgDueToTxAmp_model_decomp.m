@@ -12,16 +12,16 @@ load lon;
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
 
-regenData = false;
+regenData = true;
 
 for m = 1:length(models)
     curModel = models{m};
     
     
-    load(['E:\data\projects\bowen\temp-chg-data\baseTxDecile-' curModel '.mat']);
-    load(['E:\data\projects\bowen\temp-chg-data\baseHussDecile-' curModel '.mat']);
-    load(['E:\data\projects\bowen\temp-chg-data\futureTxDecile-' curModel '.mat']);
-    load(['E:\data\projects\bowen\temp-chg-data\futureHussDecile-' curModel '.mat']);
+%     load(['E:\data\projects\bowen\temp-chg-data\baseTxDecile-' curModel '.mat']);
+%     load(['E:\data\projects\bowen\temp-chg-data\baseHussDecile-' curModel '.mat']);
+%     load(['E:\data\projects\bowen\temp-chg-data\futureTxDecile-' curModel '.mat']);
+%     load(['E:\data\projects\bowen\temp-chg-data\futureHussDecile-' curModel '.mat']);
 
     if regenData
         baseHussDecile = [];
@@ -88,28 +88,6 @@ for m = 1:length(models)
             end
         end
 
-        tind = 1;
-        for t = 5:10:95
-            load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085.mat']);
-            chgData(waterGrid) = NaN;
-            chgData(1:15,:) = NaN;
-            chgData(75:90,:) = NaN;
-            threshChgTx(:, :, tind, m) = chgData;
-
-            load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085']);
-            chgData(waterGrid) = NaN;
-            chgData(1:15,:) = NaN;
-            chgData(75:90,:) = NaN;
-            threshChgHuss(:, :, tind, m) = chgData;
-
-            load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
-            chgData(waterGrid) = NaN;
-            chgData(1:15,:) = NaN;
-            chgData(75:90,:) = NaN;
-            threshChgTw(:, :, tind, m) = chgData;
-
-            tind = tind+1;
-        end
     end
     
     fprintf('computing tw for %s...\n', curModel);
@@ -123,91 +101,101 @@ for m = 1:length(models)
                 curTxxMonthsFut = unique(squeeze(txxMonthsFut(xlat, ylon, :)));
             end
             
-            if  waterGrid(xlat, ylon)
+            if  waterGrid(xlat, ylon) || xlat < 15 || xlat > 75
                 twChgDueToHuss(xlat, ylon, 1:10, m) = NaN;
                 twChgDueToTx(xlat, ylon, 1:10, m) = NaN;
                 twChgDueToBoth(xlat, ylon, 1:10, m) = NaN;
                 
                 if regenData
-                    futureHussDecile(xlat, ylon, 1:10) = NaN;
-                    futureTxDecile(xlat, ylon, 1:10) = NaN;
-                    baseHussDecile(xlat, ylon, 1:10) = NaN;
-                    baseTxDecile(xlat, ylon, 1:10) = NaN;
+                    futureHussDecile(xlat, ylon, 1:size(baseTx, 3), 1:10) = NaN;
+                    futureTxDecile(xlat, ylon, 1:size(baseTx, 3), 1:10) = NaN;
+                    baseHussDecile(xlat, ylon, 1:size(baseTx, 3), 1:10) = NaN;
+                    baseTxDecile(xlat, ylon, 1:size(baseTx, 3), 1:10) = NaN;
                 end
                 continue;
             end
 
             if regenData
-                tx = squeeze(baseTx(xlat, ylon, :, curTxxMonthsHist, :));
-                tx = reshape(tx, [size(tx,1)*size(tx,2)*size(tx,3), 1]);
+                for year = 1:size(baseTx, 3)
+                    tx = squeeze(baseTx(xlat, ylon, year, curTxxMonthsHist, :));
+                    tx = reshape(tx, [size(tx,1)*size(tx,2)*size(tx,3), 1]);
 
-                huss = squeeze(baseHuss(xlat, ylon, :, curTxxMonthsHist, :));
-                huss = reshape(huss, [size(huss,1)*size(huss,2)*size(huss,3), 1]);
+                    huss = squeeze(baseHuss(xlat, ylon, year, curTxxMonthsHist, :));
+                    huss = reshape(huss, [size(huss,1)*size(huss,2)*size(huss,3), 1]);
 
-                thresh = 5:10:95;
-                txPrc = prctile(squeeze(tx), thresh);
+                    thresh = 5:10:95;
+                    txPrc = prctile(squeeze(tx), thresh);
 
-                tmpPrcMatch = [];
-                for t = 1:length(thresh)
-                    tmpPrcMatch(:,t) = tx-txPrc(t);
-                end
-
-                txPrc = [];
-                for d = 1:size(tmpPrcMatch,1)
-                    ind = find(abs(tmpPrcMatch(d,:)) == min(abs(tmpPrcMatch(d,:))));
-                    if length(ind) > 0
-                        txPrc(d) = ind(1);
-                    else
-                        txPrc(d) = NaN;
+                    tmpPrcMatch = [];
+                    for t = 1:length(thresh)
+                        tmpPrcMatch(:,t) = tx-txPrc(t);
                     end
-                end
 
-
-                txFut = squeeze(futureTx(xlat, ylon, :, curTxxMonthsFut, :));
-                txFut = reshape(txFut, [size(txFut,1)*size(txFut,2)*size(txFut,3), 1]);
-
-                hussFut = squeeze(futureHuss(xlat, ylon, :, curTxxMonthsFut, :));
-                hussFut = reshape(hussFut, [size(hussFut,1)*size(hussFut,2)*size(hussFut,3), 1]);
-
-                thresh = 5:10:95;
-                txFutPrc = prctile(squeeze(txFut), thresh);
-
-                tmpFutPrcMatch = [];
-                for t = 1:length(thresh)
-                    tmpFutPrcMatch(:,t) = txFut-txFutPrc(t);
-                end
-
-                txFutPrc = [];
-                for d = 1:size(tmpFutPrcMatch,1)
-                    ind = find(abs(tmpFutPrcMatch(d,:)) == min(abs(tmpFutPrcMatch(d,:))));
-                    if length(ind) > 0
-                        txFutPrc(d) = ind(1);
-                    else
-                        txFutPrc(d) = NaN;
+                    txPrc = [];
+                    for d = 1:size(tmpPrcMatch,1)
+                        ind = find(abs(tmpPrcMatch(d,:)) == min(abs(tmpPrcMatch(d,:))));
+                        if length(ind) > 0
+                            txPrc(d) = ind(1);
+                        else
+                            txPrc(d) = NaN;
+                        end
                     end
-                end
-            end
-            
-            for t = 1:10
-                if regenData
-                    baseTxDecile(xlat, ylon, t) = nanmean(tx(txPrc == t));
-                    baseHussDecile(xlat, ylon, t) = nanmean(huss(txPrc == t));
-                    futureTxDecile(xlat, ylon, t) = nanmean(txFut(txFutPrc == t));
-                    futureHussDecile(xlat, ylon, t) = nanmean(hussFut(txFutPrc == t));
-                end
+
+
+                    txFut = squeeze(futureTx(xlat, ylon, year, curTxxMonthsFut, :));
+                    txFut = reshape(txFut, [size(txFut,1)*size(txFut,2)*size(txFut,3), 1]);
+
+                    hussFut = squeeze(futureHuss(xlat, ylon, year, curTxxMonthsFut, :));
+                    hussFut = reshape(hussFut, [size(hussFut,1)*size(hussFut,2)*size(hussFut,3), 1]);
+
+                    thresh = 5:10:95;
+                    txFutPrc = prctile(squeeze(txFut), thresh);
+
+                    tmpFutPrcMatch = [];
+                    for t = 1:length(thresh)
+                        tmpFutPrcMatch(:,t) = txFut-txFutPrc(t);
+                    end
+
+                    txFutPrc = [];
+                    for d = 1:size(tmpFutPrcMatch,1)
+                        ind = find(abs(tmpFutPrcMatch(d,:)) == min(abs(tmpFutPrcMatch(d,:))));
+                        if length(ind) > 0
+                            txFutPrc(d) = ind(1);
+                        else
+                            txFutPrc(d) = NaN;
+                        end
+                    end
                 
-                twChgDueToTx(xlat, ylon, t, m) = kopp_wetBulb(futureTxDecile(xlat, ylon, t), 100200, futureHussDecile(xlat, ylon, 5)) - ...
-                                                 kopp_wetBulb(baseTxDecile(xlat, ylon, t), 100200, baseHussDecile(xlat, ylon, t));
-                                             
-                twChgDueToHuss(xlat, ylon, t, m) = kopp_wetBulb(baseTxDecile(xlat, ylon, 5), 100200, futureHussDecile(xlat, ylon, t)) - ...
-                                                 kopp_wetBulb(baseTxDecile(xlat, ylon, t), 100200, baseHussDecile(xlat, ylon, t));
-                                             
-                twChgDueToBoth(xlat, ylon, t, m) = kopp_wetBulb(futureTxDecile(xlat, ylon, t), 100200, futureHussDecile(xlat, ylon, t)) - ...
-                                                 kopp_wetBulb(baseTxDecile(xlat, ylon, t), 100200, baseHussDecile(xlat, ylon, t));
+                    for t = 1:10
+                        if regenData
+                            baseTxDecile(xlat, ylon, year, t) = nanmean(tx(txPrc == t));
+                            baseHussDecile(xlat, ylon, year, t) = nanmean(huss(txPrc == t));
+                            futureTxDecile(xlat, ylon, year, t) = nanmean(txFut(txFutPrc == t));
+                            futureHussDecile(xlat, ylon, year, t) = nanmean(hussFut(txFutPrc == t));
+                        end
+
+                    end
+                end
+
+                for t = 1:10
+                    twChgDueToTx(xlat, ylon, t, m) = kopp_wetBulb(squeeze(nanmean(futureTxDecile(xlat, ylon, :, t), 3)), 100200, squeeze(nanmean(futureHussDecile(xlat, ylon, :, 5), 3))) - ...
+                                                     kopp_wetBulb(squeeze(nanmean(baseTxDecile(xlat, ylon, :, t), 3)), 100200, squeeze(nanmean(baseHussDecile(xlat, ylon, :, t), 3)));
+
+                    twChgDueToHuss(xlat, ylon, t, m) = kopp_wetBulb(squeeze(nanmean(baseTxDecile(xlat, ylon, :, 5), 3)), 100200, squeeze(nanmean(futureHussDecile(xlat, ylon, :, t), 3))) - ...
+                                                     kopp_wetBulb(squeeze(nanmean(baseTxDecile(xlat, ylon, :, t), 3)), 100200, squeeze(nanmean(baseHussDecile(xlat, ylon, :, t), 3)));
+
+                    twChgDueToBoth(xlat, ylon, t, m) = kopp_wetBulb(squeeze(nanmean(futureTxDecile(xlat, ylon, :, t), 3)), 100200, squeeze(nanmean(futureHussDecile(xlat, ylon, :, t), 3))) - ...
+                                                     kopp_wetBulb(squeeze(nanmean(baseTxDecile(xlat, ylon, :, t), 3)), 100200, squeeze(nanmean(baseHussDecile(xlat, ylon, :, t), 3)));
+                end
             end
         end
     end
-
+    
+    baseTxDecile = squeeze(nanmean(baseTxDecile, 3));
+    baseHussDecile = squeeze(nanmean(baseHussDecile, 3));
+    futureTxDecile = squeeze(nanmean(futureTxDecile, 3));
+    baseHussDecile = squeeze(nanmean(futureHussDecile, 3));
+    
     if regenData
         save(['E:\data\projects\bowen\temp-chg-data\baseTxDecile-' curModel '.mat'], 'baseTxDecile');
         save(['E:\data\projects\bowen\temp-chg-data\baseHussDecile-' curModel '.mat'], 'baseHussDecile');
@@ -216,10 +204,16 @@ for m = 1:length(models)
     end
 end
 
+save(['E:\data\projects\bowen\temp-chg-data\twChgDueToTx.mat'], 'twChgDueToTx');
+save(['E:\data\projects\bowen\temp-chg-data\twChgDueToHuss.mat'], 'twChgDueToHuss');
+save(['E:\data\projects\bowen\temp-chg-data\twChgDueToBoth.mat'], 'twChgDueToBoth');
+
+load(['E:\data\projects\bowen\temp-chg-data\twChgDueToTx.mat']);
+load(['E:\data\projects\bowen\temp-chg-data\twChgDueToHuss.mat']);
+load(['E:\data\projects\bowen\temp-chg-data\twChgDueToBoth.mat']);
 
 
-
-data = (squeeze(nanmean(twChgDueToBoth(:,:,5:10,:),3))-squeeze(twChgDueToBoth(:,:,5,:)));
+data = (squeeze(nanmean(twChgDueToHuss(:,:,5:10,:),3))-squeeze(twChgDueToHuss(:,:,5,:)));
 plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
@@ -247,10 +241,10 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [-.5 .5], ...
-                  'cbXTicks', -.5:.1:.5, ...
+                  'plotRange', [-2 2], ...
+                  'cbXTicks', -2:.5:2, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['tw-chg-due-to-both-decomp.eps'], ...
+                  'fileTitle', ['tw-chg-due-to-huss-decomp.eps'], ...
                   'plotXUnits', ['Change (' char(176) 'C)'], ...
                   'blockWater', true, ...
                   'colormap', brewermap([],'*RdBu'), ...

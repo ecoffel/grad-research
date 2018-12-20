@@ -30,28 +30,46 @@ pEfWb = [];
 threshChgTw = [];
 threshChgTx = [];
 threshChgHuss = [];
+threshChgTxEf = [];
+threshChgTxHuss = [];
 
 for m = 1:length(models)
     
     tind = 1;
     for t = [5:10:95 100]
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTx(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-huss-' models{m} '-rcp85-2061-2085-warm-season.mat']);
-        chgData(waterGrid) = NaN;
-        chgData(1:15,:) = NaN;
-        chgData(75:90,:) = NaN;
-        threshChgHuss(:, :, tind, m) = chgData;
+        if t < 100
+            load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
+            chgData(waterGrid) = NaN;
+            chgData(1:15,:) = NaN;
+            chgData(75:90,:) = NaN;
+            chgData(chgData > 1 | chgData < 0) = NaN;
+            threshChgTxEf(:, :, tind, m) = chgData;
+            
+            load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
+            chgData(waterGrid) = NaN;
+            chgData(1:15,:) = NaN;
+            chgData(75:90,:) = NaN;
+            chgData(chgData > 1 | chgData < 0) = NaN;
+            threshChgTxHuss(:, :, tind, m) = chgData;
+        end
+%         
+%         load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
+%         chgData(waterGrid) = NaN;
+%         chgData(1:15,:) = NaN;
+%         chgData(75:90,:) = NaN;
+%         threshChgHuss(:, :, tind, m) = chgData;
         
         tind = tind+1;
     end
@@ -144,8 +162,8 @@ hwb(nn) = [];
 ewb(nn) = [];
 wbwb(nn) = [];
 
-data = hussOnWb .* 1000;
-plotData = [];
+data = 1000 .* squeeze(nanmean(threshChgTxHuss(:,:,5:10,:),3) - threshChgTxHuss(:,:,5,:));
+ plotData = [];
 for xlat = 1:size(lat, 1)
     for ylon = 1:size(lat, 2)
         if waterGrid(xlat, ylon)
@@ -155,7 +173,7 @@ for xlat = 1:size(lat, 1)
         end
         med = nanmedian(data(xlat, ylon, :), 3);
         if ~isnan(med)
-            plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);
+            plotData(xlat, ylon) = nanmedian(data(xlat, ylon, :), 3);   
             sigChg(xlat, ylon) = length(find(sign(data(xlat, ylon, :)) == sign(plotData(xlat, ylon)))) < .66*size(data, 3);
         else
             sigChg(xlat, ylon) = 1;
@@ -175,12 +193,12 @@ result = {lat, lon, plotData};
 
 saveData = struct('data', {result}, ...
                   'plotRegion', 'world', ...
-                  'plotRange', [0 4.5], ...
-                  'cbXTicks', 0:.5:4.5, ...
+                  'plotRange', [-.5 .5], ...
+                  'cbXTicks', -.5:.1:.5, ...
                   'plotTitle', [], ...
-                  'fileTitle', ['huss-on-wb.eps'], ...
+                  'fileTitle', ['huss-txx-huss-tx50.eps'], ...
                   'plotXUnits', ['Change (g/kg)'], ...
                   'blockWater', true, ...
-                  'colormap', brewermap([],'Greens'), ...
+                  'colormap', brewermap([],'BrBG'), ...
                   'statData', sigChg);
 plotFromDataFile(saveData);

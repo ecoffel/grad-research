@@ -59,9 +59,9 @@ lonGldas = gldas_t{2};
 [latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 
 gldasRunoff = gldas_qs{3}(:, :, :, :) + gldas_qsb{3}(:, :, :, :);
-gldasRunoff = squeeze(nanmean(nanmean(nansum(gldasRunoff(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
-gldasT = squeeze(nanmean(nanmean(nanmean(gldas_t{3}(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
-gldasPr = squeeze(nanmean(nanmean(nanmean(gldas_pr{3}(latIndsBlueGldas, lonIndsBlueGldas,:,5:9),4),2),1));
+gldasRunoff = squeeze(nanmean(nanmean(nansum(gldasRunoff(latIndsBlueGldas, lonIndsBlueGldas,:,:),4),2),1));
+gldasT = squeeze(nanmean(nanmean(nanmean(gldas_t{3}(latIndsBlueGldas, lonIndsBlueGldas,:,:),4),2),1));
+gldasPr = squeeze(nanmean(nanmean(nanmean(gldas_pr{3}(latIndsBlueGldas, lonIndsBlueGldas,:,:),4),2),1));
 
 thresh = 0:5:100;
 
@@ -125,11 +125,6 @@ for y = 1:length(gldasT)
     annualRPrcGldas(y, 1) = thresh(prc);
 end
 
-
-ethiopiaMaizeYield = importdata('2017-nile-climate\data\ethiopia-maize.txt');
-ethiopiaMilletYield = importdata('2017-nile-climate\data\ethiopia-millet.txt');
-ethiopiaSorghumYield = importdata('2017-nile-climate\data\ethiopia-sorghum.txt');
-
 ethiopiaMaizeYield = importdata('2017-nile-climate\data\ethiopia-maize.txt');
 ethiopiaSorghumYield = importdata('2017-nile-climate\data\ethiopia-sorghum.txt');
 ethiopiaMilletYield = importdata('2017-nile-climate\data\ethiopia-millet.txt');
@@ -138,29 +133,117 @@ ethiopiaWheatYield = importdata('2017-nile-climate\data\ethiopia-wheat.txt');
 ethiopiaPulsesYield = importdata('2017-nile-climate\data\ethiopia-pulses.txt');
 ethiopiaCerealsYield = importdata('2017-nile-climate\data\ethiopia-cereals.txt');
 
-bpMaize = findchangepts(ethiopiaMaizeYield)
-yieldMaize_dt = detrend(ethiopiaMaizeYield, 'linear', bpMaize);% - smooth(ethiopiaMaizeYield, smoothingLen);
+smoothingLen = 15;
 
-bpMillet = findchangepts(ethiopiaMilletYield)
-yieldMillet_dt = detrend(ethiopiaMilletYield, 'linear', bpMillet);% - smooth(ethiopiaMilletYield, smoothingLen);
+linearDetrend = true;
 
-bpSorghum = findchangepts(ethiopiaSorghumYield)
-yieldSorghum_dt = detrend(ethiopiaSorghumYield, 'linear', bpSorghum);% - smooth(ethiopiaSorghumYield, smoothingLen);
+if linearDetrend
+    bpMaize = findchangepts(ethiopiaMaizeYield);
+    yieldMaize_dt = detrend(ethiopiaMaizeYield, 'linear', bpMaize);% - smooth(ethiopiaMaizeYield, smoothingLen);
 
-bpWheat = findchangepts(ethiopiaWheatYield)
-yieldWheat_dt = detrend(ethiopiaWheatYield, 'linear', bpWheat);% - smooth(ethiopiaSorghumYield, smoothingLen);
+    bpMillet = findchangepts(ethiopiaMilletYield);
+    yieldMillet_dt = detrend(ethiopiaMilletYield, 'linear', bpMillet);% - smooth(ethiopiaMilletYield, smoothingLen);
 
-bpBarley = findchangepts(ethiopiaBarleyYield)
-yieldBarley_dt = detrend(ethiopiaBarleyYield, 'linear', bpBarley);
+    bpSorghum = findchangepts(ethiopiaSorghumYield);
+    yieldSorghum_dt = detrend(ethiopiaSorghumYield, 'linear', bpSorghum);% - smooth(ethiopiaSorghumYield, smoothingLen);
 
-bpPulses = findchangepts(ethiopiaPulsesYield)
-yieldPulses_dt = detrend(ethiopiaPulsesYield, 'linear', bpPulses);
+    bpWheat = findchangepts(ethiopiaWheatYield);
+    yieldWheat_dt = detrend(ethiopiaWheatYield, 'linear', bpWheat);% - smooth(ethiopiaSorghumYield, smoothingLen);
+
+    bpBarley = findchangepts(ethiopiaBarleyYield);
+    yieldBarley_dt = detrend(ethiopiaBarleyYield, 'linear', bpBarley);
+
+    bpPulses = findchangepts(ethiopiaPulsesYield);
+    yieldPulses_dt = detrend(ethiopiaPulsesYield, 'linear', bpPulses);
+else
+    yieldBarley_dt = ethiopiaBarleyYield - smooth(ethiopiaBarleyYield, smoothingLen);
+    yieldWheat_dt = ethiopiaWheatYield - smooth(ethiopiaSorghumYield, smoothingLen);
+    yieldSorghum_dt = ethiopiaSorghumYield - smooth(ethiopiaSorghumYield, smoothingLen);
+    yieldMillet_dt = ethiopiaMilletYield - smooth(ethiopiaMilletYield, smoothingLen);
+    yieldMaize_dt = ethiopiaMaizeYield - smooth(ethiopiaMaizeYield, smoothingLen);
+    yieldPulses_dt = ethiopiaPulsesYield - smooth(ethiopiaPulsesYield, smoothingLen);
+end
 
 meanYield = nanmean([normc(yieldMaize_dt), normc(yieldMillet_dt), normc(yieldSorghum_dt), normc(yieldWheat_dt), normc(yieldBarley_dt), normc(yieldPulses_dt)], 2);
-%meanYield = nanmean([normc(yieldPulses_dt)], 2);
-tpcorr = corr(annualTPrc, annualPPrc)
-pcorr = corr(annualPPrc, meanYield)
-tcorr = corr(annualTPrc, meanYield)
+
+
+colorD = [160, 116, 46]./255.0;
+colorHd = [216, 66, 19]./255.0;
+colorH = [255, 91, 206]./255.0;
+colorW = [68, 166, 226]./255.0;
+
+smoothingTest = false;
+if smoothingTest
+    figure('Color',[1,1,1]);
+    hold on;
+    box on;
+    grid on;
+    axis square;
+    %pbaspect([1 2 1])
+
+    alltgood = [];
+    alltbad = [];
+    allpgood = [];
+    allpbad = [];
+    
+    tmean = 0;
+    pmean = 0;
+    
+    plot([0 7], [50 50], 'k', 'linewidth', 2);
+    ind = 1;
+    for smoothingLen = 5:5:30
+        yieldMaize_dt_tmp = ethiopiaMaizeYield - smooth(ethiopiaMaizeYield, smoothingLen);
+        yieldMillet_dt_tmp = ethiopiaMilletYield - smooth(ethiopiaMilletYield, smoothingLen);
+        yieldSorghum_dt_tmp = ethiopiaSorghumYield - smooth(ethiopiaSorghumYield, smoothingLen);
+        yieldWheat_dt_tmp = ethiopiaWheatYield - smooth(ethiopiaSorghumYield, smoothingLen);
+        yieldBarley_dt_tmp = ethiopiaBarleyYield - smooth(ethiopiaBarleyYield, smoothingLen);
+        yieldPulses_dt_tmp = ethiopiaPulsesYield - smooth(ethiopiaPulsesYield, smoothingLen);
+        meanYield_tmp = nanmean([normc(yieldMaize_dt_tmp), normc(yieldMillet_dt_tmp), normc(yieldSorghum_dt_tmp), normc(yieldWheat_dt_tmp), normc(yieldBarley_dt_tmp), normc(yieldPulses_dt_tmp)], 2);
+
+        indBad = find(meanYield_tmp <= mean(meanYield_tmp)-std(meanYield_tmp));
+        indGood = find(meanYield_tmp >= mean(meanYield_tmp)+std(meanYield_tmp));
+
+        indBad(indBad>50) = [];
+        indGood(indGood>50) = [];
+
+        tbad = annualTPrc(indBad);
+        pbad = annualPPrc(indBad);
+        tgood = annualTPrc(indGood);
+        pgood = annualPPrc(indGood);
+
+        tmean = tmean + nanmedian(tgood);
+        pmean = pmean + nanmedian(pgood);
+        
+        alltgood = [alltgood; tgood];
+        alltbad = [alltbad; tbad];
+        allpgood = [allpgood; pgood];
+        allpbad = [allpbad; pbad];
+        
+        b = boxplot([pgood tgood], 'widths', [.1 .1], 'position', [ind-.1 ind+.1]);
+
+        set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
+        lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
+        set(lines, 'Color', colorW, 'LineWidth', 2);
+
+        set(b(:,2), {'LineWidth', 'Color'}, {3, colorHd})
+        lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
+        set(lines, 'Color', colorHd, 'LineWidth', 2);
+        ind = ind+1;
+    end
+
+    plot([0 7], [tmean tmean]./6, '--', 'color', colorHd);
+    plot([0 7], [pmean pmean]./6, '--', 'color', colorW);
+    
+    ylim([0 100])
+    xlim([0 7]);
+    set(gca, 'xtick', 1:6, 'xticklabel', 5:5:30);
+    xlabel('Smoothing length (years)');
+    ylabel('Percentile');
+    set(gca, 'fontsize', 36);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig smoothing-test-good.eps;
+    close all;
+end
 
 x = 1961:2014;
 
@@ -179,10 +262,6 @@ for t = 10:20:90
 end
         
 
-colorD = [160, 116, 46]./255.0;
-colorHd = [216, 66, 19]./255.0;
-colorH = [255, 91, 206]./255.0;
-colorW = [68, 166, 226]./255.0;
 
 figure('Color',[1,1,1]);
 hold on;
@@ -192,8 +271,8 @@ pbaspect([2 1 1])
 
 plot(x, meanYield, 'k', 'linewidth', 2);
 
-tprc = 74;
-pprc = 34;
+tprc = 83;
+pprc = 25;
 
 hdSuperYears = [];
 for d = 1:size(annualTPrcSuper, 2)
@@ -201,20 +280,18 @@ for d = 1:size(annualTPrcSuper, 2)
     dSuperYears(:,d) = annualTPrcSuper(:, d) <= tprc & annualPPrcSuper(:, d) <= pprc;
 end
 
-for i = 1:size(hdSuperYears, 1)
-    hd = sum(hdSuperYears(i,:)) >= .5*size(hdSuperYears,2);
-    d = sum(dSuperYears(i,:)) >= .5*size(dSuperYears,2);
-    
-    if hd
-        plot(x(i+21), meanYield(i+21), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
-    elseif d
-        plot(x(i+21), meanYield(i+21), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
-    end
-end
+% for i = 1:size(hdSuperYears, 1)
+%     hd = sum(hdSuperYears(i,:)) >= .5*size(hdSuperYears,2);
+%     d = sum(dSuperYears(i,:)) >= .5*size(dSuperYears,2);
+%     
+%     if hd
+%         plot(x(i+21), meanYield(i+21), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
+%     elseif d
+%         plot(x(i+21), meanYield(i+21), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
+%     end
+% end
 
 % for i = 1:length(x)
-%     
-% 
 %     if annualPPrc(i) <= pprc & annualTPrc(i) >= tprc
 %         plot(x(i), meanYield(i), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
 %     elseif annualPPrc(i) <= pprc & annualTPrc(i) <= tprc
@@ -223,12 +300,12 @@ end
 %     
 % end
 
-yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)))
-yieldd = nanmean(meanYield(find(annualTPrc<=tprc & annualPPrc <= pprc)))
+yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)));
+yieldd = nanmean(meanYield(find(annualTPrc<=tprc & annualPPrc <= pprc)));
 
-indBad = find(meanYield <= -std(meanYield));
-indGood = find(meanYield >= std(meanYield));
-indNormal = find(meanYield > -std(meanYield) & meanYield < std(meanYield));
+indBad = find(meanYield <= mean(meanYield)-std(meanYield));
+indGood = find(meanYield >= mean(meanYield)+std(meanYield));
+indNormal = find(meanYield > mean(meanYield)-std(meanYield) & meanYield < mean(meanYield)+std(meanYield));
 
 indBad(indBad>50) = [];
 indGood(indGood>50) = [];
@@ -295,17 +372,13 @@ for w = 1:size(wars,1)
     set(s.edge, 'Color', 'w');
 end
 
-% plot([x(1) x(end)], [yieldhd yieldhd], '-', 'color', colorHd, 'linewidth', 2);
-% plot([x(1) x(end)], [yieldd yieldd], '-', 'color', colorD, 'linewidth', 2);
-
-%ylim([-5100 7100]);
 set(gca, 'YTick', -.3:.1:.3);
 xlim([1960 2015]);
 ylim([-.3 .3]);
 set(gca, 'fontsize', 36);
 ylabel('Normalized yield anomaly');
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig historical-yields.png -m4;
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig historical-yields.png -m4;
 close all;
 
 

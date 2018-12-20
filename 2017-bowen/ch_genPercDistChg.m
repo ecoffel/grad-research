@@ -36,7 +36,7 @@ for m = 1:length(models)
         chgData(75:90,:) = NaN;
         threshChgTxHuss(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-huss-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -49,7 +49,7 @@ for m = 1:length(models)
         chgData(chgData > 1 | chgData < 0) = NaN;
         threshChgTxEf(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-ef-' models{m} '-rcp85-2061-2085.mat']);
+        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -127,12 +127,12 @@ if plotDistChg
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 3);
     
     xlim([0 100]);
-    ylim([-.4 .5]);
+    ylim([-.8 .7]);
     set(gca, 'fontsize', 36);
     xlabel('Warm season Tx percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
-    set(gca, 'YTick', -.4:.1:.5);
-    ylabel(['Specific hum. amplification (g/kg)']);
+    set(gca, 'YTick', -.8:.2:.7);
+    ylabel(['EF amplification (Fraction)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['huss-chg-tx-perc.eps']);

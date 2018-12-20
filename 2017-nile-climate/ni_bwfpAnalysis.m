@@ -29,8 +29,10 @@ if ~exist('tas')
         fprintf('loading %s tas, pr historical...\n', models{mind});
 
         tas = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\historical\tas'], 'tas', 'startYear', 1900, 'endYear', 2005);
+        tasFut45 = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp45\tas'], 'tas', 'startYear', 2006, 'endYear', 2099);
         tasFut = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp85\tas'], 'tas', 'startYear', 2006, 'endYear', 2099);
         pr = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\historical\pr'], 'pr', 'startYear', 1900, 'endYear', 2005);
+        prFut45 = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp45\pr'], 'pr', 'startYear', 2006, 'endYear', 2099);
         prFut = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp85\pr'], 'pr', 'startYear', 2006, 'endYear', 2099);
         
         [latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5] = latLonIndexRange({tas{1}, tas{2},[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
@@ -53,13 +55,19 @@ if ~exist('tas')
         pfdataEthiopia(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
         
         tfdataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
+        tf45dataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut45{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
         pfdataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
+        pf45dataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut45{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
         
         tfdataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
+        tf45dataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut45{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
         pfdataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
+        pf45dataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut45{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
         
         tfdataTotal(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut{3}([latIndsBlueCmip5 latIndsWhiteCmip5], [lonIndsBlueCmip5 lonIndsWhiteCmip5], :, :), 2), 1)), 2);
+        tf45dataTotal(:,mind) = nanmean(squeeze(nanmean(nanmean(tasFut45{3}([latIndsBlueCmip5 latIndsWhiteCmip5], [lonIndsBlueCmip5 lonIndsWhiteCmip5], :, :), 2), 1)), 2);
         pfdataTotal(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut{3}([latIndsBlueCmip5 latIndsWhiteCmip5], [lonIndsBlueCmip5 lonIndsWhiteCmip5], :, :), 2), 1)), 2);
+        pf45dataTotal(:,mind) = nanmean(squeeze(nanmean(nanmean(prFut45{3}([latIndsBlueCmip5 latIndsWhiteCmip5], [lonIndsBlueCmip5 lonIndsWhiteCmip5], :, :), 2), 1)), 2);
         
     end
 end
@@ -84,16 +92,19 @@ if ~exist('bwSupplyHistTotalNoPw')
     
     bwSupplyHistTotalNoPw = zeros(length(1900:2005), length(models));
     bwSupplyFutTotalNoPw = zeros(length(2006:2099), length(models));
+    bwSupplyFutTotalNoPw45 = zeros(length(2006:2099), length(models));
     
     monthLengths = [31 28 31 30 31 30 31 31 30 31 30 31];
     
     for mind = 1:length(models)
         fprintf('loading %s mrro historical...\n', models{mind});
         mrros = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\historical\mrro'], 'mrro', 'startYear', 1900, 'endYear', 2005);
+        mrrosFut45 = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp45\mrro'], 'mrro', 'startYear', 2006, 'endYear', 2099);
         mrrosFut = loadMonthlyData(['E:\data\cmip5\output\' models{mind} '\mon\r1i1p1\rcp85\mrro'], 'mrro', 'startYear', 2006, 'endYear', 2099);
         
         for month = 1:12
             mrros{3}(:, :, :, month) = mrros{3}(:, :, :, month) .* 60 .* 60 .* 24 .* monthLengths(month);
+            mrrosFut45{3}(:, :, :, month) = mrrosFut45{3}(:, :, :, month) .* 60 .* 60 .* 24 .* monthLengths(month);
             mrrosFut{3}(:, :, :, month) = mrrosFut{3}(:, :, :, month) .* 60 .* 60 .* 24 .* monthLengths(month);
         end
         
@@ -192,6 +203,15 @@ if ~exist('bwSupplyHistTotalNoPw')
                     if ~isnan(ittrTotalNoPw)
                         bwSupplyFutTotalNoPw(year, mind) = bwSupplyFutTotalNoPw(year, mind) + ittrTotalNoPw;
                     end
+                    
+                    
+                    % not population weighted
+                    ittrTotalNoPw45 = areaTableBlue(xind, yind) * nansum(squeeze(mrrosFut45{3}(cmip5LatTableBlue(xind, yind), cmip5LonTableBlue(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw45)
+                        bwSupplyFutTotalNoPw45(year, mind) = bwSupplyFutTotalNoPw45(year, mind) + ittrTotalNoPw45;
+                    end
 
                 end
             end
@@ -209,19 +229,19 @@ if ~exist('bwSupplyHistTotalNoPw')
                     if ~isnan(ittrTotalNoPw)
                         bwSupplyFutTotalNoPw(year, mind) = bwSupplyFutTotalNoPw(year, mind) + ittrTotalNoPw;
                     end
+                    
+                    
+                    % not population weighted
+                    ittrTotalNoPw45 = areaTableWhite(xind, yind) * nansum(squeeze(mrrosFut45{3}(cmip5LatTableWhite(xind, yind), cmip5LonTableWhite(xind, yind), year, :))) * 1e-3;
+
+
+                    if ~isnan(ittrTotalNoPw45)
+                        bwSupplyFutTotalNoPw45(year, mind) = bwSupplyFutTotalNoPw45(year, mind) + ittrTotalNoPw45;
+                    end
 
                 end
             end
         end
-
-                
-        mdataEthiopia(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
-        mdataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
-        mdataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(mrros{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
-        
-        mfdataEthiopia(:,mind) = nanmean(squeeze(nanmean(nanmean(mrrosFut{3}(latIndsEthiopiaCmip5, lonIndsEthiopiaCmip5, :, :), 2), 1)), 2);
-        mfdataBlue(:,mind) = nanmean(squeeze(nanmean(nanmean(mrrosFut{3}(latIndsBlueCmip5, lonIndsBlueCmip5, :, :), 2), 1)), 2);
-        mfdataWhite(:,mind) = nanmean(squeeze(nanmean(nanmean(mrrosFut{3}(latIndsWhiteCmip5, lonIndsWhiteCmip5, :, :), 2), 1)), 2);
     end
 end
 
@@ -402,7 +422,7 @@ for dec = 2010:10:2080
     bwSupplyMeanFut(dind, :) = squeeze(squeeze(nanmean(bwSupplyFutTotalNoPw(dec-2006+1:dec+10-2006+1, :), 1)));
     
     for s = 1:5
-        noWaterFut(dind, :, s) = (1-min(bwSupplyMeanFut(dind, :) ./ bwfpTotalFut(dind, s),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)));
+        noWaterFut(dind, :, s) = ((1-min(bwSupplyMeanFut(dind, :) ./ bwfpTotalFut(dind, s),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
     end
     dind = dind+1;
 end
@@ -418,6 +438,8 @@ colorW = [68, 166, 226]./255.0;
 il = round(.1*length(models));
 ih = round(.9*length(models));
 
+sspScenario = 5;
+
 figure('Color', [1,1,1]);
 hold on;
 box on;
@@ -431,30 +453,30 @@ set(b, {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-p = plot([1:7]-.12, bwfpTotalFut(2:8,3), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorD, 'linewidth', 3);
+p = plot([1:7]-.12, bwfpTotalFut(2:8,sspScenario), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorW, 'linewidth', 3);
 
 ylim([0 1.2e12]);
 ylabel('BW (m^3/year)');
 set(gca, 'YTick', [0 .3 .6 .9 1.2] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '900B', '1.2T'});
 
-legend([p], {'BW demand'});
+legend([p], {'BW demand'}, 'location', 'northwest');
 legend boxoff;
 
 yyaxis right;
-b = boxplot(noWaterFutSorted(2:8,il:ih,3)', 'width', .15, 'positions', [1:7] + .12)
+b = boxplot(noWaterFutSorted(2:8,il:ih,sspScenario)', 'width', .15, 'positions', [1:7] + .12)
 
 set(b, {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
 set(gca, 'fontsize', 36);
-ylim([0 4e8]);
+ylim([0 100]);
 set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
-set(gca, 'YTick', [0 1 2 3 4] .* 1e8, 'YTickLabels', {'0', '100M', '200M', '300M', '400M'});
+set(gca, 'YTick', 0:20:100);
 xlim([.5 7.5]);
-ylabel('Unmet demand (people/year)');
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig bw-supply-demand-3.eps;
+ylabel('Unmet demand (% population)');
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig bw-supply-demand-5.eps;
 close all;
 
 
@@ -474,40 +496,47 @@ ihdNoWaterAnomFut = [];
 idNoWaterAnomFut = [];
 ihNoWaterAnomFut = [];
 
-tprc = 74;
-pprc = 34;
+futBwAnomFreq = [];
+fut45BwAnomFreq = [];
+histBwAnomFreq = [];
+
+tprc = 83;
+pprc = 25;
 
 % find hot/dry years and show bw supply anomalies
 for mind = 1:length(models)
     ihdTotal = find(detrend(tdataTotal(:, mind)) > prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) < prctile(detrend(pdataTotal(:, mind)), pprc));
     idTotal = find(detrend(tdataTotal(:, mind)) < prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) < prctile(detrend(pdataTotal(:, mind)), pprc));
     ihTotal = find(detrend(tdataTotal(:, mind)) > prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) > prctile(detrend(pdataTotal(:, mind)), pprc));
+    inTotal = find(detrend(tdataTotal(:, mind)) <= prctile(detrend(tdataTotal(:, mind)), tprc) & detrend(pdataTotal(:, mind)) >= prctile(detrend(pdataTotal(:, mind)), pprc));
     
     ihdAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
     idAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(idTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
     ihAnomHist(mind) = squeeze(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) - nanmean(bwSupplyHistTotalNoPw(:, mind), 1));
-                
+    
     meanNoWater = (1-min(nanmean(bwSupplyHistTotalNoPw(:, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3)));
                 
-    ihdNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
-                                meanNoWater;
-    idNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(idTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
-                                meanNoWater;
-    ihNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 1, 3))) - ...
-                                meanNoWater;
+    ihdNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
+    idNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(idTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
+    ihNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
+    inNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(inTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
 
-                            
-                
+    
+    histBwAnomFreq(mind) = (length(find(bwSupplyHistTotalNoPw(end-99:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 10) / 10 * 100; 
+    fut45BwAnomFreq(mind) = (length(find(bwSupplyFutTotalNoPw45(5:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 9) / 10 * 100;
+    futBwAnomFreq(mind) = (length(find(bwSupplyFutTotalNoPw(5:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 9) / 10 * 100;
+    
+    
     ihdTotal = find(detrend(tfdataTotal(:, mind)) > prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) < prctile(detrend(pfdataTotal(:, mind)), pprc));
     idTotal = find(detrend(tfdataTotal(:, mind)) < prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) < prctile(detrend(pfdataTotal(:, mind)), pprc));
     ihTotal = find(detrend(tfdataTotal(:, mind)) > prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) > prctile(detrend(pfdataTotal(:, mind)), pprc));
+    inTotal = find(detrend(tfdataTotal(:, mind)) <= prctile(detrend(tfdataTotal(:, mind)), tprc) & detrend(pfdataTotal(:, mind)) >= prctile(detrend(pfdataTotal(:, mind)), pprc));
     
     ihdAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(ihdTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
     idAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(idTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
     ihAnomFut(mind) = squeeze(nanmean(bwSupplyFutTotalNoPw(ihTotal, mind), 1) - nanmean(bwSupplyFutTotalNoPw(:, mind), 1));
                     
     % find no water for historical
-    
     decIndTotalIhd = (round(ihdTotal+2006,-1)-2000)/10;
     decIndTotalIhd(decIndTotalIhd > 8) = 8;
     
@@ -516,19 +545,24 @@ for mind = 1:length(models)
     
     decIndTotalIh = (round(ihTotal+2006,-1)-2000)/10;
     decIndTotalIh(decIndTotalIh > 8) = 8;
+    
+    decIndTotalIn = (round(inTotal+2006,-1)-2000)/10;
+    decIndTotalIn(decIndTotalIn > 8) = 8;
 
     decinds = (round(2006:2090,-1)-2010)/10+1;
     decinds(decinds > 8) = 8;
 
     meanNoWater = squeeze(1-min(nanmean(bwSupplyMeanFut(:, mind), 1) ./ bwfpTotalFut(:, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], 2:9, 3))));
     
-    ihdNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihdTotal, mind) ./ bwfpTotalFut(decIndTotalIhd, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIhd, 3)))) - ...
-                                meanNoWater(decIndTotalIhd),1);
-    idNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(idTotal, mind) ./ bwfpTotalFut(decIndTotalId, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalId, 3)))) - ...
-                                meanNoWater(decIndTotalId),1);
-    ihNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihTotal, mind) ./ bwfpTotalFut(decIndTotalIh, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIh, 3)))) - ...
-                                meanNoWater(decIndTotalIh),1);
+    ihdNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihdTotal, mind) ./ bwfpTotalFut(decIndTotalIhd, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIhd, 3)))) ./ squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIhd, 3)))));
+    idNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(idTotal, mind) ./ bwfpTotalFut(decIndTotalId, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalId, 3)))) ./ squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalId, 3)))));
+    ihNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(ihTotal, mind) ./ bwfpTotalFut(decIndTotalIh, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIh, 3)))) ./ squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIh, 3)))));
+    inNoWaterAnomFut(mind) = nanmean((1-min(bwSupplyFutTotalNoPw(inTotal, mind) ./ bwfpTotalFut(decIndTotalIn, 3), 1)) .* squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIn, 3)))) ./ squeeze(nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decIndTotalIn, 3)))));
 end
+
+histBwAnomFreq = sort(histBwAnomFreq);
+fut45BwAnomFreq = sort(fut45BwAnomFreq);
+futBwAnomFreq = sort(futBwAnomFreq);
 
 ihdAnomHist = sort(ihdAnomHist);
 idAnomHist = sort(idAnomHist);
@@ -541,13 +575,48 @@ ihAnomFut = sort(ihAnomFut);
 ihdNoWaterAnomHist = sort(ihdNoWaterAnomHist);
 idNoWaterAnomHist = sort(idNoWaterAnomHist);
 ihNoWaterAnomHist = sort(ihNoWaterAnomHist);
+inNoWaterAnomHist = sort(inNoWaterAnomHist);
 
 ihdNoWaterAnomFut = sort(ihdNoWaterAnomFut);
 idNoWaterAnomFut = sort(idNoWaterAnomFut);
 ihNoWaterAnomFut = sort(ihNoWaterAnomFut);
+inNoWaterAnomFut = sort(inNoWaterAnomFut);
 
 il = round(.1*length(models));
 ih = round(.9*length(models));
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+pbaspect([1 2 1]);
+set(gca, 'YGrid', 'on');
+
+b1 = boxplot([histBwAnomFreq(il:ih)' fut45BwAnomFreq(il:ih)' futBwAnomFreq(il:ih)'], 'positions', [1 1.5 2], 'widths', [.25 .25 .25]);
+
+colors = brewermap(10, 'Greens');
+set(b1(:, 1), {'LineWidth', 'Color'}, {2, colors(7,:)});
+colors = brewermap(10, 'Blues');
+set(b1(:, 2), {'LineWidth', 'Color'}, {2, colors(7,:)});
+colors = brewermap(10, 'Reds');
+set(b1(:, 3), {'LineWidth', 'Color'}, {2, colors(7,:)});
+
+lines = findobj(b1, 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+
+ylim([0 40]);
+
+set(gca,'TickLabelInterpreter', 'tex');    
+xtickangle(0);
+
+set(gca, 'XTick', [1 1.5 2], 'XTickLabels', {'Historical', 'RCP 4.5', 'RCP 8.5'});
+xtickangle(45);
+ylabel('Frequency (% of years)');
+set(gca, 'FontSize', 36);
+set(gca, 'YTick', [0:10:40]);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig(['bw-anom-recurrence.eps']);
+close all;
+
 
 figure('Color', [1,1,1]);
 hold on;
@@ -594,14 +663,14 @@ end
 
 plot([0 4], [0 0], '--k', 'linewidth', 2);
 xlim([.5 3.5]);
-ylim([-1.25 .5].*1e11);
-set(gca, 'ytick', [-1.25:.25:.5] .* 1e11, 'yticklabels', {'-125B', '-100B', '-75B', '-50B', '-25B', '0', '25B', '50B'});
+ylim([-1.5 .5].*1e11);
+set(gca, 'ytick', [-1.5:.25:.5] .* 1e11, 'yticklabels', {'-150B', '-125B', '-100B', '-75B', '-50B', '-25B', '0', '25B', '50B'});
 set(gca, 'fontsize', 36);
 ylabel('BW anomaly (m^3/year)');
 set(gca, 'xtick', [1 2 3], 'xticklabels', {'Hot & dry', 'Dry', 'Hot'});
 xtickangle(45);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bw-anom-hd-years-3.eps;
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bw-anom-hd-years-3.eps;
 close all;
 
 
@@ -614,7 +683,7 @@ box on;
 grid on;
 pbaspect([1 2 1]);
 
-b = boxplot([ihdNoWaterAnomHist(il:ih)' idNoWaterAnomHist(il:ih)', ihNoWaterAnomHist(il:ih)'], 'width', .15, 'positions', [.85 1.85 2.85]);
+b = boxplot(100 .* [ihdNoWaterAnomHist(il:ih)' idNoWaterAnomHist(il:ih)', ihNoWaterAnomHist(il:ih)', inNoWaterAnomHist(il:ih)'], 'width', .15, 'positions', [.85 1.85 2.85 3.85]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:,1), 'type', 'line', 'Tag', 'Median');
@@ -625,8 +694,11 @@ set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 set(b(:,3), {'LineWidth', 'Color'}, {3, colorH})
 lines = findobj(b(:,3), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(b(:,4), {'LineWidth', 'Color'}, {3, [.5 .5 .5]})
+lines = findobj(b(:,3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-b = boxplot([ihdNoWaterAnomFut(il:ih)' idNoWaterAnomFut(il:ih)', ihNoWaterAnomFut(il:ih)'], 'width', .15, 'positions', [1.15 2.15 3.15]);
+b = boxplot(100 .* [ihdNoWaterAnomFut(il:ih)' idNoWaterAnomFut(il:ih)', ihNoWaterAnomFut(il:ih)', inNoWaterAnomFut(il:ih)'], 'width', .15, 'positions', [1.15 2.15 3.15 4.15]);
  
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b(:,1), 'type', 'line', 'Tag', 'Median');
@@ -635,6 +707,9 @@ set(b(:,2), {'LineWidth', 'Color'}, {3, colorD})
 lines = findobj(b(:,2), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 set(b(:,3), {'LineWidth', 'Color'}, {3, colorH})
+lines = findobj(b(:,3), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+set(b(:,4), {'LineWidth', 'Color'}, {3, [.5 .5 .5]})
 lines = findobj(b(:,3), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
@@ -650,17 +725,21 @@ h = findobj(b(:, 3),'Tag','Box');
 for j=1:length(h)
     patch(get(h(j),'XData'), get(h(j), 'YData'), colorH, 'FaceAlpha', .5, 'EdgeColor', 'none');
 end
+h = findobj(b(:, 4),'Tag','Box');
+for j=1:length(h)
+    patch(get(h(j),'XData'), get(h(j), 'YData'), [.3 .3 .3], 'FaceAlpha', .5, 'EdgeColor', 'none');
+end
 
-plot([0 4], [0 0], '--k', 'linewidth', 2);
-xlim([.5 3.5]);
-ylim([-4e7 3e7]);
-set(gca, 'ytick', [-4:1:3] .* 1e7, 'yticklabels', {'-40M', '-30M', '-20M', '-10M', '0M', '10M', '20M', '30M'});
+%plot([0 4], [0 0], '--k', 'linewidth', 2);
+xlim([.5 4.5]);
+ylim([0 100]);
+%set(gca, 'ytick', [-4:1:3] .* 1e7, 'yticklabels', {'-40M', '-30M', '-20M', '-10M', '0M', '10M', '20M', '30M'});
 set(gca, 'fontsize', 36);
-ylabel('Unmet demand (people/year)');
-set(gca, 'xtick', [1 2 3], 'xticklabels', {'Hot & dry', 'Dry', 'Hot'});
+ylabel('Unmet demand (% population)');
+set(gca, 'xtick', [1 2 3 4], 'xticklabels', {'Hot & dry', 'Dry', 'Hot', 'Normal'});
 xtickangle(45);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig no-water-anom-hd-years-3.eps;
+%set(gcf, 'Position', get(0,'Screensize'));
+%export_fig no-water-anom-hd-years-3.eps;
 close all;
 
 

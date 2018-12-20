@@ -86,20 +86,24 @@ if ~exist('tEra')
     
     for xlat = 1:size(twEraNoWat, 1)
         for ylon = 1:size(twEraNoWat, 2)
-            c = reshape(twEraNoWat(xlat, ylon, :, :, :), [numel(twEraNoWat(xlat, ylon, :, :, :)),1]);
-            prcs = prctile(c, 75:100);
+            for year = 1:size(twEraNoWat, 3)
+                c = reshape(twEraNoWat(xlat, ylon, year, :, :), [numel(twEraNoWat(xlat, ylon, year, :, :)),1]);
+                prcs = prctile(c, 75:100);
 
-            for a = 1:length(absThreshRange)
-                absThresh = absThreshRange(a);
-                prc = find(abs(prcs-absThresh)==min(abs(prcs-absThresh)));
-                if length(prc) == 0 || abs(prcs(prc)-absThresh) > 5
-                    eraThreshPerc(xlat, ylon, a) = NaN;
-                    continue;
+                for a = 1:length(absThreshRange)
+                    absThresh = absThreshRange(a);
+                    prc = find(abs(prcs-absThresh)==min(abs(prcs-absThresh)));
+                    if length(prc) == 0 || abs(prcs(prc)-absThresh) > 5
+                        eraThreshPerc(xlat, ylon, year, a) = NaN;
+                        continue;
+                    end
+                    eraThreshPerc(xlat, ylon, year, a) = prc+75-1;
                 end
-                eraThreshPerc(xlat, ylon, a) = prc+75-1;
             end
         end
     end
+    
+    eraThreshPerc = squeeze(nanmean(eraThreshPerc, 3));
 end
 
 
@@ -136,9 +140,9 @@ for m = 1:length(models)
         tChg = txChg;
     end
     
-    if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-tx-count-chg-no-tx-amp-95-' num2str(absThreshRange(end)) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
-        continue;
-    end
+%     if exist(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-tx-count-chg-no-tx-amp-95-' num2str(absThreshRange(end)) '-' var1 '-' var2 '-' curModel '-' futureRcps{1} '-' num2str(futurePeriodYears(1)) '-' num2str(futurePeriodYears(end)) '.mat'], 'file')
+%         continue;
+%     end
     
     % temperature data (thresh, ann-max, or daily-max)
     baseData = [];
@@ -198,6 +202,7 @@ for m = 1:length(models)
                 twThresh(xlat, ylon) = NaN;
                 continue;
             end
+            
             
             tmp = squeeze(baseVar1Daily(xlat, ylon, :, curTxxMonthsHist, :));
             tmp = reshape(tmp, [size(tmp,1)*size(tmp,2)*size(tmp,3), 1]);

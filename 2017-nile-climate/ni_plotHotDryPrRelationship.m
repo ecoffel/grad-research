@@ -157,7 +157,7 @@ grid on;
 axis square;
 
 xlim([-20 60])
-ylim([-50 100])
+ylim([-75 100])
 
 for m = 1:length(prChgTotal)
     prSig = kstest2(squeeze(prFutTotal(:, m)), squeeze(prHistTotal(:, m)));
@@ -176,7 +176,7 @@ cint = confint(f);
 p = plot([prChgTotal(round(.1*length(models))) prChgTotal(round(.9*length(models)))], [f(prChgTotal(round(.1*length(models)))) f(prChgTotal(round(.9*length(models))))], '--b', 'LineWidth', 2);
 
 plot([-20 80], [0 0], '--k', 'linewidth', 2);
-plot([0 0], [-60 100], '--k', 'linewidth', 2);
+plot([0 0], [-80 100], '--k', 'linewidth', 2);
 
 ylabel('P std. dev. change (%)');
 xlabel('Precipitation change (%)');

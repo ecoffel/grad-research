@@ -374,7 +374,7 @@ if plotTempPTrends
     hold on;
     box on;
     axis square;
-    grid on;
+    set(gca, 'YGrid', 'on');
 
     yyaxis left;
     displace = [-.35 -.25 -.15 -.05 .05 .15];
@@ -487,17 +487,27 @@ for model = 1:size(cmip5Temp, 4)
     hotDryCmip5(:, model) = regionalTCmip5(:, model) > prcTCmip5(model) & regionalPCmip5(:, model) < prcPCmip5(model);
 end
 
-tSuper = [regionalTEra(1:2010-1981+1), regionalTGldas(1981-1960+1:end), regionalTUdel(1981-1901+1:2010-1901+1), ...
-          regionalTCpc(1:2010-1981+1), regionalTHadcrut(1981-1901+1:2010-1901+1), regionalTBe(1981-1901+1:2010-1901+1)];
-tSuperPrc = [prctile(regionalTEra(1:2005-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:2005-1981+1), tprc), prctile(regionalTUdel(1981-1901+1:2005-1901+1), tprc), ...
-          prctile(regionalTCpc(1:2005-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2005-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2005-1901+1), tprc)];
+% tSuper = [regionalTEra(1:2010-1981+1), regionalTGldas(1981-1960+1:end), regionalTUdel(1981-1901+1:2010-1901+1), ...
+%           regionalTCpc(1:2010-1981+1), regionalTHadcrut(1981-1901+1:2010-1901+1), regionalTBe(1981-1901+1:2010-1901+1)];
+% tSuperPrc = [prctile(regionalTEra(1:2005-1981+1), tprc), prctile(regionalTGldas(1981-1960+1:2005-1981+1), tprc), prctile(regionalTUdel(1981-1901+1:2005-1901+1), tprc), ...
+%           prctile(regionalTCpc(1:2005-1981+1), tprc), prctile(regionalTHadcrut(1981-1901+1:2005-1901+1), tprc), prctile(regionalTBe(1981-1901+1:2005-1901+1), tprc)];
+% 
+% pSuper = [regionalPEra(1:2010-1981+1) regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
+%           regionalPGpcp(1:2010-1981+1), regionalPChirps(1:2010-1981+1)];
+% pSuperPrc = [prctile(regionalPEra(1:2005-1981+1), pprc) prctile(regionalPGldas(1981-1960+1:2005-1960+1), pprc), prctile(regionalPUdel(1981-1901+1:2005-1901+1), pprc), ...
+%           prctile(regionalPGpcp(1:2005-1981+1), pprc), prctile(regionalPChirps(1:2005-1981+1), pprc)];
+% superEnsemble = {tSuper, tSuperPrc, pSuper, pSuperPrc};
+% save('nile-super-ensemble-blue.mat', 'superEnsemble');
 
-pSuper = [regionalPEra(1:2010-1981+1) regionalPGldas(1981-1960+1:end), regionalPUdel(1981-1901+1:2010-1901+1), ...
-          regionalPGpcp(1:2010-1981+1), regionalPChirps(1:2010-1981+1)];
-pSuperPrc = [prctile(regionalPEra(1:2005-1981+1), pprc) prctile(regionalPGldas(1981-1960+1:2005-1960+1), pprc), prctile(regionalPUdel(1981-1901+1:2005-1901+1), pprc), ...
-          prctile(regionalPGpcp(1:2005-1981+1), pprc), prctile(regionalPChirps(1:2005-1981+1), pprc)];
+superEndYr = 2016;
+superStartYr = 1981;
+
+tSuper = [regionalTCpc(1:superEndYr-1981+1), regionalTHadcrut(superStartYr-1901+1:superEndYr-1901+1), regionalTBe(superStartYr-1901+1:superEndYr-1901+1)];
+tSuperPrc = [prctile(regionalTCpc(1:superEndYr-1981+1), tprc), prctile(regionalTHadcrut(superStartYr-1901+1:superEndYr-1901+1), tprc), prctile(regionalTBe(superStartYr-1901+1:superEndYr-1901+1), tprc)];
+
+pSuper = [regionalPGpcp(1:superEndYr-1981+1), regionalPChirps(1:superEndYr-1981+1)];
+pSuperPrc = [prctile(regionalPGpcp(1:superEndYr-1981+1), pprc), prctile(regionalPChirps(1:superEndYr-1981+1), pprc)];
 superEnsemble = {tSuper, tSuperPrc, pSuper, pSuperPrc};
-save('nile-super-ensemble-blue.mat', 'superEnsemble');
 
 hdTrendsSuper = [];
 hdTrendsSuperP = [];
@@ -556,7 +566,7 @@ if plotHotDryTrends
     hold on;
     box on;
     pbaspect([1 2 1]);
-    grid on;
+    set(gca, 'YGrid', 'on');
 
     colors(4,:) = colors(9,:);
     
@@ -572,12 +582,14 @@ if plotHotDryTrends
         end
     end
 
-    b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.11], 'widths', [.1]);
+    plot([1.15 1.15], [-2 2], '-k');
+    
+    b = boxplot(reshape(hdTrendsSuper, [numel(hdTrendsSuper), 1]), 'positions', [1.34], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [0 0 0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
     
-    b = boxplot(hdTrendsCmip5', 'positions', [1.24], 'widths', [.1]);
+    b = boxplot(hdTrendsCmip5', 'positions', [1.48], 'widths', [.1]);
     set(b, {'LineWidth', 'Color'}, {2, [85/255.0, 158/255.0, 237/255.0]})
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2); 
@@ -586,9 +598,9 @@ if plotHotDryTrends
 
     ylabel(['# Years per decade']);
     ylim([-.2 .3]);
-    xlim([.5 1.5]);
+    xlim([.55 1.75]);
     set(gca, 'FontSize', 36);
-    set(gca, 'XTick', [1], 'XTickLabels', {'Hot & dry years'});
+    set(gca, 'XTick', [1.15], 'XTickLabels', {'Hot & dry years'});
     set(gca, 'YTick', -.2:.1:.3);
     %legend(legItems, {'ERA-Interim', 'GLDAS', 'UDel', 'HadCRUT4', 'BerkeleyEarth', 'CPC', 'GPCP', 'CHIRPS-2'}, 'numColumns', 5);
 

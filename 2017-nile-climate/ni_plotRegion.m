@@ -22,43 +22,73 @@ landmass = shaperead('landareas.shp', 'UseGeoCoords', true);
 countries = shaperead('2017-nile-climate/data/shape/countries/ne_50m_admin_0_countries.shp', 'UseGeoCoords', true);
 geoshow(landmass, 'FaceColor', 'w', 'EdgeColor', 'k');
 
-if ~exist('bwfp')
-    bwfpLat = [];
-    bwfpLon = [];
-    bwfp = [];
-    gwfp = [];
+% if ~exist('bwfp')
+%     bwfpLat = [];
+%     bwfpLon = [];
+%     bwfp = [];
+%     gwfp = [];
+% 
+%     % load domind bwfp
+%     load E:\data\bgwfp\output\domind\bwfp\bwfp_1.mat
+%     bwfpDomind = bwfp_1;
+%     
+%     for m = 1:12
+%         fprintf('loading bwfp/gwfp month %d...\n', m);
+% 
+%         load(['E:\data\bgwfp\output\ag\bwfp\bwfp_' num2str(m)]);
+%         eval(['bwfp(:, :, ' num2str(m) ') = bwfp_' num2str(m) '{3};']);
+% 
+%         if m == 1
+%             bwfpLat = bwfp_1{1};
+%             bwfpLon = bwfp_1{2};
+%             bwfpDomind = regridGriddata(bwfpDomind, {bwfpLat, bwfpLon, []}, false); 
+%         end
+% 
+%         % add domind onto ag bwfp
+%         bwfp(:,:,m) = bwfp(:,:,m)+bwfpDomind{3};
+%         
+%         eval(['clear bwfp_' num2str(m) ';']);
+%         eval(['clear gwfp_' num2str(m) ';']);
+%     end
+% end
 
-    % load domind bwfp
-    load E:\data\bgwfp\output\domind\bwfp\bwfp_1.mat
-    bwfpDomind = bwfp_1;
-    
-    for m = 1:12
-        fprintf('loading bwfp/gwfp month %d...\n', m);
+load e:/data/ssp-pop/ssp3/output/ssp3/ssp3_2010.mat;
+sspLat = ssp3_2010{1};
+sspLon = ssp3_2010{2};
+sspData = ssp3_2010{3};
 
-        load(['E:\data\bgwfp\output\ag\bwfp\bwfp_' num2str(m)]);
-        eval(['bwfp(:, :, ' num2str(m) ') = bwfp_' num2str(m) '{3};']);
+[latInds, lonInds] = latLonIndexRange({sspLat, sspLon, []}, regionBounds(1,:), regionBounds(2,:));
+earthradius = almanac('earth','radius','kilometers');
 
-        if m == 1
-            bwfpLat = bwfp_1{1};
-            bwfpLon = bwfp_1{2};
-            bwfpDomind = regridGriddata(bwfpDomind, {bwfpLat, bwfpLon, []}, false); 
-        end
+latdiff = ssp3_2010{1}(2,1)-ssp3_2010{1}(1,1);
+londiff = ssp3_2010{2}(1,2)-ssp3_2010{2}(1,1);
 
-        % add domind onto ag bwfp
-        bwfp(:,:,m) = bwfp(:,:,m)+bwfpDomind{3};
-        
-        eval(['clear bwfp_' num2str(m) ';']);
-        eval(['clear gwfp_' num2str(m) ';']);
+areaTable = [];
+for xind = 1:length(latInds)
+    xlat = latInds(xind);
+    for yind = 1:length(lonInds)
+        ylon = lonInds(yind);
+        curArea = areaint([ssp3_2010{1}(xlat, ylon) ssp3_2010{1}(xlat, ylon)+latdiff ssp3_2010{1}(xlat, ylon)+latdiff ssp3_2010{1}(xlat, ylon)], ...
+                          [ssp3_2010{2}(xlat, ylon) ssp3_2010{2}(xlat, ylon) ssp3_2010{2}(xlat, ylon)+londiff ssp3_2010{2}(xlat, ylon)+londiff], earthradius);
+
+        areaTable(xind, yind) = curArea;
     end
 end
 
-[latInds, lonInds] = latLonIndexRange({bwfpLat, bwfpLon, []}, regionBounds(1,:), regionBounds(2,:));
-pcolorm(bwfpLat(latInds, lonInds), bwfpLon(latInds, lonInds), nansum(bwfp(latInds, lonInds),3));
-colormap(brewermap(50,'Blues'));
-caxis([0, 15]);
+sspData = sspData(latInds, lonInds) ./ areaTable;
+
+pcolorm(sspLat(latInds, lonInds), sspLon(latInds, lonInds), sspData);
+cmap = brewermap(50,'Reds');
+cmap(1,:)=[1 1 1];
+colormap(cmap);
+
+caxis([0, 5e2]);
 alpha(.9);
 cb = colorbar('Location', 'southoutside');
-set(gca, 'fontsize', 36);
+xlabel(cb, 'People per km^{2}', 'FontSize', 30);
+set(gca, 'fontsize', 30);
+
+geoshow(landmass, 'FaceColor', 'none', 'EdgeColor', 'k');
 
 rivers = shaperead('2017-nile-climate/data/shape/rivers/world_rivers_dSe.shp', 'UseGeoCoords', true);
 geoshow(rivers, 'Color', 'blue')
@@ -73,3 +103,4 @@ for r = 1:size(regions,1)
 end
 
 set(gcf, 'Position', get(0,'Screensize'));
+export_fig nile-regions.png -m5;
