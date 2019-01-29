@@ -403,13 +403,23 @@ for s = 1:5
 end
 
 fprintf('calculating future per capita bw demand...\n');
-bwfpTotalFut = zeros(length(2010:10:2080), 5);
+bwfpTotalFut = zeros(length(2010:10:2080), 5, 3);
+
+
+% environmental flow requirement
+efrPercent = 20:20:80;
+
+% m3/capita
+waterScarcityLevel = [500 1000 1700];
+
 
 for s = 1:5
     decind = 1;
     for dec = 2010:10:2080
         
-        bwfpTotalFut(decind, s) = bwfpPc(s) * nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decind, s)));
+        for w = 1:length(waterScarcityLevel)
+            bwfpTotalFut(decind, s, w) = waterScarcityLevel(w) * nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], decind, s)));
+        end
         
         decind = decind+1;
     end
@@ -419,10 +429,14 @@ dind = 1;
 bwSupplyMeanFut = [];
 noWaterFut = [];
 for dec = 2010:10:2080
-    bwSupplyMeanFut(dind, :) = squeeze(squeeze(nanmean(bwSupplyFutTotalNoPw(dec-2006+1:dec+10-2006+1, :), 1)));
-    
-    for s = 1:5
-        noWaterFut(dind, :, s) = ((1-min(bwSupplyMeanFut(dind, :) ./ bwfpTotalFut(dind, s),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+    for e = 1:length(efrPercent)
+        bwSupplyMeanFut(dind, :, e) = (1 - (efrPercent(e) / 100.)) .* squeeze(squeeze(nanmean(bwSupplyFutTotalNoPw(dec-2006+1:dec+10-2006+1, :), 1)));
+
+        for w = 1:length(waterScarcityLevel)
+            for s = 1:5
+                noWaterFut(dind, :, s, w, e) = ((1-min(bwSupplyMeanFut(dind, :, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+            end
+        end
     end
     dind = dind+1;
 end
@@ -438,7 +452,7 @@ colorW = [68, 166, 226]./255.0;
 il = round(.1*length(models));
 ih = round(.9*length(models));
 
-sspScenario = 5;
+sspScenario = 3;
 
 figure('Color', [1,1,1]);
 hold on;
@@ -447,23 +461,23 @@ grid on;
 pbaspect([2 1 1]);
 
 yyaxis left;
-b = boxplot(bwSupplyMeanFutSorted(2:8,il:ih)', 'width', .15, 'positions', [1:7] - .12)
+b = boxplot(bwSupplyMeanFutSorted(2:8,il:ih, 3)', 'width', .15, 'positions', [1:7] - .12)
 
 set(b, {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-p = plot([1:7]-.12, bwfpTotalFut(2:8,sspScenario), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorW, 'linewidth', 3);
+p = plot([1:7]-.12, bwfpTotalFut(2:8,sspScenario,2), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorW, 'linewidth', 3);
 
-ylim([0 1.2e12]);
-ylabel('BW (m^3/year)');
-set(gca, 'YTick', [0 .3 .6 .9 1.2] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '900B', '1.2T'});
+ylim([0 0.9e12]);
+ylabel('Runoff (m^3/year)');
+set(gca, 'YTick', [0 .3 .6 .9] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '900B'});
 
-legend([p], {'BW demand'}, 'location', 'northwest');
+legend([p], {'Runoff demand'}, 'location', 'northwest');
 legend boxoff;
 
 yyaxis right;
-b = boxplot(noWaterFutSorted(2:8,il:ih,sspScenario)', 'width', .15, 'positions', [1:7] + .12)
+b = boxplot(noWaterFutSorted(2:8,il:ih,sspScenario,2,3)', 'width', .15, 'positions', [1:7] + .12)
 
 set(b, {'LineWidth', 'Color'}, {3, colorHd})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
@@ -476,9 +490,94 @@ set(gca, 'YTick', 0:20:100);
 xlim([.5 7.5]);
 ylabel('Unmet demand (% population)');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig bw-supply-demand-5.eps;
+export_fig bw-supply-demand-ssp3-efr60-ws1000.eps;
 close all;
 
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+
+% browns
+colors = brewermap(10, 'BrBG');
+colors = colors(1:5,:);
+
+for e = 1:size(noWaterFutSorted,5)
+    plot(squeeze(nanmedian(noWaterFutSorted(2:8,:,sspScenario,2,e),2)), 'linewidth', 5, 'color', colors(e,:));
+end
+
+set(gca, 'fontsize', 50);
+ylim([0 100]);
+set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
+set(gca, 'YTick', 0:20:100);
+xlim([.5 7.5]);
+%ylabel('Unmet demand (% population)');
+l = legend({'20%', '40%', '60%', '80%'}, 'location', 'northwest');
+legend boxoff;
+xtickangle(45);
+%set(gcf, 'Position', get(0,'Screensize'));
+%export_fig bw-supply-demand-ssp3-efr-var-ws1000.eps;
+close all;
+
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+
+% browns
+colors = brewermap(10, 'BrBG');
+colors = colors(7:10,:);
+
+for w = 1:size(noWaterFutSorted,4)
+    plot(squeeze(nanmedian(noWaterFutSorted(2:8,:,sspScenario,w,3),2)), 'linewidth', 5, 'color', colors(w,:));
+end
+
+set(gca, 'fontsize', 50);
+ylim([0 100]);
+set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
+set(gca, 'YTick', 0:20:100);
+xlim([.5 7.5]);
+%ylabel('Unmet demand (% population)');
+l = legend({'500 m^3', '1000 m^3', '1700 m^3'}, 'location', 'northwest');
+legend boxoff;
+xtickangle(45);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bw-supply-demand-ssp3-efr60-ws-var.eps;
+close all;
+
+
+
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+
+% browns
+colors = brewermap(6, 'Reds');
+colors = colors([2 3 6 4 5],:);
+
+for s = 1:5
+    plot(squeeze(nanmedian(noWaterFutSorted(2:8,:,s,w,2),2)), 'linewidth', 5, 'color', colors(s,:));
+end
+
+set(gca, 'fontsize', 50);
+ylim([0 100]);
+set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
+set(gca, 'YTick', 0:20:100);
+xlim([.5 7.5]);
+%ylabel('Unmet demand (% population)');
+l = legend({'SSP 1', 'SSP 2', 'SSP 3', 'SSP 4', 'SSP 5'}, 'location', 'northwest');
+legend boxoff;
+xtickangle(45);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bw-supply-demand-ssp-var-efr60-ws1000.eps;
+close all;
 
 
 
@@ -521,7 +620,6 @@ for mind = 1:length(models)
     ihNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(ihTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
     inNoWaterAnomHist(mind) = (1-min(nanmean(bwSupplyHistTotalNoPw(inTotal, mind), 1) ./ bwfpTotalFut(1, 3), 1));
 
-    
     histBwAnomFreq(mind) = (length(find(bwSupplyHistTotalNoPw(end-99:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 10) / 10 * 100; 
     fut45BwAnomFreq(mind) = (length(find(bwSupplyFutTotalNoPw45(5:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 9) / 10 * 100;
     futBwAnomFreq(mind) = (length(find(bwSupplyFutTotalNoPw(5:end, mind) < squeeze(nanmean(bwSupplyHistTotalNoPw(ihdTotal, mind), 1)))) / 9) / 10 * 100;

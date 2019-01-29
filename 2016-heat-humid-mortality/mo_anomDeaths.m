@@ -7,19 +7,23 @@ cities = ["atl", "stl", "chi", "det", "bos", "balt", "dc", "hous", "char", "aust
           "akr", "anch", "arlv", "bake", "batr", "bidd", "buff", "cayc", "cdrp", "clmg", "clmo", "colo", "corp", "covt", "dlft"];
 
 
-    wbanom = [];
-    wbanomabs = [];
-    mdataall = [];
-    wbdays = [];
-    tanom = [];
+wbanom = [];
+wbanomabs = [];
+mdataall = [];
+wbdays = [];
+tanom = [];
+
+hotdayT = [];
+hotdayWb = [];
+hotdayMort = [];
 
 cind = 1;
 for city = cities
 
-    load([city{1} 'MortData.mat']);
+    load(['2016-heat-humid-mortality/mortality-data/' city{1} 'MortData.mat']);
 
-    wbMax = mortData{2}(1:5114,12);
-    tMax = mortData{2}(1:5114,7);
+    wbMax = mortData{2}(1:5114,11);
+    tMax = mortData{2}(1:5114,9);
     tMax(abs(tMax)>100)=NaN;
     mdata = mortData{2}(1:5114,5);
     
@@ -31,6 +35,26 @@ for city = cities
     wbthresh = [20:29];
     tthresh = [22:3:50];
     bstrapLen = 0;
+    
+    t1 = 25;
+    t2 = 60;
+    
+    ind = find(tMax>t1 & tMax<t2 & wbMax > 10);
+    
+    if length(ind>10)
+        f = fitlm(normc(tMax(ind)), (madj(ind)-nanmean(madj))./nanmean(mdata));
+        hotdayTMSlope(cind) = f.Coefficients.Estimate(2);
+        hotdayTMP(cind) = f.Coefficients.pValue(2);
+
+        f = fitlm(normc(wbMax(ind)), (madj(ind)-nanmean(madj))./nanmean(mdata));
+        hotdayWbMSlope(cind) = f.Coefficients.Estimate(2);
+        hotdayWbMP(cind) = f.Coefficients.pValue(2);
+    end
+    
+    hotdayT{cind} = normc(tMax(tMax>t1 & tMax<t2 & wbMax > 10));
+    hotdayWb{cind} = normc(wbMax(tMax>t1 & tMax<t2 & wbMax > 10));
+    hotdayMort{cind} = (madj(tMax>t1 & tMax<t2 & wbMax > 10)-nanmean(madj))./nanmean(mdata);
+    
     
     wind = 1;
     for i = 1:length(wbthresh)
@@ -117,6 +141,10 @@ for city = cities
 %     xlim([19 30]);
 %     title(city);
 end
+hotdayTMSlope(hotdayTMP>.05 | hotdayWbMP>.05) = [];
+hotdayWbMSlope(hotdayTMP>.05 | hotdayWbMP>.05) = [];
+figure; hold on; plot(hotdayTMSlope,hotdayWbMSlope,'o');plot([-10 10], [-10 10]);
+
 colorTxx = [216, 66, 19]./255.0;
 fig = figure('Color', [1,1,1]);
 set(fig,'defaultAxesColorOrder',[colorTxx; [0 0 0]]);
