@@ -304,6 +304,10 @@ end
 
 bootTbad = [];
 bootPbad = [];
+bootTgood = [];
+bootPgood = [];
+bootRbad = [];
+bootRgood = [];
 
 for s = 1:size(bootsam, 2)
     bootyield = meanYield(bootsam(:,s));
@@ -314,14 +318,36 @@ for s = 1:size(bootsam, 2)
     indGood = find(bootyield >= mean(bootyield)+std(bootyield));
     indNormal = find(bootyield > mean(bootyield)-std(bootyield) & bootyield < mean(bootyield)+std(bootyield));
 
-    indBad(indBad>50) = [];
-    indGood(indGood>50) = [];
-    indNormal(indNormal>50) = [];
+    %indBad(indBad>50) = [];
+    %indGood(indGood>50) = [];
+    %indNormal(indNormal>50) = [];
 
     bootTbad(s) = nanmedian(bootT(indBad));
     bootPbad(s) = nanmedian(bootP(indBad));
     bootTgood(s) = nanmedian(bootT(indGood));
     bootPgood(s) = nanmedian(bootP(indGood));
+    
+    curbootRbad = [];
+    for i = 1:length(indBad)
+        % find inds with the same p percentile as in the bad year
+        possibleP = find(abs(bootP(indBad(i))-annualPPrcGldas) == min(abs(bootP(indBad(i))-annualPPrcGldas)));
+
+        %now out of those years with the right precip, find the T that is
+        %closest to the obs
+        curbootRbad(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)))))));
+    end
+    bootRbad(s) = nanmedian(curbootRbad);
+    
+    curbootRgood = [];
+    for i = 1:length(indGood)
+        % find inds with the same p percentile as in the bad year
+        possibleP = find(abs(bootP(indGood(i))-annualPPrcGldas) == min(abs(bootP(indGood(i))-annualPPrcGldas)));
+
+        %now out of those years with the right precip, find the T that is
+        %closest to the obs
+        curbootRgood(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)))))));
+    end
+    bootRgood(s) = nanmedian(curbootRgood);
 end
 
 figure('Color', [1,1,1]);
@@ -376,6 +402,34 @@ export_fig bootstrp-box-t.eps;
 close all;
 
 
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+pbaspect([1,3,1]);
+b=boxplot([bootRbad', bootRgood']);
+
+set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
+lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+
+set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
+lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
+set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+
+plot([0 3], [50 50], '-k', 'linewidth', 2);
+xlim([.5 2.5]);
+ylim([0 100]);
+set(gca, 'xtick', []);
+ylabel('Percentile');
+set(gca, 'FontSize', 40);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig bootstrp-box-r.eps;
+close all;
+
+
+
 figure('Color', [1,1,1]);
 hold on;
 box on;
@@ -416,6 +470,27 @@ set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
 title([]);
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig bootstrp-cdf-t.eps;
+close all;
+
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+p1=cdfplot(bootRbad);
+set(p1,'color',colorHd,'linewidth',4);
+p2=cdfplot(bootRgood);
+set(p2,'color',colorW,'linewidth',4);
+xlim([0 100]);
+xlabel('Percentile');
+ylabel('Probability');
+set(gca, 'FontSize', 40);
+set(gca, 'xtick', [0 25 50 75 100]);
+set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
+title([]);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig bootstrp-cdf-r.eps;
 close all;
 
 yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)));
