@@ -3,19 +3,15 @@ decades = 2010:10:2080;
 
 sspData = [];
 
-colors = [[66, 134, 244]; ...
-          [61, 191, 113]; ...
-          [219, 87, 100]; ...
-          [224, 123, 51]; ...
-          [229, 66, 71]];
-      
-colors = colors ./ 255.0;
-
 figure('Color', [1,1,1]);
 hold on;
 box on;
 axis square;
 grid on;
+
+colors = brewermap(7,'Reds');
+colors = colors([3 5 7 6 4],:);
+
 for ssp = ssps
     for d = 1:length(decades)
         decade = decades(d);
@@ -25,11 +21,19 @@ for ssp = ssps
         sspData(ssp, d) = sum(sum(curSsp{3}));
     end
     
-    plot(decades, sspData(ssp, :), 'LineWidth', 3, 'Color', colors(ssp, :));
+    plot(decades, sspData(ssp, :), 'LineWidth', 4, 'Color', colors(ssp, :));
 end
 
 set(gcf, 'units', 'points', 'position', [0, 0, 1000, 1000]);
-legend('SSP1', 'SSP2', 'SSP3', 'SSP4', 'SSP5');
+set(gca, 'xtick', 2010:10:2080);
+xlim([2005 2085]);
+xtickangle(45);
+set(gca, 'yticklabels', {'6B', '7B', '8B', '9B', '10B', '11B', '12B'});
+legend('SSP 1', 'SSP 2', 'SSP 3', 'SSP 4', 'SSP 5', 'location', 'northwest');
+legend boxoff;
 ylabel('Global population', 'FontSize', 30);
-set(gca, 'FontSize', 28);
+set(gca, 'FontSize', 40);
 
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig ssp-analysis.png -m3;
+close all;

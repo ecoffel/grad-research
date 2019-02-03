@@ -10,7 +10,7 @@ exposureErr45 = [];
 exposureErr85 = [];
 
 for temp = temps
-    load(['heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp85-ssp5-world.mat']);
+    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp85-ssp5-world.mat']);
     
     exposureTotals85(end+1) = saveData.futureDecY(end,end);
     exposureErr85(end+1, :) = abs(saveData.futureDecYerr(end,end,:));
@@ -22,7 +22,7 @@ for temp = temps
         end
     end
     
-    load(['heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp45-ssp5-world.mat']);
+    load(['2015-heat-humidity/heat-exposure/heatExposure-ncep-wb-davies-jones-full-' num2str(temp) '-rcp45-ssp5-world.mat']);
     
     exposureTotals45(end+1) = saveData.futureDecY(end,end);
     exposureErr45(end+1, :) = abs(saveData.futureDecYerr(end,end,:));
@@ -53,10 +53,18 @@ p2 = plot(temps-0.1, exposureTotals45, 'ko', 'MarkerSize', mSize, 'LineWidth', 3
 
 set(gca, 'YScale', 'log');
 set(gca,'YMinorGrid','Off');
-ylim([1, 1e10]);
+ylim([0, 1e10]);
+set(gca, 'xtick', 30:35);
+set(gca, 'ytick', [1 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10], ...
+         'yticklabels', {'1', '10,000', '100,000', '1M', '10M', '100M', '1B', '10B'});
 xlim([29.5 35.5]);
-legend([e1, e2], 'RCP 8.5', 'RCP 4.5');
+legend([e1, e2], 'RCP 8.5', 'RCP 4.5', 'location', 'southwest');
+legend boxoff;
 
-set(gca, 'FontSize', 24);
-xlabel(['Wet bulb temperature (' char(176) 'C)'], 'FontSize', 24);
-ylabel(['Exposure (person-days)'], 'FontSize', 24);
+set(gca, 'FontSize', 40);
+xlabel(['T_{W} (' char(176) 'C)']);
+ylabel(['Exposure (person-days/year)']);
+
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig pop-log.png -m5;
+close all;
