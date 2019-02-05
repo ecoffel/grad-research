@@ -428,6 +428,7 @@ end
 dind = 1;
 bwSupplyMeanFutNormal = [];
 bwSupplyMeanFutHotDry = [];
+noWaterFutAll = [];
 noWaterFutNormal = [];
 noWaterFutHotDry = [];
 for dec = 2010:10:2080
@@ -435,23 +436,27 @@ for dec = 2010:10:2080
         
         for mind = 1:length(models)
             curDecBw = bwSupplyFutTotalNoPw(dec-2006+1:dec+10-2006+1, mind);
+            curDecBw45 = bwSupplyFutTotalNoPw45(dec-2006+1:dec+10-2006+1, mind);
             curDecT = tfdataTotal(dec-2006+1:dec+10-2006+1, mind);
             curDecP = pfdataTotal(dec-2006+1:dec+10-2006+1, mind);
             
-            [bwsort,bwind] = sort(curDecBw);
             [psort,pind] = sort(curDecP);
             [tsort,tind] = sort(curDecT);
             
             hdInd = intersect(pind(1:5),tind(6:end));
             normalInd = setxor(1:length(pind), hdInd);
 
+            bwSupplyMeanFutAll(dind, mind, e) = (1 - (efrPercent(e) / 100.)) .* squeeze(squeeze(nanmean(curDecBw, 1)));
+            bwSupplyMeanFutAll45(dind, mind, e) = (1 - (efrPercent(e) / 100.)) .* squeeze(squeeze(nanmean(curDecBw45, 1)));
             bwSupplyMeanFutNormal(dind, mind, e) = (1 - (efrPercent(e) / 100.)) .* squeeze(squeeze(nanmean(curDecBw(normalInd), 1)));
             bwSupplyMeanFutHotDry(dind, mind, e) = (1 - (efrPercent(e) / 100.)) .* squeeze(squeeze(nanmean(curDecBw(hdInd), 1)));
             
             for w = 1:length(waterScarcityLevel)
                 for s = 1:5
-                    noWaterFutNormal(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutNormal(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
-                    noWaterFutHotDry(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutHotDry(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutAll(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutAll(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutAll45(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutAll45(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutNormal(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutNormal(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))));% ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutHotDry(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutHotDry(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))));% ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
                 end
             end
         end
@@ -463,6 +468,8 @@ end
 
 bwSupplyMeanFutSortedNormal = sort(bwSupplyMeanFutNormal, 2);
 bwSupplyMeanFutSortedHotDry = sort(bwSupplyMeanFutHotDry, 2);
+noWaterFutSortedAll = sort(noWaterFutAll, 2);
+noWaterFutSortedAll45 = sort(noWaterFutAll45, 2);
 noWaterFutSortedNormal = sort(noWaterFutNormal, 2);
 noWaterFutSortedHotDry = sort(noWaterFutHotDry, 2);
 
@@ -478,20 +485,30 @@ ih = round(.9*length(models));
 figure('Color', [1,1,1]);
 hold on;
 box on;
-grid on;
+set(gca, 'ygrid', 'on');
 pbaspect([2 1 1]);
 
 yyaxis left;
-b = boxplot(bwSupplyMeanFutSortedNormal(2:8,il:ih, 3)', 'width', .08, 'positions', [1:7] - .21)
-b2 = boxplot(bwSupplyMeanFutSortedHotDry(2:8,il:ih, 3)', 'width', .08, 'positions', [1:7] - .1)
+b = boxplot(bwSupplyMeanFutSortedNormal(2:8,il:ih, 3)', 'width', .07, 'positions', [1:7] - .21)
+b2 = boxplot(bwSupplyMeanFutSortedHotDry(2:8,il:ih, 3)', 'width', .07, 'positions', [1:7] - .1)
 
-set(b, {'LineWidth', 'Color'}, {3, colorW})
+set(b, {'LineWidth', 'Color'}, {2.5, colorW})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-set(b2, {'LineWidth', 'Color'}, {3, colorD})
+h = findobj(b,'tag','Outliers');
+for iH = 1:length(h)
+    h(iH).MarkerEdgeColor = colorW;
+end
+
+set(b2, {'LineWidth', 'Color'}, {2.5, colorD})
 lines = findobj(b2, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+h = findobj(b2,'tag','Outliers');
+for iH = 1:length(h)
+    h(iH).MarkerEdgeColor = colorD;
+end
 
 % mean of ssp3, 5
 p = plot([1:7]-.12, nanmean(bwfpTotalFut(2:8,[3,5],2),2), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorW, 'linewidth', 3);
@@ -505,18 +522,32 @@ set(gca, 'YTick', [0 .3 .6 .9] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '90
 
 yyaxis right;
 % mean of ssp3, 5
-b = boxplot(nanmean(noWaterFutSortedNormal(2:8,il:ih,[3, 5],2,3),3)', 'width', .08, 'positions', [1:7] + .1)
-b2 = boxplot(nanmean(noWaterFutSortedHotDry(2:8,il:ih,[3, 5],2,3),3)', 'width', .08, 'positions', [1:7] + .21)
+b = boxplot(nanmean(noWaterFutSortedNormal(2:8,il:ih,[3, 5],2,3),3)', 'width', .07, 'positions', [1:7] + .1)
+b2 = boxplot(nanmean(noWaterFutSortedHotDry(2:8,il:ih,[3, 5],2,3),3)', 'width', .07, 'positions', [1:7] + .21)
 
 colors = brewermap(3, 'Reds');
 
-set(b, {'LineWidth', 'Color'}, {3, colors(2,:)})
+set(b, {'LineWidth', 'Color'}, {2.5, colors(2,:)})
 lines = findobj(b, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-set(b2, {'LineWidth', 'Color'}, {3, colors(3,:)})
+h = findobj(b,'tag','Outliers');
+for iH = 1:length(h)
+    h(iH).MarkerEdgeColor = colors(2,:);
+end
+
+set(b2, {'LineWidth', 'Color'}, {2.5, colors(3,:)})
 lines = findobj(b2, 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+h = findobj(b2,'tag','Outliers');
+for iH = 1:length(h)
+    h(iH).MarkerEdgeColor = colors(3,:);
+end
+
+for i = 1.5:1:6.5
+    plot([i i], [0 105], '--', 'color', [.5 .5 .5], 'linewidth', 2);
+end
 
 set(gca, 'fontsize', 36);
 ylim([0 100]);
@@ -524,8 +555,8 @@ set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
 set(gca, 'YTick', 0:20:100);
 xlim([.5 7.5]);
 ylabel('Unmet demand (% population)');
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bw-supply-demand-ssp3-5-efr60-ws1000.eps;
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bw-supply-demand-ssp3-5-efr60-ws1000.eps;
 close all;
 
 
@@ -541,14 +572,14 @@ colors = colors(1:5,:);
 
 solidLines = [];
 
-for e = 1:size(noWaterFutSortedNormal,5)
+for e = 1:size(noWaterFutSortedAll,5)
     % ssp3
-    plot(squeeze(nanmedian(noWaterFutSortedNormal(2:8,:,3,2,e),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', '--');
+    plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,3,2,e),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', '--');
     % mean of ssp3 and 5
-    p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedNormal(2:8,:,[3,5],2,e),3),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', '-');
+    p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedAll(2:8,:,[3,5],2,e),3),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', '-');
     solidLines(e) = p;
     % ssp5
-    plot(squeeze(nanmedian(noWaterFutSortedNormal(2:8,:,5,2,e),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', ':');
+    plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,5,2,e),2)), 'linewidth', 5, 'color', colors(e,:), 'linestyle', ':');
 end
 
 set(gca, 'fontsize', 50);
@@ -572,19 +603,64 @@ grid on;
 axis square;
 
 % browns
+colors = brewermap(3, 'Reds');
+colors = colors([2 3],:);
+
+solidLines = [];
+
+
+% ssp3
+plot(squeeze(nanmedian(noWaterFutSortedAll45(2:8,:,2,2,3),2)), 'linewidth', 5, 'color', colors(1,:), 'linestyle', '--');
+% mean of ssp3 and 5
+p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedAll45(2:8,:,[2,4],2,3),3),2)), 'linewidth', 5, 'color', colors(1,:), 'linestyle', '-');
+solidLines(1) = p;
+% ssp5
+plot(squeeze(nanmedian(noWaterFutSortedAll45(2:8,:,4,2,3),2)), 'linewidth', 5, 'color', colors(1,:), 'linestyle', ':');
+
+
+% ssp3
+plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,3,2,3),2)), 'linewidth', 5, 'color', colors(2,:), 'linestyle', '--');
+% mean of ssp3 and 5
+p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedAll(2:8,:,[3,5],2,3),3),2)), 'linewidth', 5, 'color', colors(2,:), 'linestyle', '-');
+solidLines(2) = p;
+% ssp5
+plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,5,2,3),2)), 'linewidth', 5, 'color', colors(2,:), 'linestyle', ':');
+
+
+set(gca, 'fontsize', 50);
+ylim([0 100]);
+set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
+set(gca, 'YTick', 0:20:100);
+xlim([.5 7.5]);
+%ylabel('Unmet demand (% population)');
+l = legend(solidLines, {'RCP 4.5', 'RCP 8.5'}, 'location', 'northwest');
+legend boxoff;
+xtickangle(45);
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig bw-supply-demand-rcp-var-efr60-ws1000.eps;
+close all;
+
+
+figure('Color', [1,1,1]);
+hold on;
+box on;
+grid on;
+axis square;
+
+% browns
 colors = brewermap(10, 'BrBG');
 colors = colors(7:10,:);
 
 solidLines = [];
 
-for w = 1:size(noWaterFutSortedNormal,4)
+for w = 1:size(noWaterFutSortedAll,4)
     %ssp3
-    plot(squeeze(nanmedian(noWaterFutSortedNormal(2:8,:,3,w,3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', '--');
+    plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,3,w,3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', '--');
     %ssp3 and 5
-    p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedNormal(2:8,:,[3, 5],w,3),3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', '-');
+    p = plot(squeeze(nanmedian(nanmean(noWaterFutSortedAll(2:8,:,[3, 5],w,3),3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', '-');
     solidLines(w) = p;
     %ssp5
-    plot(squeeze(nanmedian(noWaterFutSortedNormal(2:8,:,5,w,3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', ':');
+    plot(squeeze(nanmedian(noWaterFutSortedAll(2:8,:,5,w,3),2)), 'linewidth', 5, 'color', colors(w,:), 'linestyle', ':');
 end
 
 set(gca, 'fontsize', 50);

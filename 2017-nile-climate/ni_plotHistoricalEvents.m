@@ -1,9 +1,7 @@
-% drought 1987
-% flood 
 
-%[1988 1994 1996 1998 1999 2001 2003
-
-wars = [[1975 1978]; ...        % 
+wars = [[1973 1974]; ...
+        [1974 1975]; ...        % 
+        [1977 1979]; ...
         [1982 1983]; ...
         [1984 1986];    ...    % resettlement of 1.5M peasants
         [1991 1992]; ...
@@ -300,7 +298,7 @@ end
 %     
 % end
 
-[bootstat, bootsam] = bootstrp(1000, @median, meanYield);
+[bootstat, bootsam] = bootstrp(1000, @median, yieldPulses_dt);
 
 bootTbad = [];
 bootPbad = [];
@@ -310,7 +308,7 @@ bootRbad = [];
 bootRgood = [];
 
 for s = 1:size(bootsam, 2)
-    bootyield = meanYield(bootsam(:,s));
+    bootyield = yieldPulses_dt(bootsam(:,s));
     bootT = annualTPrc(bootsam(:,s));
     bootP = annualPPrc(bootsam(:,s));
     

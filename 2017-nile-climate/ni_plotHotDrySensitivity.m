@@ -264,7 +264,12 @@ colors = brewermap(10, 'Greens');
 for bind = 1:size(b1,2)
     set(b1(:, bind), {'LineWidth', 'Color'}, {2, colors(7,:)})
     lines = findobj(b1(:, bind), 'type', 'line', 'Tag', 'Median');
-    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+    
+    h = findobj(b1, 'tag', 'Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colors(7,:);
+    end
 end
 
 colors = brewermap(10, 'Blues');
@@ -273,6 +278,11 @@ for bind = 1:size(b2,2)
     set(b2(:, bind), {'LineWidth', 'Color'}, {2, colors(7,:)})
     lines = findobj(b2(:, bind), 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+    
+    h = findobj(b2, 'tag', 'Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colors(7,:);
+    end
 end
 
 
@@ -282,6 +292,11 @@ for bind = 1:size(b3,2)
     set(b3(:, bind), {'LineWidth', 'Color'}, {2, colors(7,:)})
     lines = findobj(b3(:, bind), 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2); 
+    
+    h = findobj(b3, 'tag', 'Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colors(7,:);
+    end
 end
 
 % if north

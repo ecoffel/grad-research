@@ -136,6 +136,8 @@ prStdBlue = (squeeze(nanstd(prFutBlue, [], 1) - nanstd(prHistBlue, [], 1))) ./ s
 
 prChgTotal = (squeeze(nanmean(prFutTotal, 1) - nanmean(prHistTotal, 1))) ./ squeeze(nanmean(prHistTotal,1)) .* 100;
 prStdTotal = (squeeze(nanstd(prFutTotal, [], 1) - nanstd(prHistTotal, [], 1))) ./ squeeze(nanstd(prHistTotal,[],1)) .* 100;
+prCVTotal = (squeeze(nanstd(prFutTotal, [], 1) ./ nanmean(prFutTotal, 1)) - squeeze(nanstd(prHistTotal, [], 1)./nanmean(prHistTotal, 1))) ./ ...
+            squeeze(nanstd(prHistTotal, [], 1)./nanmean(prHistTotal, 1));
 
 wet = true;
 std = true;
