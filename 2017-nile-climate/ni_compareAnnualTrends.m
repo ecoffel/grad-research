@@ -1,23 +1,23 @@
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4', ...
+              'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fio-esm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'giss-e2-h', 'giss-e2-h-cc', 'giss-e2-r', 'giss-e2-r-cc', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 rcp = 'historical';
 timePeriod = [1981 2016];
 
-plotTempPTrends = false;
+plotTempPTrends = true;
 plotHotDryTrends = true;
 
 if ~exist('eraTemp', 'var')
     fprintf('loading ERA...\n');
-    eraTemp = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
+    eraTemp = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', 1981, 'endYear', 2016);
     eraTemp{3} = eraTemp{3} - 273.15;
     eraTemp = dailyToMonthly(eraTemp);
     eraTemp{3} = nanmean(eraTemp{3}, 4);
     
-    eraPr = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
+    eraPr = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', 1981, 'endYear', 2016);
     eraPr{3} = eraPr{3} .* 1000;
     eraPr = dailyToMonthly(eraPr);
     eraPr{3} = nanmean(eraPr{3}, 4);
@@ -26,17 +26,17 @@ end
 
 if ~exist('gldasTemp', 'var')
     fprintf('loading GLDAS...\n');
-    gldasTemp = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', 1960, 'endYear', 2010);
+    gldasTemp = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', 1961, 'endYear', 2010);
     gldasTemp{3} = nanmean(gldasTemp{3} - 273.15, 4);
     
-    gldasPr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1960, 'endYear', 2010);
+    gldasPr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', 1961, 'endYear', 2010);
     gldasPr{3} = gldasPr{3} .* 3600 .* 24;
     gldasPr{3} = nanmean(gldasPr{3}, 4);
 end
 
 if ~exist('gpcp', 'var')
     fprintf('loading GPCP...\n');
-    gpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\regrid\world\1979-2017', 'precip', 'startYear', timePeriod(1), 'endYear', timePeriod(end));
+    gpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\regrid\world\1979-2017', 'precip', 'startYear', 1981, 'endYear', 2016);
     gpcp{3} = nanmean(gpcp{3},4);
 end
 
@@ -47,7 +47,7 @@ if ~exist('chirps', 'var')
     load lon-chirps;
     
     % load pre-processed chirps with nile region selected
-    for year = timePeriod(1):1:timePeriod(end)
+    for year = 1981:1:2016
         fprintf('chirps year %d...\n', year);
         load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\pr-monthly-chirps-' num2str(year) '.mat']);
         chirpsPr{3} = chirpsPr{3};
@@ -69,22 +69,24 @@ if ~exist('chirps', 'var')
 end
 
 if ~exist('cpc', 'var')   
-    cpc = [];
-    for year = timePeriod(1):1:timePeriod(end)
-        fprintf('cpc year %d...\n', year);
-        load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\temp-monthly-cpc-' num2str(year) '.mat']);
-        cpcTemp{3} = cpcTemp{3};
-
-        if length(cpc) == 0
-            cpc = cpcTemp{3};
-        else
-            cpc = cat(4, cpc, cpcTemp{3});
-        end
-
-        clear cpcTemp;
-    end
-    cpc = permute(cpc, [1 2 4 3]);
-    cpc = nanmean(cpc, 4);
+    cpc = loadMonthlyData('E:\data\cpc-temp-monthly\output\air\monthly', 'air', 'startYear', 1961, 'endYear', 2016);
+    
+%     cpc = [];
+%     for year = timePeriod(1):1:timePeriod(end)
+%         fprintf('cpc year %d...\n', year);
+%         load(['C:\git-ecoffel\grad-research\2017-nile-climate\output\temp-monthly-cpc-' num2str(year) '.mat']);
+%         cpcTemp{3} = cpcTemp{3};
+% 
+%         if length(cpc) == 0
+%             cpc = cpcTemp{3};
+%         else
+%             cpc = cat(4, cpc, cpcTemp{3});
+%         end
+% 
+%         clear cpcTemp;
+%     end
+%     cpc = permute(cpc, [1 2 4 3]);
+%     cpc = nanmean(cpc, 4);
 end
 
 if ~exist('beTemp')
@@ -118,6 +120,11 @@ latUdel = udelt{1};
 lonUdel = udelt{2};
 [latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 [latIndsWhiteUdel, lonIndsWhiteUdel] = latLonIndexRange({latUdel,lonUdel,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+
+latCpc = cpc{1};
+lonCpc = cpc{2};
+[latIndsBlueCpc, lonIndsBlueCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteCpc, lonIndsWhiteCpc] = latLonIndexRange({latCpc,lonCpc,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 
 latBe = beTemp{1};
 lonBe = beTemp{2};
@@ -228,27 +235,30 @@ else
     curLatIndsBe = latIndsWhiteBe;
     curLonIndsBe = lonIndsWhiteBe;
 end
-% 
-% curLatInds = [latIndsBlue latIndsWhite];
-% curLonInds = [lonIndsBlue lonIndsWhite];
-% 
-% curLatIndsRel = [latIndsBlueRel latIndsWhiteRel];
-% curLonIndsRel = [lonIndsBlueRel lonIndsWhiteRel];
-% 
-% curLatIndsChirpsRel = [latIndsBlueChirpsRel latIndsWhiteChirpsRel];
-% curLonIndsChirpsRel = [lonIndsBlueChirpsRel lonIndsWhiteChirpsRel];
-% 
-% curLatIndsGldas = [latIndsBlueGldas latIndsWhiteGldas];
-% curLonIndsGldas = [lonIndsBlueGldas lonIndsWhiteGldas];
-% 
-% curLatIndsUdel = [latIndsBlueUdel latIndsWhiteUdel];
-% curLonIndsUdel = [lonIndsBlueUdel lonIndsWhiteUdel];
-% 
-% curLatIndsHadcrut = [latIndsBlueHadcrut latIndsWhiteHadcrut];
-% curLonIndsHadcrut = [lonIndsBlueHadcrut lonIndsWhiteHadcrut];
-% 
-% curLatIndsBe = [latIndsBlueBe latIndsWhiteBe];
-% curLonIndsBe = [lonIndsBlueBe lonIndsWhiteBe];
+
+curLatInds = [latIndsBlue latIndsWhite];
+curLonInds = [lonIndsBlue lonIndsWhite];
+
+curLatIndsRel = [latIndsBlueRel latIndsWhiteRel];
+curLonIndsRel = [lonIndsBlueRel lonIndsWhiteRel];
+
+curLatIndsChirpsRel = [latIndsBlueChirpsRel latIndsWhiteChirpsRel];
+curLonIndsChirpsRel = [lonIndsBlueChirpsRel lonIndsWhiteChirpsRel];
+
+curLatIndsGldas = [latIndsBlueGldas latIndsWhiteGldas];
+curLonIndsGldas = [lonIndsBlueGldas lonIndsWhiteGldas];
+
+curLatIndsCpc = [lonIndsBlueCpc lonIndsWhiteCpc];
+curLonIndsCpc = [lonIndsBlueCpc lonIndsWhiteCpc];
+
+curLatIndsUdel = [latIndsBlueUdel latIndsWhiteUdel];
+curLonIndsUdel = [lonIndsBlueUdel lonIndsWhiteUdel];
+
+curLatIndsHadcrut = [latIndsBlueHadcrut latIndsWhiteHadcrut];
+curLonIndsHadcrut = [lonIndsBlueHadcrut lonIndsWhiteHadcrut];
+
+curLatIndsBe = [latIndsBlueBe latIndsWhiteBe];
+curLonIndsBe = [lonIndsBlueBe lonIndsWhiteBe];
 
 plotMap = false;
 
@@ -265,7 +275,7 @@ tempSE = [];
        
 regionalTEra = squeeze(nanmean(nanmean(nanmean(eraTemp{3}(curLatInds, curLonInds, :, :), 2), 1), 4));
 regionalTGldas = squeeze(nanmean(nanmean(nanmean(gldasTemp{3}(curLatIndsGldas, curLonIndsGldas, :, :), 2), 1), 4));
-regionalTCpc = squeeze(nanmean(nanmean(nanmean(cpc(curLatIndsRel, curLonIndsRel, :, :), 2), 1), 4));
+regionalTCpc = squeeze(nanmean(nanmean(nanmean(cpc{3}(curLatIndsCpc, curLonIndsCpc, :, :), 2), 1), 4));
 regionalTUdel = squeeze(nanmean(nanmean(nanmean(udelt{3}(curLatIndsUdel, curLonIndsUdel, :, :), 2), 1), 4));
 regionalTHadcrut = squeeze(nanmean(nanmean(nanmean(hadcrutTemp{3}(curLatIndsHadcrut, curLonIndsHadcrut, :, :), 2), 1), 4));
 regionalTBe = squeeze(nanmean(nanmean(nanmean(beTemp{3}(curLatIndsBe, curLonIndsBe, :, :), 2), 1), 4));
@@ -359,7 +369,6 @@ for m = 1:size(regionalPCmip5, 2)
     prTrendsCmip5(m) = f.Coefficients.Estimate(2);
 end
 
-
 % /year -> /decade
 prTrendsCmip5 = prTrendsCmip5 .* 10;
 prTrends = prTrends .* 10;
@@ -438,7 +447,7 @@ if plotTempPTrends
     set(gca, 'YTick', -.3:.1:.3);
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig('annual-temp-pr-trends-total.eps');
-    %close all;
+    close all;
 %     if blue
 %         export_fig('annual-temp-pr-trends-blue.eps');
 %     else
@@ -474,7 +483,7 @@ prcPCmip5 = prctile(regionalPCmip5, pprc, 1);
 
 % 1981 - 2016 time period
 hotDryEra = regionalTEra > prcTEra & regionalPEra < prcPEra;
-hotDryCpcGpcp = regionalTCpc > prcTCpc & regionalPGpcp < prcPGpcp;
+hotDryCpcGpcp = regionalTCpc(21:end) > prcTCpc & regionalPGpcp < prcPGpcp;
 
 % 1981 - 2010
 hotDryGldas = regionalTGldas > prcTGldas & regionalPGldas < prcPGldas;
@@ -502,7 +511,7 @@ end
 superEndYr = 2016;
 superStartYr = 1981;
 
-tSuper = [regionalTCpc(1:superEndYr-1981+1), regionalTHadcrut(superStartYr-1901+1:superEndYr-1901+1), regionalTBe(superStartYr-1901+1:superEndYr-1901+1)];
+tSuper = [regionalTCpc(superStartYr-1961+1:superEndYr-1961+1), regionalTHadcrut(superStartYr-1901+1:superEndYr-1901+1), regionalTBe(superStartYr-1901+1:superEndYr-1901+1)];
 tSuperPrc = [prctile(regionalTCpc(1:superEndYr-1981+1), tprc), prctile(regionalTHadcrut(superStartYr-1901+1:superEndYr-1901+1), tprc), prctile(regionalTBe(superStartYr-1901+1:superEndYr-1901+1), tprc)];
 
 pSuper = [regionalPGpcp(1:superEndYr-1981+1), regionalPChirps(1:superEndYr-1981+1)];
@@ -514,7 +523,7 @@ hdTrendsSuperP = [];
 hdTrendsSuperSE = [];
 for t = 1:size(tSuper, 2)
     for p = 1:size(pSuper, 2)
-        curHd = tSuper(1:end-5, t) > tSuperPrc(t) & pSuper(1:end-5, p) < pSuperPrc(p);
+        curHd = tSuper(:, t) > tSuperPrc(t) & pSuper(:, p) < pSuperPrc(p);
         f = fitlm((1:length(curHd))', curHd', 'linear');
         hdTrendsSuperP(t, p) = f.Coefficients.pValue(2);
         hdTrendsSuper(t, p) = f.Coefficients.Estimate(2);

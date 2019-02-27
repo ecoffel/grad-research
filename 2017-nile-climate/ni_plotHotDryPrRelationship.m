@@ -1,12 +1,12 @@
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4', ...
+              'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fio-esm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'giss-e2-h', 'giss-e2-h-cc', 'giss-e2-r', 'giss-e2-r-cc', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 rcp = 'rcp85';
-timePeriodBase = [1901 2005];
-timePeriodFuture = [2020 2099];
+timePeriodBase = [1961 2005];
+timePeriodFuture = [2061 2085];
 
 annual = true;
 
@@ -97,36 +97,38 @@ end
 
 taschg = squeeze(nanmean(nanmean(tasFutCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3))-squeeze(nanmean(nanmean(tasHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3));
 prchg = squeeze(nanmean(nanmean(prFutCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3))-squeeze(nanmean(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3));
-prstdhist = squeeze(nanstd(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),[],3));
-prstdchg = squeeze(nanstd(nanmean(prFutCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),[],3))-squeeze(nanstd(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),[],3));
-prcvchg = squeeze(nanstd(nanmean(prFutCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),[],3))./squeeze(nanmean(nanmean(prFutCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3)) - ...
-          squeeze(nanstd(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),[],3))./squeeze(nanmean(nanmean(prHistCmip5(latIndsTotal, lonIndsTotal, :, months, :),4),3));
+
+prstdhist = [];
+prstdfut = [];
+for m = 1:length(models)
+    for xlat = 1:length(latIndsTotal)
+        for ylon = 1:length(lonIndsTotal)
+            prstdhist(xlat, ylon, m) = nanstd(detrend(squeeze(nanmean(prHistCmip5(latIndsTotal(xlat), lonIndsTotal(ylon), :, months, m),4))));
+            prstdfut(xlat, ylon, m) = nanstd(detrend(squeeze(nanmean(prFutCmip5(latIndsTotal(xlat), lonIndsTotal(ylon), :, months, m),4))));
+        end
+    end
+end
+
+prstdchg = prstdfut - prstdhist;
+
 
 prchg = reshape(prchg,[size(prchg,1)*size(prchg,2),size(prchg,3)]);
-prchg=normc(prchg);
+prchg = normc(prchg);
 prchg = reshape(prchg, [size(prchg,1)*size(prchg,2),1]);
 
 taschg = reshape(taschg,[size(taschg,1)*size(taschg,2),size(taschg,3)]);
-taschg=normc(taschg);
+taschg = normc(taschg);
 taschg = reshape(taschg, [size(taschg,1)*size(taschg,2),1]);
 
 prstdchg = reshape(prstdchg,[size(prstdchg,1)*size(prstdchg,2),size(prstdchg,3)]);
-prstdchg=normc(prstdchg);
+prstdchg = normc(prstdchg);
 prstdchg = reshape(prstdchg, [size(prstdchg,1)*size(prstdchg,2),1]);
 
-prcvchg = reshape(prcvchg,[size(prcvchg,1)*size(prcvchg,2),size(prcvchg,3)]);
-prcvchg = reshape(prcvchg, [size(prcvchg,1)*size(prcvchg,2),1]);
-
-prstdhist = reshape(prstdhist,[size(prstdhist,1)*size(prstdhist,2),size(prstdhist,3)]);
-prstdhist=normc(prstdhist);
-prstdhist = reshape(prstdhist, [size(prstdhist,1)*size(prstdhist,2),1]);
-
 hdchg = reshape(hdFut-hdHist,[size(hdHist,1)*size(hdHist,2),size(hdHist,3)]);
-hdchg=normc(hdchg);
+hdchg = normc(hdchg);
 hdchg = reshape(hdchg,[size(hdchg,1)*size(hdchg,2),1]);
 
-f = fitlm([prchg,prstdhist,prstdchg],hdchg);
-
+f = fitlm([prchg, prstdchg], hdchg, 'interactions');
 
 colorD = [160, 116, 46]./255.0;
 colorHd = [216, 66, 19]./255.0;
@@ -145,41 +147,33 @@ b.CData(1,:) = colorW;
 b.CData(2,:) = colorD;
 b.CData(3,:) = colorHd;
 
-ylim([-5 5]);
+ylim([-.8 .8]);
 xlim([.5 2.5]);
 set(gca, 'fontsize', 40);
-set(gca, 'ytick', [-5 -3 -1 0 1 3 5]);
+set(gca, 'ytick', [-.75:.25:.75]);
 ylabel('Normalized coefficient');
-set(gca, 'xtick', [1 1.5 2], 'xticklabels', {'P Chg^*', 'P STD Hist^*', 'P STD Chg^*'});
+set(gca, 'xtick', [1 1.5 2], 'xticklabels', {'P Chg^*', 'P STD Chg^*', 'Interaction^*'});
 xtickangle(45);
-
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig hd-chg-contrib.eps;
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig hd-chg-contrib.eps;
 close all;
 
 
 prChgBlue = (squeeze(nanmean(prFutBlue, 1) - nanmean(prHistBlue, 1))) ./ squeeze(nanmean(prHistBlue,1)) .* 100;
 prStdBlue = (squeeze(nanstd(prFutBlue, [], 1) - nanstd(prHistBlue, [], 1))) ./ squeeze(nanstd(prHistBlue,[],1)) .* 100;
 
-prStdHist = nanstd(prHistTotal, [], 1)';
+prHist = squeeze(nanmean(prHistTotal,1));
+prStdHist = squeeze(nanstd(detrend(prHistTotal(:, m)),[],1));
 
-tasChgTotal = (squeeze(nanmean(tasFutTotal, 1) - nanmean(tasHistTotal, 1)))';% ./ squeeze(nanmean(prHistTotal,1)) .* 100; 
-prChgTotal = (squeeze(nanmean(prFutTotal, 1) - nanmean(prHistTotal, 1))) ./ squeeze(nanmean(prHistTotal,1)) .* 100;
-prStdTotal = (squeeze(nanstd(prFutTotal, [], 1) - nanstd(prHistTotal, [], 1))) ./ squeeze(nanstd(prHistTotal,[],1)) .* 100;
-prCVTotal = (squeeze(nanstd(prFutTotal, [], 1) ./ nanmean(prFutTotal, 1)) - squeeze(nanstd(prHistTotal, [], 1)./nanmean(prHistTotal, 1)))';% ./ ...
-            %squeeze(nanstd(prHistTotal, [], 1)./nanmean(prHistTotal, 1));
+prChgTotal = (squeeze(nanmean(prFutTotal, 1) - nanmean(prHistTotal, 1)));
 
-wet = true;
-std = true;
+prStdTotal = [];
+for m = 1:length(models)
+    prStdTotal(m) = (squeeze(nanstd(detrend(prFutTotal(:, m)), [], 1) - nanstd(detrend(prHistTotal(:, m)), [], 1)));
+end
 
-prChgTotal = prChgTotal';
-prStdTotal = prStdTotal';
-
-% [b,i] = sort(prChgTotal);
-% prChgTotal = prChgTotal(i);
-% prStdTotal = prStdTotal(i);
-
-corrval = corr(prChgTotal, prStdTotal);
+prChgTotal = (prChgTotal ./ prHist)' .* 100;
+prStdTotal = (prStdTotal ./ prStdHist)' .* 100;
 
 figure('Color', [1,1,1]);
 hold on;
@@ -188,8 +182,8 @@ grid on;
 %pbaspect([2 1 1]);
 axis square;
 
-xlim([-10 80])
-ylim([-50 160])
+xlim([-12 120])
+ylim([-50 60])
 
 for m = 1:length(prChgTotal)
     prSig = kstest2(squeeze(prFutTotal(:, m)), squeeze(prHistTotal(:, m)));
@@ -199,7 +193,7 @@ for m = 1:length(prChgTotal)
     else
         %plot(tChg(m), prChg(s, m), 'o', 'MarkerSize', 25, 'Color', [85/255.0, 158/255.0, 237/255.0], 'LineWidth', 2);
     end
-    t = text(prChgTotal(m), prStdTotal(m), num2str(i(m)), 'HorizontalAlignment', 'center', 'Color', 'k');
+    t = text(prChgTotal(m), prStdTotal(m), num2str(m), 'HorizontalAlignment', 'center', 'Color', 'k');
     t.FontSize = 22;
 end
 
@@ -210,16 +204,19 @@ prStdTotal = prStdTotal(i);
 [f, gof] = fit(prChgTotal, prStdTotal, 'poly1');
 cint = confint(f);
 p = plot([prChgTotal(1) prChgTotal(end)], [f(prChgTotal(1)) f(prChgTotal(end))], '--b', 'LineWidth', 2);
+f = fitlm(prChgTotal, prStdTotal);
 
 plot([-20 80], [0 0], '--k', 'linewidth', 2);
 plot([0 0], [-80 170], '--k', 'linewidth', 2);
 
-ylabel('P std. dev. change (%)');
+plot([-200 200], [-200 200], '-', 'color', [.5 .5 .5]);
+
+ylabel('P STD change (%)');
 xlabel('Precipitation change (%)');
 
 set(gca, 'xtick', [0 20 40]);
 set(gca, 'FontSize', 40);
-legend([p], {sprintf('Correlation = %.2f', corrval)}, 'location', 'northwest');
+legend([p], {sprintf('Slope = %.2f, p = %.2f', f.Coefficients.Estimate(2), f.Coefficients.pValue(2))}, 'location', 'northwest');
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig pr-chg-std-total.eps;
 close all;

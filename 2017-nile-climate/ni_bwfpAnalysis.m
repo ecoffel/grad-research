@@ -455,8 +455,8 @@ for dec = 2010:10:2080
                 for s = 1:5
                     noWaterFutAll(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutAll(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
                     noWaterFutAll45(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutAll45(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
-                    noWaterFutNormal(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutNormal(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))));% ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
-                    noWaterFutHotDry(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutHotDry(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))));% ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutNormal(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutNormal(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
+                    noWaterFutHotDry(dind, mind, s, w, e) = ((1-min(bwSupplyMeanFutHotDry(dind, mind, e) ./ bwfpTotalFut(dind, s, w),1)) .* nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s)))) ./ nansum(nansum(ssp([latIndsBlueSSP latIndsWhiteSSP], [lonIndsBlueSSP lonIndsWhiteSSP], dind, s))) .* 100;
                 end
             end
         end
@@ -513,9 +513,9 @@ end
 % mean of ssp3, 5
 p = plot([1:7]-.12, nanmean(bwfpTotalFut(2:8,[3,5],2),2), 'o', 'markersize', 18, 'markerfacecolor', 'w', 'color', colorW, 'linewidth', 3);
 
-ylim([0 0.9e12]);
+ylim([0 0.63e12]);
 ylabel('Runoff (m^3/year)');
-set(gca, 'YTick', [0 .3 .6 .9] .* 1e12, 'YTickLabels', {'0', '300B', '600B', '900B'});
+set(gca, 'YTick', [0 .2 .4 .6] .* 1e12, 'YTickLabels', {'0', '200B', '400B', '600B'});
 
 %legend([p], {'Runoff demand'}, 'location', 'northwest');
 %legend boxoff;
@@ -546,7 +546,7 @@ for iH = 1:length(h)
 end
 
 for i = 1.5:1:6.5
-    plot([i i], [0 105], '--', 'color', [.5 .5 .5], 'linewidth', 2);
+    plot([i i], [0 105], '-', 'color', [.5 .5 .5], 'linewidth', 2);
 end
 
 set(gca, 'fontsize', 36);
@@ -555,8 +555,8 @@ set(gca, 'XTick', 1:7, 'XTickLabels', 2020:10:2080);
 set(gca, 'YTick', 0:20:100);
 xlim([.5 7.5]);
 ylabel('Unmet demand (% population)');
-% set(gcf, 'Position', get(0,'Screensize'));
-% export_fig bw-supply-demand-ssp3-5-efr60-ws1000.eps;
+set(gcf, 'Position', get(0,'Screensize'));
+export_fig bw-supply-demand-ssp3-5-efr60-ws1000.eps;
 close all;
 
 

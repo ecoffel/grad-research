@@ -1,45 +1,37 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t83-p25.mat']);
-hotDryHistorical75 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004-t80-p20.mat']);
-hotDryHistorical80 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t85-p15.mat']);
-hotDryHistorical85 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1980-2004.mat']);
-hotDryHistorical90 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1981-2005-t95-p5.mat']);
-hotDryHistorical95 = hotDryFuture(:, :, :);
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4', ...
+              'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fio-esm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'giss-e2-h', 'giss-e2-h-cc', 'giss-e2-r', 'giss-e2-r-cc', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t83-p25-tfull-pfull.mat']);
-hotDryFuture45Late75 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t80-p20.mat']);
-hotDryFuture45Late80 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t85-p15-tfull-pfull.mat']);
-hotDryFuture45Late85 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080.mat']);
-hotDryFuture45Late90 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2056-2080-t95-p5-tfull-pfull.mat']);
-hotDryFuture45Late95 = hotDryFuture;
+for m = 1:length(models)
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t83-p20.mat']);
+    hotDryHistorical75(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t85-p15.mat']);
+    hotDryHistorical85(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t95-p5.mat']);
+    hotDryHistorical95(:,:,m) = hdyears;
+    
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp45-2061-2085-t83-p20.mat']);
+    hotDryFuture45Late75(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp45-2061-2085-t85-p15.mat']);
+    hotDryFuture45Late85(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp45-2061-2085-t95-p5.mat']);
+    hotDryFuture45Late95(:,:,m) = hdyears;
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t83-p25-tfull-pfull.mat']);
-hotDryFutureLate75 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t80-p20.mat']);
-hotDryFutureLate80 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t85-p15-tfull-pfull.mat']);
-hotDryFutureLate85 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080.mat']);
-hotDryFutureLate90 = hotDryFuture(:, :, :);
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2056-2080-t95-p5-tfull-pfull.mat']);
-hotDryFutureLate95 = hotDryFuture(:, :, :);
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp85-2061-2085-t83-p20.mat']);
+    hotDryFutureLate75(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp85-2061-2085-t85-p15.mat']);
+    hotDryFutureLate85(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-rcp85-2061-2085-t95-p5.mat']);
+    hotDryFutureLate95(:,:,m) = hdyears;
+end
+
 
 region = 'total';
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 load lat;
 load lon;
@@ -108,28 +100,6 @@ hotdryHist75 = squeeze(nanmean(nanmean(hotdryHist75,2),1));
 hotdry45_75 = sort(hotdry45_75);
 hotdryHist75 = sort(hotdryHist75);
 
-hotdry80 = hotDryFutureLate80;
-hotdry80 = hotdry80(curLatInds, curLonInds, :);
-hotdry80 = squeeze(nanmean(nanmean(hotdry80,2),1));
-hotdryHist80 = hotDryHistorical80;
-hotdryHist80 = hotdryHist80(curLatInds, curLonInds, :);
-hotdryHist80 = squeeze(nanmean(nanmean(hotdryHist80,2),1));
-% hotdry80 = hotdry80 ./ hotdryHist80;
-% hotdry80(isinf(hotdry80)) = NaN;
-% hotdry80(hotdryHist80 < .01) = NaN;
-hotdry80 = sort(hotdry80);
-
-hotdry45_80 = hotDryFuture45Late80;
-hotdry45_80 = hotdry45_80(curLatInds, curLonInds, :);
-hotdry45_80 = squeeze(nanmean(nanmean(hotdry45_80,2),1));
-hotdryHist80 = hotDryHistorical80;
-hotdryHist80 = hotdryHist80(curLatInds, curLonInds, :);
-hotdryHist80 = squeeze(nanmean(nanmean(hotdryHist80,2),1));
-% hotdry45_80 = hotdry45_80 ./ hotdryHist80;
-% hotdry45_80(isinf(hotdry45_80)) = NaN;
-% hotdry45_80(hotdryHist80 < .01) = NaN;
-hotdry45_80 = sort(hotdry45_80);
-
 hotdry85 = hotDryFutureLate85;
 hotdry85 = hotdry85(curLatInds, curLonInds, :);
 hotdry85 = squeeze(nanmean(nanmean(hotdry85,2),1));
@@ -152,28 +122,6 @@ hotdryHist85 = squeeze(nanmean(nanmean(hotdryHist85,2),1));
 % hotdry45_85(hotdryHist85 < .01) = NaN;
 hotdry45_85 = sort(hotdry45_85);
 hotdryHist85 = sort(hotdryHist85);
-
-hotdry90 = hotDryFutureLate90;
-hotdry90 = hotdry90(curLatInds, curLonInds, :);
-hotdry90 = squeeze(nanmean(nanmean(hotdry90,2),1));
-hotdryHist90 = hotDryHistorical90;
-hotdryHist90 = hotdryHist90(curLatInds, curLonInds, :);
-hotdryHist90 = squeeze(nanmean(nanmean(hotdryHist90,2),1));
-% hotdry90 = hotdry90 ./ hotdryHist90;
-% hotdry90(isinf(hotdry90)) = NaN;
-% hotdry90(hotdryHist90 < .01) = NaN;
-hotdry90 = sort(hotdry90);
-
-hotdry45_90 = hotDryFuture45Late90;
-hotdry45_90 = hotdry45_90(curLatInds, curLonInds, :);
-hotdry45_90 = squeeze(nanmean(nanmean(hotdry45_90,2),1));
-hotdryHist90 = hotDryHistorical90;
-hotdryHist90 = hotdryHist90(curLatInds, curLonInds, :);
-hotdryHist90 = squeeze(nanmean(nanmean(hotdryHist90,2),1));
-% hotdry45_90 = hotdry45_90 ./ hotdryHist90;
-% hotdry45_90(isinf(hotdry45_90)) = NaN;
-% hotdry45_90(hotdryHist90 < .01) = NaN;
-hotdry45_90 = sort(hotdry45_90);
 
 hotdry95 = hotDryFutureLate95;
 hotdry95 = hotdry95(curLatInds, curLonInds, :);
@@ -203,20 +151,10 @@ ind2_75 = round(.9*length(hotdry75));
 %hotdry75(1:ind1_75) = NaN;
 hotdry75(ind2_75:end) = NaN;
 
-ind1_80 = round(.1*length(hotdry80));
-ind2_80 = round(.9*length(hotdry80));
-%hotdry80(1:ind1_80) = NaN;
-hotdry80(ind2_80:end) = NaN;
-
 ind1_85 = round(.1*length(hotdry85));
 ind2_85 = round(.9*length(hotdry85));
 %hotdry85(1:ind1_85) = NaN;
 hotdry85(ind2_85:end) = NaN;
-
-ind1_90 = round(.1*length(hotdry90));
-ind2_90 = round(.9*length(hotdry90));
-%hotdry90(1:ind1_90) = NaN;
-hotdry90(ind2_90:end) = NaN;
 
 ind1_95 = round(.1*length(hotdry95));
 ind2_95 = round(.9*length(hotdry95));
@@ -228,20 +166,10 @@ ind2_45_75 = round(.9*length(hotdry45_75));
 %hotdry45_75(1:ind1_45_75) = NaN;
 hotdry45_75(ind2_45_75:end) = NaN;
 
-ind1_45_80 = round(.1*length(hotdry45_80));
-ind2_45_80 = round(.9*length(hotdry45_80));
-%hotdry45_80(1:ind1_45_80) = NaN;
-hotdry45_80(ind2_45_80:end) = NaN;
-
 ind1_45_85 = round(.1*length(hotdry45_85));
 ind2_45_85 = round(.9*length(hotdry45_85));
 %hotdry45_85(1:ind1_45_85) = NaN;
 hotdry45_85(ind2_45_85:end) = NaN;
-
-ind1_45_90 = round(.1*length(hotdry45_90));
-ind2_45_90 = round(.9*length(hotdry45_90));
-%hotdry45_90(1:ind1_45_90) = NaN;
-hotdry45_90(ind2_45_90:end) = NaN;
 
 ind1_45_95 = round(.1*length(hotdry45_95));
 ind2_45_95 = round(.9*length(hotdry45_95));
@@ -308,12 +236,12 @@ end
 % end
 
 xlim([1 4]);
-ylim([0 25]);
+ylim([0 27]);
 
 set(gca,'TickLabelInterpreter', 'tex');    
 xtickangle(0);
 
-set(gca, 'XTick', 1.5:1:3.5, 'XTickLabels', {'T_{83}/P_{25}', 'T_{85}/P_{15}', 'T_{95}/P_{5}'});
+set(gca, 'XTick', 1.5:1:3.5, 'XTickLabels', {'T_{83}/P_{20}', 'T_{85}/P_{15}', 'T_{95}/P_{5}'});
 xtickangle(90);
 ylabel('Frequency (% of years)');
 set(gca, 'FontSize', 36);

@@ -37,10 +37,8 @@ lat=udelt{1};
 lon=udelt{2};
 
 [regionInds, regions, regionNames] = ni_getRegions();
-regionBoundsEthiopia = regions('nile-ethiopia');
 regionBoundsBlue = regions('nile-blue');
 
-[latIndsEthiopiaUdel, lonIndsEthiopiaUdel] = latLonIndexRange({lat, lon,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
 [latIndsBlueUdel, lonIndsBlueUdel] = latLonIndexRange({lat, lon,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 
 pdataset = squeeze(nanmean(nanmean(nansum(udelp{3}(latIndsBlueUdel, lonIndsBlueUdel, :, :), 4), 2), 1));
@@ -53,7 +51,6 @@ load 2017-nile-climate\output\gldas_t.mat
 
 latGldas = gldas_t{1};
 lonGldas = gldas_t{2};
-[latIndsEthiopiaGldas, lonIndsEthiopiaGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsEthiopia(1,:), regionBoundsEthiopia(2,:));
 [latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas, lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 
 gldasRunoff = gldas_qs{3}(:, :, :, :) + gldas_qsb{3}(:, :, :, :);
@@ -162,6 +159,7 @@ else
     yieldPulses_dt = ethiopiaPulsesYield - smooth(ethiopiaPulsesYield, smoothingLen);
 end
 
+
 meanYield = nanmean([normc(yieldMaize_dt), normc(yieldMillet_dt), normc(yieldSorghum_dt), normc(yieldWheat_dt), normc(yieldBarley_dt), normc(yieldPulses_dt)], 2);
 
 
@@ -217,7 +215,7 @@ if smoothingTest
         allpgood = [allpgood; pgood];
         allpbad = [allpbad; pbad];
         
-        b = boxplot([pgood tgood], 'widths', [.1 .1], 'position', [ind-.1 ind+.1]);
+        b = boxplot([pbad tbad], 'widths', [.1 .1], 'position', [ind-.1 ind+.1]);
 
         set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
         lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -229,8 +227,8 @@ if smoothingTest
         ind = ind+1;
     end
 
-    plot([0 7], [tmean tmean]./6, '--', 'color', colorHd);
-    plot([0 7], [pmean pmean]./6, '--', 'color', colorW);
+    plot([0 7], [mean(alltbad) mean(alltbad)], '--', 'color', colorHd);
+    plot([0 7], [mean(allpbad) mean(allpbad)], '--', 'color', colorW);
     
     ylim([0 100])
     xlim([0 7]);
@@ -239,268 +237,215 @@ if smoothingTest
     ylabel('Percentile');
     set(gca, 'fontsize', 36);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig smoothing-test-good.eps;
+    export_fig smoothing-test-bad.eps;
     close all;
 end
 
 x = 1961:2014;
 
-yhd = [];
-yd = [];
-tind = 1;
 
-for t = 10:20:90
-    pind = 1;
-    for p = 10:20:90
-        yhd(tind, pind) = nanmean(meanYield(find(annualTPrc>t & annualPPrc < p)));
-        yd(tind, pind) = nanmean(meanYield(find(annualTPrc<t & annualPPrc < p)));
-        pind = pind+1;
-    end
-    tind=tind+1;
-end
         
 
-tprc = 83;
-pprc = 25;
-
-figure('Color',[1,1,1]);
-hold on;
-box on;
-grid on;
-pbaspect([2 1 1])
-
-plot(x, meanYield, 'k', 'linewidth', 2);
-
-
-hdSuperYears = [];
-for d = 1:size(annualTPrcSuper, 2)
-    hdSuperYears(:,d) = annualTPrcSuper(:, d) >= tprc & annualPPrcSuper(:, d) <= pprc;
-    dSuperYears(:,d) = annualTPrcSuper(:, d) <= tprc & annualPPrcSuper(:, d) <= pprc;
-end
-
-% for i = 1:size(hdSuperYears, 1)
-%     hd = sum(hdSuperYears(i,:)) >= .5*size(hdSuperYears,2);
-%     d = sum(dSuperYears(i,:)) >= .5*size(dSuperYears,2);
+% [bootstat, bootsam] = bootstrp(1000, @median, yieldPulses_dt);
+% 
+% bootTbad = [];
+% bootPbad = [];
+% bootTgood = [];
+% bootPgood = [];
+% bootRbad = [];
+% bootRgood = [];
+% 
+% for s = 1:size(bootsam, 2)
+%     bootyield = yieldPulses_dt(bootsam(:,s));
+%     bootT = annualTPrc(bootsam(:,s));
+%     bootP = annualPPrc(bootsam(:,s));
 %     
-%     if hd
-%         plot(x(i+21), meanYield(i+21), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
-%     elseif d
-%         plot(x(i+21), meanYield(i+21), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
+%     indBad = find(bootyield <= mean(bootyield)-std(bootyield));
+%     indGood = find(bootyield >= mean(bootyield)+std(bootyield));
+%     indNormal = find(bootyield > mean(bootyield)-std(bootyield) & bootyield < mean(bootyield)+std(bootyield));
+% 
+%     %indBad(indBad>50) = [];
+%     %indGood(indGood>50) = [];
+%     %indNormal(indNormal>50) = [];
+% 
+%     bootTbad(s) = nanmedian(bootT(indBad));
+%     bootPbad(s) = nanmedian(bootP(indBad));
+%     bootTgood(s) = nanmedian(bootT(indGood));
+%     bootPgood(s) = nanmedian(bootP(indGood));
+%     
+%     curbootRbad = [];
+%     for i = 1:length(indBad)
+%         % find inds with the same p percentile as in the bad year
+%         possibleP = find(abs(bootP(indBad(i))-annualPPrcGldas) == min(abs(bootP(indBad(i))-annualPPrcGldas)));
+% 
+%         %now out of those years with the right precip, find the T that is
+%         %closest to the obs
+%         curbootRbad(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)))))));
 %     end
+%     bootRbad(s) = nanmedian(curbootRbad);
+%     
+%     curbootRgood = [];
+%     for i = 1:length(indGood)
+%         % find inds with the same p percentile as in the bad year
+%         possibleP = find(abs(bootP(indGood(i))-annualPPrcGldas) == min(abs(bootP(indGood(i))-annualPPrcGldas)));
+% 
+%         %now out of those years with the right precip, find the T that is
+%         %closest to the obs
+%         curbootRgood(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)))))));
+%     end
+%     bootRgood(s) = nanmedian(curbootRgood);
 % end
 
-% for i = 1:length(x)
-%     if annualPPrc(i) <= pprc & annualTPrc(i) >= tprc
-%         plot(x(i), meanYield(i), 'om', 'markersize', 15, 'linewidth', 4, 'color', colorHd);
-%     elseif annualPPrc(i) <= pprc & annualTPrc(i) <= tprc
-%         plot(x(i), meanYield(i), 'og', 'markersize', 15, 'linewidth', 4, 'color', colorD);
-%     end
-%     
-% end
-
-[bootstat, bootsam] = bootstrp(1000, @median, yieldPulses_dt);
-
-bootTbad = [];
-bootPbad = [];
-bootTgood = [];
-bootPgood = [];
-bootRbad = [];
-bootRgood = [];
-
-for s = 1:size(bootsam, 2)
-    bootyield = yieldPulses_dt(bootsam(:,s));
-    bootT = annualTPrc(bootsam(:,s));
-    bootP = annualPPrc(bootsam(:,s));
-    
-    indBad = find(bootyield <= mean(bootyield)-std(bootyield));
-    indGood = find(bootyield >= mean(bootyield)+std(bootyield));
-    indNormal = find(bootyield > mean(bootyield)-std(bootyield) & bootyield < mean(bootyield)+std(bootyield));
-
-    %indBad(indBad>50) = [];
-    %indGood(indGood>50) = [];
-    %indNormal(indNormal>50) = [];
-
-    bootTbad(s) = nanmedian(bootT(indBad));
-    bootPbad(s) = nanmedian(bootP(indBad));
-    bootTgood(s) = nanmedian(bootT(indGood));
-    bootPgood(s) = nanmedian(bootP(indGood));
-    
-    curbootRbad = [];
-    for i = 1:length(indBad)
-        % find inds with the same p percentile as in the bad year
-        possibleP = find(abs(bootP(indBad(i))-annualPPrcGldas) == min(abs(bootP(indBad(i))-annualPPrcGldas)));
-
-        %now out of those years with the right precip, find the T that is
-        %closest to the obs
-        curbootRbad(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indBad(i))-annualTPrcGldas(possibleP)))))));
-    end
-    bootRbad(s) = nanmedian(curbootRbad);
-    
-    curbootRgood = [];
-    for i = 1:length(indGood)
-        % find inds with the same p percentile as in the bad year
-        possibleP = find(abs(bootP(indGood(i))-annualPPrcGldas) == min(abs(bootP(indGood(i))-annualPPrcGldas)));
-
-        %now out of those years with the right precip, find the T that is
-        %closest to the obs
-        curbootRgood(i) = nanmean(annualRPrcGldas(possibleP(find(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)) == min(abs(bootT(indGood(i))-annualTPrcGldas(possibleP)))))));
-    end
-    bootRgood(s) = nanmedian(curbootRgood);
-end
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-pbaspect([1,3,1]);
-b=boxplot([bootPbad', bootPgood']);
-
-set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
-lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
-lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-plot([0 3], [50 50], '-k', 'linewidth', 2);
-xlim([.5 2.5]);
-ylim([0 100]);
-set(gca, 'xtick', []);
-ylabel('Percentile');
-set(gca, 'FontSize', 40);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-box-p.eps;
-close all;
-
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-pbaspect([1,3,1]);
-b=boxplot([bootTbad', bootTgood']);
-
-set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
-lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
-lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-plot([0 3], [50 50], '-k', 'linewidth', 2);
-xlim([.5 2.5]);
-ylim([0 100]);
-set(gca, 'xtick', []);
-ylabel('Percentile');
-set(gca, 'FontSize', 40);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-box-t.eps;
-close all;
-
-
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-pbaspect([1,3,1]);
-b=boxplot([bootRbad', bootRgood']);
-
-set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
-lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
-lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
-set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
-
-plot([0 3], [50 50], '-k', 'linewidth', 2);
-xlim([.5 2.5]);
-ylim([0 100]);
-set(gca, 'xtick', []);
-ylabel('Percentile');
-set(gca, 'FontSize', 40);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-box-r.eps;
-close all;
-
-
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-axis square;
-p1=cdfplot(bootPbad);
-set(p1,'color',colorHd,'linewidth',4);
-p2=cdfplot(bootPgood);
-set(p2,'color',colorW,'linewidth',4);
-xlim([0 100]);
-xlabel('Percentile');
-ylabel('Probability');
-set(gca, 'FontSize', 40);
-set(gca, 'xtick', [0 25 50 75 100]);
-set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
-title([]);
-legend('Poor yields', 'Good yields', 'location', 'southeast');
-legend boxoff;
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-cdf-p.eps;
-close all;
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-axis square;
-p1=cdfplot(bootTbad);
-set(p1,'color',colorHd,'linewidth',4);
-p2=cdfplot(bootTgood);
-set(p2,'color',colorW,'linewidth',4);
-xlim([0 100]);
-xlabel('Percentile');
-ylabel('Probability');
-set(gca, 'FontSize', 40);
-set(gca, 'xtick', [0 25 50 75 100]);
-set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
-title([]);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-cdf-t.eps;
-close all;
-
-
-figure('Color', [1,1,1]);
-hold on;
-box on;
-grid on;
-axis square;
-p1=cdfplot(bootRbad);
-set(p1,'color',colorHd,'linewidth',4);
-p2=cdfplot(bootRgood);
-set(p2,'color',colorW,'linewidth',4);
-xlim([0 100]);
-xlabel('Percentile');
-ylabel('Probability');
-set(gca, 'FontSize', 40);
-set(gca, 'xtick', [0 25 50 75 100]);
-set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
-title([]);
-set(gcf, 'Position', get(0,'Screensize'));
-export_fig bootstrp-cdf-r.eps;
-close all;
-
-yieldhd = nanmean(meanYield(find(annualTPrc>=tprc & annualPPrc <= pprc)));
-yieldd = nanmean(meanYield(find(annualTPrc<=tprc & annualPPrc <= pprc)));
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% pbaspect([1,3,1]);
+% b=boxplot([bootPbad', bootPgood']);
+% 
+% set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
+% lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
+% lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% plot([0 3], [50 50], '-k', 'linewidth', 2);
+% xlim([.5 2.5]);
+% ylim([0 100]);
+% set(gca, 'xtick', []);
+% ylabel('Percentile');
+% set(gca, 'FontSize', 40);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-box-p.eps;
+% close all;
+% 
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% pbaspect([1,3,1]);
+% b=boxplot([bootTbad', bootTgood']);
+% 
+% set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
+% lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
+% lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% plot([0 3], [50 50], '-k', 'linewidth', 2);
+% xlim([.5 2.5]);
+% ylim([0 100]);
+% set(gca, 'xtick', []);
+% ylabel('Percentile');
+% set(gca, 'FontSize', 40);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-box-t.eps;
+% close all;
+% 
+% 
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% pbaspect([1,3,1]);
+% b=boxplot([bootRbad', bootRgood']);
+% 
+% set(b(:,1), {'LineWidth', 'Color'}, {3, colorHd})
+% lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% set(b(:,2), {'LineWidth', 'Color'}, {3, colorW})
+% lines = findobj(b(:, 2), 'type', 'line', 'Tag', 'Median');
+% set(lines, 'Color', [.6 .6 .6], 'LineWidth', 2);
+% 
+% plot([0 3], [50 50], '-k', 'linewidth', 2);
+% xlim([.5 2.5]);
+% ylim([0 100]);
+% set(gca, 'xtick', []);
+% ylabel('Percentile');
+% set(gca, 'FontSize', 40);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-box-r.eps;
+% close all;
+% 
+% 
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% axis square;
+% p1=cdfplot(bootPbad);
+% set(p1,'color',colorHd,'linewidth',4);
+% p2=cdfplot(bootPgood);
+% set(p2,'color',colorW,'linewidth',4);
+% xlim([0 100]);
+% xlabel('Percentile');
+% ylabel('Probability');
+% set(gca, 'FontSize', 40);
+% set(gca, 'xtick', [0 25 50 75 100]);
+% set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
+% title([]);
+% legend('Poor yields', 'Good yields', 'location', 'southeast');
+% legend boxoff;
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-cdf-p.eps;
+% close all;
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% axis square;
+% p1=cdfplot(bootTbad);
+% set(p1,'color',colorHd,'linewidth',4);
+% p2=cdfplot(bootTgood);
+% set(p2,'color',colorW,'linewidth',4);
+% xlim([0 100]);
+% xlabel('Percentile');
+% ylabel('Probability');
+% set(gca, 'FontSize', 40);
+% set(gca, 'xtick', [0 25 50 75 100]);
+% set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
+% title([]);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-cdf-t.eps;
+% close all;
+% 
+% 
+% figure('Color', [1,1,1]);
+% hold on;
+% box on;
+% grid on;
+% axis square;
+% p1=cdfplot(bootRbad);
+% set(p1,'color',colorHd,'linewidth',4);
+% p2=cdfplot(bootRgood);
+% set(p2,'color',colorW,'linewidth',4);
+% xlim([0 100]);
+% xlabel('Percentile');
+% ylabel('Probability');
+% set(gca, 'FontSize', 40);
+% set(gca, 'xtick', [0 25 50 75 100]);
+% set(gca, 'ytick', [0 .2 .4 .5 .6 .8 1]);
+% title([]);
+% set(gcf, 'Position', get(0,'Screensize'));
+% export_fig bootstrp-cdf-r.eps;
+% close all;
 
 indBad = find(meanYield <= mean(meanYield)-std(meanYield));
 indGood = find(meanYield >= mean(meanYield)+std(meanYield));
 indNormal = find(meanYield > mean(meanYield)-std(meanYield) & meanYield < mean(meanYield)+std(meanYield));
-
-indBad(indBad>50) = [];
-indGood(indGood>50) = [];
-indNormal(indNormal>50) = [];
+% 
+% indBad(indBad>50) = [];
+% indGood(indGood>50) = [];
+% indNormal(indNormal>50) = [];
 
 tbad = annualTPrc(indBad);
 pbad = annualPPrc(indBad);
@@ -538,6 +483,17 @@ for i = 1:length(indGood)
     rgood(i) = nanmean(annualRPrcGldas(possibleP(find(abs(annualTPrc(indGood(i))-annualTPrcGldas(possibleP)) == min(abs(annualTPrc(indGood(i))-annualTPrcGldas(possibleP)))))));
 end
 
+
+
+figure('Color',[1,1,1]);
+hold on;
+box on;
+grid on;
+pbaspect([2 1 1])
+
+plot(x, meanYield, 'k', 'linewidth', 2);
+
+
 plot([x(1) x(end)], [0 0], '--k','linewidth', 2);
 % plot([x(1) x(end)], [-std(meanYield) -std(meanYield)], '--','linewidth', 2, 'color', colorHd);
 % plot([x(1) x(end)], [std(meanYield) std(meanYield)], '--','linewidth', 2, 'color', colorW);
@@ -558,7 +514,7 @@ set(s.edge, 'Color', 'w');
 
 for w = 1:size(wars,1)
     s = shadedErrorBar([wars(w,1) wars(w,2)], [0 0], [1 1], [], 1);
-    set(s.mainLine, 'Color', 'W', 'LineWidth', 1);
+    set(s.mainLine, 'Color', 'none', 'LineWidth', 1);
     set(s.patch, 'FaceColor', [.4 .4 .4]);
     set(s.edge, 'Color', 'w');
 end
@@ -571,6 +527,7 @@ ylabel('Normalized yield anomaly');
 set(gcf, 'Position', get(0,'Screensize'));
 export_fig historical-yields.png -m4;
 close all;
+
 
 
 figure('Color',[1,1,1]);
@@ -600,11 +557,12 @@ plot([2.6 4], [nanmedian(rgood) nanmedian(rgood)], '--', 'color', colorD, 'linew
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T', 'R'});
+set(gca,'TickLabelInterpreter', 'tex');
+set(gca, 'XTickLabels', {'P^*', 'T^*', 'R^*'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig tp-good.eps;
+export_fig tp-good-pulses.eps;
 close all;
 
 
@@ -635,11 +593,12 @@ plot([2.7 4], [nanmedian(rbad) nanmedian(rbad)], '--', 'color', colorD, 'linewid
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T', 'R'});
+set(gca,'TickLabelInterpreter', 'tex');
+set(gca, 'XTickLabels', {'P^*', 'T^*', 'R^*'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig tp-bad.eps;
+export_fig tp-bad-pulses.eps;
 close all;
 
 
@@ -650,7 +609,7 @@ grid on;
 pbaspect([1 3 1])
 
 plot([0 4], [50 50], 'k', 'linewidth', 2);
-b = boxplot([pnormal tnormal rnormal], 'widths', [.8 .8]);
+b = boxplot([pnormal tnormal rnormal'], 'widths', [.8 .8]);
 
 set(b(:,1), {'LineWidth', 'Color'}, {3, colorW})
 lines = findobj(b(:, 1), 'type', 'line', 'Tag', 'Median');
@@ -664,14 +623,15 @@ set(b(:,3), {'LineWidth', 'Color'}, {3, colorD})
 lines = findobj(b(:, 3), 'type', 'line', 'Tag', 'Median');
 set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
 
-plot([.6 4], [nanmean(pnormal) nanmean(pnormal)], '--', 'color', colorW, 'linewidth', 2);
-plot([1.6 4], [nanmean(tnormal) nanmean(tnormal)], '--', 'color', colorHd, 'linewidth', 2);
-plot([2.6 4], [nanmean(rnormal) nanmean(rnormal)], '--', 'color', colorD, 'linewidth', 2);
+plot([.6 4], [nanmedian(pnormal) nanmedian(pnormal)], '--', 'color', colorW, 'linewidth', 2);
+plot([1.6 4], [nanmedian(tnormal) nanmedian(tnormal)], '--', 'color', colorHd, 'linewidth', 2);
+plot([2.6 4], [nanmedian(rnormal) nanmedian(rnormal)], '--', 'color', colorD, 'linewidth', 2);
 
 
 ylim([0 100]);
 set(gca, 'fontsize', 36);
-set(gca, 'XTickLabels', {'P', 'T', 'R'});
+set(gca,'TickLabelInterpreter', 'tex');
+set(gca, 'XTickLabels', {'P^*', 'T^*', 'R^*'});
 set(gca, 'YTick', [0 20 40 50 60 80 100]);
 ylabel('Percentile');
 set(gcf, 'Position', get(0,'Screensize'));

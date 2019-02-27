@@ -17,7 +17,7 @@ fprintf('loading CPC...\n');
 for year = 1980:1:2016
     fprintf('cpc year %d...\n', year);
     cpcTemp = {};
-    curcpc = loadDailyData('E:\data\cpc-temp\output\tmin\regrid\world', 'startYear', year, 'endYear', year);
+    curcpc = loadDailyData('E:\data\cpc-temp\output\tmax\regrid\world', 'startYear', year, 'endYear', year);
     
     if monthly
         curcpc = dailyToMonthly(curcpc);

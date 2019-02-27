@@ -132,7 +132,7 @@ if plotDistChg
     xlabel('Warm season Tx percentile');
     set(gca, 'XTick', 5:10:95, 'XTickLabels', 5:10:95);
     set(gca, 'YTick', -.8:.2:.7);
-    ylabel(['EF amplification (Fraction)']);
+    ylabel(['Specific hum. amplification (g/kg)']);
     
     set(gcf, 'Position', get(0,'Screensize'));
     export_fig(['huss-chg-tx-perc.eps']);
