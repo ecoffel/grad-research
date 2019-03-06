@@ -4,6 +4,20 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+modelsMrroSubset = {'bcc-csm1-1-m', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'gfdl-esm2g', 'gfdl-esm2m', ...
+              'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+          
+          
+modelSubsetInd = [];
+for m = 1:length(models)
+    if ismember(models{m}, modelsMrroSubset)
+        modelSubsetInd(end+1) = m;
+    end
+end
+          
 rcp = 'rcp85';
 timePeriodBase = [1961 2005];
 timePeriodFuture = [2061 2085];
@@ -22,8 +36,6 @@ load lon;
 % load(['2017-nile-climate/output/historical-pr-percentiles-chirps.mat']);
 
 [regionInds, regions, regionNames] = ni_getRegions();
-
-
 
 seasonNames = {'DJF', 'MAM', 'JJA', 'SON'};
 seasons = [[12 1 2]; 
@@ -79,7 +91,6 @@ for s = 1%:size(seasons, 1)
     latIndsWhite = curInds{1};
     lonIndsWhite = curInds{2};
     
-    
     latInds = [latIndsBlue latIndsWhite];
     lonInds = [lonIndsBlue lonIndsWhite];
     
@@ -88,7 +99,140 @@ for s = 1%:size(seasons, 1)
     
     tasFut = squeeze(nanmean(nanmean(nanmean(tasFutCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
     tasHist = squeeze(nanmean(nanmean(nanmean(tasHistCmip5(latInds, lonInds, :, months, :), 4), 2), 1));
-    %tChg = squeeze(nanmean(nanmean(nanmean(tempChgCmip5(latInds-latIndsRegion(1)+1, lonInds-lonIndsRegion(1)+1, months, :)))));
+    
+    
+    colorD = [160, 116, 46]./255.0;
+    colorHd = [216, 66, 19]./255.0;
+    colorH = [255, 91, 206]./255.0;
+    colorW = [68, 166, 226]./255.0;
+    
+    fig = figure('Color', [1,1,1]);
+    set(fig,'defaultAxesColorOrder',[colorHd; colorW]);
+    hold on;
+    box on;
+    grid on;
+    axis square;
+    
+    yyaxis left;
+    b1 = boxplot(squeeze(nanmean(tasHist,1))', 'positions', [1]);
+    b2 = boxplot(squeeze(nanmean(tasHist(:,modelSubsetInd),1))', 'positions', [1.3]);
+    
+    
+    b3 = boxplot(squeeze(nanmean(tasFut,1))', 'positions', [1.6]);
+    b4 = boxplot(squeeze(nanmean(tasFut(:,modelSubsetInd),1))', 'positions', [1.9]);
+    
+    set(b1, {'LineWidth', 'Color'}, {2.5, colorHd})
+    lines = findobj(b1, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b1,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorHd;
+    end
+    
+    set(b2, {'LineWidth', 'Color'}, {2.5, colorHd})
+    lines = findobj(b2, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b2,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorHd;
+    end
+    
+    set(b3, {'LineWidth', 'Color'}, {2.5, colorHd})
+    lines = findobj(b3, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b3,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorHd;
+    end
+    
+    set(b4, {'LineWidth', 'Color'}, {2.5, colorHd})
+    lines = findobj(b4, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b4,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorHd;
+    end
+    
+    h = findobj(b3(:, 1), 'Tag', 'Box');
+    for j=1:length(h)
+        patch(get(h(j),'XData'), get(h(j), 'YData'), colorHd, 'FaceAlpha', .5, 'EdgeColor', 'none');
+    end
+    
+    h = findobj(b4(:, 1), 'Tag', 'Box');
+    for j=1:length(h)
+        patch(get(h(j),'XData'), get(h(j), 'YData'), colorHd, 'FaceAlpha', .5, 'EdgeColor', 'none');
+    end
+    
+    ylabel(['Temperature (' char(176) 'C)']);
+    ylim([19 32]);
+    
+    yyaxis right;
+    b5 = boxplot(squeeze(nanmean(prHist,1))', 'positions', [2.5]);
+    b6 = boxplot(squeeze(nanmean(prHist(:,modelSubsetInd),1))', 'positions', [2.8]);
+    b7 = boxplot(squeeze(nanmean(prFut,1))', 'positions', [3.1]);
+    b8 = boxplot(squeeze(nanmean(prFut(:,modelSubsetInd),1))', 'positions', [3.4]);
+    
+    set(b5, {'LineWidth', 'Color'}, {2.5, colorW})
+    lines = findobj(b5, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b5,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorW;
+    end
+    
+    set(b6, {'LineWidth', 'Color'}, {2.5, colorW})
+    lines = findobj(b6, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b6,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorW;
+    end
+    
+    set(b7, {'LineWidth', 'Color'}, {2.5, colorW})
+    lines = findobj(b7, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b7,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorW;
+    end
+    
+    set(b8, {'LineWidth', 'Color'}, {2.5, colorW})
+    lines = findobj(b8, 'type', 'line', 'Tag', 'Median');
+    set(lines, 'Color', [100 100 100]./255, 'LineWidth', 2);
+
+    h = findobj(b8,'tag','Outliers');
+    for iH = 1:length(h)
+        h(iH).MarkerEdgeColor = colorW;
+    end
+    
+    h = findobj(b7(:, 1), 'Tag', 'Box');
+    for j=1:length(h)
+        patch(get(h(j),'XData'), get(h(j), 'YData'), colorW, 'FaceAlpha', .5, 'EdgeColor', 'none');
+    end
+    
+    h = findobj(b8(:, 1), 'Tag', 'Box');
+    for j=1:length(h)
+        patch(get(h(j),'XData'), get(h(j), 'YData'), colorW, 'FaceAlpha', .5, 'EdgeColor', 'none');
+    end
+    
+    ylim([0 6]);
+    ylabel('Precipitation (mm/day)');
+    xlim([.5 3.9]);
+    
+    set(gca, 'xtick', [1.45, 2.95], 'xticklabels', {'Temperature', 'Precipitation'});
+    
+    set(gca, 'FontSize', 40);
+    set(gcf, 'Position', get(0,'Screensize'));
+    export_fig model-subset-verification.eps
+    close all
+    
     
     if plotMap
         curInds = regionInds('nile');
@@ -97,7 +241,6 @@ for s = 1%:size(seasons, 1)
         
         chg = squeeze(nanmean(nanmean(prFutCmip5(latInds, lonInds, :, :, :), 4), 3)) - ...
               squeeze(nanmean(nanmean(prHistCmip5(latInds, lonInds, :, :, :), 4), 3));
-        
         
         prStdChg = [];
         

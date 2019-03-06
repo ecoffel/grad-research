@@ -1,27 +1,24 @@
 base = 'cmip5';
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1961-2005-t83-p20.mat']);
-hotDryHistorical83 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1961-2005-t85-p15.mat']);
-hotDryHistorical85 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-historical-1961-2005-t95-p5.mat']);
-hotDryHistorical95 = hotDryFuture;
+models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4', ...
+              'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'fio-esm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'giss-e2-h', 'giss-e2-h-cc', 'giss-e2-r', 'giss-e2-r-cc', 'hadgem2-cc', ...
+              'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp45-2061-2085-t83-p20-tfull-pfull.mat']);
-hotDryFutureLate45 = hotDryFuture;
-load(['2017-nile-climate\output\hotDryFuture-annual-' base '-rcp85-2061-2085-t83-p20-tfull-pfull.mat']);
-hotDryFutureLate85 = hotDryFuture;
+for m = 1:length(models)
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t83-p20.mat']);
+    hotDryHistorical83(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t85-p15.mat']);
+    hotDryHistorical85(:,:,m) = hdyears;
+    load(['2017-nile-climate\output\hotDryFuture-annual-' base '-' models{m} '-historical-1961-2005-t95-p5.mat']);
+    hotDryHistorical95(:,:,m) = hdyears;
+end
 
 drawScatter = false;
 drawMap = true;
 north = false;
 annual = true;
-
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
-              'hadgem2-es', 'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
 seasons = [[12 1 2];
            [3 4 5];
@@ -76,9 +73,9 @@ plot([0 4], [1 1], '--k', 'linewidth', 2);
 
 set(gca,'TickLabelInterpreter', 'tex');
 
-ylim([0 7]);
+ylim([0 6]);
 xlim([.5 3.5]);
-set(gca, 'YTick', 0:1:7);
+set(gca, 'YTick', 0:1:6);
 ylabel('Frequency multiplier');
 set(gca, 'XTick', 1:1:3, 'XTickLabels', {'T_{83}/P_{20}', 'T_{85}/P_{15}', 'T_{95}/P_{5}'});
 set(gca, 'FontSize', 40);

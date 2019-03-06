@@ -9,14 +9,13 @@ regionBoundsBlue = regions('nile-blue');
 regionBoundsWhite = regions('nile-white');
 
 
-
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', 'ccsm4', ...
               'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fio-esm', 'gfdl-cm3', 'gfdl-esm2g', 'gfdl-esm2m', 'giss-e2-h', 'giss-e2-h-cc', 'giss-e2-r', 'giss-e2-r-cc', 'hadgem2-cc', ...
               'hadgem2-es', 'inmcm4', 'ipsl-cm5a-lr', 'ipsl-cm5a-mr', 'ipsl-cm5b-lr', 'miroc5', 'miroc-esm', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-timePeriod = [1981 2016];
+timePeriod = [1981 2005];
           
 
 if ~exist('era', 'var')
@@ -70,19 +69,26 @@ end
 
 if ~exist('gldas', 'var')
     fprintf('loading GLDAS...\n');
-    gldas = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', timePeriod(1), 'endYear', 2010);
+    gldas = loadMonthlyData('E:\data\gldas-noah-v2\output\Tair_f_inst', 'Tair_f_inst', 'startYear', timePeriod(1), 'endYear', 2005);
     gldas{3} = gldas{3} - 273.15;
 
-    gldasPr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', timePeriod(1), 'endYear', 2010);
+    gldasPr = loadMonthlyData('E:\data\gldas-noah-v2\output\Rainf_f_tavg', 'Rainf_f_tavg', 'startYear', timePeriod(1), 'endYear', 2005);
     gldasPr{3} = gldasPr{3} .* 3600 .* 24;
 end
 
 if ~exist('cpc', 'var')   
    
     
-    cpc = loadMonthlyData('E:\data\cpc-temp-monthly\output\air\monthly', 'air', 'startYear', 1981, 'endYear', 2016);
+    cpc = loadMonthlyData('E:\data\cpc-temp-monthly\output\air\monthly', 'air', 'startYear', 1981, 'endYear', 2005);
     cpc{3} = cpc{3}-273.15;
 
+end
+
+if ~exist('udelt')
+    udelp = loadMonthlyData('E:\data\udel\output\precip\monthly\1900-2014', 'precip', 'startYear', 1981, 'endYear', 2005);
+    udelp = {udelp{1}, udelp{2}, flipud(udelp{3})};
+    udelt = loadMonthlyData('E:\data\udel\output\air\monthly\1900-2014', 'air', 'startYear', 1981, 'endYear', 2005);
+    udelt = {udelt{1}, udelt{2}, flipud(udelt{3}).*10./30};
 end
 
 
@@ -95,6 +101,11 @@ latGldas = gldas{1};
 lonGldas = gldas{2};
 [latIndsBlueGldas, lonIndsBlueGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
 [latIndsWhiteGldas, lonIndsWhiteGldas] = latLonIndexRange({latGldas,lonGldas,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
+
+latUDel = udelt{1};
+lonUDel = udelt{2};
+[latIndsBlueUDel, lonIndsBlueUDel] = latLonIndexRange({latUDel,lonUDel,[]}, regionBoundsBlue(1,:), regionBoundsBlue(2,:));
+[latIndsWhiteUDel, lonIndsWhiteUDel] = latLonIndexRange({latUDel,lonUDel,[]}, regionBoundsWhite(1,:), regionBoundsWhite(2,:));
 
 % latUdel = udelt{1};
 % lonUdel = udelt{2};
@@ -156,7 +167,7 @@ seasons = [[12 1 2];
            [6 7 8];
            [9 10 11]];
 
-blue = true;
+blue = false;
        
 
 if blue
@@ -175,8 +186,8 @@ if blue
     curLatIndsCpc = latIndsBlueCpc;
     curLonIndsCpc = lonIndsBlueCpc;
     
-%     curLatIndsUdel = latIndsBlueUdel;
-%     curLonIndsUdel = lonIndsBlueUdel;
+    curLatIndsUdel = latIndsBlueUDel;
+    curLonIndsUdel = lonIndsBlueUDel;
     
 %     curLatIndsHadcrut = latIndsBlueHadcrut;
 %     curLonIndsHadcrut = lonIndsBlueHadcrut;
@@ -199,8 +210,8 @@ else
     curLatIndsGldas = latIndsWhiteGldas;
     curLonIndsGldas = lonIndsWhiteGldas;
     
-%     curLatIndsUdel = latIndsWhiteUdel;
-%     curLonIndsUdel = lonIndsWhiteUdel;
+    curLatIndsUdel = latIndsWhiteUDel;
+    curLonIndsUdel = lonIndsWhiteUDel;
     
 %     curLatIndsHadcrut = latIndsWhiteHadcrut;
 %     curLonIndsHadcrut = lonIndsWhiteHadcrut;
@@ -228,9 +239,10 @@ grid on;
 for season = 1:size(seasons, 1)
     
     yyaxis left;
-    regionalTEra = squeeze(nanmean(nanmean(nanmean(nanmean(era{3}(curLatInds, curLonInds, :, seasons(season,:)), 4), 2), 1), 3));
-    regionalTCpc = squeeze(nanmean(nanmean(nanmean(nanmean(cpc{3}(curLatIndsCpc, curLonIndsCpc, :, seasons(season,:)), 4), 2), 1), 3));
-    regionalTGldas = squeeze(nanmean(nanmean(nanmean(nanmean(gldas{3}(curLatIndsGldas, curLonIndsGldas, :, seasons(season,:)), 4), 2), 1), 3));
+    regionalTEra = squeeze(nanmean(nanmean(nanmean(nanmean(era{3}(curLatInds, curLonInds, :, seasons(season,:)), 3), 4), 2), 1));
+    regionalTCpc = squeeze(nanmean(nanmean(nanmean(nanmean(cpc{3}(curLatIndsCpc, curLonIndsCpc, :, seasons(season,:)), 3), 4), 2), 1));
+    regionalTGldas = squeeze(nanmean(nanmean(nanmean(nanmean(gldas{3}(curLatIndsGldas, curLonIndsGldas, :, seasons(season,:)), 3), 4), 2), 1));
+    regionalTUDel = squeeze(nanmean(nanmean(nanmean(nanmean(udelt{3}(curLatIndsUdel, curLonIndsUdel, :, seasons(season,:)), 3), 4), 2), 1));
     regionalTCmip5 = squeeze(nanmean(nanmean(nanmean(nanmean(cmip5Temp(curLatInds, curLonInds, :, seasons(season,:), :), 4), 3), 2), 1));
 
     b = boxplot(regionalTCmip5, 'positions', [season-.12], 'width', .2);
@@ -241,13 +253,15 @@ for season = 1:size(seasons, 1)
     p1 = plot(season-.12, regionalTGldas, '*', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     p2 = plot(season-.12, regionalTEra, 'x', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     p3 = plot(season-.12, regionalTCpc, 'd', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p4 = plot(season-.12, regionalTUDel, '^', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     
     
     
     yyaxis right;
     regionalPGpcp = squeeze(nanmean(nanmean(nanmean(nanmean(gpcp{3}(curLatInds, curLonInds, :, seasons(season,:)), 3), 4), 2), 1));
     regionalPChirps = squeeze(nanmean(nanmean(nanmean(nanmean(chirps(curLatIndsChirpsRel, curLonIndsChirpsRel, :, seasons(season,:)), 3), 4), 2), 1));
-    regionalPEra = squeeze(nanmean(nanmean(nanmean(nanmean(eraPr{3}(curLatInds, curLonInds, :, seasons(season,:)), 4), 2), 1), 3));
+    regionalPEra = squeeze(nanmean(nanmean(nanmean(nanmean(eraPr{3}(curLatInds, curLonInds, :, seasons(season,:)), 3), 4), 2), 1));
+    regionalPUDel = squeeze(nanmean(nanmean(nanmean(nanmean(udelp{3}(curLatIndsUdel, curLonIndsUdel, :, seasons(season,:)), 3), 4), 2), 1));
     regionalPCmip5 = squeeze(nanmean(nanmean(nanmean(nanmean(cmip5Pr(curLatInds, curLonInds, :, seasons(season,:), :), 4), 3), 2), 1));
 
     b = boxplot(regionalPCmip5, 'positions', [season+.12], 'width', .2);
@@ -255,9 +269,10 @@ for season = 1:size(seasons, 1)
     lines = findobj(b, 'type', 'line', 'Tag', 'Median');
     set(lines, 'Color', [.3 .3 .3], 'LineWidth', 2); 
         
-    p4 = plot(season+.12, regionalPEra, 'x', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
-    p5 = plot(season+.12, regionalPGpcp, '+', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
-    p6 = plot(season+.12, regionalPChirps, 's', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p5 = plot(season+.12, regionalPEra, 'x', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p6 = plot(season+.12, regionalPGpcp, '+', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p7 = plot(season+.12, regionalPChirps, 's', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p8 = plot(season+.12, regionalPUDel, '^', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     
 end
 
@@ -268,14 +283,14 @@ ylabel(['Temperature (' char(176) 'C)']);
 yyaxis right;
 ylim([0 9]);
 ylabel(['Precipitation (mm/day)']);
-leg = legend([p1, p2, p3, p5, p6], ' GLDAS', ' ERA-Interim', ' CPC', ' GPCP', ' CHIRPS', 'location', 'northwest', 'NumColumns', 2);
+leg = legend([p1, p2, p3, p4, p6, p7], ' GLDAS', ' ERA-Interim', ' CPC', ' UDel', ' GPCP', ' CHIRPS', 'location', 'northwest', 'NumColumns', 2);
 set(leg, 'fontsize', 30);
 legend boxoff;
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
 set(gca, 'FontSize', 40);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig temp-pr-verification-blue.eps
+export_fig temp-pr-verification-white.eps
 close all
 
 
@@ -293,11 +308,13 @@ for season = 1:size(seasons, 1)
     regionalTEra = squeeze(nanmean(nanmean(nanmean(era{3}(curLatInds, curLonInds, :, seasons(season,:)), 4), 2), 1));
     regionalTCpc = squeeze(nanmean(nanmean(nanmean(cpc{3}(curLatIndsCpc, curLonIndsCpc, :, seasons(season,:)), 4), 2), 1));
     regionalTGldas = squeeze(nanmean(nanmean(nanmean(gldas{3}(curLatIndsGldas, curLonIndsGldas, :, seasons(season,:)), 4), 2), 1));
+    regionalTUDel = squeeze(nanmean(nanmean(nanmean(udelt{3}(curLatIndsUdel, curLonIndsUdel, :, seasons(season,:)), 4), 2), 1));
     regionalTCmip5 = squeeze(nanmean(nanmean(nanmean(cmip5Temp(curLatInds, curLonInds, :, seasons(season,:), :), 4), 2), 1));
 
     regionalPGpcp = squeeze(nanmean(nanmean(nanmean(gpcp{3}(curLatInds, curLonInds, :, seasons(season,:)), 4), 2), 1));
     regionalPEra = squeeze(nanmean(nanmean(nanmean(eraPr{3}(curLatInds, curLonInds, :, seasons(season,:)), 4), 2), 1));
     regionalPGldas = squeeze(nanmean(nanmean(nanmean(gldasPr{3}(curLatIndsGldas, curLonIndsGldas, :, seasons(season,:)), 4), 2), 1));
+    regionalPUDel = squeeze(nanmean(nanmean(nanmean(udelp{3}(curLatIndsUdel, curLonIndsUdel, :, seasons(season,:)), 4), 2), 1));
     regionalPCmip5 = squeeze(nanmean(nanmean(nanmean(cmip5Pr(curLatInds, curLonInds, :, seasons(season,:), :), 4), 2), 1));
 
     cmip5Corr = [];
@@ -313,6 +330,7 @@ for season = 1:size(seasons, 1)
     p2 = plot(season, nancorr(detrend(regionalTEra-nanmean(regionalTEra)), detrend(regionalPEra-nanmean(regionalPEra))), 'x', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     p3 = plot(season, nancorr(detrend(regionalTGldas-mean(regionalTGldas)), detrend(regionalPGldas-mean(regionalPGldas))), '+', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     p4 = plot(season, nancorr(detrend(regionalTCpc-mean(regionalTCpc)), detrend(regionalPGpcp-mean(regionalPGpcp))), 's', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
+    p5 = plot(season, nancorr(detrend(regionalTUDel-nanmean(regionalTUDel)), detrend(regionalPUDel-nanmean(regionalPUDel))), '^', 'Color', 'k','MarkerSize', 15, 'LineWidth', 2);
     
 end
 
@@ -320,13 +338,13 @@ xlim([0 5]);
 ylim([-1 1]);
 plot([0 5], [0 0], '--k', 'linewidth', 2);
 ylabel(['T-P Correlation']);
-leg = legend([p2, p3, p4], ' ERA-Interim', ' GLDAS', ' CPC-GPCP', 'location', 'northeast');
+leg = legend([p2, p3, p4, p5], ' ERA-Interim', ' GLDAS', ' CPC-GPCP', ' UDel', 'location', 'northeast');
 set(leg, 'fontsize', 30);
 legend boxoff;
 set(gca, 'XTick', 1:4, 'XTickLabels', {'DJF', 'MAM', 'JJA', 'SON'});
 
 set(gca, 'FontSize', 40);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig t-p-corr-verification-blue.eps
+export_fig t-p-corr-verification-white.eps
 close all
 
