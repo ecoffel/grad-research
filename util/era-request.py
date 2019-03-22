@@ -5,25 +5,23 @@ from ecmwfapi import ECMWFDataServer
 import os.path
 server = ECMWFDataServer()
  
-files =     ["201.128", "202.128", "228.128", "146.128", "147.128"]
-fileNames = ["mx2t",    "mn2t",    "tp",      "sshf",    "slhf"]
-
-files =     ["39.128", "40.128", "41.128", "42.128"]
-fileNames = ["swvl1",  "swvl2",  "swvl3",  "swvl4"]
-
-files =     ["33.128", "141.128"]
-fileNames = ["rsn",    "sd"]
-
-files =      ["201.128"]
-fileNames = ["mx2t"]
-
-
-files =      ["134.128"]
-fileNames = ["sp"]
+#files =     ["201.128", "202.128", "228.128", "146.128", "147.128"]
+#fileNames = ["mx2t",    "mn2t",    "tp",      "sshf",    "slhf"]
+#
+#files =     ["39.128", "40.128", "41.128", "42.128"]
+#fileNames = ["swvl1",  "swvl2",  "swvl3",  "swvl4"]
+#
+#files =     ["33.128", "141.128"]
+#fileNames = ["rsn",    "sd"]
 
 files =      ["168.128"]
 fileNames = ["d2m"]
 
+files =      ["201.128"]
+fileNames = ["mx2t"]
+
+files =      ["134.128"]
+fileNames = ["sp"]
 
 baseDir = 'e:/data/era-interim/raw/'
 
@@ -77,8 +75,8 @@ def interim_land_request(file, fileName, dates, target):
         "target": target})
     
 
-yearStart = 1989
-yearEnd = 1990
+yearStart = 2017
+yearEnd = 2018
 for f in range(len(files)):
     for year in list(range(yearStart, yearEnd + 1)):
         startDate = '%04d-01-01' % (year)

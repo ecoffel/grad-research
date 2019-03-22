@@ -135,6 +135,7 @@ for k = 1:length(ncFileNames)
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
+        fprintf('skipping %s', folDataTarget);
         continue;
     end
     
@@ -151,16 +152,17 @@ for k = 1:length(ncFileNames)
     dailyData = [];
 
     while ind < dims{dimIdTime}{2}
+        curDt = datevec(time(ind+1));
+        curDay = curDt(3);
+        curMonth = curDt(2);
+        
         if lastDay == -1
-            lastDay = day(time(ind+1));
+            lastDay = curDay;
         end
         
         data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1]));
         data = data .* scale_factor + add_offset;
         data = permute(data, [2 1]);
-        
-        curDay = day(time(ind+1));
-        curMonth = month(time(ind+1));
         
         % new day, average over previous days
         if curDay ~= lastDay
@@ -178,7 +180,7 @@ for k = 1:length(ncFileNames)
                 % sum and convert to W/m2
                 monthlyData(:, :, monthlyInd) = -nansum(dailyData(:, :, [4 8]), 3) ./ 24 ./ 3600;
             elseif strcmp(varName, 'sp') | strcmp(varName, 'd2m')
-                % sum and convert to W/m2
+                % take daily mean
                 monthlyData(:, :, monthlyInd) = nanmean(dailyData(:, :, :), 3);
             end
             dailyData = [];

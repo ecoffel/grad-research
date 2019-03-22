@@ -1,5 +1,5 @@
 % needs to handle plev
-regridVar = {'d2m'};
+regridVar = {'d2m', 'mx2t', 'sp'};
 gridSpacing = 2;
 
 latGrid = meshgrid(linspace(-90, 90, 180/gridSpacing), linspace(0, 360, 360/gridSpacing))';

@@ -26,11 +26,12 @@ months = range(6,10)
 if not 'eba' in locals():
     print('loading eba...')
     eba = []
-    for line in open('%s/ecoffel/data/projects/electricity/EBA.txt' % dataDir, 'r'):
+    for line in open('%s/ecoffel/data/projects/electricity/NUC_STATUS.txt' % dataDir, 'r'):
         if (len(eba)+1) % 100 == 0:
             print('loading line ', (len(eba)+1))
             
         curLine = json.loads(line)
+        
         
         #if 'Demand for' in curLine['name']: print(ln)
         
@@ -80,58 +81,44 @@ if not 'eba' in locals():
             
             eba.append(curLineNew)
 
-#subgrids = {}
-#
-#subgrids['ERCO'] = {'genId':547, \
-#                    }
+subgrid = 'NYIS'
 
-# TX
-#genId = 547
-#intId = 548
-#demId = 69 
-#demFctId = 546
+subgrids = {}
+subgrids['ERCO'] = {'genId':547, \
+                    'intId':548, \
+                    'demFctId':546, \
+                    'demId': 69, \
+                    'states':['TX']}
 
-# ISNE
-#genId = 474
-#intId = 432
-#demId = 73
-#demFctId = 473 
+subgrids['ISNE'] = {'genId':474, \
+                    'intId':432, \
+                    'demFctId':473, \
+                    'demId': 73, \
+                    'states':['ME', 'MA', 'CT', 'RI', 'NH', 'VT']}
 
-# PJM
-genId = 567
-intId = 568
-demId = 51
-demFctId = 566
+subgrids['PJM'] = {'genId':567, \
+                    'intId':568, \
+                    'demFctId':566, \
+                    'demId': 51, \
+                    'states':['OH', 'PA', 'NJ', 'DE', 'WV', 'VA', 'MD']}
 
-# CISO
-#genId = 508
-#intId = 509
-#demId = 65
-#demFctId = 507
+subgrids['CISO'] = {'genId':508, \
+                    'intId':509, \
+                    'demFctId':507, \
+                    'demId': 65, \
+                    'states':['CA']}
 
-# NYIS
-#genId = 576
-#intId = 577
-#demId = 28
-#demFctId = 575
+subgrids['NYIS'] = {'genId':576, \
+                    'intId':577, \
+                    'demFctId':575, \
+                    'demId': 28, \
+                    'states':['NY']}
+
 
 if not 'uscrn' in locals():
     uscrnDir = '%s/USCRN' % dataDir
     
-    # ISNE
-    #uscrnStateList = ['ME', 'MA', 'CT', 'RI', 'NH', 'VT']
-    
-    # TX
-    #uscrnStateList = ['TX']
-    
-    # NYIS
-    #uscrnStateList = ['NY']
-    
-    # CISO
-    #uscrnStateList = ['CA']
-    
-    # PJM
-    uscrnStateList = ['OH', 'PA', 'NJ', 'DE', 'WV', 'VA', 'MD']
+    uscrnStateList = subgrids[subgrid]['states']
 
     uscrnListN = 0    
     uscrnList = []
@@ -193,6 +180,12 @@ if not 'dailySeries' in locals():
     
     lastDay = -1
     o = 0
+    
+    genId = subgrids[subgrid]['genId']
+    demId = subgrids[subgrid]['demId']
+    demFctId = subgrids[subgrid]['demFctId']
+    intId = subgrids[subgrid]['intId']
+    
     # loop through all obs from the uscrn data
     for year in np.unique(uscrn['year']):
         for month in np.unique(uscrn['month']):
