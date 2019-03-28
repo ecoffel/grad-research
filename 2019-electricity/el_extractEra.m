@@ -1,5 +1,5 @@
 if ~exist('eraTemp')
-    eraTemp = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', 2007, 'endYear', 2018);
+    eraTemp = loadDailyData('E:\data\era-interim\output\wb-davies-jones-full\regrid\world', 'startYear', 2007, 'endYear', 2018);
     if nanmean(nanmean(nanmean(nanmean(nanmean(eraTemp{3}))))) > 100
         eraTemp{3} = eraTemp{3} - 273.15;
     end
@@ -35,4 +35,4 @@ for i = 1:size(plantLatLon, 1)
     plantWbTimeSeries(i, :) = [ind, txClean'];
 end
 
-csvwrite('2019-electricity/nuke-tx-era.csv', plantWbTimeSeries);
+csvwrite('2019-electricity/nuke-tw-era.csv', plantWbTimeSeries);

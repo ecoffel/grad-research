@@ -126,7 +126,7 @@ for k = 1:length(ncFileNames)
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
-        %continue;
+        continue;
     end
     
     ind = 0;

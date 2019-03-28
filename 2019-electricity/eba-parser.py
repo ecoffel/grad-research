@@ -21,12 +21,12 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-months = range(6,10)
+months = range(1,13)
 
 if not 'eba' in locals():
     print('loading eba...')
     eba = []
-    for line in open('%s/ecoffel/data/projects/electricity/NUC_STATUS.txt' % dataDir, 'r'):
+    for line in open('%s/ecoffel/data/projects/electricity/EBA.txt' % dataDir, 'r'):
         if (len(eba)+1) % 100 == 0:
             print('loading line ', (len(eba)+1))
             
@@ -81,7 +81,7 @@ if not 'eba' in locals():
             
             eba.append(curLineNew)
 
-subgrid = 'NYIS'
+subgrid = 'PJM'
 
 subgrids = {}
 subgrids['ERCO'] = {'genId':547, \
@@ -172,7 +172,9 @@ if not 'uscrn' in locals():
     uscrn['rh'][uscrn['rh'] < -100] = np.nan
     uscrn['wb'][uscrn['wb'] < -100] = np.nan
 
-    
+
+tw = np.genfromtxt('nuke-tx-era.csv', delimiter=',')
+
 if not 'dailySeries' in locals():
     print('building daily electricity data...')
     dailySeries = {'year':[], 'month':[], 'day':[], 'tempData':[], 'rhData':[], 'wbData':[], \
@@ -188,13 +190,17 @@ if not 'dailySeries' in locals():
     
     # loop through all obs from the uscrn data
     for year in np.unique(uscrn['year']):
+        if not year in range(2014, 2018+1):
+            continue
+        
         for month in np.unique(uscrn['month']):
         #   
             # select only summer
             if not month in months:
                 continue
 
-            for day in np.unique(uscrn['day']):
+            # need this where statement to get correct # days in the current month
+            for day in np.unique(uscrn['day'][np.where((uscrn['year']==year) & (uscrn['month']==month))[0]]):
 
                 # find matching TX generation data
                 indGen = np.where((eba[genId]['year'] == year) & \
@@ -248,6 +254,11 @@ if not 'dailySeries' in locals():
                             dailySeries['tempData'][-1].append(np.nan)
                             dailySeries['rhData'][-1].append(np.nan)
                             dailySeries['wbData'][-1].append(np.nan)
+                else:
+                    dailySeries['genData'].append(24*[np.nan])
+                    dailySeries['intData'].append(24*[np.nan])
+                    dailySeries['demData'].append(24*[np.nan])
+                    dailySeries['demFctData'].append(24*[np.nan])
     
     dailySeries['genData'] = np.array(dailySeries['genData'])
     dailySeries['intData'] = np.array(dailySeries['intData'])
@@ -261,9 +272,86 @@ if not 'dailySeries' in locals():
     dailySeries['rhData'][dailySeries['rhData']<-100] = np.nan
     dailySeries['wbData'][dailySeries['wbData']<-100] = np.nan
 
-
+sys.exit()
 # find days above 95 percentile tx
-dailyTx = np.nanmax(dailySeries['wbData'], axis=1)
+dailyTx = np.nanmax(dailySeries['tempData'], axis=1)
+intTx = []
+genTx = []
+demTx = []
+demFctTx = []
+
+dailyCoefsDiff = []
+dailyCoefsInt = []
+
+indTxRange = []
+
+range1 = 20
+range2 = 40
+step = 2
+for t in range(range1, range2, step):
+    indTx = np.where((dailyTx >= t) & (dailyTx < t+step))[0]
+    if len(indTx) < 10:
+        intTx.append(np.nan)
+        genTx.append(np.nan)
+        demTx.append(np.nan)
+        demFctTx.append(np.nan)
+        continue
+    indTxRange.append(indTx)
+    intTx.append(np.min(np.nanmean(dailySeries['intData'][indTx], axis = 0)))
+    genTx.append(np.max(np.nanmean(dailySeries['genData'][indTx], axis = 0)))
+    demTx.append(np.max(np.nanmean(dailySeries['demData'][indTx], axis = 0)))
+    demFctTx.append(np.max(np.nanmean(dailySeries['demFctData'][indTx], axis = 0)))
+    
+    y = np.max(dailySeries['demData'][indTx], axis=1)
+    x = dailyTx[indTx]
+    nn = np.where((~np.isnan(y)) & (~np.isnan(x)))
+    modelDem = sm.OLS(y[nn], x[nn]).fit()
+    
+    y = np.max(dailySeries['genData'][indTx], axis=1)
+    x = dailyTx[indTx]
+    nn = np.where((~np.isnan(y)) & (~np.isnan(x)))
+    modelGen = sm.OLS(y[nn], x[nn]).fit()
+    
+    y = np.max(dailySeries['demData'][indTx]-dailySeries['genData'][indTx], axis=1)
+    x = dailyTx[indTx]
+    nn = np.where((~np.isnan(y)) & (~np.isnan(x)))
+    modelDiff = sm.OLS(y[nn], x[nn]).fit()
+    
+    y = np.min(dailySeries['intData'][indTx], axis=1)
+    x = dailyTx[indTx]
+    nn = np.where((~np.isnan(y)) & (~np.isnan(x)))
+    modelInt = sm.OLS(y[nn], x[nn]).fit()
+    
+    dailyCoefsDiff.append(modelDiff.params[0])
+    dailyCoefsInt.append(modelInt.params[0])
+
+demTx = np.array(demTx)
+genTx = np.array(genTx)
+intTx = np.array(intTx)
+plt.figure()
+plt.plot(range(range1, range2, step), demTx-genTx, label='Demand - Generation')
+plt.plot(range(range1, range2, step), intTx, label='Interchange')
+plt.plot([0, 100], [0, 0], '--k')
+plt.xticks(range(20, 40, 2))
+plt.xlim([19, 41])
+plt.xlabel('Summer daily max Tx')
+plt.ylabel('Electricity anomaly (MWh)')
+plt.legend()
+
+
+sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
 intTx = []
 genTx = []
 demTx = []
@@ -333,7 +421,7 @@ plt.plot(range(range1, range2, step), genTx, label='Generation')
 plt.plot(range(range1, range2, step), intTx, label='Interchange')
 plt.plot([0, 100], [0, 0], '--k')
 plt.xticks(range(0, 110, 10))
-plt.xlabel('Summer daily max Tw percentile')
+plt.xlabel('Summer daily max Tx percentile')
 plt.ylabel('Electricity anomaly (MWh)')
 plt.legend()
 
@@ -343,7 +431,7 @@ plt.plot(range(range1, range2, step), demTx-genTx, label='Demand - Generation')
 plt.plot(range(range1, range2, step), intTx, label='Interchange')
 plt.plot([0, 100], [0, 0], '--k')
 plt.xticks(range(0, 110, 10))
-plt.xlabel('Summer daily max Tw percentile')
+plt.xlabel('Summer daily max Tx percentile')
 plt.ylabel('Electricity anomaly (MWh)')
 plt.legend()
 
@@ -352,7 +440,7 @@ plt.plot(range(range1, range2, step), dailyCoefsDiff, label='Demand - Generation
 plt.plot(range(range1, range2, step), dailyCoefsInt, label='Interchange')
 plt.plot([0, 100], [0, 0], '--k')
 plt.xticks(range(0, 110, 10))
-plt.xlabel('Summer daily max Tw percentile')
+plt.xlabel('Summer daily max Tx percentile')
 plt.ylabel('MWh / degree C')
 plt.legend()
 
@@ -365,7 +453,7 @@ step = 10
 eGen = np.reshape(dailySeries['genData'],[dailySeries['genData'].size, 1])
 eDem = np.reshape(dailySeries['demData'],[dailySeries['demData'].size, 1])
 eInt = np.reshape(dailySeries['intData'],[dailySeries['intData'].size, 1])
-t = np.reshape(dailySeries['wbData'],[dailySeries['wbData'].size, 1])
+t = np.reshape(dailySeries['tempData'],[dailySeries['tempData'].size, 1])
 
 nn = np.where((~np.isnan(eGen)) & (~np.isnan(t)) & (~np.isnan(eDem)) & (~np.isnan(eInt)))
 eGen = eGen[nn]
@@ -409,7 +497,7 @@ plt.figure()
 plt.plot(range(range1, range2, step), coefsDiff, label = 'Demand - Generation')
 plt.plot(range(range1, range2, step), coefsInt, label = 'Interchange')
 plt.plot([0, 100], [0, 0], '--k')
-plt.xlabel('Summer hourly Tw percentile')
+plt.xlabel('Summer hourly Tx percentile')
 plt.ylabel('MWh anomaly / degree C')
 plt.xticks(range(range1, range2+10, 10))
 plt.legend()
