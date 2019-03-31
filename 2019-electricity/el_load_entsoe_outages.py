@@ -8,198 +8,137 @@ Created on Tue Mar 26 15:57:40 2019
 import matplotlib.pyplot as plt 
 import numpy as np
 import statsmodels.api as sm
-import pandas as pd
-import math
-import sys
-import os
+import el_entsoe_utils
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-def normalize(v):
-    nn = np.where(~np.isnan(v))[0]
-    norm = np.linalg.norm(v[nn])
-    newv = v.copy()
-    if norm == 0: 
-       return newv
-   
-    return newv / float(norm)
+useEra = True
+plotFigs = False
+
+
+entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
+entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=True)
+entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoeMatchData)
+
+# determine breakpoint in data
+for i in range(25,36):
+    ind1 = np.where(entsoeAgData['tx']<i)[0]
+    ind2 = np.where(entsoeAgData['tx']>i)[0]
     
-
-monthsList = ['January', 'February', 'March', 'April', 'May', 'June', \
-              'July', 'August', 'September', 'October', 'November', 'December']
-
-def getMonth(m):
-    return monthsList.index(m)+1
-
-def getEUCountryCode(s):
-    euCodes = ['AL', 'AD', 'AM', 'AT', 'BY', 'BE', 'BA', 'BG', 'CH', 'CY', 'CZ', 'DE', \
-               'DK', 'EE', 'ES', 'FO', 'FI', 'FR', 'GB', 'GE', 'GI', 'GR', 'HU', 'HR', \
-               'IE', 'IS', 'IT', 'LT', 'LU', 'LV', 'MC', 'MK', 'MT', 'NO', 'NL', 'PO', \
-               'PT', 'RO', 'SE', 'SI', 'SK', 'SM', 'VA']
-    for c in euCodes:
-        if c in s:
-            return c
-
-yearsEntsoe = []
-monthsEntsoe = []
-daysEntsoe = []
-countriesEntsoe = []
-actualCapacityEntsoe = []
-normalCapacityEntsoe = []
-for year in range(2015, 2019):
-    print('loading %d'%year)
-    for month in range(1, 13):
-        with open('%s/ecoffel/data/projects/electricity/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
-            n = 0
-            for line in f:
-                if n == 0:
-                    n += 1
-                    continue
-                
-                lineParts = line.split('\t')
-                
-                if len(lineParts) < 20:
-                    continue
-                
-#                if lineParts[8] != 'Forced':
-#                    continue
-                
-                yearsEntsoe.append(int(lineParts[0]))
-                monthsEntsoe.append(int(lineParts[1]))
-                daysEntsoe.append(int(lineParts[2]))
-                countriesEntsoe.append(getEUCountryCode(lineParts[12]))
-                actualCapacityEntsoe.append(float(lineParts[19]))
-                normalCapacityEntsoe.append(float(lineParts[18]))
-                
-yearsEntsoe = np.array(yearsEntsoe)
-monthsEntsoe = np.array(monthsEntsoe)
-daysEntsoe = np.array(daysEntsoe)
-countriesEntsoe = np.array(countriesEntsoe)
-actualCapacityEntsoe = np.array(actualCapacityEntsoe)
-normalCapacityEntsoe = np.array(normalCapacityEntsoe)
-
-countryList = []
-with open('country-tx-cpc-2015-2018.csv', 'r') as f:
-    i = 0
-    for line in f:
-        if i > 3:
-            parts = line.split(',')
-            countryList.append(parts[0])
-        i += 1
-countryTxData = np.genfromtxt('country-tx-cpc-2015-2018.csv', delimiter=',', skip_header=1)
-countryYearData = countryTxData[0,1:]
-countryMonthData = countryTxData[1,1:]
-countryDayData = countryTxData[2,1:]
-countryTxData = countryTxData[3:,1:]
-
-if not 'finalTx' in locals():
-    finalTx = []
-    finalOutages = []
-    finalOutagesBool = []
-    finalOutagesCount = []
-    finalOutageInds = []
+    if len(ind1) < 10 or len(ind2) < 10: continue
     
-    for c in range(len(countryList)):
-        get_inds = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-        indCountryEntsoe = get_inds(countryList[c], countriesEntsoe)
+    mdlX1 = sm.add_constant(entsoeAgData['tx'][ind1])
+    mdl1 = sm.OLS(entsoeAgData['outagesBool'][ind1], mdlX1).fit()
     
-        finalTx.append([])
-        finalOutages.append([])
-        finalOutageInds.append([])
-        finalOutagesBool.append([])
-        finalOutagesCount.append([])
-        for i in range(len(countryTxData[c])):
-            curYear = countryYearData[i]
-            curMonth = countryMonthData[i]
-            curDay = countryDayData[i]
-            
-            curDayIndEntsoe = np.where((yearsEntsoe == curYear) & (monthsEntsoe == curMonth) & \
-                                 (daysEntsoe == curDay))[0]
-            
-            curDayIndEntsoe = np.intersect1d(curDayIndEntsoe, indCountryEntsoe)
-            
-            if len(curDayIndEntsoe) > 0:
-                finalOutages[c].append(np.nansum(normalCapacityEntsoe[curDayIndEntsoe] - \
-                                                 actualCapacityEntsoe[curDayIndEntsoe]))
-                finalOutagesBool[c].append(1)
-            else:
-                finalOutages[c].append(0)
-                finalOutagesBool[c].append(0)
-            
-            finalOutagesCount[c].append(len(curDayIndEntsoe))
-            finalTx[c].append(countryTxData[c,i])
+    mdlX2 = sm.add_constant(entsoeAgData['tx'][ind2])
+    mdl2 = sm.OLS(entsoeAgData['outagesBool'][ind2], mdlX2).fit()
+    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+                                                                        mdl2.params[1], mdl2.pvalues[1]))
+
+
+x = entsoeAgData['tx']
+y = 100-(entsoeAgData['outages']*100)
+
+thresh = 27
+
+if useEra:
+    thresh = 27
+
+ind1 = np.where(x<thresh)[0]
+ind2 = np.where(x>thresh)[0]
+
+z1 = np.polyfit(x[ind1], y[ind1], 1)
+p1 = np.poly1d(z1)
+
+z2 = np.polyfit(x[ind2], y[ind2], 1)
+p2 = np.poly1d(z2)
+
+plt.figure(figsize=(3,3))
+plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
+plt.plot(range(10, thresh+1), p1(range(10, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(thresh, 39), p2(range(thresh, 39)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot([thresh, thresh], [-10, 100], '--k')
+plt.xlim([10, 40])
+plt.xticks(range(10, 40+1, 4))
+plt.ylim([0, 105])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+if plotFigs:
+    if useEra:
+        plt.savefig('entsoe-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.savefig('entsoe-outages-cpc.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
+binnedOutageData = []
+binnedOutageMeans = []
+binnedTx = []
+
+binstep = 2
+bin_x1 = 12
+bin_x2 = 36
+for c in range(len(entsoeMatchData['countries'])):
+    binnedOutageData.append([])
+    for t in range(bin_x1, bin_x2, binstep):
+        tempInds = np.where((entsoeMatchData['tx'][c] >= t) & (entsoeMatchData['tx'][c] < t+binstep))[0]
+        binnedOutageData[c].append(np.nanmean(entsoeMatchData['outagesBool'][c, tempInds]))
+binnedOutageData = np.array(binnedOutageData)
+
+for t in range(bin_x1, bin_x2, binstep):
+    tempInds = np.where((entsoeAgData['tx'] >= t) & (entsoeAgData['tx'] < t+binstep))[0]
+    if len(tempInds) > 0:
+        binnedOutageMeans.append(np.nanmean(entsoeAgData['outagesBool'][tempInds])*100)
+        binnedTx.append(t)
+    else:
+        binnedOutageMeans.append(np.nan)
         
-        outageInd = np.where(np.array(finalOutages[c]) > 0)[0]
-        finalOutageInds[c].extend(outageInd)
-    
-    finalTx = np.array(finalTx)
-    finalOutages = np.array(finalOutages)
-    finalOutagesBool = np.array(finalOutagesBool)
-    finalOutagesCount = np.array(finalOutagesCount)
-    finalOutageInds = np.array(finalOutageInds)
-                
-    for c in range(finalOutages.shape[0]):
-        finalOutages[c,:] = normalize(finalOutages[c,:]-pd.rolling_mean(finalOutages[c,:], 15))
 
 
-txAll = []
-outageAll = []
-outageBoolAll = []
-outageCountAll = []
-
-for c in range(finalOutages.shape[0]):
-    summerInds = np.where((countryMonthData > 6) & (countryMonthData < 9))[0]
-#    inds = np.intersect1d(summerInds, finalOutageInds[c])
-    
-    inds = summerInds
-    if len(inds) > 25:
-        curTx = finalTx[c,inds]
-        curOutage = finalOutages[c,inds]
-        curOutageBool = finalOutagesBool[c,inds]
-        curOutageCount = finalOutagesCount[c,inds]
-
-
-#        if c == 13:
-#            notOutliers = np.where((curOutage < .1))[0]
-#        else:
-#            notOutliers = np.where((curOutage < (np.nanmean(curOutage)+2*np.nanstd(curOutage))))[0]
-#        
-#        curTx = curTx[notOutliers]
-#        curOutage = curOutage[notOutliers]
-        
-#        z = np.polyfit(curTx, curOutage, 1)
-        X = sm.add_constant(curTx)
-        model = sm.OLS(curOutageBool, X).fit() 
-        
-        txAll.extend(curTx)
-        outageAll.extend(curOutage)
-        outageBoolAll.extend(curOutageBool)
-        outageCountAll.extend(normalize(np.array(curOutageCount)))
-        print('c = %d, country = %s, slope = %0.2f, p = %.02f' % (c, countryList[c], model.params[1]*1000, model.pvalues[1]))
-#        plt.figure()
-#        plt.scatter(curTx,curOutage)
-#        plt.title('c = %s'%countryList[c])
-#        plt.draw()
-            
-X = sm.add_constant(txAll)
-model = sm.OLS(outageCountAll, X).fit() 
-
-txAll = np.array(txAll)
-outageBoolAll = np.array(outageBoolAll)
-outageCountAll = np.array(outageCountAll)
-
-plt.figure()
-i = np.where(txAll>20)[0]
-plt.scatter(txAll[i], outageBoolAll[i])
-z = np.polyfit(txAll[i], outageBoolAll[i], 4)
+z = np.polyfit(binnedTx, binnedOutageMeans, 5)
 p = np.poly1d(z)
-plt.plot(range(20,45), p(range(20,45)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
 
-plt.figure()
-plt.scatter(txAll[i], outageCountAll[i])
-z = np.polyfit(txAll[i], outageCountAll[i], 4)
-p = np.poly1d(z)
-plt.plot(range(20,45), p(range(20,45)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.figure(figsize=(3,3))
+plt.bar(range(bin_x1, bin_x2, binstep), binnedOutageMeans, yerr = np.nanstd(binnedOutageData, axis=0)*100/2, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = 2, align = 'edge', \
+        error_kw=dict(lw=2, capsize=3, capthick=2), ecolor = [.25, .25, .25])
+plt.plot(range(13, 37), p(range(12, 36)), "--", linewidth = 2, color = [234/255., 49/255., 49/255.])
+plt.xlim([11, 37])
+plt.ylim([0, 35])
 
-            
+plt.gca().set_xticks(range(12,40,4))
+plt.gca().set_yticks(range(0,34,5))
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Plants with outages (%)', fontname = 'Helvetica', fontsize=16)
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+if plotFigs:
+    if useEra:
+        plt.savefig('entsoe-perc-plants-with-outages-era.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.savefig('entsoe-perc-plants-with-outages-cpc.epc', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)

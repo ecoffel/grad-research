@@ -1,7 +1,12 @@
-if ~exist('eraTemp')
-    eraTemp = loadDailyData('E:\data\era-interim\output\wb-davies-jones-full\regrid\world', 'startYear', 2007, 'endYear', 2018);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(eraTemp{3}))))) > 100
-        eraTemp{3} = eraTemp{3} - 273.15;
+if ~exist('temp')
+    tempEra = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', 2007, 'endYear', 2018);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(tempEra{3}))))) > 100
+        tempEra{3} = tempEra{3} - 273.15;
+    end
+    
+    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2007, 'endYear', 2018);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
     end
 end
 
@@ -18,21 +23,37 @@ for i = 1:size(plantLatLon, 1)
         lon = lon+360;
     end
     
-    [latInd, lonInd] = latLonIndex(eraTemp, [lat, lon]);
+    [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
     
-    tx = squeeze(eraTemp{3}(latInd, lonInd, :, :, :));
+    
+    [latEraInd, lonEraInd] = latLonIndex(tempEra, [lat, lon]);
+    
+    
+    tx = squeeze(temp{3}(latInd, lonInd, :, :, :));
+    txEra = squeeze(tempEra{3}(latEraInd, lonEraInd, :, :, :));
     
     curDate = datenum(2007, 1, 1, 1, 0, 0);
     txClean = [];
+    txCleanEra = [];
     for year = 1:length(2007:2018)
         for month = 1:12
             days = round(addtodate(curDate, 1, 'month') - curDate);
             curDate = addtodate(curDate, 1, 'month');
             txClean = [txClean; squeeze(tx(year, month, 1:days))];
+            txCleanEra = [txCleanEra; squeeze(txEra(year, month, 1:days))];
         end
+    end
+    
+    fprintf('cpc = %d, era = %d\n', length(find(~isnan(txClean))),length(find(~isnan(txCleanEra))))
+    figure();
+    hold on;
+    plot(txClean)
+    plot(txCleanEra)
+    if isnan(corr(txClean,txCleanEra))
+        x=5;
     end
     
     plantWbTimeSeries(i, :) = [ind, txClean'];
 end
 
-csvwrite('2019-electricity/nuke-tw-era.csv', plantWbTimeSeries);
+ csvwrite('2019-electricity/nuke-tx-cpc.csv', plantWbTimeSeries);

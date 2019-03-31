@@ -24,6 +24,9 @@ import csv
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
+useEra = True
+plotFigs = False
+
 months = range(1,13)
 
 if not 'eba' in locals():
@@ -134,16 +137,54 @@ for i in range(percOutage.shape[0]):
         x = x[nn]
         ytotal.extend(y)
         xtotal.extend(x)
+    else:
+        print(i)
+
+
+xtotal = np.array(xtotal)
+ytotal = np.array(ytotal)
+for i in range(10,43):
+    ind1 = np.where(xtotal<i)[0]
+    ind2 = np.where(xtotal>i)[0]
+    
+    if len(ind1) < 10 or len(ind2) < 10: continue
+    
+    mdlX1 = sm.add_constant(xtotal[ind1])
+    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+    
+    mdlX2 = sm.add_constant(xtotal[ind2])
+    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+                                                                        mdl2.params[1], mdl2.pvalues[1]))
+
+
 
 df = pd.DataFrame({'x':xtotal, 'y':ytotal})
 
-z = np.polyfit(xtotal, ytotal, 3)
-plt.figure(figsize=(5,5))
+thresh = 27
 
-plt.xlim([20, 42])
-sns.regplot(x='x', y='y', data=df, order=3, \
-            scatter_kws={"color": [.75, .75, .75], "s":10}, \
-            line_kws={"color": [234/255., 49/255., 49/255.]})
+if useEra:
+    thresh = 32
+
+ind1 = np.where(xtotal<thresh)[0]
+ind2 = np.where(xtotal>thresh)[0]
+
+z1 = np.polyfit(xtotal[ind1], ytotal[ind1], 1)
+p1 = np.poly1d(z1)
+
+z2 = np.polyfit(xtotal[ind2], ytotal[ind2], 1)
+p2 = np.poly1d(z2)
+
+plt.figure(figsize=(3,3))
+
+plt.scatter(xtotal, ytotal, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
+plt.plot(range(20, thresh+1), p1(range(20, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(thresh, 44), p2(range(thresh, 44)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot([thresh, thresh], [-10, 100], '--k')
+plt.ylim([-5,105])
+#sns.regplot(x='x', y='y', data=df, order=3, \
+#            scatter_kws={"color": [.5, .5, .5], "facecolor":[.75, .75, .75], "s":30}, \
+#            line_kws={"color": [234/255., 49/255., 49/255.]})
 #plt.scatter(xtotal, ytotal, 5, facecolors = 'none', edgecolors = [.75, .75, .75])
 #z = [model.params[1], model.params[0]]
 #p = np.poly1d(z)
@@ -159,19 +200,19 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Nuclear plant operating capacity (%)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
+
+plt.gca().set_xticks(range(20,45,4))
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 #plt.title('July - August', fontname = 'Helvetica', fontsize=16)
-plt.savefig('nuke-cap-reduction.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+if plotFigs:
+    plt.savefig('nuke-cap-reduction.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
 X = sm.add_constant(xtotal)
 model = sm.OLS(ytotal, X).fit() 
-
-
-
 
 
 
@@ -211,7 +252,7 @@ ydata = np.array(ydata)
 z = np.polyfit(xtotal, ytotal, 3)
 p = np.poly1d(z)
 
-plt.figure(figsize=(5,5))
+plt.figure(figsize=(3,3))
 plt.bar(range(20, 44, binstep), np.nanmean(ydata,axis=0), yerr = np.nanstd(ydata, axis=0)/2, \
         facecolor = [.75, .75, .75], \
         edgecolor = [0, 0, 0], alpha = .5, width = 4, align = 'edge', \
@@ -228,24 +269,27 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Nuclear plants with outages (%)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Plants with outages (%)', fontname = 'Helvetica', fontsize=16)
+
+plt.gca().set_xticks(range(20,45,4))
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 #plt.title('July - August', fontname = 'Helvetica', fontsize=16)
-plt.savefig('nuke-outage-chance.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
-X = sm.add_constant(xtotal)
-model = sm.OLS(ytotal, X).fit() 
+if plotFigs:
+    plt.savefig('nuke-outage-chance.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+#X = sm.add_constant(xtotal)
+#model = sm.OLS(ytotal, X).fit() 
 
 
-i = 0
-with open('nuke-lat-lon.csv', 'w') as f:
-    csvWriter = csv.writer(f)    
-    for pp in eba:
-        if 'lat' in pp.keys() and 'Nuclear generating capacity outage' in pp['name'] and not 'for generator' in pp['name']:
-            print(pp['name'])
+#i = 0
+#with open('nuke-lat-lon.csv', 'w') as f:
+#    csvWriter = csv.writer(f)    
+#    for pp in eba:
+#        if 'lat' in pp.keys() and 'Nuclear generating capacity outage' in pp['name'] and not 'for generator' in pp['name']:
+#            print(pp['name'])
 #            csvWriter.writerow([i, float(pp['lat']), float(pp['lon'])])
-        i += 1
-
+#        i += 1
+#

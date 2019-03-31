@@ -20,6 +20,10 @@ import os
 
 from el_subgrids import subgrids
 
+
+useEra = True
+plotFigs = False
+
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
@@ -229,19 +233,24 @@ outagesTotalPJM[1,:] = np.squeeze(np.squeeze(outagesTotalPJM[1,:])-pd.rolling_me
 outagesTotalPJM[2,:] = np.squeeze(np.squeeze(outagesTotalPJM[2,:])-pd.rolling_mean(np.squeeze(outagesTotalPJM[2,:]), smoothingLen))
 
 outagesForcedPJM = np.array(outagesForcedPJM)
-outagesForcedPJM[0,:] = outagesForcedPJM[0,:]-pd.rolling_mean(outagesForcedPJM[0,:], smoothingLen)
-outagesForcedPJM[1,:] = outagesForcedPJM[1,:]-pd.rolling_mean(outagesForcedPJM[1,:], smoothingLen)
-outagesForcedPJM[2,:] = outagesForcedPJM[2,:]-pd.rolling_mean(outagesForcedPJM[2,:], smoothingLen)
+#outagesForcedPJM[0,:] = outagesForcedPJM[0,:]-pd.rolling_mean(outagesForcedPJM[0,:], smoothingLen)
+#outagesForcedPJM[1,:] = outagesForcedPJM[1,:]-pd.rolling_mean(outagesForcedPJM[1,:], smoothingLen)
+#outagesForcedPJM[2,:] = outagesForcedPJM[2,:]-pd.rolling_mean(outagesForcedPJM[2,:], smoothingLen)
 
 stateList = []
-with open('subgrid-tx-cpc-2004-2018.csv', 'r') as f:
+
+fileName = 'subgrid-tx-cpc-2004-2018.csv'
+if useEra:
+    fileName = 'subgrid-tx-era-2004-2018.csv'
+    
+with open(fileName, 'r') as f:
     i = 0
     for line in f:
         if i > 2:
             parts = line.split(',')
             stateList.append(parts[0])
         i += 1
-stateTxData = np.genfromtxt('subgrid-tx-cpc-2004-2018.csv', delimiter=',', skip_header=1)
+stateTxData = np.genfromtxt(fileName, delimiter=',', skip_header=1)
 stateYearData = stateTxData[0,1:]
 stateMonthData = stateTxData[1,1:]
 stateDayData = stateTxData[2,1:]
@@ -275,9 +284,22 @@ for i in range(stateTxData.shape[1]):
 txISNE = np.array(txISNE)
 txPJM = np.array(txPJM)
 txSWPP = np.array(txSWPP)
-sys.exit()
+
+outagesPJMTotal = []
+outagesPJMTotal.extend(outagesForcedPJM[0,:])
+outagesPJMTotal.extend(outagesForcedPJM[1,:])
+outagesPJMTotal.extend(outagesForcedPJM[2,:])
+outagesPJMTotal = np.array(outagesPJMTotal)
+
+txPJMTotal = []
+txPJMTotal.extend(txPJM)
+txPJMTotal.extend(txPJM)
+txPJMTotal.extend(txPJM)
+txPJMTotal = np.array(txPJMTotal)
+txPJM = txPJMTotal
+
 outagesISNE = normalize(outagesISNE)
-outagesPJM = normalize(np.nanmean(outagesTotalPJM,axis=0))
+outagesPJM = normalize(outagesPJMTotal)
 outagesSWPP = normalize(outagesSWPP)
 
 
@@ -307,15 +329,29 @@ ytotal.extend(y)
 X = sm.add_constant(x)
 model = sm.OLS(y, X).fit() 
 
-z = np.polyfit(x, y, 4)
-p = np.poly1d(z)
+thresh = 33
+p_xlim1 = 24
+p_xlim2 = 39
+if useEra:
+    thresh = 32
+
+ind1 = np.where(x<thresh)[0]
+ind2 = np.where(x>thresh)[0]
+
+z1 = np.polyfit(x[ind1], y[ind1], 1)
+p1 = np.poly1d(z1)
+
+z2 = np.polyfit(x[ind2], y[ind2], 1)
+p2 = np.poly1d(z2)
 
 x1 = 20
 x2 = 39
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
-plt.plot(range(x1+1, x2-1), p(range(x1+1, x2-1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([20,40], [0, 0], '--k')
 plt.xlim([x1, x2])
 plt.xticks(range(x1,x2+1,2))
@@ -335,17 +371,32 @@ plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-#plt.savefig('us-outages-swpp.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+if plotFigs:
+    plt.savefig('us-outages-swpp.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+print('SWPP ----------------------------')
+
+xtotal = np.array(xtotal)
+ytotal = np.array(ytotal)
+for i in range(30,37):
+    ind1 = np.where(xtotal<i)[0]
+    ind2 = np.where(xtotal>i)[0]
+    
+    if len(ind1) < 10 or len(ind2) < 10: continue
+    
+    mdlX1 = sm.add_constant(xtotal[ind1])
+    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+    
+    mdlX2 = sm.add_constant(xtotal[ind2])
+    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+                                                                        mdl2.params[1], mdl2.pvalues[1]))
 
 
 
 
 
-
-
-
-
-summerInds = np.where((monthsPJM >= monthRange[0]) | (monthsPJM <= monthRange[1]))[0]
+summerInds = np.where((monthsPJM >= monthRange[0]) & (monthsPJM <= monthRange[1]))[0]
 
 y = outagesPJM
 x = txPJM
@@ -356,22 +407,38 @@ nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
 
-xtotal.extend(x)
-ytotal.extend(y)
 #print(np.polyfit(x,y,1))
 
 X = sm.add_constant(x)
 model = sm.OLS(y, X).fit() 
 
-z = np.polyfit(x, y, 4)
-p = np.poly1d(z)
+
+thresh = 31
+p_xlim1 = 24
+p_xlim2 = 35
+if useEra:
+    thresh = 29
+    p_xlim1 = 23
+    p_xlim2 = 33
+
+ind1 = np.where(x<thresh)[0]
+ind2 = np.where(x>thresh)[0]
+
+z1 = np.polyfit(x[ind1], y[ind1], 1)
+p1 = np.poly1d(z1)
+
+z2 = np.polyfit(x[ind2], y[ind2], 1)
+p2 = np.poly1d(z2)
+
 
 x1 = 20
 x2 = 39
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
-plt.plot(range(x1+1, x2-1), p(range(x1+1, x2-1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([20,40], [0, 0], '--k')
 plt.xlim([x1, x2])
 plt.xticks(range(x1,x2+1,2))
@@ -391,7 +458,26 @@ plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-#plt.savefig('us-outages-pjm.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+if plotFigs:
+    plt.savefig('us-outages-pjm.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
+print('PJM ----------------------------')
+xtotal = np.array(x)
+ytotal = np.array(y)
+for i in range(26,34):
+    ind1 = np.where(xtotal<i)[0]
+    ind2 = np.where(xtotal>i)[0]
+
+    if len(ind1) < 10 or len(ind2) < 10: continue
+
+    mdlX1 = sm.add_constant(xtotal[ind1])
+    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+    
+    mdlX2 = sm.add_constant(xtotal[ind2])
+    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+                                                                        mdl2.params[1], mdl2.pvalues[1]))
 
 
 
@@ -408,10 +494,7 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 
 
-
-
-
-summerInds = np.where((monthsISNE >= monthRange[0]) | (monthsISNE <= monthRange[0]))[0]
+summerInds = np.where((monthsISNE >= monthRange[0]) & (monthsISNE <= monthRange[0]))[0]
 
 y = outagesISNE
 x = txISNE
@@ -422,8 +505,6 @@ nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
 
-xtotal.extend(x)
-ytotal.extend(y)
 #hotInds = np.where((x>25))[0]
 #x = x[hotInds]
 #y = y[hotInds]
@@ -434,15 +515,32 @@ ytotal.extend(y)
 X = sm.add_constant(x)
 model = sm.OLS(y, X).fit() 
 
-z = np.polyfit(x, y, 4)
-p = np.poly1d(z)
+thresh = 30
+p_xlim1 = 20
+p_xlim2 = 35
+if useEra:
+    thresh = 28
+    p_xlim1 = 20
+    p_xlim2 = 32
+
+ind1 = np.where(x<thresh)[0]
+ind2 = np.where(x>thresh)[0]
+
+
+z1 = np.polyfit(x[ind1], y[ind1], 1)
+p1 = np.poly1d(z1)
+
+z2 = np.polyfit(x[ind2], y[ind2], 1)
+p2 = np.poly1d(z2)
 
 x1 = 20
-x2 = 39
+x2 = 38
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
-plt.plot(range(x1+1, x2-1), p(range(x1+1, x2-1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([10,50], [0, 0], '--k')
 plt.xlim([x1, x2])
 plt.xticks(range(x1,x2+1,2))
@@ -462,10 +560,26 @@ plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-#plt.savefig('us-outages-isne.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+if plotFigs:
+    plt.savefig('us-outages-isne.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
 
 
-
+print('ISNE ----------------------------')
+xtotal = np.array(x)
+ytotal = np.array(y)
+for i in range(12,34):
+    ind1 = np.where(xtotal<i)[0]
+    ind2 = np.where(xtotal>i)[0]
+    
+    if len(ind1) < 10 or len(ind2) < 10: continue
+    
+    mdlX1 = sm.add_constant(xtotal[ind1])
+    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+    
+    mdlX2 = sm.add_constant(xtotal[ind2])
+    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+                                                                        mdl2.params[1], mdl2.pvalues[1]))
 
 
 
