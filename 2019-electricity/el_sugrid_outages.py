@@ -21,7 +21,7 @@ import os
 from el_subgrids import subgrids
 
 
-useEra = True
+useEra = False
 plotFigs = False
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'

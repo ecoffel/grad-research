@@ -14,15 +14,10 @@ Created on Wed Mar  6 15:09:30 2019
 """
 
 import json
-import el_readUSCRN
-import el_wet_bulb
-import el_cooling_tower_model
 import matplotlib.pyplot as plt 
 import numpy as np
 import pandas as pd
-import glob
 import statsmodels.api as sm
-import math
 import sys
 
 from el_subgrids import subgrids

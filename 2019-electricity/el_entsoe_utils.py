@@ -32,11 +32,17 @@ def getEUCountryCode(s):
         if c in s:
             return c
 
+def get3LetterEUCountryCodes():
+    codes = ['AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', \
+             'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK',\
+             'SVN', 'ESP', 'SWE', 'GBR']
+    return codes
 
 def loadEntsoe(dataDir):
     yearsEntsoe = []
     monthsEntsoe = []
     daysEntsoe = []
+    namesEntsoe = []
     countriesEntsoe = []
     actualCapacityEntsoe = []
     normalCapacityEntsoe = []
@@ -58,6 +64,9 @@ def loadEntsoe(dataDir):
                     if lineParts[8] != 'Forced':
                         continue
                     
+#                    if float(lineParts[18]) < 100:
+#                        continue
+                    
                     if 'Hydro' in lineParts[15] or \
                         'hydro' in lineParts[15] or \
                         'Wind' in lineParts[15] or \
@@ -68,6 +77,7 @@ def loadEntsoe(dataDir):
                     monthsEntsoe.append(int(lineParts[1]))
                     daysEntsoe.append(int(lineParts[2]))
                     countriesEntsoe.append(getEUCountryCode(lineParts[12]))
+                    namesEntsoe.append(lineParts[14])
                     actualCapacityEntsoe.append(float(lineParts[19]))
                     normalCapacityEntsoe.append(float(lineParts[18]))
                     
@@ -79,7 +89,8 @@ def loadEntsoe(dataDir):
     normalCapacityEntsoe = np.array(normalCapacityEntsoe)
     
     d = {'years':yearsEntsoe, 'months':monthsEntsoe, 'days':daysEntsoe, \
-         'countries':countriesEntsoe, 'actualCapacity':actualCapacityEntsoe, \
+         'countries':countriesEntsoe, 'names': namesEntsoe, \
+         'actualCapacity':actualCapacityEntsoe, \
          'normalCapacity':normalCapacityEntsoe}
     
     return d
@@ -105,7 +116,7 @@ def matchEntsoeWx(entsoeData, useEra):
     countryTxData = countryTxData[3:,1:]
     
     finalTx = []
-    finalOutages = []
+    finalCapacity = []
     finalOutagesBool = []
     finalOutagesCount = []
     finalOutageInds = []
@@ -117,7 +128,7 @@ def matchEntsoeWx(entsoeData, useEra):
         indCountryEntsoe = get_inds(countryList[c], entsoeData['countries'])
     
         finalTx.append([])
-        finalOutages.append([])
+        finalCapacity.append([])
         finalOutageInds.append([])
         finalOutagesBool.append([])
         finalOutagesCount.append([])
@@ -136,27 +147,30 @@ def matchEntsoeWx(entsoeData, useEra):
                 for p in curDayIndEntsoe:    
                     perc.append(entsoeData['actualCapacity'][p] / entsoeData['normalCapacity'][p])
                 
-                finalOutages[c].append(np.nanmean(perc))
+                finalCapacity[c].append(np.nanmean(perc))
                 finalOutagesBool[c].append(1)
             else:
-                finalOutages[c].append(0)
+                # 1 here because plant at 100% capacity
+                finalCapacity[c].append(1)
+                
+                # 0 here because no outage
                 finalOutagesBool[c].append(0)
             
             finalOutagesCount[c].append(len(curDayIndEntsoe))
             finalTx[c].append(countryTxData[c,i])
 
         
-        outageInd = np.where(np.array(finalOutages[c]) > 0)[0]
+        outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
         finalOutageInds[c].extend(outageInd)
     
     finalTx = np.array(finalTx)
-    finalOutages = np.array(finalOutages)
+    finalCapacity = np.array(finalCapacity)
     finalOutagesBool = np.array(finalOutagesBool)
     finalOutagesCount = np.array(finalOutagesCount)
     finalOutageInds = np.array(finalOutageInds)
     
     d = {'tx':finalTx, 'years':countryYearData, 'months':countryMonthData, 'days':countryDayData, \
-         'countries':countryList, 'outages':finalOutages, 'outagesBool':finalOutagesBool, \
+         'countries':countryList, 'capacity':finalCapacity, 'outagesBool':finalOutagesBool, \
          'outagesCount':finalOutagesCount}
     return d
 
@@ -164,30 +178,30 @@ def matchEntsoeWx(entsoeData, useEra):
 def aggregateEntsoeData(entsoeMatchData):
     # aggregate country entsoe outdata data into single 1d array
     txAll = []
-    outageAll = []
+    capacityAll = []
     outageBoolAll = []
     outageCountAll = []
     
-    for c in range(entsoeMatchData['outages'].shape[0]):
+    for c in range(entsoeMatchData['capacity'].shape[0]):
         inds = np.where((entsoeMatchData['months'] > 6) & (entsoeMatchData['months'] < 9))[0]
     
         curTx = entsoeMatchData['tx'][c,inds]
-        curOutage = entsoeMatchData['outages'][c,inds]
+        curCapacity = entsoeMatchData['capacity'][c,inds]
         curOutageBool = entsoeMatchData['outagesBool'][c,inds]
         curOutageCount = entsoeMatchData['outagesCount'][c,inds]
     
         # outages reported for this country
         if np.nansum(curOutageCount) > 0:
             txAll.extend(curTx)
-            outageAll.extend(curOutage)
+            capacityAll.extend(curCapacity)
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
     
     txAll = np.array(txAll)
-    outageAll = np.array(outageAll)
+    capacityAll = np.array(capacityAll)
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
     
-    d = {'tx':txAll, 'outages':outageAll, 'outagesBool':outageBoolAll, \
+    d = {'tx':txAll, 'capacity':capacityAll, 'outagesBool':outageBoolAll, \
          'outagesCount':outageCountAll}
     return d

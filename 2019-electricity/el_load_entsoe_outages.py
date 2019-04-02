@@ -13,37 +13,37 @@ import el_entsoe_utils
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = True
+useEra = False
 plotFigs = False
 
 
 entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
-entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=True)
+entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=useEra)
 entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoeMatchData)
 
 # determine breakpoint in data
-for i in range(25,36):
+for i in range(20,35):
     ind1 = np.where(entsoeAgData['tx']<i)[0]
     ind2 = np.where(entsoeAgData['tx']>i)[0]
     
     if len(ind1) < 10 or len(ind2) < 10: continue
     
     mdlX1 = sm.add_constant(entsoeAgData['tx'][ind1])
-    mdl1 = sm.OLS(entsoeAgData['outagesBool'][ind1], mdlX1).fit()
+    mdl1 = sm.OLS(entsoeAgData['capacity'][ind1], mdlX1).fit()
     
     mdlX2 = sm.add_constant(entsoeAgData['tx'][ind2])
-    mdl2 = sm.OLS(entsoeAgData['outagesBool'][ind2], mdlX2).fit()
+    mdl2 = sm.OLS(entsoeAgData['capacity'][ind2], mdlX2).fit()
     print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
                                                                         mdl2.params[1], mdl2.pvalues[1]))
 
 
 x = entsoeAgData['tx']
-y = 100-(entsoeAgData['outages']*100)
+y = (entsoeAgData['capacity']*100)
 
 thresh = 27
 
 if useEra:
-    thresh = 27
+    thresh = 24
 
 ind1 = np.where(x<thresh)[0]
 ind2 = np.where(x>thresh)[0]
