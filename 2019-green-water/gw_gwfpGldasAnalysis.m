@@ -14,14 +14,20 @@ sacksCalRice = calendar;
 load('2019-green-water/sacks-Wheat');
 sacksCalWheat = calendar;
 
-load('2019-green-water/gldasData.mat');
+load('2019-green-water/gldasDataET-regrid.mat');
 gldasETData = gldasData;
+load('2019-green-water/gldasDataP-regrid.mat');
+gldasPData = gldasData;
 load('2019-green-water/gwfpData.mat');
+
+load('2019-green-water/gpcpData-regrid.mat');
 
 lat = iizumiMaize{1};
 lon = iizumiMaize{2};
 
 monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+
 
 if ~exist('gldasData') 
     fprintf('loading GLDAS pr...\n');
@@ -85,6 +91,37 @@ if ~exist('gldasData')
         end
     end
 end
+
+
+% regrid gpcp if necessary
+% gpcp = loadMonthlyData('E:\data\gpcp\output\precip\monthly\1979-2017', 'precip', 'startYear', 1981, 'endYear', 2010);
+% gpcpLat = gpcp{1};
+% gpcpLon = gpcp{2};
+% gpcpData = gpcp{3};
+% gpcpRegridData = [];
+% for y = 1:size(gpcpData, 3)
+%     for m = 1:size(gpcpData, 4)
+%         fprintf('regridding %d/%d\n', y, m);
+%         tmp = squeeze(gpcpData(:, :, y, m));
+%         tmpRegrid = regridGriddata({gpcpLat, gpcpLon, tmp}, iizumiMaize, false);
+%         gpcpRegridData(:, :, y, m) = tmpRegrid{3};
+%     end
+% end
+% 
+% save('2019-green-water/gpcpData-regrid.mat', 'gpcpRegridData');
+
+
+
+
+
+
+gldasNormData = squeeze(nanmean(gldasETData(:, :, 1995-1981+1:2004-1981+1, :), 3)) ./ squeeze(nanmean(gldasPData(:, :, 1995-1981+1:2004-1981+1, :), 3));
+gwfpNormData = gwfpData ./ squeeze(nanmean(gpcpRegridData(:, :, 1995-1981+1:2004-1981+1, :), 3));
+p = gwfpNormData ./ gldasNormData;
+
+
+
+
 
 regions = [[33, 52, [-110, -85]+360]; ... % us midwest
            [31, 41, [110, 123]]; ... % ne china

@@ -29,6 +29,8 @@ dataDir = 'e:/data/'
 useEra = True
 plotFigs = True
 
+outageDaysOnly = True
+
 
 def bootstrap_resample(X, n=None):
     """ Bootstrap resample an array_like
@@ -102,12 +104,15 @@ ytotalBool = np.array(ytotalBool)
 
 indOutages = np.where(ytotal<100)
 
-df = pd.DataFrame({'x':xtotal, 'y':ytotal})
-dfLogistic = pd.DataFrame({'x':xtotalBool, 'y':ytotalBool})
+if outageDaysOnly:
+    df = pd.DataFrame({'x':xtotal[indOutages], 'y':ytotal[indOutages]})
+else:
+    df = pd.DataFrame({'x':xtotal, 'y':ytotal})
+
 
 plt.figure(figsize=(4,4))
 plt.xlim([20,44])
-plt.ylim([-5,105])
+plt.ylim([-25, 105])
 sns.regplot(x='x', y='y', data=df, order=3, \
             scatter_kws={"color": [.5, .5, .5], "facecolor":[.75, .75, .75], "s":10, 'alpha':.25}, \
             line_kws={"color": [234/255., 49/255., 49/255.]})
@@ -115,13 +120,14 @@ sns.regplot(x='x', y='y', data=df, order=3, \
 sns.regplot(x='x', y='y', data=df, order=1, scatter=False, \
             line_kws={"color": [244/255., 153/255., 34/255.]})
 
-plt.xlim([20, 44])
-sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
-            line_kws={"color": [34/255., 171/255., 244/255.]})
+if outageDaysOnly:
+    plt.xlim([20, 44])
+    sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
+                line_kws={"color": [34/255., 171/255., 244/255.]})
 
 
 plt.xlim([19,45])
-plt.ylim([-5, 105])
+plt.ylim([-25, 105])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -134,6 +140,7 @@ plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsiz
 plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 plt.gca().set_xticks(range(20,45,4))
+plt.gca().set_yticks(range(0,101,20))
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
@@ -141,17 +148,70 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 #plt.title('July - August', fontname = 'Helvetica', fontsize=16)
 if plotFigs:
-    plt.savefig('nuke-eu-cap-reduction.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    if outageDaysOnly:
+        plt.savefig('nuke-eu-cap-reduction-outage-days.png', format='png', dpi=300, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.savefig('nuke-eu-cap-reduction-all-days.png', format='png', dpi=300, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+binstep = 4
+bin_x1 = 20
+bin_x2 = 44
+
+
+bincounts = []
+for t in range(bin_x1, bin_x2, binstep):
+    if outageDaysOnly:
+        bincounts.append(len(xtotal[(ytotal < 100) & (xtotal >= t) & (xtotal < t+binstep)]))
+    else:
+        bincounts.append(len(xtotal[(xtotal >= t) & (xtotal < t+binstep)]))
+
+
+# plot hist of days in each temp bin
+plt.figure(figsize=(6,1))
+plt.xlim([19, 45])
+#plt.ylim([0, 1])
+
+plt.bar(range(bin_x1, bin_x2, binstep), bincounts, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = binstep, align = 'edge', \
+        zorder=0)
+
+plt.gca().set_xticks([])
+plt.gca().set_xticklabels([])
+if outageDaysOnly:
+    plt.gca().set_yticks([0, 1500, 3000])
+    plt.gca().set_yticklabels(['0', '1.5K', '3K'])
+else:
+    plt.gca().set_yticks([0, 10000, 20000])
+    plt.gca().set_yticklabels(['0', '10K', '20K'])
+
+plt.gca().set_yticks([])
+plt.gca().set_yticklabels([])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+if plotFigs:
+    if outageDaysOnly:
+        plt.savefig('temp-day-hist-only-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.savefig('temp-day-hist-all-days-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
 
 
 
 
-
+dfLogistic = pd.DataFrame({'x':xtotalBool, 'y':ytotalBool})
 
 binnedOutageData = []
 binnedTx = []
 
-binstep = 2
+binstep = 4
 bin_x1 = 20
 bin_x2 = 44
 for i in range(entsoePlantData['tx'].shape[0]):
@@ -190,16 +250,39 @@ for i in range(nukeAgData['percCapacity'].shape[0]):
 binnedOutageData = np.array(binnedOutageData)
 binnedOutageData = binnedOutageData / 100
 
+
+boxy = []
+boxyMeans = []
+for c in range(binnedOutageData.shape[1]):
+    boxy.append([])
+    for i in range(binnedOutageData.shape[0]):
+        if not np.isnan(binnedOutageData[i, c]):
+            boxy[-1].append(binnedOutageData[i, c])
+    boxyMeans.append(np.mean(boxy[-1]))
+
+
 z = np.polyfit(range(bin_x1, bin_x2, binstep), np.nanmean(binnedOutageData, axis=0), 3)
 p = np.poly1d(z)
 
 plt.figure(figsize=(4,4))
-plt.bar(range(bin_x1, bin_x2, binstep), np.nanmean(binnedOutageData, axis=0),\
-        yerr = np.nanstd(binnedOutageData, axis=0)/2, \
-        facecolor = [.75, .75, .75], \
-        edgecolor = [0, 0, 0], width = 2, align = 'edge', \
-        error_kw=dict(lw=2, capsize=3, capthick=2), ecolor = [.25, .25, .25], zorder=0)
+#plt.bar(range(bin_x1, bin_x2, binstep), np.nanmean(binnedOutageData, axis=0),\
+#        yerr = np.nanstd(binnedOutageData, axis=0)/2, \
+#        facecolor = [.75, .75, .75], \
+#        edgecolor = [0, 0, 0], width = 2, align = 'edge', \
+#        error_kw=dict(lw=2, capsize=3, capthick=2), ecolor = [.25, .25, .25], zorder=0)
 
+
+medianprops = dict(linestyle='-', linewidth=2, color='black')
+meanpointprops = dict(marker='D', markeredgecolor='black',
+                      markerfacecolor='red')
+bplot = plt.boxplot(boxy, positions = range(22, 44, 4), showmeans=True, widths=4, sym='.', patch_artist=True, \
+                    medianprops=medianprops, meanprops=meanpointprops, zorder=0)
+
+colors = ['lightgray']
+for patch in bplot['boxes']:
+    patch.set_facecolor([.75, .75, .75])
+
+    
 
 plt.xlim([20, 44])
 sns.regplot(x='x', y='y', data=dfLogistic, logistic=True, scatter=False, \
@@ -210,8 +293,9 @@ plt.xlim([19, 45])
 plt.ylim([0, .55])
 
 plt.gca().set_xticks(range(20,45,4))
-plt.gca().set_yticks(np.arange(0,.55,.10))
-plt.gca().set_yticklabels(range(0,55,10))
+plt.gca().set_xticklabels(range(20,45,4))
+plt.gca().set_yticks(np.arange(0,1.1,.20))
+plt.gca().set_yticklabels(range(0,110,20))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
