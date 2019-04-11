@@ -17,15 +17,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
 import seaborn as sns
 import el_entsoe_utils
 import el_nuke_utils
+import sys
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
 useEra = True
-plotFigs = False
+plotFigs = True
 
 
 def bootstrap_resample(X, n=None):
@@ -47,8 +49,9 @@ def bootstrap_resample(X, n=None):
     return resample_i
 
 entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
-entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=useEra)
-entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoeMatchData)
+entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
+#entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=useEra)
+entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
 
 nukeData = el_nuke_utils.loadNukeData(dataDir)
 nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
@@ -66,33 +69,57 @@ ytotal.extend(100*entsoeAgData['capacity'])
 ytotal = np.array(ytotal)
 
 
+
+xtotalBool = []
+xtotalBool.extend(nukeAgData['txSummer'])
+xtotalBool.extend(entsoeAgData['tx'])
+xtotalBool = np.array(xtotalBool)
+
+ytotalBool = []
+ytotalBool.extend(nukeAgData['outagesBool'])
+ytotalBool.extend(entsoeAgData['outagesBool'])
+ytotalBool = np.array(ytotalBool)
+
+
+
+
 # determine breakpoint in data
-for i in range(20,35):
-    ind1 = np.where(xtotal<i)[0]
-    ind2 = np.where(xtotal>i)[0]
-    
-    if len(ind1) < 10 or len(ind2) < 10: continue
-    
-    mdlX1 = sm.add_constant(xtotal[ind1])
-    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
-    
-    mdlX2 = sm.add_constant(xtotal[ind2])
-    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
-    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
-                                                                        mdl2.params[1], mdl2.pvalues[1]))
+#for i in range(20,35):
+#    ind1 = np.where(xtotal<i)[0]
+#    ind2 = np.where(xtotal>i)[0]
+#    
+#    if len(ind1) < 10 or len(ind2) < 10: continue
+#    
+#    mdlX1 = sm.add_constant(xtotal[ind1])
+#    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+#    
+#    mdlX2 = sm.add_constant(xtotal[ind2])
+#    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+#    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+#                                                                        mdl2.params[1], mdl2.pvalues[1]))
+
 
 
 indOutages = np.where(ytotal<100)
 
 df = pd.DataFrame({'x':xtotal, 'y':ytotal})
-
+dfLogistic = pd.DataFrame({'x':xtotalBool, 'y':ytotalBool})
 
 plt.figure(figsize=(4,4))
 plt.xlim([20,44])
 plt.ylim([-5,105])
 sns.regplot(x='x', y='y', data=df, order=3, \
-            scatter_kws={"color": [.5, .5, .5], "facecolor":[.75, .75, .75], "s":30}, \
+            scatter_kws={"color": [.5, .5, .5], "facecolor":[.75, .75, .75], "s":10, 'alpha':.25}, \
             line_kws={"color": [234/255., 49/255., 49/255.]})
+
+sns.regplot(x='x', y='y', data=df, order=1, scatter=False, \
+            line_kws={"color": [244/255., 153/255., 34/255.]})
+
+plt.xlim([20, 44])
+sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
+            line_kws={"color": [34/255., 171/255., 244/255.]})
+
+
 plt.xlim([19,45])
 plt.ylim([-5, 105])
 
@@ -124,17 +151,17 @@ if plotFigs:
 binnedOutageData = []
 binnedTx = []
 
-binstep = 4
+binstep = 2
 bin_x1 = 20
 bin_x2 = 44
-for c in range(len(entsoeMatchData['countries'])):
+for i in range(entsoePlantData['tx'].shape[0]):
     binnedOutageData.append([])
     for t in range(bin_x1, bin_x2, binstep):
-        tempInds = np.where((entsoeMatchData['tx'][c] >= t) & (entsoeMatchData['tx'][c] < t+binstep))[0]
+        tempInds = np.where((entsoePlantData['tx'][i] >= t) & (entsoePlantData['tx'][i] < t+binstep))[0]
         if len(tempInds) > 0:
-            binnedOutageData[c].append(np.nanmean(entsoeMatchData['outagesBool'][c, tempInds]))
+            binnedOutageData[i].append(np.nanmean(entsoePlantData['outagesBool'][i, tempInds]))
         else:
-            binnedOutageData[c].append(np.nan)
+            binnedOutageData[i].append(np.nan)
 
 
 for i in range(nukeAgData['percCapacity'].shape[0]):
@@ -161,6 +188,7 @@ for i in range(nukeAgData['percCapacity'].shape[0]):
                 binnedOutageData[-1].append(np.nan)
 
 binnedOutageData = np.array(binnedOutageData)
+binnedOutageData = binnedOutageData / 100
 
 z = np.polyfit(range(bin_x1, bin_x2, binstep), np.nanmean(binnedOutageData, axis=0), 3)
 p = np.poly1d(z)
@@ -170,13 +198,20 @@ plt.bar(range(bin_x1, bin_x2, binstep), np.nanmean(binnedOutageData, axis=0),\
         yerr = np.nanstd(binnedOutageData, axis=0)/2, \
         facecolor = [.75, .75, .75], \
         edgecolor = [0, 0, 0], width = 2, align = 'edge', \
-        error_kw=dict(lw=2, capsize=3, capthick=2), ecolor = [.25, .25, .25])
-plt.plot(range(21, 44), p(range(20, 43)), "--", linewidth = 2, color = [234/255., 49/255., 49/255.])
+        error_kw=dict(lw=2, capsize=3, capthick=2), ecolor = [.25, .25, .25], zorder=0)
+
+
+plt.xlim([20, 44])
+sns.regplot(x='x', y='y', data=dfLogistic, logistic=True, scatter=False, \
+            line_kws={"color": [234/255., 49/255., 49/255.]})
+
+#plt.plot(range(21, 44), p(range(20, 43)), "--", linewidth = 2, color = [234/255., 49/255., 49/255.])
 plt.xlim([19, 45])
-plt.ylim([0, 55])
+plt.ylim([0, .55])
 
 plt.gca().set_xticks(range(20,45,4))
-plt.gca().set_yticks(range(0,55,10))
+plt.gca().set_yticks(np.arange(0,.55,.10))
+plt.gca().set_yticklabels(range(0,55,10))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -193,6 +228,6 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
     if useEra:
-        plt.savefig('nuke-eu-perc-plants-with-outages-era.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig('nuke-eu-perc-plants-with-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
     else:
-        plt.savefig('nuke-eu-perc-plants-with-outages-cpc.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig('nuke-eu-perc-plants-with-outages-cpc.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)

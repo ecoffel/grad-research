@@ -13,7 +13,7 @@ import el_entsoe_utils
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = False
+useEra = True
 plotFigs = False
 
 

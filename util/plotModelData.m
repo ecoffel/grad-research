@@ -84,7 +84,20 @@ if ~noNewFig
 end
 
 
-if strcmp(region, 'world')
+if strcmp(region, 'green-water')
+%     worldmap world;
+    worldmap([-60, 60], [-125, -175]);
+    % add in the final lon line (for lon = 360/0) - this hasn't been
+    % plotted yet
+    if correctLon0
+        data{1}(:, end+1) = data{1}(:, end) + (data{1}(:, end)-data{1}(:, end-1));
+        data{2}(:, end+1) = data{2}(:, end) + (data{2}(:, end)-data{2}(:, end-1));
+        %data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
+    end
+
+    
+    framem off; gridm off; mlabel off; plabel off;
+elseif strcmp(region, 'world')
     worldmap world;
     
     % add in the final lon line (for lon = 360/0) - this hasn't been
@@ -95,7 +108,6 @@ if strcmp(region, 'world')
         %data{3}(:, end+1) = data{3}(:, 1);% + (data{3}(:, end)-data{3}(:, end-1));
     end
 
-    
     framem off; gridm off; mlabel off; plabel off;
 elseif strcmp(region, 'north atlantic')
     worldmap([25 75], [-75 10]);

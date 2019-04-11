@@ -110,6 +110,8 @@ def accumulateNukeWxData(eba, tx, ids):
     
     percCapacity = np.array(percCapacity)  
     
+    outageBool = []
+    
     xtotal = []
     ytotal = []
     for i in range(percCapacity.shape[0]):
@@ -125,11 +127,18 @@ def accumulateNukeWxData(eba, tx, ids):
             x = x[nn]
             ytotal.extend(y)
             xtotal.extend(x)
+            
+            for k in range(len(y)):
+                if y[k] < 100:
+                    outageBool.append(1)
+                else:
+                    outageBool.append(0)
         else:
             print(i)
     
     xtotal = np.array(xtotal)
     ytotal = np.array(ytotal)
     
-    d = {'txSummer': xtotal, 'capacitySummer':ytotal, 'percCapacity':percCapacity, 'summerInds':summerInds}
+    d = {'txSummer': xtotal, 'capacitySummer':ytotal, 'percCapacity':percCapacity, \
+         'summerInds':summerInds, 'outagesBool':outageBool}
     return d
