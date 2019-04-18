@@ -17,7 +17,7 @@ import el_entsoe_utils
 
 dataDir = 'e:/data/'
 
-entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
+entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
 
 
 #with open('%s/ecoffel/data/projects/electricity/global_power_plant_database.csv'%dataDir,encoding='latin-1') as f:
@@ -74,7 +74,7 @@ mSize = 15
 
 # Add a marker per city of the data frame!
 xpt, ypt = m(nukeLatLon[:,1], nukeLatLon[:,2])
-m.scatter(ypt, xpt, s=mSize, color="orange", edgecolors="black", zorder=10)
+m.scatter(ypt, xpt, s=mSize, color="orange", edgecolors="black", label='Nuclear', zorder=10)
 
 coalInds = []
 gasInds = []
@@ -111,10 +111,10 @@ m.scatter(ypt, xpt, s=mSize, color='#3182bd', edgecolors="black", label='Gas', z
 
 xpt, ypt = m(entsoeLat[np.array(oilInds)], entsoeLon[np.array(oilInds)])
 m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', zorder=10)
-#
+##
 #xpt, ypt = m(entsoeLat[np.array(nukeInds)], entsoeLon[np.array(nukeInds)])
 #m.scatter(ypt, xpt, s=mSize, color='orange', edgecolors="black", label='Nuclear', zorder=10)
-#
+##
 #xpt, ypt = m(entsoeLat[np.array(bioInds)], entsoeLon[np.array(bioInds)])
 #m.scatter(ypt, xpt, s=mSize, color='green', edgecolors="black", label='Biomass', zorder=10)
 #

@@ -44,7 +44,7 @@ def getFuelType(s):
         if t in s.lower() or s.lower() in t:
             return t
 
-def loadEntsoe(dataDir):
+def loadEntsoeWithLatLon(dataDir):
     
     print('loading entsoe plant locations...')
     ppCommissionYear = []
@@ -183,6 +183,95 @@ def loadEntsoe(dataDir):
          'normalCapacity':normalCapacityEntsoe}
     
     return d
+
+
+def loadEntsoe(dataDir):
+                
+    yearsEntsoe = []
+    monthsEntsoe = []
+    daysEntsoe = []
+    namesEntsoe = []
+    fuelTypesEntsoe = []
+    eicEntsoe = []
+    countriesEntsoe = []
+    actualCapacityEntsoe = []
+    normalCapacityEntsoe = []
+    for year in range(2015, 2019):
+        print('loading entsoe year %d...'%year)
+        for month in range(1, 13):
+            with open('%s/ecoffel/data/projects/electricity/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
+                n = 0
+                
+                countryInd = -1
+                capActInd = -1
+                capNormInd = -1
+                eicInd = -1
+                nameInd = -1
+                
+                for line in f:
+                    lineParts = line.split('\t')
+                    
+                    if n == 0:
+                        for p in range(len(lineParts)):
+                            if lineParts[p].strip() == 'MapCode':
+                                countryInd = p
+                            elif lineParts[p].strip() == 'InstalledCapacity':
+                                capNormInd = p
+                            elif lineParts[p].strip() == 'UnavailabilityValue':
+                                capActInd = p
+                            elif lineParts[p].strip() == 'PowerRecourceEIC':
+                                eicInd = p
+                            elif lineParts[p].strip() == 'UnitName':
+                                nameInd = p
+                        n += 1
+                        continue
+                    
+                    if countryInd == -1 or capActInd == -1 or capNormInd == -1:
+                        print('no data for %d/%d'%(month,year))
+                        break
+                    
+                    if len(lineParts) < 20:
+                        continue
+                    
+                    if lineParts[8] != 'Forced':
+                        continue
+                    
+                    if 'Hydro' in lineParts[15] or \
+                        'hydro' in lineParts[15] or \
+                        'Wind' in lineParts[15] or \
+                        'wind' in lineParts[15]:
+                        continue
+                    
+                    curEIC = lineParts[eicInd].strip()
+                    curName = lineParts[nameInd].strip()
+                    
+                    yearsEntsoe.append(int(lineParts[0]))
+                    monthsEntsoe.append(int(lineParts[1]))
+                    daysEntsoe.append(int(lineParts[2]))
+                    eicEntsoe.append(curEIC)
+                    countriesEntsoe.append(getEUCountryCode(lineParts[countryInd]))
+                    namesEntsoe.append(curName)
+                    fuelTypesEntsoe.append(getFuelType(lineParts[15].strip()))
+                    actualCapacityEntsoe.append(float(lineParts[capActInd]))
+                    normalCapacityEntsoe.append(float(lineParts[capNormInd]))
+                    
+    yearsEntsoe = np.array(yearsEntsoe)
+    monthsEntsoe = np.array(monthsEntsoe)
+    daysEntsoe = np.array(daysEntsoe)
+    countriesEntsoe = np.array(countriesEntsoe)
+    actualCapacityEntsoe = np.array(actualCapacityEntsoe)
+    normalCapacityEntsoe = np.array(normalCapacityEntsoe)
+    
+    d = {'years':yearsEntsoe, 'months':monthsEntsoe, 'days':daysEntsoe, \
+         'countries':countriesEntsoe, 'names': namesEntsoe, \
+         'fuelTypes':fuelTypesEntsoe, \
+         'actualCapacity':actualCapacityEntsoe, \
+         'normalCapacity':normalCapacityEntsoe}
+    
+    return d
+
+
+
 
 
 def matchEntsoeWxPlantSpecific(entsoeData, useEra):
@@ -342,40 +431,6 @@ def matchEntsoeWxCountry(entsoeData, useEra):
 
 
 
-
-
-def aggregateEntsoeDataPlantSpecific(entsoeMatchDataPlant):
-    # aggregate country entsoe outdata data into single 1d array
-    txAll = []
-    capacityAll = []
-    outageBoolAll = []
-    outageCountAll = []
-    
-    for c in range(entsoeMatchData['capacity'].shape[0]):
-        inds = np.where((entsoeMatchData['months'] > 6) & (entsoeMatchData['months'] < 9))[0]
-    
-        curTx = entsoeMatchData['tx'][c,inds]
-        curCapacity = entsoeMatchData['capacity'][c,inds]
-        curOutageBool = entsoeMatchData['outagesBool'][c,inds]
-        curOutageCount = entsoeMatchData['outagesCount'][c,inds]
-    
-        # outages reported for this country
-        if np.nansum(curOutageCount) > 0:
-            txAll.extend(curTx)
-            capacityAll.extend(curCapacity)
-            outageBoolAll.extend(curOutageBool)
-            outageCountAll.extend(normalize(np.array(curOutageCount)))
-    
-    txAll = np.array(txAll)
-    capacityAll = np.array(capacityAll)
-    outageBoolAll = np.array(outageBoolAll)
-    outageCountAll = np.array(outageCountAll)
-    
-    d = {'tx':txAll, 'capacity':capacityAll, 'outagesBool':outageBoolAll, \
-         'outagesCount':outageCountAll}
-    return d
-
-
 def aggregateEntsoeData(entsoeMatchData):
     # aggregate country entsoe outdata data into single 1d array
     txAll = []
@@ -383,6 +438,12 @@ def aggregateEntsoeData(entsoeMatchData):
     outageBoolAll = []
     outageCountAll = []
     
+    plantMonths = []
+    plantDays = []
+    plantIds = []
+    # the number to start the IDs at to differentiate from the nuke data
+    baseId = 100
+    
     for c in range(entsoeMatchData['capacity'].shape[0]):
         inds = np.where((entsoeMatchData['months'] > 6) & (entsoeMatchData['months'] < 9))[0]
     
@@ -397,14 +458,21 @@ def aggregateEntsoeData(entsoeMatchData):
             capacityAll.extend(curCapacity)
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
+            plantIds.extend([c+baseId] * len(curTx))
+            plantMonths.extend(entsoeMatchData['months'][inds])
+            plantDays.extend(entsoeMatchData['days'][inds])
     
     txAll = np.array(txAll)
     capacityAll = np.array(capacityAll)
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
+    plantIds = np.array(plantIds)
+    plantMonths = np.array(plantMonths)
+    plantDays = np.array(plantDays)
     
     d = {'tx':txAll, 'capacity':capacityAll, 'outagesBool':outageBoolAll, \
-         'outagesCount':outageCountAll}
+         'outagesCount':outageCountAll, 'plantMonths':plantMonths, \
+         'plantDays':plantDays, 'plantIds':plantIds}
     return d
 
 

@@ -17,8 +17,12 @@ useEra = True
 plotFigs = False
 
 
+entsoeDataLatLon = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
 entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
-entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=useEra)
+
+entsoeMatchData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
+entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeDataLatLon, useEra=useEra)
+
 entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoeMatchData)
 
 # determine breakpoint in data
@@ -43,7 +47,7 @@ y = (entsoeAgData['capacity']*100)
 thresh = 27
 
 if useEra:
-    thresh = 24
+    thresh = 23
 
 ind1 = np.where(x<thresh)[0]
 ind2 = np.where(x>thresh)[0]

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import el_nuke_utils
+import sys
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
@@ -23,6 +24,41 @@ eba = el_nuke_utils.loadNukeData(dataDir)
 tx, ids = el_nuke_utils.loadWxData(eba, useEra=useEra)
 ebaAcc = el_nuke_utils.accumulateNukeWxData(eba, tx, ids)
 
+plantAcc = el_nuke_utils.accumulateNukeWxDataPlantLevel(eba, tx, ids)
+
+
+thresh = 30
+slopes = []
+cntNeg = 0
+cntPos = 0
+for p in range(plantAcc['txSummer'].shape[0]):
+    t = plantAcc['txSummer'][p]
+    c = plantAcc['capacitySummer'][p]
+    m = plantAcc['plantMonths'][p]
+    d = plantAcc['plantDays'][p]
+    
+    ind = np.where((t>thresh))[0]
+    if len(ind) < 2: continue
+    X = sm.add_constant(t[ind]) # adding a constant 
+    model = sm.OLS(c[ind], X).fit()
+    
+    slopes.append(model.params[1])
+    
+slopes = np.array(slopes)
+plt.figure(figsize=(3,3))
+for s in range(len(slopes)):
+    plt.plot([thresh,np.nanmax(plantAcc['txSummer'][s])], \
+              [1, 1+(slopes[s]*(np.nanmax(plantAcc['txSummer'][s])-thresh)/100.0)], \
+              linewidth=2, color=[.5, .5, .5])
+plt.plot([thresh,50], [1, 1], '--k')
+plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica') 
+    tick.label.set_fontsize(14)
 
 for i in range(10,43):
     ind1 = np.where(ebaAcc['txSummer']<i)[0]

@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-from sklearn.linear_model import LogisticRegression
+from sklearn import linear_model
 import seaborn as sns
 import el_entsoe_utils
 import el_nuke_utils
@@ -27,7 +27,7 @@ import sys
 dataDir = 'e:/data/'
 
 useEra = True
-plotFigs = True
+plotFigs = False
 
 outageDaysOnly = True
 
@@ -70,7 +70,20 @@ ytotal.extend(nukeAgData['capacitySummer'])
 ytotal.extend(100*entsoeAgData['capacity'])
 ytotal = np.array(ytotal)
 
+plantid = []
+plantid.extend(nukeAgData['plantIds'])
+plantid.extend(entsoeAgData['plantIds'])
+plantid = np.array(plantid)
 
+plantMonths = []
+plantMonths.extend(nukeAgData['plantMonths'])
+plantMonths.extend(entsoeAgData['plantMonths'])
+plantMonths = np.array(plantMonths)
+
+plantDays = []
+plantDays.extend(nukeAgData['plantDays'])
+plantDays.extend(entsoeAgData['plantDays'])
+plantDays = np.array(plantDays)
 
 xtotalBool = []
 xtotalBool.extend(nukeAgData['txSummer'])
@@ -83,7 +96,27 @@ ytotalBool.extend(entsoeAgData['outagesBool'])
 ytotalBool = np.array(ytotalBool)
 
 
+data = {'Temp':xtotal, 'PlantID':plantid, \
+        'PlantMonths':plantMonths, 'PlantDays':plantDays, \
+        'PC':ytotal}
+df = pd.DataFrame(data, \
+                  columns=['Temp', 'PlantID', 'PlantMonths', 'PlantDays', 'PC'])
 
+X = df[['Temp', 'PlantID', 'PlantMonths', 'PlantDays']]
+Y = df['PC']
+
+regr = linear_model.LinearRegression()
+regr.fit(X, Y)
+
+print('Intercept: \n', regr.intercept_)
+print('Coefficients: \n', regr.coef_)
+
+X = sm.add_constant(X) # adding a constant
+ 
+model = sm.OLS(Y, X).fit()
+
+print_model = model.summary()
+print(print_model)
 
 # determine breakpoint in data
 #for i in range(20,35):
@@ -202,6 +235,63 @@ if plotFigs:
         plt.savefig('temp-day-hist-only-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
     else:
         plt.savefig('temp-day-hist-all-days-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
+binstep = 20
+bin_y1 = 0
+bin_y2 = 105
+
+
+bincounts = []
+for t in range(bin_y1, bin_y2, binstep):
+    if outageDaysOnly:
+        bincounts.append(len(ytotal[(ytotal < 100) & (ytotal >= t) & (ytotal < t+binstep)]))
+    else:
+        bincounts.append(len(ytotal[(ytotal >= t) & (ytotal <= t+binstep)]))
+
+
+# plot hist of days in each temp bin
+plt.figure(figsize=(6,1))
+plt.xlim([0, 100])
+#plt.ylim([0, 1])
+
+plt.bar(range(bin_y1, bin_y2, binstep), bincounts, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = binstep, align = 'edge', \
+        zorder=0)
+
+plt.gca().set_xticks([])
+plt.gca().set_xticklabels([])
+if outageDaysOnly:
+    plt.gca().set_yticks([0, 2500, 5000])
+    plt.gca().set_yticklabels(['0', '2.5K', '5K'])
+else:
+    plt.gca().set_yticks([0, 10000, 20000])
+    plt.gca().set_yticklabels(['0', '10K', '20K'])
+
+plt.gca().set_yticks([])
+plt.gca().set_yticklabels([])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+if plotFigs:
+    if outageDaysOnly:
+        plt.savefig('outage-day-hist-only-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.savefig('outage-day-hist-all-days-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
+
+
 
 
 

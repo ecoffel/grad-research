@@ -8,13 +8,13 @@ Created on Mon Apr  1 09:47:36 2019
 import json
 import numpy as np
 
+import sys
+
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
 useEra = True
 plotFigs = False
-
-months = range(1,13)
 
 def loadNukeData(dataDir):
     print('loading nuke eba...')
@@ -38,9 +38,8 @@ def loadNukeData(dataDir):
             curLineNew['data'] = []
             
             for datapt in curLine['data']:
-                # restrict to summer months
-                if not int(datapt[0][4:6]) in months or \
-                    int(datapt[0][0:4]) > 2018:
+                # restrict to before 2019
+                if int(datapt[0][0:4]) > 2018:
                     continue
                 
                 curLineNew['year'].append(int(datapt[0][0:4]))
@@ -55,7 +54,7 @@ def loadNukeData(dataDir):
             curLineNew['month'] = np.array(curLineNew['month'])
             curLineNew['day'] = np.array(curLineNew['day'])
             curLineNew['data'] = np.array(curLineNew['data'])
-
+            
             eba.append(curLineNew)
     return eba
 
@@ -66,6 +65,8 @@ def loadWxData(eba, useEra):
         fileName = 'nuke-tx-cpc.csv'
         
     tx = np.genfromtxt(fileName, delimiter=',')
+    
+    # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []
     for i in range(tx.shape[0]):
         # current facility outage name
@@ -86,6 +87,66 @@ def loadWxData(eba, useEra):
     return (np.array(tx), np.array(ids))
 
 
+
+
+
+def accumulateNukeWxDataPlantLevel(eba, tx, ids):
+    
+    summerInds = np.where((eba[0]['month'] == 7) | (eba[0]['month'] == 8))[0]
+    
+    plantPercCapacity = []
+    plantTx = []
+    
+    plantMonths = []
+    plantDays = []
+    
+    for i in range(ids.shape[0]):
+        out = np.array(eba[ids[i,0]]['data'])
+        cap = np.array(eba[ids[i,1]]['data'])     
+        
+        if len(out) == 4383 and len(cap) == 4383:
+            
+            # calc the plant operating capacity (% of total normal capacity)
+            plantPercCapacity.append(100*(1-(out/cap)))
+            
+            plantMonths.append(eba[ids[i,0]]['month'])
+            plantDays.append(eba[ids[i,0]]['day'])
+            
+    
+    plantPercCapacity = np.array(plantPercCapacity)  
+    plantMonths = np.array(plantMonths)
+    plantDays = np.array(plantDays)
+    
+    finalPlantPercCapacity = []
+    
+    for i in range(plantPercCapacity.shape[0]):
+        
+        y = plantPercCapacity[i]
+        x = tx[i,1:]
+        
+        if len(y)==len(x):
+            y = y[summerInds]
+            x = x[summerInds]
+            nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
+            y = y[nn]
+            x = x[nn]
+            
+            finalPlantPercCapacity.append(y)
+            plantTx.append(x)
+    
+    plantTx = np.array(plantTx)
+    finalPlantPercCapacity = np.array(finalPlantPercCapacity)
+    
+    d = {'txSummer': plantTx, 'capacitySummer':finalPlantPercCapacity, \
+         'summerInds':summerInds, \
+         'plantMonths':plantMonths, 'plantDays':plantDays}
+    return d
+
+
+
+
+
+
 def accumulateNukeWxData(eba, tx, ids):
     
     summerInds = np.where((eba[0]['month'] == 7) | (eba[0]['month'] == 8))[0]
@@ -93,6 +154,12 @@ def accumulateNukeWxData(eba, tx, ids):
     percCapacity = []
     totalOut = []
     totalCap = []
+    
+    # unique identifiers for plants
+    plantIds = []
+    plantMonths = []
+    plantDays = []
+    
     for i in range(ids.shape[0]):
         out = np.array(eba[ids[i,0]]['data'])
         cap = np.array(eba[ids[i,1]]['data'])     
@@ -101,6 +168,11 @@ def accumulateNukeWxData(eba, tx, ids):
             
             # calc the plant operating capacity (% of total normal capacity)
             percCapacity.append(100*(1-(out/cap)))
+            
+            plantIds.append([i]*len(out))
+            plantMonths.append(eba[ids[i,0]]['month'])
+            plantDays.append(eba[ids[i,0]]['day'])
+            
             if len(totalOut) == 0:
                 totalOut = out
                 totalCap = cap
@@ -109,11 +181,17 @@ def accumulateNukeWxData(eba, tx, ids):
                 totalCap += cap
     
     percCapacity = np.array(percCapacity)  
+    plantIds = np.array(plantIds)
+    plantMonths = np.array(plantMonths)
+    plantDays = np.array(plantDays)
     
     outageBool = []
     
     xtotal = []
     ytotal = []
+    plantIdsAcc = []
+    monthsAcc = []
+    daysAcc = []
     for i in range(percCapacity.shape[0]):
         
         y = percCapacity[i]
@@ -127,6 +205,9 @@ def accumulateNukeWxData(eba, tx, ids):
             x = x[nn]
             ytotal.extend(y)
             xtotal.extend(x)
+            plantIdsAcc.extend(plantIds[i,summerInds])
+            monthsAcc.extend(plantMonths[i,summerInds])
+            daysAcc.extend(plantDays[i,summerInds])            
             
             for k in range(len(y)):
                 if y[k] < 100:
@@ -138,7 +219,11 @@ def accumulateNukeWxData(eba, tx, ids):
     
     xtotal = np.array(xtotal)
     ytotal = np.array(ytotal)
+    plantIdsAcc = np.array(plantIdsAcc)
+    monthsAcc = np.array(monthsAcc)
+    daysAcc = np.array(daysAcc)
     
     d = {'txSummer': xtotal, 'capacitySummer':ytotal, 'percCapacity':percCapacity, \
-         'summerInds':summerInds, 'outagesBool':outageBool}
+         'summerInds':summerInds, 'outagesBool':outageBool, 'plantIds':plantIdsAcc, \
+         'plantMonths':monthsAcc, 'plantDays':daysAcc}
     return d
