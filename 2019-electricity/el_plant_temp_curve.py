@@ -96,20 +96,30 @@ ytotalBool.extend(entsoeAgData['outagesBool'])
 ytotalBool = np.array(ytotalBool)
 
 
-data = {'Temp':xtotal, 'PlantID':plantid, \
-        'PlantMonths':plantMonths, 'PlantDays':plantDays, \
-        'PC':ytotal}
-df = pd.DataFrame(data, \
-                  columns=['Temp', 'PlantID', 'PlantMonths', 'PlantDays', 'PC'])
+np.random.seed(1493)
 
-X = df[['Temp', 'PlantID', 'PlantMonths', 'PlantDays']]
-Y = df['PC']
+tempCoef = []
 
-regr = linear_model.LinearRegression()
-regr.fit(X, Y)
-
-print('Intercept: \n', regr.intercept_)
-print('Coefficients: \n', regr.coef_)
+for i in range(100):
+    resampleInd = np.random.choice(len(xtotal), int(.1 * len(xtotal)))
+    
+    
+    data = {'Temp':xtotal[resampleInd], 'PlantID':plantid[resampleInd], \
+            'PlantMonths':plantMonths[resampleInd], 'PlantDays':plantDays[resampleInd], \
+            'PC':ytotal[resampleInd]}
+    df = pd.DataFrame(data, \
+                      columns=['Temp', 'PlantID', 'PlantMonths', 'PlantDays', 'PC'])
+    
+    X = df[['Temp', 'PlantID', 'PlantMonths', 'PlantDays']]
+    Y = df['PC']
+    
+    regr = linear_model.LinearRegression()
+    regr.fit(X, Y)
+    
+    tempCoef.append(regr.coef_[0])
+    
+#    print('Intercept: \n', regr.intercept_)
+#    print('Coefficients: \n', regr.coef_)
 
 X = sm.add_constant(X) # adding a constant
  

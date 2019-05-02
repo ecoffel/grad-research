@@ -21,7 +21,7 @@ import os
 from el_subgrids import subgrids
 
 
-useEra = False
+useEra = True
 plotFigs = False
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
@@ -317,6 +317,47 @@ nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
 
+
+
+binstep = 4
+bin_y1 = 20
+bin_y2 = 40
+
+bincounts = []
+for t in range(bin_y1, bin_y2, binstep):
+    bincounts.append(len(x[(x >= t) & (x <= t+binstep)]))
+
+
+plt.figure(figsize=(6,1))
+plt.xlim([bin_y1, bin_y2])
+#plt.ylim([0, 1])
+
+plt.bar(range(bin_y1, bin_y2, binstep), bincounts, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = binstep, align = 'edge', \
+        zorder=0)
+
+plt.gca().set_xticks([])
+plt.gca().set_xticklabels([])
+plt.gca().set_yticks([0, 30, 60])
+plt.gca().set_yticklabels(['0', '30', '60'])
+
+plt.gca().set_yticks([])
+plt.gca().set_yticklabels([])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+if plotFigs:
+    plt.savefig('outage-hist-swpp-era.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
 xtotal.extend(x)
 ytotal.extend(y)
 #hotInds = np.where((x>25))[0]
@@ -345,7 +386,7 @@ z2 = np.polyfit(x[ind2], y[ind2], 1)
 p2 = np.poly1d(z2)
 
 x1 = 20
-x2 = 39
+x2 = 40
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
@@ -354,9 +395,9 @@ plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3
 plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([20,40], [0, 0], '--k')
 plt.xlim([x1, x2])
-plt.xticks(range(x1,x2+1,2))
+plt.xticks(range(x1,x2+1,4))
 plt.yticks(np.arange(-.06,.1,.03))
-plt.ylim([-.07, .1])
+plt.ylim([-.12, .1])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -365,7 +406,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 
 x0,x1 = plt.gca().get_xlim()
@@ -407,10 +448,45 @@ nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
 
-#print(np.polyfit(x,y,1))
 
-X = sm.add_constant(x)
-model = sm.OLS(y, X).fit() 
+
+binstep = 4
+bin_y1 = 20
+bin_y2 = 40
+
+bincounts = []
+for t in range(bin_y1, bin_y2, binstep):
+    bincounts.append(len(x[(x >= t) & (x <= t+binstep)]))
+
+
+plt.figure(figsize=(6,1))
+plt.xlim([bin_y1, bin_y2])
+#plt.ylim([0, 1])
+
+plt.bar(range(bin_y1, bin_y2, binstep), bincounts, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = binstep, align = 'edge', \
+        zorder=0)
+
+plt.gca().set_xticks([])
+plt.gca().set_xticklabels([])
+plt.gca().set_yticks([0, 30, 60])
+plt.gca().set_yticklabels(['0', '30', '60'])
+
+plt.gca().set_yticks([])
+plt.gca().set_yticklabels([])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+if plotFigs:
+    plt.savefig('outage-hist-pjm-era.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
 
 
 thresh = 31
@@ -432,7 +508,7 @@ p2 = np.poly1d(z2)
 
 
 x1 = 20
-x2 = 39
+x2 = 40
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
@@ -441,9 +517,9 @@ plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3
 plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([20,40], [0, 0], '--k')
 plt.xlim([x1, x2])
-plt.xticks(range(x1,x2+1,2))
+plt.xticks(range(x1,x2+1,4))
 plt.yticks(np.arange(-.06,.1,.03))
-plt.ylim([-.07, .1])
+plt.ylim([-.12, .1])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -452,7 +528,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 
 x0,x1 = plt.gca().get_xlim()
@@ -505,9 +581,46 @@ nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
 
-#hotInds = np.where((x>25))[0]
-#x = x[hotInds]
-#y = y[hotInds]
+
+
+
+binstep = 4
+bin_y1 = 20
+bin_y2 = 40
+
+bincounts = []
+for t in range(bin_y1, bin_y2, binstep):
+    bincounts.append(len(x[(x >= t) & (x <= t+binstep)]))
+
+
+plt.figure(figsize=(6,1))
+plt.xlim([bin_y1, bin_y2])
+#plt.ylim([0, 1])
+
+plt.bar(range(bin_y1, bin_y2, binstep), bincounts, \
+        facecolor = [.75, .75, .75], \
+        edgecolor = [0, 0, 0], width = binstep, align = 'edge', \
+        zorder=0)
+
+plt.gca().set_xticks([])
+plt.gca().set_xticklabels([])
+plt.gca().set_yticks([0, 30, 60])
+plt.gca().set_yticklabels(['0', '30', '60'])
+
+plt.gca().set_yticks([])
+plt.gca().set_yticklabels([])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+if plotFigs:
+    plt.savefig('outage-hist-isne-era.eps', format='eps', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+
+
 
 
 #print(np.polyfit(x,y,1))
@@ -534,7 +647,7 @@ z2 = np.polyfit(x[ind2], y[ind2], 1)
 p2 = np.poly1d(z2)
 
 x1 = 20
-x2 = 38
+x2 = 40
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
@@ -543,9 +656,9 @@ plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3
 plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([10,50], [0, 0], '--k')
 plt.xlim([x1, x2])
-plt.xticks(range(x1,x2+1,2))
+plt.xticks(range(x1,x2+1,4))
 plt.yticks(np.arange(-.06,.1,.03))
-plt.ylim([-.07, .1])
+plt.ylim([-.12, .1])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -554,7 +667,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Daily maximum temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Normalized outages', fontname = 'Helvetica', fontsize=16)
 
 x0,x1 = plt.gca().get_xlim()
