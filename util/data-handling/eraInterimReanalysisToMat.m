@@ -73,11 +73,11 @@ for k = 1:length(ncFileNames)
     for i = 0:nvar-1
         [vname, vtype, vdim, vatts] = netcdf.inqVar(ncid,i);
         
-        if strcmp(vname, 'latitude')
+        if strcmp(vname, 'latitude') || strcmp(vname, 'g0_lat_1')
             varIdLat = i+1;
         end
         
-        if strcmp(vname, 'longitude')
+        if strcmp(vname, 'longitude') || strcmp(vname, 'g0_lon_2')
             varIdLon = i+1;
         end
         
@@ -89,7 +89,7 @@ for k = 1:length(ncFileNames)
             varIdLev = i+1;
         end
         
-        if strcmp(vname, 'time')
+        if strcmp(vname, 'time') || strcmp(vname, 'initial_time0_hours')
             varIdTime = i+1;
         end
         
@@ -115,7 +115,11 @@ for k = 1:length(ncFileNames)
     lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1900 01 01 00 00 00]);
+    if length(strfind(outputDir, '075x075')) > 0
+        starttime = datenum([1800 01 01 00 00 00]);
+    else
+        starttime = datenum([1900 01 01 00 00 00]);
+    end
     time = [];
     
     % these are hours since 1900-01-01 01:01:01

@@ -17,12 +17,11 @@ import statsmodels.api as sm
 import math
 import sys
 import os
-
 from el_subgrids import subgrids
-
+from scipy import optimize
 
 useEra = True
-plotFigs = False
+plotFigs = True
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
@@ -36,6 +35,10 @@ def normalize(v):
    
     newv[nn] = newv[nn] / norm
     return newv
+
+def piecewise_linear(x, x0, y0, k1, k2):
+    return np.piecewise(x, [x < x0, x >= x0], [lambda x:k1*x + y0-k1*x0, lambda x:k2*x + y0-k2*x0])
+
 
 monthsList = ['January', 'February', 'March', 'April', 'May', 'June', \
               'July', 'August', 'September', 'October', 'November', 'December']
@@ -319,6 +322,8 @@ y = y[nn]
 
 
 
+
+
 binstep = 4
 bin_y1 = 20
 bin_y2 = 40
@@ -430,10 +435,8 @@ for i in range(30,37):
     
     mdlX2 = sm.add_constant(xtotal[ind2])
     mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
-    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
-                                                                        mdl2.params[1], mdl2.pvalues[1]))
-
-
+    print('t = %d, slope1 = %.6f, p1 = %.2f, r2 = %.2f, slope1 = %.6f, p1 = %.2f, r2 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], mdl1.rsquared, \
+                                                                        mdl2.params[1], mdl2.pvalues[1], mdl2.rsquared))
 
 
 
@@ -447,7 +450,6 @@ y = y[summerInds]
 nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
 x = x[nn]
 y = y[nn]
-
 
 
 binstep = 4
@@ -506,15 +508,21 @@ p1 = np.poly1d(z1)
 z2 = np.polyfit(x[ind2], y[ind2], 1)
 p2 = np.poly1d(z2)
 
+zAll = np.polyfit(x, y, 1)
+pAll = np.poly1d(zAll)
+
+
 
 x1 = 20
 x2 = 40
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
-plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
-plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
-plt.plot([thresh, thresh], [-1, 1], '--k')
+#plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+#plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+plt.plot(range(p_xlim1, p_xlim2), pAll(range(p_xlim1, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+
+#plt.plot([thresh, thresh], [-1, 1], '--k')
 plt.plot([20,40], [0, 0], '--k')
 plt.xlim([x1, x2])
 plt.xticks(range(x1,x2+1,4))
@@ -539,27 +547,22 @@ if plotFigs:
 
 
 print('PJM ----------------------------')
-xtotal = np.array(x)
-ytotal = np.array(y)
-for i in range(26,34):
-    ind1 = np.where(xtotal<i)[0]
-    ind2 = np.where(xtotal>i)[0]
-
-    if len(ind1) < 10 or len(ind2) < 10: continue
-
-    mdlX1 = sm.add_constant(xtotal[ind1])
-    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
-    
-    mdlX2 = sm.add_constant(xtotal[ind2])
-    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
-    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
-                                                                        mdl2.params[1], mdl2.pvalues[1]))
-
-
-
-
-
-
+#xtotal = np.array(x)
+#ytotal = np.array(y)
+#for i in range(26,34):
+#    ind1 = np.where(xtotal<i)[0]
+#    ind2 = np.where(xtotal>i)[0]
+#
+#    if len(ind1) < 10 or len(ind2) < 10: continue
+#
+#    mdlX1 = sm.add_constant(xtotal[ind1])
+#    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
+#    
+#    mdlX2 = sm.add_constant(xtotal[ind2])
+#    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
+#    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
+#                                                                        mdl2.params[1], mdl2.pvalues[1]))
+#
 
 
 
@@ -646,14 +649,21 @@ p1 = np.poly1d(z1)
 z2 = np.polyfit(x[ind2], y[ind2], 1)
 p2 = np.poly1d(z2)
 
+zAll = np.polyfit(x, y, 1)
+pAll = np.poly1d(zAll)
+
+
 x1 = 20
 x2 = 40
 
 plt.figure(figsize=(3,3))
 plt.scatter(x, y, s = 30, edgecolors = [.6, .6, .6], color = [.8, .8, .8])
-plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
-plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
-plt.plot([thresh, thresh], [-1, 1], '--k')
+#plt.plot(range(p_xlim1, thresh+1), p1(range(p_xlim1, thresh+1)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+#plt.plot(range(thresh, p_xlim2), p2(range(thresh, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+#plt.plot([thresh, thresh], [-1, 1], '--k')
+
+plt.plot(range(p_xlim1, p_xlim2), pAll(range(p_xlim1, p_xlim2)), "--", linewidth = 3, color = [234/255., 49/255., 49/255.])
+
 plt.plot([10,50], [0, 0], '--k')
 plt.xlim([x1, x2])
 plt.xticks(range(x1,x2+1,4))

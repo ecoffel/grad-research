@@ -14,14 +14,14 @@ server = ECMWFDataServer()
 #files =     ["33.128", "141.128"]
 #fileNames = ["rsn",    "sd"]
 
-files =      ["168.128"]
-fileNames = ["d2m"]
+#files =      ["168.128"]
+#fileNames = ["d2m"]
 
 files =      ["201.128"]
 fileNames = ["mx2t"]
 
-files =      ["134.128"]
-fileNames = ["sp"]
+#files =      ["134.128"]
+#fileNames = ["sp"]
 
 baseDir = 'e:/data/era-interim/raw/'
 
@@ -49,7 +49,7 @@ def interim_request(file, fileName, dates, target):
         "dataset": "interim",
         "date": dates,
         "expver": "1",
-        "grid": "2.00/2.00",
+        "grid": "0.75/0.75",
         "levtype": "sfc",
         "param": file,
         "step": "3/6/9/12",
@@ -75,7 +75,7 @@ def interim_land_request(file, fileName, dates, target):
         "target": target})
     
 
-yearStart = 2017
+yearStart = 1981
 yearEnd = 2018
 for f in range(len(files)):
     for year in list(range(yearStart, yearEnd + 1)):

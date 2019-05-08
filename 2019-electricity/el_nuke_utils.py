@@ -190,6 +190,7 @@ def accumulateNukeWxData(eba, tx, ids):
     xtotal = []
     ytotal = []
     plantIdsAcc = []
+    plantMeanTempsAcc = []
     monthsAcc = []
     daysAcc = []
     for i in range(percCapacity.shape[0]):
@@ -206,6 +207,7 @@ def accumulateNukeWxData(eba, tx, ids):
             ytotal.extend(y)
             xtotal.extend(x)
             plantIdsAcc.extend(plantIds[i,summerInds])
+            plantMeanTempsAcc.extend([np.nanmean(x)]*len(x))
             monthsAcc.extend(plantMonths[i,summerInds])
             daysAcc.extend(plantDays[i,summerInds])            
             
@@ -224,6 +226,6 @@ def accumulateNukeWxData(eba, tx, ids):
     daysAcc = np.array(daysAcc)
     
     d = {'txSummer': xtotal, 'capacitySummer':ytotal, 'percCapacity':percCapacity, \
-         'summerInds':summerInds, 'outagesBool':outageBool, 'plantIds':plantIdsAcc, \
-         'plantMonths':monthsAcc, 'plantDays':daysAcc}
+         'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
+         'plantMeanTemps':plantMeanTempsAcc, 'plantMonths':monthsAcc, 'plantDays':daysAcc}
     return d

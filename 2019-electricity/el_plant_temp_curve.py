@@ -26,128 +26,79 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = True
+useEra = False
 plotFigs = False
 
 outageDaysOnly = True
 
+dataset = 'all'
 
-def bootstrap_resample(X, n=None):
-    """ Bootstrap resample an array_like
-    Parameters
-    ----------
-    X : array_like
-      data to resample
-    n : int, optional
-      length of resampled array, equal to len(X) if n==None
-    Results
-    -------
-    returns X_resamples
-    """
-    if n == None:
-        n = len(X)
-        
-    resample_i = np.floor(np.random.rand(n)*len(X)).astype(int)
-    return resample_i
+if not 'entsoeAgData' in locals():
+    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
+    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
+#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
+    entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
 
-entsoeData = el_entsoe_utils.loadEntsoe(dataDir)
-entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
-#entsoeMatchData = el_entsoe_utils.matchEntsoeWx(entsoeData, useEra=useEra)
-entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
-
-nukeData = el_nuke_utils.loadNukeData(dataDir)
-nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
-nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
+if not 'nukeAgData' in locals():
+    nukeData = el_nuke_utils.loadNukeData(dataDir)
+    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
+    nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
 
 
 xtotal = []
-xtotal.extend(nukeAgData['txSummer'])
-xtotal.extend(entsoeAgData['tx'])
+if dataset == 'nuke' or dataset == 'all':
+    xtotal.extend(nukeAgData['txSummer'])
+
+if dataset == 'entsoe' or dataset == 'all':
+    xtotal.extend(entsoeAgData['txSummer'])
 xtotal = np.array(xtotal)
 
 ytotal = []
-ytotal.extend(nukeAgData['capacitySummer'])
-ytotal.extend(100*entsoeAgData['capacity'])
+if dataset == 'nuke' or dataset == 'all':
+    ytotal.extend(nukeAgData['capacitySummer'])
+if dataset == 'entsoe' or dataset == 'all':
+    ytotal.extend(100*entsoeAgData['capacitySummer'])
 ytotal = np.array(ytotal)
 
 plantid = []
-plantid.extend(nukeAgData['plantIds'])
-plantid.extend(entsoeAgData['plantIds'])
+if dataset == 'nuke' or dataset == 'all':
+    plantid.extend(nukeAgData['plantIds'])
+if dataset == 'entsoe' or dataset == 'all':
+    plantid.extend(entsoeAgData['plantIds'])
 plantid = np.array(plantid)
 
 plantMonths = []
-plantMonths.extend(nukeAgData['plantMonths'])
-plantMonths.extend(entsoeAgData['plantMonths'])
+if dataset == 'nuke' or dataset == 'all':
+    plantMonths.extend(nukeAgData['plantMonths'])
+if dataset == 'entsoe' or dataset == 'all':
+    plantMonths.extend(entsoeAgData['plantMonths'])
 plantMonths = np.array(plantMonths)
 
 plantDays = []
-plantDays.extend(nukeAgData['plantDays'])
-plantDays.extend(entsoeAgData['plantDays'])
+if dataset == 'nuke' or dataset == 'all':
+    plantDays.extend(nukeAgData['plantDays'])
+if dataset == 'entsoe' or dataset == 'all':
+    plantDays.extend(entsoeAgData['plantDays'])
 plantDays = np.array(plantDays)
 
+
 xtotalBool = []
-xtotalBool.extend(nukeAgData['txSummer'])
-xtotalBool.extend(entsoeAgData['tx'])
+if dataset == 'nuke' or dataset == 'all':
+    xtotalBool.extend(nukeAgData['txSummer'])
+if dataset == 'entsoe' or dataset == 'all':
+    xtotalBool.extend(entsoeAgData['txSummer'])
 xtotalBool = np.array(xtotalBool)
 
 ytotalBool = []
-ytotalBool.extend(nukeAgData['outagesBool'])
-ytotalBool.extend(entsoeAgData['outagesBool'])
+if dataset == 'nuke' or dataset == 'all':
+    ytotalBool.extend(nukeAgData['outagesBoolSummer'])
+if dataset == 'entsoe' or dataset == 'all':
+    ytotalBool.extend(entsoeAgData['outagesBoolSummer'])
 ytotalBool = np.array(ytotalBool)
 
 
-np.random.seed(1493)
-
-tempCoef = []
-
-for i in range(100):
-    resampleInd = np.random.choice(len(xtotal), int(.1 * len(xtotal)))
-    
-    
-    data = {'Temp':xtotal[resampleInd], 'PlantID':plantid[resampleInd], \
-            'PlantMonths':plantMonths[resampleInd], 'PlantDays':plantDays[resampleInd], \
-            'PC':ytotal[resampleInd]}
-    df = pd.DataFrame(data, \
-                      columns=['Temp', 'PlantID', 'PlantMonths', 'PlantDays', 'PC'])
-    
-    X = df[['Temp', 'PlantID', 'PlantMonths', 'PlantDays']]
-    Y = df['PC']
-    
-    regr = linear_model.LinearRegression()
-    regr.fit(X, Y)
-    
-    tempCoef.append(regr.coef_[0])
-    
-#    print('Intercept: \n', regr.intercept_)
-#    print('Coefficients: \n', regr.coef_)
-
-X = sm.add_constant(X) # adding a constant
- 
-model = sm.OLS(Y, X).fit()
-
-print_model = model.summary()
-print(print_model)
-
-# determine breakpoint in data
-#for i in range(20,35):
-#    ind1 = np.where(xtotal<i)[0]
-#    ind2 = np.where(xtotal>i)[0]
-#    
-#    if len(ind1) < 10 or len(ind2) < 10: continue
-#    
-#    mdlX1 = sm.add_constant(xtotal[ind1])
-#    mdl1 = sm.OLS(ytotal[ind1], mdlX1).fit()
-#    
-#    mdlX2 = sm.add_constant(xtotal[ind2])
-#    mdl2 = sm.OLS(ytotal[ind2], mdlX2).fit()
-#    print('t = %d, slope1 = %.6f, p1 = %.2f, slope1 = %.6f, p1 = %.2f'%(i,mdl1.params[1], mdl1.pvalues[1], \
-#                                                                        mdl2.params[1], mdl2.pvalues[1]))
-
-
-
-indOutages = np.where(ytotal<100)
-
 if outageDaysOnly:
+    indOutages = np.where(ytotal<100)
     df = pd.DataFrame({'x':xtotal[indOutages], 'y':ytotal[indOutages]})
 else:
     df = pd.DataFrame({'x':xtotal, 'y':ytotal})
@@ -163,10 +114,10 @@ sns.regplot(x='x', y='y', data=df, order=3, \
 sns.regplot(x='x', y='y', data=df, order=1, scatter=False, \
             line_kws={"color": [244/255., 153/255., 34/255.]})
 
-if outageDaysOnly:
-    plt.xlim([20, 44])
-    sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
-                line_kws={"color": [34/255., 171/255., 244/255.]})
+#if outageDaysOnly:
+#    plt.xlim([20, 44])
+#    sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
+#                line_kws={"color": [34/255., 171/255., 244/255.]})
 
 
 plt.xlim([19,45])
@@ -314,12 +265,13 @@ binnedTx = []
 binstep = 4
 bin_x1 = 20
 bin_x2 = 44
-for i in range(entsoePlantData['tx'].shape[0]):
+
+for i in range(entsoePlantData['txSummer'].shape[0]):
     binnedOutageData.append([])
     for t in range(bin_x1, bin_x2, binstep):
-        tempInds = np.where((entsoePlantData['tx'][i] >= t) & (entsoePlantData['tx'][i] < t+binstep))[0]
+        tempInds = np.where((entsoePlantData['txSummer'][i] >= t) & (entsoePlantData['txSummer'][i] < t+binstep))[0]
         if len(tempInds) > 0:
-            binnedOutageData[i].append(np.nanmean(entsoePlantData['outagesBool'][i, tempInds]))
+            binnedOutageData[i].append(np.nanmean(100 * entsoePlantData['outagesBoolSummer'][i, tempInds]))
         else:
             binnedOutageData[i].append(np.nan)
 
@@ -405,7 +357,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Plants with outages (%)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Chance of outage (%)', fontname = 'Helvetica', fontsize=16)
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()

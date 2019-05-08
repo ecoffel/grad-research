@@ -48,9 +48,9 @@ entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
 #        i += 1
 
 
-
-entsoeLat = np.array(list(set(entsoeData['lats'])))
-entsoeLon = np.array(list(set(entsoeData['lons'])))
+uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
+entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
+entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
 entsoePlantType = []    
 for l in list(set(entsoeLat)):
     ind = np.where(entsoeData['lats'] == l)[0]

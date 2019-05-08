@@ -287,8 +287,11 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
     tx = tx[3:,:]
     
     finalTx = []
+    finalTxSummer = []
     finalCapacity = []
+    finalCapacitySummer = []
     finalOutagesBool = []
+    finalOutagesBoolSummer = []
     finalOutagesCount = []
     finalOutageInds = []
     
@@ -300,9 +303,12 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
     for c in range(len(uniquePlants)):
     
         finalTx.append([])
+        finalTxSummer.append([])
         finalCapacity.append([])
+        finalCapacitySummer.append([])
         finalOutageInds.append([])
         finalOutagesBool.append([])
+        finalOutagesBoolSummer.append([])
         finalOutagesCount.append([])
         
         plantInds = [k for k in range(len(entsoeData['names'])) if entsoeData['names'][k] == uniquePlants[c]]
@@ -313,41 +319,64 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
             curMonth = txMonths[i]
             curDay = txDays[i]
             
+            # the indices in the raw entsoe data for the current day
             curDayIndEntsoe = np.where((entsoeData['years'] == curYear) & (entsoeData['months'] == curMonth) & \
                                  (entsoeData['days'] == curDay))[0]
             
+            # intersect the indices for the current plant on the current day
             curDayIndEntsoe = np.intersect1d(curDayIndEntsoe, plantInds)
             
             if len(curDayIndEntsoe) > 0:
                 perc = []
+                # loop over all entries for current plant on current day (maybe there are > 1)
                 for p in curDayIndEntsoe:    
                     perc.append(entsoeData['actualCapacity'][p] / entsoeData['normalCapacity'][p])
                 
+                # record the average capacity for current plant on current day
                 finalCapacity[c].append(np.nanmean(perc))
+                
+                # 1 here because there is an outage
                 finalOutagesBool[c].append(1)
+                
+                # record outages for only summer
+                if curMonth == 7 or curMonth == 8:
+                    finalCapacitySummer[c].append(np.nanmean(perc))
+                    finalOutagesBoolSummer[c].append(1)
+                
             else:
                 # 1 here because plant at 100% capacity
                 finalCapacity[c].append(1)
-                
+            
                 # 0 here because no outage
                 finalOutagesBool[c].append(0)
             
+                if curMonth == 7 or curMonth == 8:
+                    finalCapacitySummer[c].append(1)
+                    finalOutagesBoolSummer[c].append(0)
+                
             finalOutagesCount[c].append(len(curDayIndEntsoe))
             finalTx[c].append(tx[c,i])
+            
+            # record temps for only summer days
+            if curMonth == 7 or curMonth == 8:
+                finalTxSummer[c].append(tx[c,i])    
 
         
         outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
         finalOutageInds[c].extend(outageInd)
     
     finalTx = np.array(finalTx)
+    finalTxSummer = np.array(finalTxSummer)
     finalCapacity = np.array(finalCapacity)
+    finalCapacitySummer = np.array(finalCapacitySummer)
     finalOutagesBool = np.array(finalOutagesBool)
+    finalOutagesBoolSummer = np.array(finalOutagesBoolSummer)
     finalOutagesCount = np.array(finalOutagesCount)
     finalOutageInds = np.array(finalOutageInds)
     
-    d = {'tx':finalTx, 'years':txYears, 'months':txMonths, 'days':txDays, \
-         'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'outagesBool':finalOutagesBool, \
-         'outagesCount':finalOutagesCount}
+    d = {'tx':finalTx, 'txSummer':finalTxSummer, 'years':txYears, 'months':txMonths, 'days':txDays, \
+         'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
+         'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount}
     return d
 
 
@@ -371,8 +400,11 @@ def matchEntsoeWxCountry(entsoeData, useEra):
     countryTxData = countryTxData[3:,1:]
     
     finalTx = []
+    finalTxSummer = []
     finalCapacity = []
+    finalCapacitySummer = []
     finalOutagesBool = []
+    finalOutagesBoolSummer = []
     finalOutagesCount = []
     finalOutageInds = []
     
@@ -383,9 +415,12 @@ def matchEntsoeWxCountry(entsoeData, useEra):
         indCountryEntsoe = get_inds(countryList[c], entsoeData['countries'])
     
         finalTx.append([])
+        finalTxSummer.append([])
         finalCapacity.append([])
+        finalCapacitySummer.append([])
         finalOutageInds.append([])
         finalOutagesBool.append([])
+        finalOutagesBoolSummer.append([])
         finalOutagesCount.append([])
         for i in range(len(countryTxData[c])):
             curYear = countryYearData[i]
@@ -404,29 +439,43 @@ def matchEntsoeWxCountry(entsoeData, useEra):
                 
                 finalCapacity[c].append(np.nanmean(perc))
                 finalOutagesBool[c].append(1)
+                
+                if curMonth == 7 or curMonth == 8:
+                    finalOutagesBoolSummer[c].append(1)
+                    finalCapacitySummer[c].append(np.nanmean(perc))    
             else:
                 # 1 here because plant at 100% capacity
                 finalCapacity[c].append(1)
                 
                 # 0 here because no outage
                 finalOutagesBool[c].append(0)
+                
+                if curMonth == 7 or curMonth == 8:
+                    finalOutagesBoolSummer[c].append(0)
+                    finalCapacitySummer[c].append(1)    
             
             finalOutagesCount[c].append(len(curDayIndEntsoe))
             finalTx[c].append(countryTxData[c,i])
+            
+            if curMonth == 7 or curMonth == 8:
+                finalTxSummer[c].append(countryTxData[c,i])    
 
-        
         outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
         finalOutageInds[c].extend(outageInd)
     
     finalTx = np.array(finalTx)
+    finalTxSummer = np.array(finalTxSummer)
     finalCapacity = np.array(finalCapacity)
+    finalCapacitySummer = np.array(finalCapacitySummer)
     finalOutagesBool = np.array(finalOutagesBool)
+    finalOutagesBoolSummer = np.array(finalOutagesBoolSummer)
     finalOutagesCount = np.array(finalOutagesCount)
     finalOutageInds = np.array(finalOutageInds)
     
-    d = {'tx':finalTx, 'years':countryYearData, 'months':countryMonthData, 'days':countryDayData, \
-         'countries':countryList, 'capacity':finalCapacity, 'outagesBool':finalOutagesBool, \
-         'outagesCount':finalOutagesCount}
+    d = {'tx':finalTx, 'txSummer':finalTxSummer, \
+         'years':countryYearData, 'months':countryMonthData, 'days':countryDayData, \
+         'countries':countryList, 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
+         'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount}
     return d
 
 
@@ -441,6 +490,7 @@ def aggregateEntsoeData(entsoeMatchData):
     plantMonths = []
     plantDays = []
     plantIds = []
+    plantMeanTemps = []
     # the number to start the IDs at to differentiate from the nuke data
     baseId = 100
     
@@ -455,6 +505,7 @@ def aggregateEntsoeData(entsoeMatchData):
         # outages reported for this country
         if np.nansum(curOutageCount) > 0:
             txAll.extend(curTx)
+            plantMeanTemps.extend([np.nanmean(curTx)]*len(curTx))
             capacityAll.extend(curCapacity)
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
@@ -470,9 +521,9 @@ def aggregateEntsoeData(entsoeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     
-    d = {'tx':txAll, 'capacity':capacityAll, 'outagesBool':outageBoolAll, \
+    d = {'txSummer':txAll, 'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
          'outagesCount':outageCountAll, 'plantMonths':plantMonths, \
-         'plantDays':plantDays, 'plantIds':plantIds}
+         'plantDays':plantDays, 'plantIds':plantIds, 'plantMeanTemps':plantMeanTemps}
     return d
 
 
