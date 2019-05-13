@@ -33,58 +33,59 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = False
 plotFigs = False
 
-dataset = 'nuke'
+dataset = 'all'
 
-if not 'entsoeAgData' in locals():
+if not 'entsoeData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
+    
+    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
+    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
+    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
 #    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
-    entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
+    entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
+    entsoeAgDataCpc = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataCpc)
+    entsoeAgDataNcep = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataNcep)
 
 if not 'nukeAgData' in locals():
     nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
-    nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
+    
+    nukeTxEra, nukeTxIdsEra = el_nuke_utils.loadWxData(nukeData, wxdata='era')
+    nukeTxCpc, nukeTxIdsCpc = el_nuke_utils.loadWxData(nukeData, wxdata='cpc')
+    nukeTxNcep, nukeTxIdsNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
+    
+    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxEra, nukeTxIdsEra)
+    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxCpc, nukeTxIdsCpc)
+    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxNcep, nukeTxIdsNcep)
 
 
 xtotal = []
 if dataset == 'nuke' or dataset == 'all':
-    xtotal.extend(nukeAgData['txSummer'])
+    xtotal.extend(nukeAgDataEra['txSummer'])
+    xtotal.extend(nukeAgDataCpc['txSummer'])
+    xtotal.extend(nukeAgDataNcep['txSummer'])
 
 if dataset == 'entsoe' or dataset == 'all':
-    xtotal.extend(entsoeAgData['txSummer'])
+    xtotal.extend(entsoeAgDataEra['txSummer'])
+    xtotal.extend(entsoeAgDataCpc['txSummer'])
+    xtotal.extend(entsoeAgDataNcep['txSummer'])
+    
 xtotal = np.array(xtotal)
 
 ytotal = []
 if dataset == 'nuke' or dataset == 'all':
-    ytotal.extend(nukeAgData['capacitySummer'])
+    ytotal.extend(nukeAgDataEra['capacitySummer'])
+    ytotal.extend(nukeAgDataCpc['capacitySummer'])
+    ytotal.extend(nukeAgDataNcep['capacitySummer'])
+    
 if dataset == 'entsoe' or dataset == 'all':
-    ytotal.extend(100*entsoeAgData['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataEra['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataCpc['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataNcep['capacitySummer'])
+    
 ytotal = np.array(ytotal)
 
-plantid = []
-if dataset == 'nuke' or dataset == 'all':
-    plantid.extend(nukeAgData['plantIds'])
-if dataset == 'entsoe' or dataset == 'all':
-    plantid.extend(entsoeAgData['plantIds'])
-plantid = np.array(plantid)
-
-plantMonths = []
-if dataset == 'nuke' or dataset == 'all':
-    plantMonths.extend(nukeAgData['plantMonths'])
-if dataset == 'entsoe' or dataset == 'all':
-    plantMonths.extend(entsoeAgData['plantMonths'])
-plantMonths = np.array(plantMonths)
-
-plantDays = []
-if dataset == 'nuke' or dataset == 'all':
-    plantDays.extend(nukeAgData['plantDays'])
-if dataset == 'entsoe' or dataset == 'all':
-    plantDays.extend(entsoeAgData['plantDays'])
-plantDays = np.array(plantDays)
 
 np.random.seed(1493)
 
@@ -103,14 +104,16 @@ for i in range(1000):
     resampleInd = np.random.choice(len(xtotal), int(.25 * len(xtotal)))
     
     
-    data = {'Temp':xtotal[resampleInd], 'PlantID':plantid[resampleInd], \
-            'PlantMonths':plantMonths[resampleInd], 'PlantDays':plantDays[resampleInd], \
-            'PC':ytotal[resampleInd]}
+    data = {'Temp':xtotal[resampleInd], 'PC':ytotal[resampleInd]}
     df = pd.DataFrame(data, \
-                      columns=['Temp', 'PlantID', 'PlantMonths', 'PlantDays', 'PC'])
+                      columns=['Temp', 'PC'])
     
-    X = df[['Temp', 'PlantID', 'PlantMonths', 'PlantDays']]
+    
+    df = df.dropna()
+    
+    X = df[['Temp']]
     Y = df['PC']
+      
     
     regr = linear_model.LinearRegression()
     regr.fit(X, Y)

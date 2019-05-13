@@ -16,19 +16,16 @@ import el_load_global_plants
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = True
 plotFigs = False
 
-regr, mdl = el_temp_pp_model.buildLinearTempPPModel(useEra)
-#zPoly3, pPoly3 = el_temp_pp_model.buildPoly3TempPPModel(useEra)
+#regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
+zPoly3, pPoly3 = el_temp_pp_model.buildPoly3TempPPModel()
 
 #globalPlants = el_load_global_plants.loadGlobalPlants()
 
 yearRange = [1981, 2018]
 # load wx data for global plants
-fileName = 'entsoe-nuke-pp-tx-cpc.csv'
-if useEra:
-    fileName = 'entsoe-nuke-pp-tx-era.csv'
+fileName = 'entsoe-nuke-pp-tx-era.csv'
 
 #fileName = 'entnsoe-nuke-pp-rcp85-tx-cmip5-canesm2-2020-2050.csv'
 
@@ -56,15 +53,22 @@ for p in range(len(plantList)):
     
     for year in range(yearRange[0], yearRange[1]):
         ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
+#        ind = np.where((plantYearData == year))[0]
         tx = plantTxData[p, ind]
         tx2 = tx ** 2
         nn = np.where(~np.isnan(tx))[0]
-#        tx = np.nanmax(tx[nn])
-        tx = np.nanmean(tx[nn])
+        
+        if len(nn) == 0:
+            caps.append(np.nan)
+            continue
+        
+        tx = np.nanmax(tx[nn])
+#        tx = np.nanmean(tx[nn])
         tx2 = tx2[nn]
-        txMeanList = np.array([txMean]*len(nn))
-#        caps.append(np.nanmean(pPoly3(tx)))
-        caps.append(np.nanmean(regr.predict(tx)))
+#        txMeanList = np.array([txMean]*len(nn))
+        caps.append(pPoly3(tx))
+        
+#        caps.append(np.nanmean(regr.predict(tx)))
 #        caps.append(np.nanmean(pPoly3(np.array(list(set(zip(tx)))))))
         
             
@@ -98,7 +102,7 @@ yd = np.array([intercepts[i] + xd*slopes[i] for i in range(len(slopes))])
 
 plt.figure(figsize=(4,4))
 plt.xlim([0, 38])
-plt.ylim([90, 100])
+plt.ylim([95,100])
 plt.grid(True)
 #plt.plot(xd, yd.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.], alpha = .2)
 #plt.plot(xd, np.nanmean(yd, axis=0), '-', linewidth = 3, color = [0, 0, 0])
@@ -125,7 +129,7 @@ plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 
 if plotFigs:
-    plt.savefig('historical-pp-cap-change-poly3-summer-tx.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('historical-pp-cap-change-linear-summer-txx.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 

@@ -58,14 +58,35 @@ def loadNukeData(dataDir):
             eba.append(curLineNew)
     return eba
 
-def loadWxData(eba, useEra):
+def loadWxData(eba, wxdata):
     # read tw time series
-    fileName = 'nuke-tx-era.csv'
-    if not useEra:
-        fileName = 'nuke-tx-cpc.csv'
-        
-    tx = np.genfromtxt(fileName, delimiter=',')
+    fileName = ''
     
+    if wxdata == 'cpc':
+        fileName = 'nuke-tx-cpc.csv'
+    elif wxdata == 'era':
+        fileName = 'nuke-tx-era-075.csv'
+    elif wxdata == 'ncep':
+        fileName = 'nuke-tx-ncep.csv'
+    elif wxdata == 'all':
+        fileName = ['nuke-tx-cpc.csv', 'nuke-tx-era-075.csv', 'nuke-tx-ncep.csv']
+        
+        
+    tx = []
+    
+    if wxdata == 'all':
+        tx1 = np.genfromtxt(fileName[0], delimiter=',')    
+        tx2 = np.genfromtxt(fileName[1], delimiter=',')    
+        tx3 = np.genfromtxt(fileName[2], delimiter=',')    
+        
+        tx = tx1.copy()
+        for i in range(0,tx1.shape[0]):
+            for j in range(1,tx1.shape[1]):
+                tx[i,j] = np.nanmean([tx1[i,j], tx2[i,j], tx3[i,j]])
+        
+    else:
+        tx = np.genfromtxt(fileName, delimiter=',')
+        
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []
     for i in range(tx.shape[0]):

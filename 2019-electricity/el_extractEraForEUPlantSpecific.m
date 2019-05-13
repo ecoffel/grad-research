@@ -1,5 +1,14 @@
+startYear = 2015;
+endYear = 2018;
+
 if ~exist('temp')
-%     temp = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', 2015, 'endYear', 2018);
+    temp = loadDailyData('E:\data\era-interim\output\mx2t\075x075\mx2t', 'startYear', startYear, 'endYear', endYear);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
+    end
+  
+% 
+%     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', 2015, 'endYear', 2018);
 %     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
 %         temp{3} = temp{3} - 273.15;
 %     end
@@ -8,12 +17,6 @@ if ~exist('temp')
 %     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
 %         temp{3} = temp{3} - 273.15;
 %     end
-    
-    
-    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2015, 'endYear', 2018);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-        temp{3} = temp{3} - 273.15;
-    end
 end
 
 plantLatLon = csvread('2019-electricity/entsoe-lat-lon.csv');
@@ -27,32 +30,38 @@ for i = 1:size(plantLatLon, 1)
         lon = lon+360;
     end
     
-    [latInd, lonInd] = latLonIndexRange(temp, [lat-.5 lat+.5], [lon-.5 lon+.5]);
-        
+
+    [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
+%     [latInd, lonInd] = latLonIndexRange(temp, [lat-.25 lat+.25], [lon-.25 lon+.25]);
+
+
     tx = squeeze(nanmean(nanmean(temp{3}(latInd, lonInd, :, :, :), 2), 1));
+
     
-    curDate = datenum(2015, 1, 1, 1, 0, 0);
+    curDate = datenum(startYear, 1, 1, 1, 0, 0);
     txClean = [];
     txYears = [];
     txMonths = [];
     txDays = [];
-    for year = 1:size(tx, 1)
-        for month = 1:size(tx, 2)
-            for day = 1:size(tx, 3)
-            
-                curTx = squeeze(tx(year, month, day));
-                if ~isnan(curTx)
-                    vec = datevec(curDate);
-                    txYears(end+1) = vec(1);
-                    txMonths(end+1) = vec(2);
-                    txDays(end+1) = vec(3);
-                    txClean(end+1) = curTx;
-                    curDate = addtodate(curDate, 1, 'day');
-                end
-            end
-        end
-    end
     
+    for j = 1:numel(tx)
+        dv = datevec(curDate);
+        
+        yr = dv(1);
+        mn = dv(2);
+        dy = dv(3);
+        
+        if yr > endYear
+            break
+        end
+        
+        txYears(end+1) = yr;
+        txMonths(end+1) = mn;
+        txDays(end+1) = dy;
+        txClean(end+1) = tx(yr-startYear+1, mn, dy);
+        curDate = addtodate(curDate, 1, 'day');
+    end
+        
     if i == 1
         plantTxTimeSeries(1, :) = txYears;
         plantTxTimeSeries(2, :) = txMonths;
@@ -62,7 +71,7 @@ for i = 1:size(plantLatLon, 1)
     plantTxTimeSeries(end+1,:) = txClean;
 end
 
-csvwrite('2019-electricity/entsoe-tx-cpc.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-tx-era-075.csv', plantTxTimeSeries);
 %  
 % T = table(countryTxTimeSeries, 'RowNames', {'year', 'month', 'day', countryIds{countryIdInds}});
 %  

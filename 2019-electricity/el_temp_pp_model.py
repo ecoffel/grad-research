@@ -16,93 +16,116 @@ import el_nuke_utils
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-def buildLinearTempPPModel(useEra):
+def buildLinearTempPPModel():
+    
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
-    entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
+    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
+    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
+    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
+#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
+    entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
+    entsoeAgDataCpc = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataCpc)
+    entsoeAgDataNcep = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataNcep)
     
     nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
-    nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
     
+    nukeTxEra, nukeTxIdsEra = el_nuke_utils.loadWxData(nukeData, wxdata='era')
+    nukeTxCpc, nukeTxIdsCpc = el_nuke_utils.loadWxData(nukeData, wxdata='cpc')
+    nukeTxNcep, nukeTxIdsNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
+    
+    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxEra, nukeTxIdsEra)
+    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxCpc, nukeTxIdsCpc)
+    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxNcep, nukeTxIdsNcep)
+
     
     xtotal = []
-    xtotal.extend(nukeAgData['txSummer'])
-    xtotal.extend(entsoeAgData['txSummer'])
+    xtotal.extend(nukeAgDataEra['txSummer'])
+    xtotal.extend(nukeAgDataCpc['txSummer'])
+    xtotal.extend(nukeAgDataNcep['txSummer'])
+    
+    xtotal.extend(entsoeAgDataEra['txSummer'])
+    xtotal.extend(entsoeAgDataCpc['txSummer'])
+    xtotal.extend(entsoeAgDataNcep['txSummer'])
     xtotal = np.array(xtotal)
     
     ytotal = []
-    ytotal.extend(nukeAgData['capacitySummer'])
-    ytotal.extend(100*entsoeAgData['capacitySummer'])
+    ytotal.extend(nukeAgDataEra['capacitySummer'])
+    ytotal.extend(nukeAgDataCpc['capacitySummer'])
+    ytotal.extend(nukeAgDataNcep['capacitySummer'])
+    
+    ytotal.extend(100*entsoeAgDataEra['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataCpc['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataNcep['capacitySummer'])
     ytotal = np.array(ytotal)
     
-    plantid = []
-    plantid.extend(nukeAgData['plantIds'])
-    plantid.extend(entsoeAgData['plantIds'])
-    plantid = np.array(plantid)
     
-    plantMonths = []
-    plantMonths.extend(nukeAgData['plantMonths'])
-    plantMonths.extend(entsoeAgData['plantMonths'])
-    plantMonths = np.array(plantMonths)
-    
-    plantDays = []
-    plantDays.extend(nukeAgData['plantDays'])
-    plantDays.extend(entsoeAgData['plantDays'])
-    plantDays = np.array(plantDays)
-    
-    plantMeanTemps = []
-    plantMeanTemps.extend(nukeAgData['plantMeanTemps'])
-    plantMeanTemps.extend(entsoeAgData['plantMeanTemps'])
-    plantMeanTemps = np.array(plantMeanTemps)
-    
-    np.random.seed(1493)
-    
-    resampleInd = np.array(list(range(len(xtotal)))) #np.random.choice(len(xtotal), int(.1 * len(xtotal)))
-    
-    
-    data = {'Temp':xtotal[resampleInd], 'Temp2':xtotal[resampleInd]**2, \
-            'PlantID':plantid[resampleInd], \
-            'PlantMonths':plantMonths[resampleInd], 'PlantDays':plantDays[resampleInd], \
-            'PlantMeanTemps':plantMeanTemps[resampleInd], \
-            'PC':ytotal[resampleInd]}
+#    data = {'Temp':xtotal[resampleInd], 'Temp2':xtotal[resampleInd]**2, \
+#            'PlantID':plantid[resampleInd], \
+#            'PlantMonths':plantMonths[resampleInd], 'PlantDays':plantDays[resampleInd], \
+#            'PlantMeanTemps':plantMeanTemps[resampleInd], \
+#            'PC':ytotal[resampleInd]}
+#    df = pd.DataFrame(data, \
+#                      columns=['Temp', 'Temp2', 'PlantID', 'PlantMeanTemps', 'PlantMonths', 'PlantDays', 'PC'])
+#    
+    data = {'Temp':xtotal, 'PC':ytotal}
     df = pd.DataFrame(data, \
-                      columns=['Temp', 'Temp2', 'PlantID', 'PlantMeanTemps', 'PlantMonths', 'PlantDays', 'PC'])
+                      columns=['Temp', 'PC'])
+    
+    df = df.dropna()
     
     X = df[['Temp']]#, 'PlantMeanTemps', 'PlantMonths']]#, 'PlantMeanTemps', 'PlantMonths']]#, 'PlantID', 'PlantMonths', 'PlantDays']]
     Y = df['PC']
     
     regr = linear_model.LinearRegression()
     regr.fit(X, Y)
-    
-    
+        
     X = sm.add_constant(X) 
     model = sm.OLS(Y, X).fit()
     
     return (regr, model)
 
 
-def buildPoly3TempPPModel(useEra):
+def buildPoly3TempPPModel():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
-    entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
+    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
+    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
+    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
+#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
+    entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
+    entsoeAgDataCpc = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataCpc)
+    entsoeAgDataNcep = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataNcep)
     
     nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
-    nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
     
+    nukeTxEra, nukeTxIdsEra = el_nuke_utils.loadWxData(nukeData, wxdata='era')
+    nukeTxCpc, nukeTxIdsCpc = el_nuke_utils.loadWxData(nukeData, wxdata='cpc')
+    nukeTxNcep, nukeTxIdsNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
+    
+    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxEra, nukeTxIdsEra)
+    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxCpc, nukeTxIdsCpc)
+    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxNcep, nukeTxIdsNcep)
+
     
     xtotal = []
-    xtotal.extend(nukeAgData['txSummer'])
-    xtotal.extend(entsoeAgData['txSummer'])
+    xtotal.extend(nukeAgDataEra['txSummer'])
+    xtotal.extend(nukeAgDataCpc['txSummer'])
+    xtotal.extend(nukeAgDataNcep['txSummer'])
+    
+    xtotal.extend(entsoeAgDataEra['txSummer'])
+    xtotal.extend(entsoeAgDataCpc['txSummer'])
+    xtotal.extend(entsoeAgDataNcep['txSummer'])
     xtotal = np.array(xtotal)
     
     ytotal = []
-    ytotal.extend(nukeAgData['capacitySummer'])
-    ytotal.extend(100*entsoeAgData['capacitySummer'])
-    ytotal = np.array(ytotal)
+    ytotal.extend(nukeAgDataEra['capacitySummer'])
+    ytotal.extend(nukeAgDataCpc['capacitySummer'])
+    ytotal.extend(nukeAgDataNcep['capacitySummer'])
     
-       
+    ytotal.extend(100*entsoeAgDataEra['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataCpc['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataNcep['capacitySummer'])
+    ytotal = np.array(ytotal)
+      
     data = {'Temp':xtotal, 'PC':ytotal}
     df = pd.DataFrame(data, columns=['Temp', 'PC'])
     

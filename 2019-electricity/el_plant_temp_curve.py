@@ -26,23 +26,25 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-useEra = False
-plotFigs = False
+wxdata = 'all'
 
-outageDaysOnly = True
+plotFigs = True
+
+outageDaysOnly = False
 
 dataset = 'all'
 
 if not 'entsoeAgData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, useEra=useEra)
+    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata=wxdata)
 #    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
     entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
 
 if not 'nukeAgData' in locals():
     nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=useEra)
+    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, wxdata=wxdata)
     nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
+    nukePlantData = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeTx, nukeTxIds)
 
 
 xtotal = []
@@ -363,7 +365,4 @@ x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
-    if useEra:
-        plt.savefig('nuke-eu-perc-plants-with-outages-era.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
-    else:
-        plt.savefig('nuke-eu-perc-plants-with-outages-cpc.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('nuke-eu-perc-plants-with-outages-%s.png'%wxdata, format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)

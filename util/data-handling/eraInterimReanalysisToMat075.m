@@ -1,4 +1,4 @@
-function eraInterimReanalysisToMat(rawNcDir, outputDir, varName, maxNum, selLev)
+function eraInterimReanalysisToMat075(rawNcDir, outputDir, varName, maxNum, selLev)
 
 ncFileNames = dir([rawNcDir, '/', varName, '*.nc']);
 ncFileNames = {ncFileNames.name};
@@ -114,13 +114,10 @@ for k = 1:length(ncFileNames)
     [lon, lat] = meshgrid(lon, lat);
     lat = flipud(lat);
     
-    % starts at 1900 01 01 01 01 01
-    if length(strfind(outputDir, '075x075')) > 0
-%         starttime = datenum([1800 01 01 00 00 00]);
-        starttime = datenum([1900 01 01 00 00 00]);
-    else
-        starttime = datenum([1900 01 01 00 00 00]);
-    end
+    
+%     starttime = datenum([1800 01 01 00 00 00]);
+    starttime = datenum([1900 01 01 00 00 00]);
+
     time = [];
     
     % these are hours since 1900-01-01 01:01:01
@@ -150,52 +147,22 @@ for k = 1:length(ncFileNames)
     % month of last time step, so we know when to save
     curStartDate = -1;
     lastMonth = -1;
-    lastDay = -1;
-    dateInd = 1;
-    monthlyInd = 1;
-    monthlyData = [];
-    dailyData = [];
+    
+    monthlyData = zeros(size(lat,1), size(lat,2), 31);
+    monthlyData(monthlyData == 0) = NaN;
+    
 
     while ind < dims{dimIdTime}{2}
         curDt = datevec(time(ind+1));
         curDay = curDt(3);
         curMonth = curDt(2);
         
-        if lastDay == -1
-            lastDay = curDay;
-        end
         
         data = double(netcdf.getVar(ncid, varIdMain-1, [0, 0, ind], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1]));
         data = data .* scale_factor + add_offset;
         data = permute(data, [2 1]);
         
-        % new day, average over previous days
-        if curDay ~= lastDay
-            dailyData(:, :, dateInd) = data;
-            if strcmp(varName, 'mx2t')
-                monthlyData(:, :, monthlyInd) = nanmax(dailyData, [], 3);
-            elseif strcmp(varName, 'mn2t')
-                monthlyData(:, :, monthlyInd) = nanmin(dailyData, [], 3);
-            elseif strcmp(varName, 'tp') 
-                monthlyData(:, :, monthlyInd) = nansum(dailyData(:, :, [4 8]), 3);
-            elseif strcmp(varName, 'swvl1') || strcmp(varName, 'swvl2') || strcmp(varName, 'swvl3') || strcmp(varName, 'swvl4') || strcmp(varName, 'rsn') || strcmp(varName, 'sd')
-                % average over day's soil moisture or snow
-                monthlyData(:, :, monthlyInd) = nanmean(dailyData(:, :, :), 3);
-            elseif strcmp(varName, 'sshf') || strcmp(varName, 'slhf')
-                % sum and convert to W/m2
-                monthlyData(:, :, monthlyInd) = -nansum(dailyData(:, :, [4 8]), 3) ./ 24 ./ 3600;
-            elseif strcmp(varName, 'sp') | strcmp(varName, 'd2m')
-                % take daily mean
-                monthlyData(:, :, monthlyInd) = nanmean(dailyData(:, :, :), 3);
-            end
-            dailyData = [];
-            monthlyInd = monthlyInd + 1;
-            lastDay = curDay;
-            dateInd = 1;
-        else
-            dailyData(:, :, dateInd) = data;
-            dateInd = dateInd + 1;
-        end
+        monthlyData(:, :, curDay) = data;
         
         % we're on a new month - save
         if lastMonth == -1
@@ -217,7 +184,8 @@ for k = 1:length(ncFileNames)
             save([folDataTarget, '/', fileName, '.mat'], fileName);
 
             clear monthlyDataSet;
-            monthlyData = [];
+            monthlyData = zeros(size(lat,1), size(lat,2), 31);
+            monthlyData(monthlyData == 0) = NaN;
             monthlyInd = 1;
             lastMonth = curMonth;
             curStartDate = time(ind+1);

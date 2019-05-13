@@ -274,17 +274,44 @@ def loadEntsoe(dataDir):
 
 
 
-def matchEntsoeWxPlantSpecific(entsoeData, useEra):
-    fileName = 'entsoe-tx-cpc.csv'
-    if useEra:
-        fileName = 'entsoe-tx-era.csv'
-        
-    tx = np.genfromtxt(fileName, delimiter=',')
+def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
+    fileName = ''
     
-    txYears = tx[0,:]
-    txMonths = tx[1,:]
-    txDays = tx[2,:]
-    tx = tx[3:,:]
+    if wxdata == 'cpc':
+        fileName = 'entsoe-tx-cpc.csv'
+    elif wxdata == 'era':
+        fileName = 'entsoe-tx-era-075.csv'
+    elif wxdata == 'ncep':
+        fileName = 'entsoe-tx-ncep.csv'
+    elif wxdata == 'all':
+        fileName = ['entsoe-tx-cpc.csv', 'entsoe-tx-era-075.csv', 'entsoe-tx-ncep.csv']
+        
+    tx = []
+    txYears = []
+    txMonths = []
+    txDays = []
+    
+    if wxdata == 'all':
+        tx1 = np.genfromtxt(fileName[0], delimiter=',')    
+        tx2 = np.genfromtxt(fileName[1], delimiter=',')    
+        tx3 = np.genfromtxt(fileName[2], delimiter=',')    
+        
+        txYears = tx1[0,:]
+        txMonths = tx1[1,:]
+        txDays = tx1[2,:]
+        
+        tx = np.zeros([tx1.shape[0]-3, tx1.shape[1]])
+        for i in range(3,tx1.shape[0]):
+            for j in range(tx1.shape[1]):
+                tx[i-3,j] = np.nanmean([tx1[i,j], tx2[i,j], tx3[i,j]])
+        
+    else:
+        tx = np.genfromtxt(fileName, delimiter=',')
+        
+        txYears = tx[0,:]
+        txMonths = tx[1,:]
+        txDays = tx[2,:]
+        tx = tx[3:,:]
     
     finalTx = []
     finalTxSummer = []
@@ -297,10 +324,12 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
     
     print('matching entsoe outages with wx...')
     
-    uniquePlants = list(set(entsoeData['names']))
+    uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
+    entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
+    entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
     
     # loop over each power plant
-    for c in range(len(uniquePlants)):
+    for c in range(len(entsoeLat)):
     
         finalTx.append([])
         finalTxSummer.append([])
@@ -311,7 +340,8 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
         finalOutagesBoolSummer.append([])
         finalOutagesCount.append([])
         
-        plantInds = [k for k in range(len(entsoeData['names'])) if entsoeData['names'][k] == uniquePlants[c]]
+        plantInds = np.where((entsoeData['lats'] == entsoeLat[c]) & \
+                             (entsoeData['lons'] == entsoeLon[c]))[0]
         
         # and each day
         for i in range(tx.shape[1]):
@@ -326,6 +356,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
             # intersect the indices for the current plant on the current day
             curDayIndEntsoe = np.intersect1d(curDayIndEntsoe, plantInds)
             
+            # there is some outage recorded for current plant on current day
             if len(curDayIndEntsoe) > 0:
                 perc = []
                 # loop over all entries for current plant on current day (maybe there are > 1)
@@ -342,7 +373,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
                 if curMonth == 7 or curMonth == 8:
                     finalCapacitySummer[c].append(np.nanmean(perc))
                     finalOutagesBoolSummer[c].append(1)
-                
+            # no outage reported
             else:
                 # 1 here because plant at 100% capacity
                 finalCapacity[c].append(1)
@@ -365,6 +396,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
         outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
         finalOutageInds[c].extend(outageInd)
     
+    
     finalTx = np.array(finalTx)
     finalTxSummer = np.array(finalTxSummer)
     finalCapacity = np.array(finalCapacity)
@@ -374,9 +406,13 @@ def matchEntsoeWxPlantSpecific(entsoeData, useEra):
     finalOutagesCount = np.array(finalOutagesCount)
     finalOutageInds = np.array(finalOutageInds)
     
+    entsoeLat = np.array(entsoeLat)
+    entsoeLon = np.array(entsoeLon)
+    
     d = {'tx':finalTx, 'txSummer':finalTxSummer, 'years':txYears, 'months':txMonths, 'days':txDays, \
          'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
-         'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount}
+         'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount, \
+         'lats':entsoeLat, 'lons':entsoeLon}
     return d
 
 
@@ -528,11 +564,16 @@ def aggregateEntsoeData(entsoeMatchData):
 
 
 def exportLatLon(entsoeData):
+    
     import csv
+    uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
+    entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
+    entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
+    
     i = 0
     with open('entsoe-lat-lon.csv', 'w') as f:
         csvWriter = csv.writer(f)    
-        for i in range(len(entsoeData['lats'])):
-            csvWriter.writerow([i, entsoeData['lats'][i], entsoeData['lons'][i]])
+        for i in range(len(entsoeLat)):
+            csvWriter.writerow([i, entsoeLat[i], entsoeLon[i]])
     
     

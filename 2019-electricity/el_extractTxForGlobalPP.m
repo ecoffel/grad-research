@@ -1,14 +1,6 @@
 
-dataset = 'e:/data/cmip5/output';
-
-models = {'bcc-csm1-1-m', 'canesm2', ...
-              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
-              'gfdl-esm2g', 'gfdl-esm2m', ...
-              'inmcm4', 'miroc5', 'miroc-esm', ...
-              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
-
-startYear = 2020;
-endYear = 2050;
+startYear = 1981;
+endYear = 2018;
 
 plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
 
@@ -20,15 +12,15 @@ for y = startYear:endYear
     
     fprintf('processing %d\n', y)
     
-%     temp = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', y, 'endYear', y);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
-    
-    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
+    temp = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', y, 'endYear', y);
     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
         temp{3} = temp{3} - 273.15;
     end
+    
+%     temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+%         temp{3} = temp{3} - 273.15;
+%     end
     
 
     for i = 1:size(plantLatLon, 1)
@@ -84,5 +76,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/entnsoe-nuke-pp-tx-cpc.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entnsoe-nuke-pp-tx-era.csv', plantTxTimeSeries);
 
