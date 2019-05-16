@@ -12,50 +12,29 @@ from sklearn import linear_model
 import statsmodels.api as sm
 import el_entsoe_utils
 import el_nuke_utils
+import pickle
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
 def buildLinearTempPPModel():
     
-    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
-    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
-    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
-#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
-    entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
-    entsoeAgDataCpc = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataCpc)
-    entsoeAgDataNcep = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataNcep)
-    
-    nukeData = el_nuke_utils.loadNukeData(dataDir)
-    
-    nukeTxEra, nukeTxIdsEra = el_nuke_utils.loadWxData(nukeData, wxdata='era')
-    nukeTxCpc, nukeTxIdsCpc = el_nuke_utils.loadWxData(nukeData, wxdata='cpc')
-    nukeTxNcep, nukeTxIdsNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
-    
-    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxEra, nukeTxIdsEra)
-    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxCpc, nukeTxIdsCpc)
-    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxNcep, nukeTxIdsNcep)
+    eData = {}
+    with open('eData.dat', 'rb') as f:
+        eData = pickle.load(f)
 
     
+    entsoeAgDataAll = eData['entsoeAgDataAll']
+    nukeAgDataAll = eData['nukeAgDataAll']
+
     xtotal = []
-    xtotal.extend(nukeAgDataEra['txSummer'])
-    xtotal.extend(nukeAgDataCpc['txSummer'])
-    xtotal.extend(nukeAgDataNcep['txSummer'])
-    
-    xtotal.extend(entsoeAgDataEra['txSummer'])
-    xtotal.extend(entsoeAgDataCpc['txSummer'])
-    xtotal.extend(entsoeAgDataNcep['txSummer'])
+    xtotal.extend(nukeAgDataAll['txAvgSummer'])
+    xtotal.extend(entsoeAgDataAll['txAvgSummer'])
     xtotal = np.array(xtotal)
     
     ytotal = []
-    ytotal.extend(nukeAgDataEra['capacitySummer'])
-    ytotal.extend(nukeAgDataCpc['capacitySummer'])
-    ytotal.extend(nukeAgDataNcep['capacitySummer'])
-    
-    ytotal.extend(100*entsoeAgDataEra['capacitySummer'])
-    ytotal.extend(100*entsoeAgDataCpc['capacitySummer'])
-    ytotal.extend(100*entsoeAgDataNcep['capacitySummer'])
+    ytotal.extend(nukeAgDataAll['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataAll['capacitySummer'])
     ytotal = np.array(ytotal)
     
     
@@ -85,54 +64,47 @@ def buildLinearTempPPModel():
     return (regr, model)
 
 
-def buildPoly3TempPPModel():
-    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
-    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
-    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
-#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
-    entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
-    entsoeAgDataCpc = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataCpc)
-    entsoeAgDataNcep = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataNcep)
-    
-    nukeData = el_nuke_utils.loadNukeData(dataDir)
-    
-    nukeTxEra, nukeTxIdsEra = el_nuke_utils.loadWxData(nukeData, wxdata='era')
-    nukeTxCpc, nukeTxIdsCpc = el_nuke_utils.loadWxData(nukeData, wxdata='cpc')
-    nukeTxNcep, nukeTxIdsNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
-    
-    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxEra, nukeTxIdsEra)
-    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxCpc, nukeTxIdsCpc)
-    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTxNcep, nukeTxIdsNcep)
+def buildPolyTempPPModel(tempVar, nBootstrap, order):
+    eData = {}
+    with open('eData.dat', 'rb') as f:
+        eData = pickle.load(f)
 
     
+    entsoeAgDataAll = eData['entsoeAgDataAll']
+    nukeAgDataAll = eData['nukeAgDataAll']
+
     xtotal = []
-    xtotal.extend(nukeAgDataEra['txSummer'])
-    xtotal.extend(nukeAgDataCpc['txSummer'])
-    xtotal.extend(nukeAgDataNcep['txSummer'])
-    
-    xtotal.extend(entsoeAgDataEra['txSummer'])
-    xtotal.extend(entsoeAgDataCpc['txSummer'])
-    xtotal.extend(entsoeAgDataNcep['txSummer'])
+    xtotal.extend(nukeAgDataAll[tempVar])
+    xtotal.extend(entsoeAgDataAll[tempVar])
     xtotal = np.array(xtotal)
     
     ytotal = []
-    ytotal.extend(nukeAgDataEra['capacitySummer'])
-    ytotal.extend(nukeAgDataCpc['capacitySummer'])
-    ytotal.extend(nukeAgDataNcep['capacitySummer'])
-    
-    ytotal.extend(100*entsoeAgDataEra['capacitySummer'])
-    ytotal.extend(100*entsoeAgDataCpc['capacitySummer'])
-    ytotal.extend(100*entsoeAgDataNcep['capacitySummer'])
+    ytotal.extend(nukeAgDataAll['capacitySummer'])
+    ytotal.extend(100*entsoeAgDataAll['capacitySummer'])
     ytotal = np.array(ytotal)
       
-    data = {'Temp':xtotal, 'PC':ytotal}
-    df = pd.DataFrame(data, columns=['Temp', 'PC'])
+    ind = np.where((ytotal <= 100.1) & (xtotal > 20))[0]
+    xtotal = xtotal[ind]
+    ytotal = ytotal[ind]
     
-    z = np.polyfit(df['Temp'], df['PC'], 3)
-    p = np.poly1d(z)
+    pBootstrap = []
+    zBootstrap = []
     
-    return (z,p)
+    for i in range(nBootstrap):
+        resampleInd = np.random.choice(len(xtotal), int(len(xtotal)))
+        
+        data = {'Temp':xtotal[resampleInd], 'PC':ytotal[resampleInd]}
+        df = pd.DataFrame(data, \
+                          columns=['Temp', 'PC'])
+        
+        df = df.dropna()
+        
+        z = np.polyfit(df['Temp'], df['PC'], order)
+        p = np.poly1d(z)
+        zBootstrap.append(z)
+        pBootstrap.append(p)
+    
+    return (zBootstrap,pBootstrap)
 
 
 
@@ -144,7 +116,7 @@ def exportNukeEntsoePlantLocations():
     entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
     
     nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, useEra=True)
+    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, wxdata='era')
     
     nukeLat = []
     nukeLon = []

@@ -140,8 +140,8 @@ for k = 1:length(ncFileNames)
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
-        %fprintf('skipping %s', folDataTarget);
-        %continue;
+        fprintf('skipping %s', folDataTarget);
+        continue;
     end
     fprintf('processing %s...\n', folDataTarget)
 

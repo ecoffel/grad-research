@@ -2,10 +2,10 @@ startYear = 2007;
 endYear = 2018;
 
 if ~exist('temp')
-    temp = loadDailyData('E:\data\era-interim\output\mx2t\075x075\mx2t', 'startYear', startYear, 'endYear', endYear);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-        temp{3} = temp{3} - 273.15;
-    end
+%     temp = loadDailyData('E:\data\era-interim\output\mx2t\', 'startYear', startYear, 'endYear', endYear);
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+%         temp{3} = temp{3} - 273.15;
+%     end
     
 
 %     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', 2007, 'endYear', 2018);
@@ -13,10 +13,10 @@ if ~exist('temp')
 %         temp{3} = temp{3} - 273.15;
 %     end
 
-%     temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2007, 'endYear', 2018);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
+    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2007, 'endYear', 2018);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
+    end
 end
 
 plantLatLon = csvread('2019-electricity/nuke-lat-lon.csv');
@@ -32,8 +32,8 @@ for i = 1:size(plantLatLon, 1)
         lon = lon+360;
     end
     
-%     [latInd, lonInd] = latLonIndexRange(temp, [lat-.25, lat+.25], [lon-.25, lon+.25]);
-    [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
+    [latInd, lonInd] = latLonIndexRange(temp, [lat-.25, lat+.25], [lon-.25, lon+.25]);
+%     [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
         
 %     [latEraInd, lonEraInd] = latLonIndex(tempEra, [lat, lon]);%-.5, lat+.5], [lon-.5, lon+.5]);
     
@@ -57,4 +57,4 @@ for i = 1:size(plantLatLon, 1)
     plantWbTimeSeries(i, :) = [ind, txClean'];
 end
 
- csvwrite('2019-electricity/nuke-tx-era-075.csv', plantWbTimeSeries);
+ csvwrite('2019-electricity/nuke-tx-cpc.csv', plantWbTimeSeries);

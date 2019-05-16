@@ -61,18 +61,24 @@ def loadNukeData(dataDir):
 def loadWxData(eba, wxdata):
     # read tw time series
     fileName = ''
+    fileNameCDD = ''
     
     if wxdata == 'cpc':
         fileName = 'nuke-tx-cpc.csv'
+        fileNameCDD = 'nuke-cdd-cpc.csv'
     elif wxdata == 'era':
-        fileName = 'nuke-tx-era-075.csv'
+        fileName = 'nuke-tx-era.csv'
+        fileNameCDD = 'nuke-cdd-era.csv'
     elif wxdata == 'ncep':
         fileName = 'nuke-tx-ncep.csv'
+        fileNameCDD = 'nuke-cdd-ncep.csv'
     elif wxdata == 'all':
-        fileName = ['nuke-tx-cpc.csv', 'nuke-tx-era-075.csv', 'nuke-tx-ncep.csv']
+        fileName = ['nuke-tx-cpc.csv', 'nuke-tx-era.csv', 'nuke-tx-ncep.csv']
+        fileNameCDD = ['nuke-cdd-cpc.csv', 'nuke-cdd-era.csv', 'nuke-cdd-ncep.csv']
         
         
     tx = []
+    cdd = []
     
     if wxdata == 'all':
         tx1 = np.genfromtxt(fileName[0], delimiter=',')    
@@ -84,8 +90,19 @@ def loadWxData(eba, wxdata):
             for j in range(1,tx1.shape[1]):
                 tx[i,j] = np.nanmean([tx1[i,j], tx2[i,j], tx3[i,j]])
         
+        
+        cdd1 = np.genfromtxt(fileNameCDD[0], delimiter=',')    
+        cdd2 = np.genfromtxt(fileNameCDD[1], delimiter=',')    
+        cdd3 = np.genfromtxt(fileNameCDD[2], delimiter=',')    
+        
+        cdd = cdd1.copy()
+        for i in range(0,cdd1.shape[0]):
+            for j in range(1,cdd1.shape[1]):
+                cdd[i,j] = np.nanmean([cdd1[i,j], cdd2[i,j], cdd3[i,j]])
+        
     else:
         tx = np.genfromtxt(fileName, delimiter=',')
+        cdd = np.genfromtxt(fileNameCDD, delimiter=',')
         
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []
@@ -105,18 +122,23 @@ def loadWxData(eba, wxdata):
                nameParts[1] in eba[n]['name']:
                    capacityId = n
                    ids.append([outageId, capacityId])
-    return (np.array(tx), np.array(ids))
+    return {'tx':np.array(tx), 'cdd':np.array(cdd), 'ids':np.array(ids)}
 
 
 
 
 
-def accumulateNukeWxDataPlantLevel(eba, tx, ids):
+def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     
     summerInds = np.where((eba[0]['month'] == 7) | (eba[0]['month'] == 8))[0]
     
+    tx = nukeMatchData['tx']
+    cdd = nukeMatchData['cdd']
+    ids = nukeMatchData['ids']
+    
     plantPercCapacity = []
     plantTx = []
+    plantCDD = []
     
     plantMonths = []
     plantDays = []
@@ -142,23 +164,29 @@ def accumulateNukeWxDataPlantLevel(eba, tx, ids):
     
     for i in range(plantPercCapacity.shape[0]):
         
-        y = plantPercCapacity[i]
-        x = tx[i,1:]
+        curPC = plantPercCapacity[i]
+        curTx = tx[i,1:]
+        curCDD = cdd[i,1:]
         
-        if len(y)==len(x):
-            y = y[summerInds]
-            x = x[summerInds]
-            nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
-            y = y[nn]
-            x = x[nn]
+        if len(curPC)==len(curTx):
+            curPC = curPC[summerInds]
+            curTx = curTx[summerInds]
+            curCDD = curCDD[summerInds]
+            nn = np.where((~np.isnan(curPC)) & (~np.isnan(curTx)) & (~np.isnan(curCDD)))[0]
+            curPC = curPC[nn]
+            curTx = curTx[nn]
+            curCDD = curCDD[nn]
             
-            finalPlantPercCapacity.append(y)
-            plantTx.append(x)
+            finalPlantPercCapacity.append(curPC)
+            plantTx.append(curTx)
+            plantCDD.append(curCDD)
     
     plantTx = np.array(plantTx)
+    plantCDD = np.array(plantCDD)
     finalPlantPercCapacity = np.array(finalPlantPercCapacity)
     
-    d = {'txSummer': plantTx, 'capacitySummer':finalPlantPercCapacity, \
+    d = {'txSummer': plantTx, 'cddSummer':plantCDD, \
+         'capacitySummer':finalPlantPercCapacity, \
          'summerInds':summerInds, \
          'plantMonths':plantMonths, 'plantDays':plantDays}
     return d
@@ -168,7 +196,14 @@ def accumulateNukeWxDataPlantLevel(eba, tx, ids):
 
 
 
-def accumulateNukeWxData(eba, tx, ids):
+def accumulateNukeWxData(eba, nukeMatchData):
+    
+    tx = nukeMatchData['tx']
+    cdd = nukeMatchData['cdd']
+    ids = nukeMatchData['ids']
+    
+    # for averaging cdd and tx
+    smoothingLen = 4
     
     summerInds = np.where((eba[0]['month'] == 7) | (eba[0]['month'] == 8))[0]
     
@@ -208,45 +243,85 @@ def accumulateNukeWxData(eba, tx, ids):
     
     outageBool = []
     
-    xtotal = []
-    ytotal = []
+    plantTxTotal = []
+    plantTxAvgTotal = []
+    plantCDDAccTotal = []
+    plantCapTotal = []
     plantIdsAcc = []
     plantMeanTempsAcc = []
     monthsAcc = []
     daysAcc = []
+    
+    # loop over all plants
     for i in range(percCapacity.shape[0]):
         
-        y = percCapacity[i]
-        x = tx[i,1:]
+        plantCap = percCapacity[i]
+        plantTx = tx[i,1:]
+        plantCDD = cdd[i,1:]
         
-        if len(y)==len(x):
-            y = y[summerInds]
-            x = x[summerInds]
-            nn = np.where((~np.isnan(y)) & (~np.isnan(x)))[0]
-            y = y[nn]
-            x = x[nn]
-            ytotal.extend(y)
-            xtotal.extend(x)
+        # accumulate weekly cdd
+        
+        plantCDDSmooth = []
+        for d in range(len(plantCDD)):
+            if d < (smoothingLen-1):
+                plantCDDSmooth.append(np.nan)
+            else:
+                plantCDDSmooth.append(np.nansum(plantCDD[d-(smoothingLen-1):d+1]))
+            
+        plantCDDSmooth = np.array(plantCDDSmooth)
+        
+        
+        plantTxAvg = []
+        for d in range(tx.shape[1]):
+            if d > smoothingLen-1:
+                plantTxAvg.append(np.nanmean(tx[i,d-(smoothingLen-1):d+1]))
+            else:
+                plantTxAvg.append(np.nan)
+        
+        plantTxAvg = np.array(plantTxAvg)
+        
+        if len(plantTx)==len(plantCap):
+            plantCap = plantCap[summerInds]
+            plantTx = plantTx[summerInds]
+            plantTxAvg = plantTxAvg[summerInds]
+            plantCDD = plantCDD[summerInds]
+            plantCDDSmooth = plantCDDSmooth[summerInds]
+            
+            nn = np.where((~np.isnan(plantCap)) & (~np.isnan(plantTx)) & (~np.isnan(plantTxAvg)) \
+                          & (~np.isnan(plantCDD)) & (~np.isnan(plantCDDSmooth)))[0]
+            
+            plantCap = plantCap[nn]
+            plantTx = plantTx[nn]
+            plantTxAvg = plantTxAvg[nn]
+            plantCDD = plantCDD[nn]
+            plantCDDSmooth = plantCDDSmooth[nn]
+            
+            plantCapTotal.extend(plantCap)
+            plantTxTotal.extend(plantTx)
+            plantTxAvgTotal.extend(plantTxAvg)
+            plantCDDAccTotal.extend(plantCDDSmooth)
+            
             plantIdsAcc.extend(plantIds[i,summerInds])
-            plantMeanTempsAcc.extend([np.nanmean(x)]*len(x))
+            plantMeanTempsAcc.extend([np.nanmean(plantTx)]*len(plantTx))
             monthsAcc.extend(plantMonths[i,summerInds])
             daysAcc.extend(plantDays[i,summerInds])            
             
-            for k in range(len(y)):
-                if y[k] < 100:
+            for k in range(len(plantCap)):
+                if plantCap[k] < 100:
                     outageBool.append(1)
                 else:
                     outageBool.append(0)
-        else:
-            print(i)
     
-    xtotal = np.array(xtotal)
-    ytotal = np.array(ytotal)
+    plantTxTotal = np.array(plantTxTotal)
+    plantTxAvgTotal = np.array(plantTxAvgTotal)
+    plantCDDAccTotal = np.array(plantCDDAccTotal)
+    plantCapTotal = np.array(plantCapTotal)
     plantIdsAcc = np.array(plantIdsAcc)
     monthsAcc = np.array(monthsAcc)
     daysAcc = np.array(daysAcc)
     
-    d = {'txSummer': xtotal, 'capacitySummer':ytotal, 'percCapacity':percCapacity, \
+    d = {'txSummer': plantTxTotal, 'txAvgSummer': plantTxAvgTotal, 'cddSummer': plantCDDAccTotal, \
+         'capacitySummer':plantCapTotal, 'percCapacity':percCapacity, \
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
          'plantMeanTemps':plantMeanTempsAcc, 'plantMonths':monthsAcc, 'plantDays':daysAcc}
     return d

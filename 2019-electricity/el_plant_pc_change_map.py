@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Wed May 15 18:33:47 2019
+
+@author: Ethan
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Mon Apr  1 11:10:50 2019
 
 @author: Ethan
@@ -12,12 +19,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sys
-import el_entsoe_utils
-
+import pickle
 
 dataDir = 'e:/data/'
 
-entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
+if not 'plantPcChange' in locals():
+    plantPcChange = {}
+    with open('plantPcChange.dat', 'rb') as f:
+        plantPcChange = pickle.load(f)
+
+
+pcChg = np.nanmean(plantPcChange['pCapTxx50'][0,:,33:],axis=1) - \
+        np.nanmean(plantPcChange['pCapTxx50'][0,:,0:5],axis=1)
+
+if not 'eData' in locals():
+    eData = {}
+    with open('eData.dat', 'rb') as f:
+        eData = pickle.load(f)
+entsoeData = eData['entsoeData']
 
 uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
 entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
@@ -94,4 +113,4 @@ m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', zor
 
 plt.legend(markerscale=2, prop = {'size':8, 'family':'Helvetica'})
 
-plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+#plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Tue May 14 11:52:17 2019
+
+@author: Ethan
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Tue May  7 12:24:42 2019
 
 @author: Ethan
@@ -55,12 +62,18 @@ nukeAgDataNcep = eData['nukeAgDataNcep']
 nukeAgDataAll = eData['nukeAgDataAll']
 
 
-tempVar = 'txxSummer'
-xlim_1 = 20
-xlim_2 = 50
+
+perc1 = -1
+perc2 = 80
+
+
+
+tempVar = 'txAvgSummer'
+xlim_1 = 0
+xlim_2 = 44
 #xlim_1 = 0
 #xlim_2 = 125
-xLabelSpacing = 8
+
 
 
 xtotal = []
@@ -130,9 +143,17 @@ tempNonlinCoef1 = []
 tempNonlinCoef2 = []
 tempNonlinCoef3 = []
 
-ind = np.where((ytotal <= 100.1) & (xtotal > 20))[0]
-xtotal = xtotal[ind]
-ytotal = ytotal[ind]
+ind = np.where(ytotal <= 101)[0]
+indPerc = []
+if perc1 == -1:
+    indPerc = np.where(xtotal >= np.percentile(xtotal, perc2))[0]
+elif perc2 == -1:
+    indPerc = np.where(xtotal <= np.percentile(xtotal, perc1))[0]
+else:
+    indPerc = np.where((xtotal >= np.percentile(xtotal, perc1)) & (xtotal <= np.percentile(xtotal, perc2)))[0]
+
+xtotal = xtotal[np.intersect1d(ind, indPerc)]
+ytotal = ytotal[np.intersect1d(ind, indPerc)]
 
 for i in range(1000):
     resampleInd = np.random.choice(len(xtotal), int(len(xtotal)))
@@ -141,7 +162,18 @@ for i in range(1000):
     df = pd.DataFrame(data, \
                       columns=['Temp', 'PC'])
     
+    
     df = df.dropna()
+    
+    X = df[['Temp']]
+    Y = df['PC']
+      
+    
+    regr = linear_model.LinearRegression()
+    regr.fit(X, Y)
+        
+    tempCoef.append(regr.coef_[0])
+    tempInt.append(regr.intercept_)
     
     z = np.polyfit(df['Temp'], df['PC'], 1)
     p = np.poly1d(z)
@@ -155,9 +187,10 @@ for i in range(1000):
     p = np.poly1d(z)
     tempNonlinCoef3.append(p)
 
+#plt.plot(range(21, 44), p(range(20, 43)), "--", linewidth = 2, color = [234/255., 49/255., 49/255.])
 
-
-
+tempInt = np.array(tempInt)
+tempCoef = np.array(tempCoef)
 
 xd = np.linspace(xlim_1, xlim_2, 200)
 yd = np.array([tempInt[i] + tempCoef[i] * xd for i in range(len(tempCoef))])
@@ -176,8 +209,8 @@ plt.plot(xd, yPolyd1.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.]
 plt.plot(xd, np.nanmean(yPolyd1, axis=0), '-', linewidth = 3, color = [0, 0, 0])
 
 
-plt.gca().set_xticks(range(xlim_1,xlim_2+1,xLabelSpacing))
-plt.gca().set_xticklabels(range(xlim_1,xlim_2+1,xLabelSpacing))
+plt.gca().set_xticks(range(xlim_1,xlim_2+1,8))
+plt.gca().set_xticklabels(range(xlim_1,xlim_2+1,8))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -194,81 +227,13 @@ plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('pp-regression-bootstrap-poly1-%s.png'%tempVar, format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('pp-regression-bootstrap-poly1-%s.png'%dataset, format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
 
 
 
 
 
 
-
-plt.figure(figsize=(2,4))
-plt.xlim([xlim_1-1, xlim_2+1])
-plt.ylim([75, 100])
-plt.grid(True)
-#plt.plot(xd, yd.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.], alpha = .2)
-#plt.plot(xd, np.nanmean(yd, axis=0), '-', linewidth = 3, color = [0, 0, 0])
-
-plt.plot(xd, yPolyd2.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.], alpha = .2)
-plt.plot(xd, np.nanmean(yPolyd2, axis=0), '-', linewidth = 3, color = [0, 0, 0])
-
-
-plt.gca().set_xticks(range(xlim_1,xlim_2+1,xLabelSpacing))
-plt.gca().set_xticklabels(range(xlim_1,xlim_2+1,xLabelSpacing))
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-#plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-#plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
-
-#x0,x1 = plt.gca().get_xlim()
-#y0,y1 = plt.gca().get_ylim()
-#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-if plotFigs:
-    plt.savefig('pp-regression-bootstrap-poly2-%s.png'%tempVar, format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
-
-
-
-
-
-
-
-plt.figure(figsize=(2,4))
-plt.xlim([xlim_1-1, xlim_2+1])
-plt.ylim([75, 100])
-plt.grid(True)
-#plt.plot(xd, yd.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.], alpha = .2)
-#plt.plot(xd, np.nanmean(yd, axis=0), '-', linewidth = 3, color = [0, 0, 0])
-
-plt.plot(xd, yPolyd3.T, '-', linewidth = 1, color = [234/255., 49/255., 49/255.], alpha = .2)
-plt.plot(xd, np.nanmean(yPolyd3, axis=0), '-', linewidth = 3, color = [0, 0, 0])
-
-
-plt.gca().set_xticks(range(xlim_1,xlim_2+1,xLabelSpacing))
-plt.gca().set_xticklabels(range(xlim_1,xlim_2+1,xLabelSpacing))
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-#plt.xlabel('Daily max temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-#plt.ylabel('Plant capacity (%)', fontname = 'Helvetica', fontsize=16)
-
-#x0,x1 = plt.gca().get_xlim()
-#y0,y1 = plt.gca().get_ylim()
-#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-if plotFigs:
-    plt.savefig('pp-regression-bootstrap-poly3-%s.png'%tempVar, format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
 
 
 

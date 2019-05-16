@@ -29,8 +29,8 @@ dataDir = 'e:/data/'
 
 plotFigs = False
 
-regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
-#zPoly3, pPoly3 = el_temp_pp_model.buildPoly3TempPPModel()
+#regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
+zPoly3, pPoly3 = el_temp_pp_model.buildPoly3TempPPModel()
 
 #globalPlants = el_load_global_plants.loadGlobalPlants()
 
@@ -105,21 +105,21 @@ for p in range(len(plantList)):
         if len(nn) == 0:
             curPcAnnual.append(np.nan)
         else:
-            curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
-#            curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
+#            curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
+            curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
         
         nn = np.where(~np.isnan(txSummer))[0]
         if len(nn) == 0:
             curPcSummer.append(np.nan)
         else:
-            curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
-#            curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
+#            curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
+            curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
         
         if np.isnan(txx):
             curPcTxx.append(np.nan)
         else:
-            curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
-#            curPcTxx.append(np.nanmean(pPoly3(txx)))
+#            curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
+            curPcTxx.append(np.nanmean(pPoly3(txx)))
         
             
     pcAnnualHist.append(np.array(curPcAnnual))
@@ -189,21 +189,21 @@ for m in range(len(models)):
             if len(nn) == 0:
                 curPcAnnual.append(np.nan)
             else:
-                curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
-    #            curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
+#                curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
+                curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
             
             nn = np.where(~np.isnan(txSummer))[0]
             if len(nn) == 0:
                 curPcSummer.append(np.nan)
             else:
-                curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
-    #            curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
+#                curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
+                curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
             
             if np.isnan(txx):
                 curPcTxx.append(np.nan)
             else:
-                curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
-    #            curPcTxx.append(np.nanmean(pPoly3(txx)))
+#                curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
+                curPcTxx.append(np.nanmean(pPoly3(txx)))
             
             
                 
@@ -239,21 +239,21 @@ for m in range(len(models)):
             if len(nn) == 0:
                 curPcAnnual.append(np.nan)
             else:
-                curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
-    #            curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
+#                curPcAnnual.append(np.nanmean(regr.predict(txAnnual[nn].reshape(-1, 1))))
+                curPcAnnual.append(np.nanmean(pPoly3(txAnnual[nn])))
             
             nn = np.where(~np.isnan(txSummer))[0]
             if len(nn) == 0:
                 curPcSummer.append(np.nan)
             else:
-                curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
-    #            curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
+#                curPcSummer.append(np.nanmean(regr.predict(txSummer[nn].reshape(-1, 1))))
+                curPcSummer.append(np.nanmean(pPoly3(txSummer[nn])))
             
             if np.isnan(txx):
                 curPcTxx.append(np.nan)
             else:
-                curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
-    #            curPcTxx.append(np.nanmean(pPoly3(txx)))
+#                curPcTxx.append(np.nanmean(regr.predict(txx.reshape(1, -1))))
+                curPcTxx.append(np.nanmean(pPoly3(txx)))
                 
             
                 

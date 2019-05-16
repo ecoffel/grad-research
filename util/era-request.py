@@ -17,8 +17,8 @@ server = ECMWFDataServer()
 #files =      ["168.128"]
 #fileNames = ["d2m"]
 
-files =      ["201.128"]
-fileNames = ["mx2t"]
+files =      ["202.128"]
+fileNames = ["mn2t"]
 
 #files =      ["134.128"]
 #fileNames = ["sp"]
@@ -49,7 +49,7 @@ def interim_request(file, fileName, dates, target):
         "dataset": "interim",
         "date": dates,
         "expver": "1",
-        "grid": "0.75/0.75",
+        "grid": "2.00/2.00",
         "levtype": "sfc",
         "param": file,
         "step": "3/6/9/12",
@@ -75,18 +75,18 @@ def interim_land_request(file, fileName, dates, target):
         "target": target})
     
 
-yearStart = 2018
+yearStart = 2017
 yearEnd = 2018
 for f in range(len(files)):
     for year in list(range(yearStart, yearEnd + 1)):
         startDate = '%04d-01-01' % (year)
         lastDate = '%04d-12-31' % (year)
         requestDates = (startDate + "/to/" + lastDate)
-        if os.path.isfile(baseDir + fileNames[f] + "_" + str(year) + "_075x075.nc"):
-            print('skipping', fileNames[f] + "_" + str(year) + "_075x075.nc")
+        if os.path.isfile(baseDir + fileNames[f] + "_" + str(year) + "_2x2.nc"):
+            print('skipping', fileNames[f] + "_" + str(year) + "_2x2.nc")
         else:
-            print('requesting', fileNames[f] + "_" + str(year) + "_075x075.nc")
+            print('requesting', fileNames[f] + "_" + str(year) + "_2x2.nc")
             if useInterimLand:
-                interim_land_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_075x075.nc')
+                interim_land_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_2x2.nc')
             else:
-                interim_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_075x075.nc')
+                interim_request(files[f], fileNames[f], requestDates, baseDir + fileNames[f] + '_' + str(year) + '_2x2.nc')

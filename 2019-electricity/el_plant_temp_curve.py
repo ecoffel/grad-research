@@ -19,40 +19,38 @@ import pandas as pd
 import statsmodels.api as sm
 from sklearn import linear_model
 import seaborn as sns
-import el_entsoe_utils
-import el_nuke_utils
+import pickle
 import sys
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-wxdata = 'all'
+wxdata = 'era'
 
-plotFigs = True
+plotFigs = False
 
 outageDaysOnly = False
 
 dataset = 'all'
 
-if not 'entsoeAgData' in locals():
-    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
-    entsoePlantData = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata=wxdata)
-#    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
-    entsoeAgData = el_entsoe_utils.aggregateEntsoeData(entsoePlantData)
+tempVar = 'txAvgSummer'
 
-if not 'nukeAgData' in locals():
-    nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, wxdata=wxdata)
-    nukeAgData = el_nuke_utils.accumulateNukeWxData(nukeData, nukeTx, nukeTxIds)
-    nukePlantData = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeTx, nukeTxIds)
+eData = {}
+with open('eData.dat', 'rb') as f:
+    eData = pickle.load(f)
 
+entsoePlantData = eData['entsoePlantDataAll']
+entsoeAgData = eData['entsoeAgDataAll']
+nukeMatchData = eData['nukeMatchDataAll']
+nukeAgData = eData['nukeAgDataAll']
+nukePlantData = eData['nukePlantDataAll']
 
 xtotal = []
 if dataset == 'nuke' or dataset == 'all':
-    xtotal.extend(nukeAgData['txSummer'])
+    xtotal.extend(nukeAgData[tempVar])
 
 if dataset == 'entsoe' or dataset == 'all':
-    xtotal.extend(entsoeAgData['txSummer'])
+    xtotal.extend(entsoeAgData[tempVar])
 xtotal = np.array(xtotal)
 
 ytotal = []
@@ -86,9 +84,9 @@ plantDays = np.array(plantDays)
 
 xtotalBool = []
 if dataset == 'nuke' or dataset == 'all':
-    xtotalBool.extend(nukeAgData['txSummer'])
+    xtotalBool.extend(nukeAgData[tempVar])
 if dataset == 'entsoe' or dataset == 'all':
-    xtotalBool.extend(entsoeAgData['txSummer'])
+    xtotalBool.extend(entsoeAgData[tempVar])
 xtotalBool = np.array(xtotalBool)
 
 ytotalBool = []
@@ -98,12 +96,17 @@ if dataset == 'entsoe' or dataset == 'all':
     ytotalBool.extend(entsoeAgData['outagesBoolSummer'])
 ytotalBool = np.array(ytotalBool)
 
+ind = np.where((ytotal <= 100.1) & (xtotal > 20))[0]
+xtotal = xtotal[ind]
+ytotal = ytotal[ind]
 
 if outageDaysOnly:
     indOutages = np.where(ytotal<100)
     df = pd.DataFrame({'x':xtotal[indOutages], 'y':ytotal[indOutages]})
+    
 else:
     df = pd.DataFrame({'x':xtotal, 'y':ytotal})
+
 
 
 plt.figure(figsize=(4,4))
@@ -116,13 +119,14 @@ sns.regplot(x='x', y='y', data=df, order=3, \
 sns.regplot(x='x', y='y', data=df, order=1, scatter=False, \
             line_kws={"color": [244/255., 153/255., 34/255.]})
 
+
 #if outageDaysOnly:
 #    plt.xlim([20, 44])
 #    sns.regplot(x='x', y='y', data=df, lowess=True, scatter=False, \
 #                line_kws={"color": [34/255., 171/255., 244/255.]})
 
 
-plt.xlim([19,45])
+plt.xlim([20,45])
 plt.ylim([-25, 105])
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -268,10 +272,10 @@ binstep = 4
 bin_x1 = 20
 bin_x2 = 44
 
-for i in range(entsoePlantData['txSummer'].shape[0]):
+for i in range(entsoePlantData[tempVar].shape[0]):
     binnedOutageData.append([])
     for t in range(bin_x1, bin_x2, binstep):
-        tempInds = np.where((entsoePlantData['txSummer'][i] >= t) & (entsoePlantData['txSummer'][i] < t+binstep))[0]
+        tempInds = np.where((entsoePlantData[tempVar][i] >= t) & (entsoePlantData[tempVar][i] < t+binstep))[0]
         if len(tempInds) > 0:
             binnedOutageData[i].append(np.nanmean(100 * entsoePlantData['outagesBoolSummer'][i, tempInds]))
         else:
@@ -282,7 +286,7 @@ for i in range(nukeAgData['percCapacity'].shape[0]):
     binnedOutageData.append([])
     
     y = nukeAgData['percCapacity'][i]
-    x = nukeTx[i,1:]
+    x = nukeMatchData['tx'][i,1:]
 
     if len(y) == len(x):
         y = y[nukeAgData['summerInds']]

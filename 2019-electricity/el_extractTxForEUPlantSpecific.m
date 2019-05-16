@@ -2,21 +2,21 @@ startYear = 2015;
 endYear = 2018;
 
 if ~exist('temp')
-    temp = loadDailyData('E:\data\era-interim\output\mx2t\075x075\mx2t', 'startYear', startYear, 'endYear', endYear);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-        temp{3} = temp{3} - 273.15;
-    end
-  
+%     temp = loadDailyData('E:\data\era-interim\output\mx2t\', 'startYear', startYear, 'endYear', endYear);
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+%         temp{3} = temp{3} - 273.15;
+%     end
+%   
 % 
 %     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', 2015, 'endYear', 2018);
 %     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
 %         temp{3} = temp{3} - 273.15;
 %     end
     
-%     temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2015, 'endYear', 2018);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
+    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2015, 'endYear', 2018);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
+    end
 end
 
 plantLatLon = csvread('2019-electricity/entsoe-lat-lon.csv');
@@ -31,8 +31,9 @@ for i = 1:size(plantLatLon, 1)
     end
     
 
-    [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
-%     [latInd, lonInd] = latLonIndexRange(temp, [lat-.25 lat+.25], [lon-.25 lon+.25]);
+%     [latInd, lonInd] = latLonIndex(temp, [lat, lon]);
+    [latInd, lonInd] = latLonIndexRange(temp, [lat-.25 lat+.25], [lon-.25 lon+.25]);
+%     [latInd, lonInd] = latLonIndexRange(temp, [lat-.5 lat+.5], [lon-.5 lon+.5]);
 
 
     tx = squeeze(nanmean(nanmean(temp{3}(latInd, lonInd, :, :, :), 2), 1));
@@ -71,7 +72,7 @@ for i = 1:size(plantLatLon, 1)
     plantTxTimeSeries(end+1,:) = txClean;
 end
 
-csvwrite('2019-electricity/entsoe-tx-era-075.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-tx-cpc.csv', plantTxTimeSeries);
 %  
 % T = table(countryTxTimeSeries, 'RowNames', {'year', 'month', 'day', countryIds{countryIdInds}});
 %  
