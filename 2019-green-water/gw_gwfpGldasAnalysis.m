@@ -131,6 +131,9 @@ for m = 1:12
 end
 gwfpData(gwfpData == Inf) = NaN;
 
+gwfpPct = {lat,lon,pct};
+save('gwfpPctUsed.mat', 'gwfpPct');
+
 regions = [[33, 52, [-110, -85]+360]; ... % us midwest
            [31, 41, [110, 123]]; ... % ne china
            [10, 30, 71, 83]; ...  % west india

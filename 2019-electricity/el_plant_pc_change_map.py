@@ -16,12 +16,27 @@ import os
 os.environ['PROJ_LIB'] = r'C:\Users\Ethan\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
+import matplotlib.cm as cmx
+from matplotlib.colors import Normalize
 import numpy as np
 import pandas as pd
 import sys
 import pickle
 
 dataDir = 'e:/data/'
+
+
+class MidpointNormalize(Normalize):
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge cases to make a
+        # simple example...
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y))
+
 
 if not 'plantPcChange' in locals():
     plantPcChange = {}
@@ -31,6 +46,7 @@ if not 'plantPcChange' in locals():
 
 pcChg = np.nanmean(plantPcChange['pCapTxx50'][0,:,33:],axis=1) - \
         np.nanmean(plantPcChange['pCapTxx50'][0,:,0:5],axis=1)
+        
 
 if not 'eData' in locals():
     eData = {}
@@ -48,7 +64,6 @@ for l in list(set(entsoeLat)):
 
 nukeLatLon = np.genfromtxt('nuke-lat-lon.csv', delimiter=',')
 
-
 fig = plt.figure(figsize=(6,6))
 ax = plt.axes([0,0,1,1]) 
 # A basic map
@@ -60,57 +75,33 @@ m.drawcoastlines(linewidth=0.1, color="black")
 m.drawstates()
 m.drawcountries()
 
-mSize = 15
+mSize = 25
 
-# Add a marker per city of the data frame!
-xpt, ypt = m(nukeLatLon[:,1], nukeLatLon[:,2])
-m.scatter(ypt, xpt, s=mSize, color="orange", edgecolors="black", label='Nuclear', zorder=10)
+norm = MidpointNormalize(vmin=-0.5, midpoint=0, vmax=0.5)
 
-coalInds = []
-gasInds = []
-oilInds = []
-nukeInds = []
-bioInds = []
-wasteInds = []
-cogenInds = []
-
-for i in range(len(entsoeLat)):
-    if entsoeLat[i] < 30:
-        continue 
-     
-    if entsoePlantType[i] == 'coal':
-        coalInds.append(i)
-    elif entsoePlantType[i] == 'gas':
-        gasInds.append(i)
-    elif entsoePlantType[i] == 'oil':
-        oilInds.append(i)
-    elif entsoePlantType[i] == 'nuclear':
-        nukeInds.append(i)
-    elif entsoePlantType[i] == 'biomass':
-        bioInds.append(i)
-    elif entsoePlantType[i] == 'cogeneration':
-        cogenInds.append(i)
+xpts = []
+ypts = []
 
 
+for i in range(nukeLatLon.shape[0]):
+    xpt, ypt = m(nukeLatLon[i,1], nukeLatLon[i,2])
+    xpts.append(xpt)
+    ypts.append(ypt)
 
-xpt, ypt = m(entsoeLat[np.array(coalInds)], entsoeLon[np.array(coalInds)])
-m.scatter(ypt, xpt, s=mSize, color='#f03b20', edgecolors="black", label='Coal', zorder=10)
+for i in range(entsoeLat.shape[0]):
+    xpt, ypt = m(entsoeLat[i], entsoeLon[i])
+    xpts.append(xpt)
+    ypts.append(ypt)
 
-xpt, ypt = m(entsoeLat[np.array(gasInds)], entsoeLon[np.array(gasInds)])
-m.scatter(ypt, xpt, s=mSize, color='#3182bd', edgecolors="black", label='Gas', zorder=10)
+sc = m.scatter(ypts, xpts, s=mSize, marker='o', \
+          c=pcChg, norm=norm, cmap=plt.cm.get_cmap('RdBu'), edgecolors='black', zorder=10)
+plt.clim(-0.5, 0.5)
+cb = m.colorbar(sc, location='bottom')
+cb.set_ticks(np.arange(-.5, .51, .25))
+cb.set_label(label="Historical plant capacity change on TXx day (%)", size=14, family='Helvetica')
 
-xpt, ypt = m(entsoeLat[np.array(oilInds)], entsoeLon[np.array(oilInds)])
-m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', zorder=10)
-##
-#xpt, ypt = m(entsoeLat[np.array(nukeInds)], entsoeLon[np.array(nukeInds)])
-#m.scatter(ypt, xpt, s=mSize, color='orange', edgecolors="black", label='Nuclear', zorder=10)
-##
-#xpt, ypt = m(entsoeLat[np.array(bioInds)], entsoeLon[np.array(bioInds)])
-#m.scatter(ypt, xpt, s=mSize, color='green', edgecolors="black", label='Biomass', zorder=10)
-#
-#xpt, ypt = m(entsoeLat[np.array(cogenInds)], entsoeLon[np.array(cogenInds)])
-#m.scatter(ypt, xpt, s=mSize, color='pink', edgecolors="black", label='Cogen', zorder=10)
+for l in cb.ax.xaxis.get_ticklabels():
+    l.set_family("Helvetica")
+    l.set_size(14)
 
-plt.legend(markerscale=2, prop = {'size':8, 'family':'Helvetica'})
-
-#plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=1000, bbox_inches = 'tight', pad_inches = 0)
+plt.savefig('pp-hist-pc-change-map.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)

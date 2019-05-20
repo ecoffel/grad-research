@@ -26,8 +26,10 @@ def loadNukeData(dataDir):
         curLine = json.loads(line)
 
         #if 'Demand for' in curLine['name']: print(ln)
+        print(curLine['name'])
         
         if 'data' in curLine.keys():
+            
             curLine['data'].reverse()
             curLineNew = curLine.copy()
             
@@ -81,7 +83,7 @@ def loadWxData(eba, wxdata):
     cdd = []
     
     if wxdata == 'all':
-        tx1 = np.genfromtxt(fileName[0], delimiter=',')    
+        tx1 = np.genfromtxt(fileName[0], delimiter=',')
         tx2 = np.genfromtxt(fileName[1], delimiter=',')    
         tx3 = np.genfromtxt(fileName[2], delimiter=',')    
         
@@ -123,10 +125,6 @@ def loadWxData(eba, wxdata):
                    capacityId = n
                    ids.append([outageId, capacityId])
     return {'tx':np.array(tx), 'cdd':np.array(cdd), 'ids':np.array(ids)}
-
-
-
-
 
 def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     
@@ -325,3 +323,5 @@ def accumulateNukeWxData(eba, nukeMatchData):
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
          'plantMeanTemps':plantMeanTempsAcc, 'plantMonths':monthsAcc, 'plantDays':daysAcc}
     return d
+
+

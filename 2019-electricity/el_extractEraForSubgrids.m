@@ -1,4 +1,4 @@
-year1 = 2004;
+year1 = 1981;
 year2 = 2018;
 
 if ~exist('temp')
@@ -206,5 +206,5 @@ end
 T = table(stateTxTimeSeries, 'RowNames', {'year', 'month', 'day', stateIds{:}});
  
 % Write the table to a CSV file
-writetable(T, ['2019-electricity/subgrid-tx-era-' num2str(year1) '-' num2str(year2) '-test.csv'], 'WriteRowNames', true);
+writetable(T, ['2019-electricity/subgrid-tx-era-' num2str(year1) '-' num2str(year2) '.csv'], 'WriteRowNames', true);
 

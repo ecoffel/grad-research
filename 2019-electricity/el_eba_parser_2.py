@@ -17,7 +17,7 @@ import json
 import matplotlib.pyplot as plt 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
+import pickle
 import sys
 
 from el_subgrids import subgrids
@@ -125,23 +125,25 @@ if not 'eba' in locals():
             eba.append(curLineNew)
 
 if not 'dailySeries' in locals():
-    dailySeries = {'year':[], 'month':[], 'day':[], 'tempData':[], 'rhData':[], 'wbData':[], \
-                       'genData':[], 'intData':[], 'demData':[], 'demFctData':[]}
+    
     
     stateList = []
-    with open('subgrid-tx-era.csv', 'r') as f:
+    with open('subgrid-tx-era-1981-2018.csv', 'r') as f:
         i = 0
         for line in f:
             if i > 2:
                 parts = line.split(',')
                 stateList.append(parts[0])
             i += 1
-    tx = np.genfromtxt('subgrid-tx-era.csv', delimiter=',', skip_header=1)
+    tx = np.genfromtxt('subgrid-tx-era-1981-2018.csv', delimiter=',', skip_header=1)
     year = tx[0,1:]
     month = tx[1,1:]
     day = tx[2,1:]
     tx = tx[3:,1:]
-        
+    
+    dailySeries = {'year':year, 'month':month, 'day':day, 'tempData':[], \
+                       'genData':[], 'intData':[], 'demData':[], 'demFctData':[]}
+    
     for subgrid in subgrids.keys():
 
         print('building daily electricity data for %s...' % subgrid)
@@ -179,27 +181,29 @@ if not 'dailySeries' in locals():
             indDemFct = np.where((eba[demFctId]['year'] == year[i]) & \
                            (eba[demFctId]['month'] == month[i]) & \
                            (eba[demFctId]['day'] == day[i]))[0]
-                        
+            
+            
+            # add temp data - temp data goes back to 1981
+            meanTx = 0
+            for state in subgrids[subgrid]['states']:
+                meanTx += tx[stateList.index(state)-1, i]
+                                            
+            dailySeries['tempData'][-1].append(meanTx / len(subgrids[subgrid]['states']))
+            
             if len(indGen) == 1 and len(indInt) == 1 and len(indDem) == 1 and len(indDemFct) == 1:
                 dailySeries['genData'][-1].extend(eba[genId]['dataMaxSmooth'][indGen])
                 dailySeries['intData'][-1].extend(eba[intId]['dataMinSmooth'][indInt])
                 dailySeries['demData'][-1].extend(eba[demId]['dataMaxSmooth'][indDem])
-                dailySeries['demFctData'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])
-                
-                # add list for current day
-                meanTx = 0
-                for state in subgrids[subgrid]['states']:
-                    meanTx += tx[stateList.index(state)-1, i]
-                                                
-                dailySeries['tempData'][-1].append(meanTx / len(subgrids[subgrid]['states']))
-    
+                dailySeries['demFctData'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])    
             else:
                 dailySeries['genData'][-1].append(np.nan)
                 dailySeries['intData'][-1].append(np.nan)
                 dailySeries['demData'][-1].append(np.nan)
                 dailySeries['demFctData'][-1].append(np.nan)
-                dailySeries['tempData'][-1].append(np.nan)
-        
+    
+    dailySeries['year'] = np.array(dailySeries['year'])
+    dailySeries['month'] = np.array(dailySeries['month'])
+    dailySeries['day'] = np.array(dailySeries['day'])
     dailySeries['genData'] = np.array(dailySeries['genData'])
     dailySeries['intData'] = np.array(dailySeries['intData'])
     dailySeries['demData'] = np.array(dailySeries['demData'])
@@ -210,13 +214,22 @@ intTx = []
 genTx = []
 demTx = []
 demFctTx = []
+
+genTxScatter = []
+txScatter = []
+
 for s in range(len(subgrids)):
-    dailyTx = dailySeries['tempData'][s]
+    elecInd = np.where(~np.isnan(dailySeries['genData'][s]))[0]
+    
+    dailyTx = dailySeries['tempData'][s][elecInd]
     
     intTx.append([])
     genTx.append([])
     demTx.append([])
     demFctTx.append([])
+    
+    txScatter.append(dailyTx)
+    genTxScatter.append(dailySeries['genData'][s][elecInd])
     
     range1 = -20
     range2 = 40
@@ -233,7 +246,17 @@ for s in range(len(subgrids)):
         genTx[s].append(np.nanmean(dailySeries['genData'][s][indTx], axis = 0))
         demTx[s].append(np.nanmean(dailySeries['demData'][s][indTx], axis = 0))
         demFctTx[s].append(np.nanmean(dailySeries['demFctData'][s][indTx], axis = 0))
-    
+
+
+txScatter = np.array(txScatter)
+genTxScatter = np.array(genTxScatter)
+
+genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, \
+           'allTx':dailySeries['tempData'], \
+           'year':dailySeries['year'], 'month':dailySeries['month'], 'day':dailySeries['day']}
+with open('genData.dat', 'wb') as f:
+    pickle.dump(genData, f)
+
 demTx = np.transpose(np.array(demTx))
 genTx = np.transpose(np.array(genTx))
 intTx = np.transpose(np.array(intTx))

@@ -34,7 +34,7 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = False
+plotFigs = True
 
 dataset = 'all'
 wxdataset = 'all'
@@ -55,12 +55,12 @@ nukeAgDataNcep = eData['nukeAgDataNcep']
 nukeAgDataAll = eData['nukeAgDataAll']
 
 
-tempVar = 'txxSummer'
+tempVar = 'cddSummer'
+#xlim_1 = 20
+#xlim_2 = 50
 xlim_1 = 20
-xlim_2 = 50
-#xlim_1 = 0
-#xlim_2 = 125
-xLabelSpacing = 8
+xlim_2 = 80
+xLabelSpacing = 20
 
 
 xtotal = []

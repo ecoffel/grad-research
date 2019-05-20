@@ -28,7 +28,7 @@ yieldPrRel = [];
 for xlat = 1:size(yieldMaize, 1)
     for ylon = 1:size(yieldMaize, 2)
         y = detrend(normalize(squeeze(yieldMaize(xlat, ylon, :))));
-        yieldMaize(xlat, ylon, :) = detrend(normalize(y));
+        yieldMaize(xlat, ylon, :) = y;
         
         p = squeeze(normalize(squeeze(nanmean(gpcpRegridData(xlat, ylon, :, [6:8]), 4))));
         gpcpPr(xlat, ylon, :) = p;

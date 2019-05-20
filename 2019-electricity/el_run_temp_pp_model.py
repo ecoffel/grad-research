@@ -62,8 +62,6 @@ indPoly10 = np.where(abs(pSel-pPoly10) == np.nanmin(abs(pSel-pPoly10)))[0]
 indPoly50 = np.where(abs(pSel-pPoly50) == np.nanmin(abs(pSel-pPoly50)))[0]
 indPoly90 = np.where(abs(pSel-pPoly90) == np.nanmin(abs(pSel-pPoly90)))[0]
 
-
-
 xd = np.linspace(20, 50, 200)
 yPolyAll = np.array([pPoly3[i](xd) for i in range(len(pPoly3))])
 yPolyd10 = np.array(pPoly3[indPoly10[0]](xd))
@@ -192,7 +190,6 @@ pcChg = {'pCapTx10':pCapTx10, 'pCapTx50':pCapTx50, 'pCapTx90':pCapTx90, \
 with open('plantPcChange.dat', 'wb') as f:
     pickle.dump(pcChg, f)
 
-sys.exit()
 
 pcTx10 = np.squeeze(np.nanmean(pCapTx10[0,:,:], axis=0))
 pcTx50 = np.squeeze(np.nanmean(pCapTx50[0,:,:], axis=0))
