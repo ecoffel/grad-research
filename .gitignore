@@ -48,6 +48,7 @@ unpop2012.csv
 *.zip
 *.png
 *.dbf
+.eps
 *.shp
 *.shx
 *.prj
@@ -59,3 +60,18 @@ unpop2012.csv
 2017-nile-climate/data/*
 dbscan/*
 2015-weight-restriction-v2/airport-wx/*
+*.eps
+*.csv
+*.dat
+*.iml
+*.asc
+*.mat
+*.mat
+*.cpg
+2017-bowen/figs.txt
+2017-bowen/regression-results.txt
+2017-ag-precip/monthly-totals.txt
+2017-nile-climate/.ipynb_checkpoints/nile-data-exploration-checkpoint.ipynb
+*.ai
+*.mat
+2019-electricity/pp-dataframe
