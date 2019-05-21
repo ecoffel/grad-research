@@ -123,7 +123,7 @@ plantIds.extend(entsoeAgDataNcep['plantIds'])
 df['plantIdsAll'] = plantIds
 
 plantMonths = []
-plantMonths.extend(nukeAgDataNcep['plantMonths'])
+plantMonths.extend(nukeAgDataNcep['plantMonthsSummer'])
 plantMonths.extend(entsoeAgDataNcep['plantMonths'])
 df['plantMonthsAll'] = plantMonths
 
