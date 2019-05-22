@@ -16,14 +16,9 @@ import sys
 dataDir = 'e:/data/'
 
 plotFigs = False
+newFit = True
 
 smoothingLen = 4
-
-#regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
-if not 'pPoly3' in locals():
-    zPoly3, pPoly3 = el_temp_pp_model.buildPolyTempPPModel('txSummer', 1000, 3)
-
-#globalPlants = el_load_global_plants.loadGlobalPlants()
 
 yearRange = [1981, 2018]
 # load wx data for global plants
@@ -44,29 +39,59 @@ plantDayData = plantTxData[2,1:].copy()
 plantTxData = plantTxData[3:,1:].copy()
 
 
-# unpack polyfit coefs into lists
-(p1,p2,p3,p4) = zip(*[(p[0], p[1], p[2], p[3]) for p in pPoly3])
-p1 = np.array(p1)
-p2 = np.array(p2)
-p3 = np.array(p3)
-p4 = np.array(p4)
 
-pSel = p4
+summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
+plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
-# find percentiles for quadratic coef
-pPoly10 = np.percentile(pSel, 10)
-pPoly50 = np.percentile(pSel, 50)
-pPoly90 = np.percentile(pSel, 90)
 
-indPoly10 = np.where(abs(pSel-pPoly10) == np.nanmin(abs(pSel-pPoly10)))[0]
-indPoly50 = np.where(abs(pSel-pPoly50) == np.nanmin(abs(pSel-pPoly50)))[0]
-indPoly90 = np.where(abs(pSel-pPoly90) == np.nanmin(abs(pSel-pPoly90)))[0]
+
+pPolyData = {}
+#regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
+if newFit:
+    zPoly3, pPoly3 = el_temp_pp_model.buildPolyTempPPModel('txSummer', 1000, 3)
+    
+        # unpack polyfit coefs into lists
+    (p1,p2,p3,p4) = zip(*[(p[0], p[1], p[2], p[3]) for p in pPoly3])
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+    p3 = np.array(p3)
+    p4 = np.array(p4)
+    
+    pSel = p4
+    
+    # find percentiles for quadratic coef
+    pPoly10 = np.percentile(pSel, 10)
+    pPoly50 = np.percentile(pSel, 50)
+    pPoly90 = np.percentile(pSel, 90)
+    
+    indPoly10 = np.where(abs(pSel-pPoly10) == np.nanmin(abs(pSel-pPoly10)))[0]
+    indPoly50 = np.where(abs(pSel-pPoly50) == np.nanmin(abs(pSel-pPoly50)))[0]
+    indPoly90 = np.where(abs(pSel-pPoly90) == np.nanmin(abs(pSel-pPoly90)))[0]
+    
+    
+    
+    pPolyData = {'pPoly3':pPoly3, 'indPoly10':indPoly10, 'indPoly50':indPoly50, \
+                 'indPoly90':indPoly90}
+    with open('pPolyData.dat', 'wb') as f:
+        pickle.dump(pPolyData, f)
+else:
+    with open('pPolyData.dat', 'rb') as f:
+        pPolyData = pickle.load(f)
+        
+    pPoly3 = pPolyData['pPoly3']
+    indPoly10 = pPolyData['indPoly10']
+    indPoly50 = pPolyData['indPoly50']
+    indPoly90 = pPolyData['indPoly90']
+    
 
 xd = np.linspace(20, 50, 200)
 yPolyAll = np.array([pPoly3[i](xd) for i in range(len(pPoly3))])
 yPolyd10 = np.array(pPoly3[indPoly10[0]](xd))
 yPolyd50 = np.array(pPoly3[indPoly50[0]](xd))
 yPolyd90 = np.array(pPoly3[indPoly90[0]](xd))
+
+
+
 
 plt.figure(figsize=(4,4))
 plt.xlim([19, 51])
@@ -77,6 +102,10 @@ plt.plot(xd, yPolyAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
 p1 = plt.plot(xd, yPolyd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
 p2 = plt.plot(xd, yPolyd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
 p3 = plt.plot(xd, yPolyd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
+
+
+for m in plantMeanTemps:
+    plt.plot([m, m], [75,77], color='black', linewidth=1)
 
 plt.gca().set_xticks(range(20, 51, 5))
 
@@ -90,15 +119,22 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'})
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
+
+plt.show()
+sys.exit()
+
+
 if plotFigs:
     plt.savefig('hist-pc-temp-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
 
 pCapTx10 = []
 pCapTx50 = []
@@ -184,6 +220,8 @@ pCapTx90 = np.array(pCapTx90)
 pCapTxx10 = np.array(pCapTxx10)
 pCapTxx50 = np.array(pCapTxx50)
 pCapTxx90 = np.array(pCapTxx90)
+
+sys.exit()
 
 pcChg = {'pCapTx10':pCapTx10, 'pCapTx50':pCapTx50, 'pCapTx90':pCapTx90, \
          'pCapTxx10':pCapTxx10, 'pCapTxx50':pCapTxx50, 'pCapTxx90':pCapTxx90}

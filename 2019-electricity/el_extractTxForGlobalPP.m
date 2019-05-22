@@ -2,7 +2,7 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
 
 plantTxTimeSeries = [];
 
@@ -76,5 +76,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/entnsoe-nuke-pp-tx-era.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/global-pp-tx-era.csv', plantTxTimeSeries);
 

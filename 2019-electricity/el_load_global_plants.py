@@ -10,6 +10,34 @@ import csv
 
 dataDir = 'e:/data'
 
+
+def countryCheck(s):
+    
+    countries = ['USA', 'AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', \
+                 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', \
+                 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', \
+                 'SVK', 'SVN', 'ESP', 'SWE', 'GBR']
+    
+    if s.upper() in countries:
+        return True
+    else:
+        return False
+
+def fuelCheck(s):
+    
+    fuels = ['gas', 'coal', 'oil', 'nuclear']
+    
+    if s.lower() in fuels:
+        return True
+    else:
+        return False
+
+def capacityCheck(c):
+    if c >= 400:
+        return True
+    else:
+        return False
+
 def loadGlobalPlants():
     globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[]}
         
@@ -21,11 +49,17 @@ def loadGlobalPlants():
                 continue
             
             parts = line.split(',')
-            globalPlants['countries'].append(parts[0].strip())
-            globalPlants['caps'].append(float(parts[4].strip()))
-            globalPlants['lats'].append(float(parts[5].strip()))
-            globalPlants['lons'].append(float(parts[6].strip()))
-            globalPlants['fuels'].append(parts[7].strip())
+            
+            country = parts[0].strip()
+            fuel = parts[7].strip()
+            cap = float(parts[4].strip())
+            
+            if countryCheck(country) and fuelCheck(fuel) and capacityCheck(cap):
+                globalPlants['countries'].append(country)
+                globalPlants['caps'].append(cap)
+                globalPlants['lats'].append(float(parts[5].strip()))
+                globalPlants['lons'].append(float(parts[6].strip()))
+                globalPlants['fuels'].append(fuel)
     
     globalPlants['countries'] = np.array(globalPlants['countries'])
     globalPlants['caps'] = np.array(globalPlants['caps'])
@@ -37,15 +71,11 @@ def loadGlobalPlants():
 
 
 def exportGlobalPlants(globalPlants):
-    # only export 100MW or greater plants
-    capThresh = 1000
-    
     i = 0
     with open('global-pp-lat-lon.csv', 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(globalPlants['lats'])):
-            if globalPlants['caps'][i] > capThresh:
-                csvWriter.writerow([i, globalPlants['lats'][i], globalPlants['lons'][i]])
+            csvWriter.writerow([i, globalPlants['lats'][i], globalPlants['lons'][i]])
 
 
         

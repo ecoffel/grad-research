@@ -25,8 +25,6 @@ def loadNukeData(dataDir):
             
         curLine = json.loads(line)
 
-        #if 'Demand for' in curLine['name']: print(ln)
-        
         if 'data' in curLine.keys():
             
             curLine['data'].reverse()
@@ -136,6 +134,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     nukeLat = []
     nukeLon = []
     
+    plantCapacity = []
+    
     plantPercCapacity = []
     plantTx = []
     plantCDD = []
@@ -159,7 +159,19 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             nukeLat.append(eba[ids[i,0]]['lat'])
             nukeLon.append(eba[ids[i,0]]['lon'])
             
+            # find total generating capacity for this plant
+            for p in range(len(eba)):
+                if 'Nuclear generating capacity' in eba[p]['name'] and \
+                    eba[p]['lat'] == eba[ids[i,0]]['lat'] and \
+                    eba[p]['lon'] == eba[ids[i,0]]['lon'] and \
+                    not 'outage' in eba[p]['name'] and \
+                    not 'generator' in eba[p]['name']:
+                        plantCapacity.append(np.nanmax(eba[p]['data']))
+                        
+                
+            
     
+    plantCapacity = np.array(plantCapacity)  
     plantPercCapacity = np.array(plantPercCapacity)  
     plantYears = np.array(plantYears)
     plantMonths = np.array(plantMonths)
@@ -200,6 +212,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     d = {'txSummer': plantTx, 'cddSummer':plantCDD, \
          'capacitySummer':finalPlantPercCapacitySummer, \
          'capacity':finalPlantPercCapacity, \
+         'normalCapacity':plantCapacity, \
          'summerInds':summerInds, \
          'plantLats':nukeLat, 'plantLons':nukeLon, \
          'plantYears':plantYears, 'plantMonths':plantMonths, 'plantDays':plantDays}

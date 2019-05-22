@@ -26,6 +26,7 @@ if not 'eData' in locals():
 nukePlants = eData['nukePlantDataAll']
 nukeData = eData['nukeAgDataAll']
 
+normalCap = nukePlants['normalCapacity']
 cap = nukeData['percCapacity']
 mon = nukeData['plantMonths']
 
@@ -152,6 +153,46 @@ plt.gca().set_xticklabels(xl)
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+if plotFigs:
+    plt.savefig('outages-by-year.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+X = sm.add_constant(normalCap)
+mdl = sm.OLS(np.nanmean(plantCaps,axis=1),X).fit()
+
+z = np.polyfit(normalCap, np.nanmean(plantCaps,axis=1), 1)
+p = np.poly1d(z)
+
+xd = np.arange(500, 3900)
+
+plt.figure(figsize=(4,4))
+plt.xlim([0, 4500])
+plt.ylim([-.2, 20])
+plt.grid(True, alpha=.5)
+
+plt.scatter(normalCap, np.nanmean(plantCaps,axis=1), s=50, c='gray', edgecolors='black')
+plt.plot(xd, p(xd), '--', color=snsColors[1], linewidth=3)
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Plant design capacity (MW)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Mean summer outage (%)', fontname = 'Helvetica', fontsize=16)
+
+plt.gca().set_yticks(range(0,21,4))
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+if plotFigs:
+    plt.savefig('outages-by-plant-design-capacity.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 
