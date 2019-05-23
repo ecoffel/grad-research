@@ -13,7 +13,7 @@ import el_temp_pp_model
 import pickle
 import sys
 
-plotFigs = True
+plotFigs = False
 
 pcChg = {}
 with open('plantPcChange.dat', 'rb') as f:
