@@ -16,7 +16,7 @@ import sys
 dataDir = 'e:/data/'
 
 plotFigs = False
-newFit = True
+newFit = False
 
 smoothingLen = 4
 

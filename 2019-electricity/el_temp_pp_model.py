@@ -26,15 +26,25 @@ def buildLinearTempPPModel():
     
     entsoeAgDataAll = eData['entsoeAgDataAll']
     nukeAgDataAll = eData['nukeAgDataAll']
+    nukePlantDataAll = eData['nukePlantDataAll']
 
     xtotal = []
-    xtotal.extend(nukeAgDataAll['txAvgSummer'])
-    xtotal.extend(entsoeAgDataAll['txAvgSummer'])
+    xtotal.extend(nukeAgDataAll['txSummer'])
+#    xtotal.extend(entsoeAgDataAll['txAvgSummer'])
     xtotal = np.array(xtotal)
+    
+    
+    qstotal = []
+    qstotal.extend(nukeAgDataAll['qsAnomSummer'])
+    qstotal = np.array(qstotal)
+    
+    plantId = []
+    plantId.extend(nukeAgDataAll['plantIds'])
+    plantId = np.array(plantId)
     
     ytotal = []
     ytotal.extend(nukeAgDataAll['capacitySummer'])
-    ytotal.extend(100*entsoeAgDataAll['capacitySummer'])
+#    ytotal.extend(100*entsoeAgDataAll['capacitySummer'])
     ytotal = np.array(ytotal)
     
     
@@ -46,9 +56,11 @@ def buildLinearTempPPModel():
 #    df = pd.DataFrame(data, \
 #                      columns=['Temp', 'Temp2', 'PlantID', 'PlantMeanTemps', 'PlantMonths', 'PlantDays', 'PC'])
 #    
-    data = {'Temp':xtotal, 'PC':ytotal}
+    
+    ind = np.where((qstotal<-5))[0]
+    data = {'Temp':xtotal[ind]**3, 'QS':qstotal[ind], 'PC':ytotal[ind]}
     df = pd.DataFrame(data, \
-                      columns=['Temp', 'PC'])
+                      columns=['Temp', 'QS', 'PC'])
     
     df = df.dropna()
     

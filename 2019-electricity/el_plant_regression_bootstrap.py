@@ -34,9 +34,9 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = True
+plotFigs = False
 
-dataset = 'all'
+dataset = 'nuke'
 wxdataset = 'all'
 
 if not 'eData' in locals():
@@ -55,12 +55,12 @@ nukeAgDataNcep = eData['nukeAgDataNcep']
 nukeAgDataAll = eData['nukeAgDataAll']
 
 
-tempVar = 'cddSummer'
+tempVar = 'qsAnomSummer'
 #xlim_1 = 20
 #xlim_2 = 50
-xlim_1 = 20
-xlim_2 = 80
-xLabelSpacing = 20
+xlim_1 = -3
+xlim_2 = 3
+xLabelSpacing = 1
 
 
 xtotal = []
@@ -130,7 +130,10 @@ tempNonlinCoef1 = []
 tempNonlinCoef2 = []
 tempNonlinCoef3 = []
 
-ind = np.where((ytotal <= 100.1) & (xtotal > 20))[0]
+if tempVar == 'txSummer':
+    ind = np.where((ytotal <= 100.1) & (xtotal > 20))[0]
+else:
+    ind = np.where((ytotal <= 100.1))[0]
 xtotal = xtotal[ind]
 ytotal = ytotal[ind]
 
@@ -147,11 +150,11 @@ for i in range(1000):
     p = np.poly1d(z)
     tempNonlinCoef1.append(p)
     
-    z = np.polyfit(df['Temp'], df['PC'], 2)
+    z = np.polyfit(df['Temp'], df['PC'], 4)
     p = np.poly1d(z)
     tempNonlinCoef2.append(p)
 
-    z = np.polyfit(df['Temp'], df['PC'], 3)
+    z = np.polyfit(df['Temp'], df['PC'], 5)
     p = np.poly1d(z)
     tempNonlinCoef3.append(p)
 

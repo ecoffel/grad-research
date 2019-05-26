@@ -1,7 +1,13 @@
-function gpcpToMat(rawNcDir, outputDir, maxNum)
+function gldasToMat(rawNcDir, outputDir, maxNum)
 
-varNames = ["Rainf_f_tavg", "Evap_tavg", "Qair_f_inst", "Qh_tavg", "Qle_tavg", "SoilMoi0_10cm_inst", ...
-            "SoilMoi10_40cm_inst", "SoilMoi100_200cm_inst", "SWE_inst", "Tair_f_inst", "Qs_acc", "Qsb_acc"];
+if length(strfind(rawNcDir, 'noah')) > 0
+    varNames = ["Rainf_f_tavg", "Evap_tavg", "Qair_f_inst", "Qh_tavg", "Qle_tavg", "SoilMoi0_10cm_inst", ...
+                "SoilMoi10_40cm_inst", "SoilMoi100_200cm_inst", "SWE_inst", "Tair_f_inst", "Qs_acc", "Qsb_acc"];
+elseif length(strfind(rawNcDir, 'vic')) > 0
+    varNames = ["Canint", "Evap", "LWDNf", "PSurff", "Qairf", "Qs", ...
+                "Qsb", "Qsm", "Rainf", "Snowf", "SoilMoist", "SWDNf", ...
+                "SWE", "Tairf", "Windf"];
+end
 varIds = ones(size(varNames)) .* -1;
 
 ncFileNames = dir([rawNcDir, '/*.nc4']);
@@ -116,11 +122,16 @@ for k = 1:length(ncFileNames)
     %lat = flipud(lat);
     
     % starts at 1900 01 01 01 01 01
-    starttime = datenum([1948 01 01 00 00 00]);
-    
-    % these are days since 1800-01-01 01:01:01
-	timestep = netcdf.getVar(ncid, varIdTime-1, [0], [dims{dimIdTime}{2}]);
-    time = addtodate(starttime, timestep, 'day');
+    if length(strfind(rawNcDir, 'noah')) > 0
+        starttime = datenum([1948 01 01 00 00 00]);
+        
+        % these are days since 1800-01-01 01:01:01
+        timestep = netcdf.getVar(ncid, varIdTime-1, [0], [dims{dimIdTime}{2}]);
+        time = addtodate(starttime, timestep, 'day');
+    elseif length(strfind(rawNcDir, 'vic')) > 0
+        starttime = datenum([1979 01 01 00 00 00]);
+        time = addtodate(starttime, fileCount, 'month');
+    end
     
     for v = 1:length(varNames)
         
@@ -135,7 +146,11 @@ for k = 1:length(ncFileNames)
             %continue;
         end
         
-        data = double(netcdf.getVar(ncid, varIds(v)-1, [0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
+        if length(vars{varIds(v)}{3}) == 3
+            data = double(netcdf.getVar(ncid, varIds(v)-1, [0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1])) .* scale_factor + add_offset;
+        elseif length(vars{varIds(v)}{3}) == 4
+            data = double(netcdf.getVar(ncid, varIds(v)-1, [0, 0, 0, 0], [dims{dimIdLon}{2}, dims{dimIdLat}{2}, 1, 1])) .* scale_factor + add_offset;
+        end
         data = permute(data, [2 1]);
         data(data == missing_val) = NaN;
         

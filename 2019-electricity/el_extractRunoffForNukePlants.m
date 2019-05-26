@@ -1,11 +1,15 @@
 startYear = 2007;
 endYear = 2018;
 
-if ~exist('qs')
-    qs = loadMonthlyData('E:\data\gldas-noah-v2\output\Qs_acc', 'Qs_acc', 'startYear', startYear, 'endYear', endYear);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(qs{3}))))) > 100
-        qs{3} = qs{3} - 273.15;
-    end
+qsGldas = loadMonthlyData('E:\data\gldas\output\vic-1\Qs', 'Qs', 'startYear', startYear, 'endYear', endYear);
+qsbGldas = loadMonthlyData('E:\data\gldas\output\vic-1\Qsb', 'Qsb', 'startYear', startYear, 'endYear', endYear);
+
+qsGldas{3} = qsGldas{3} + qsbGldas{3};
+qsGldas{2}(qsGldas{2} < 0) = 360 + qsGldas{2}(qsGldas{2} < 0);
+
+monthLens = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+for m = 1:12
+    qsGldas{3}(:, :, :, m) = qsGldas{3}(:, :, :, m) .* 3600 .* 24 .* monthLens(m);
 end
 
 plantLatLon = csvread('2019-electricity/nuke-lat-lon.csv');
@@ -19,21 +23,20 @@ for i = 1:size(plantLatLon, 1)
         lon = lon+360;
     end
     
-    [latInd, lonInd] = latLonIndexRange(qs, [lat-.25, lat+.25], [lon-.25, lon+.25]);
+    [latInd, lonInd] = latLonIndexRange(qsGldas, [lat-1.5, lat+1.5], [lon-1.5, lon+1.5]);
 
-    tx = squeeze(nanmean(nanmean(qs{3}(latInd, lonInd, :, :, :), 2), 1));
+    qs = squeeze(nanmean(nanmean(qsGldas{3}(latInd, lonInd, :, :, :), 2), 1));
     
     curDate = datenum(startYear, 1, 1, 1, 0, 0);
-    txClean = [];
+    qsClean = [];
     for year = 1:length(startYear:endYear)
         for month = 1:12
-            days = round(addtodate(curDate, 1, 'month') - curDate);
             curDate = addtodate(curDate, 1, 'month');
-            txClean = [txClean; squeeze(tx(year, month, 1:days))];
+            qsClean = [qsClean; squeeze(qs(year, month))];
         end
     end
         
-    plantWbTimeSeries(i, :) = [ind, txClean'];
+    plantWbTimeSeries(i, :) = [ind, qsClean'];
 end
 
- csvwrite('2019-electricity/nuke-tx-cpc.csv', plantWbTimeSeries);
+ csvwrite('2019-electricity/nuke-qs-gldas.csv', plantWbTimeSeries);

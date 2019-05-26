@@ -83,58 +83,23 @@ eData = {'entsoeData':entsoeData, \
 with open('eData.dat', 'wb') as f:
     pickle.dump(eData, f)
 
-#
-#df = pd.DataFrame()
-#
-#
-#txSummerEra = []
-#txSummerEra.extend(nukeAgDataEra['txSummer'])
-#txSummerEra.extend(entsoeAgDataEra['txSummer'])
-#df['txSummerAllEra'] = txSummerEra
-#
-#txSummerCpc = []
-#txSummerCpc.extend(nukeAgDataCpc['txSummer'])
-#txSummerCpc.extend(entsoeAgDataCpc['txSummer'])
-#df['txSummerAllCpc'] = txSummerCpc
-#
-#txSummerNcep = []
-#txSummerNcep.extend(nukeAgDataNcep['txSummer'])
-#txSummerNcep.extend(entsoeAgDataNcep['txSummer'])
-#df['txSummerAllNcep'] = txSummerNcep
-#
-#cddSummerEra = []
-#cddSummerEra.extend(nukeAgDataEra['cddSummer'])
-#cddSummerEra.extend(entsoeAgDataEra['cddSummer'])
-#df['cddSummerAllEra'] = cddSummerEra
-#
-#cddSummerCpc = []
-#cddSummerCpc.extend(nukeAgDataCpc['cddSummer'])
-#cddSummerCpc.extend(entsoeAgDataCpc['cddSummer'])
-#df['cddSummerAllCpc'] = cddSummerCpc
-#
-#cddSummerNcep = []
-#cddSummerNcep.extend(nukeAgDataNcep['cddSummer'])
-#cddSummerNcep.extend(entsoeAgDataNcep['cddSummer'])
-#df['cddSummerAllNcep'] = cddSummerNcep
-#
-#plantIds = []
-#plantIds.extend(nukeAgDataNcep['plantIds'])
-#plantIds.extend(entsoeAgDataNcep['plantIds'])
-#df['plantIdsAll'] = plantIds
-#
-#plantMonths = []
-#plantMonths.extend(nukeAgDataNcep['plantMonthsSummer'])
-#plantMonths.extend(entsoeAgDataNcep['plantMonths'])
-#df['plantMonthsAll'] = plantMonths
-#
-#pc = []
-#pc.extend(nukeAgDataEra['capacitySummer'])
-#pc.extend(100*entsoeAgDataEra['capacitySummer'])
-#df['PCAll'] = pc
-#
-#
-#
-#df.to_pickle('pp-dataframe')
+
+df = pd.DataFrame()
+
+temp = []
+temp.extend(nukeAgDataAll['txSummer'])
+df['Temp'] = temp
+
+qs = []
+qs.extend(nukeAgDataAll['qsAnomSummer'])
+df['QS'] = qs
+
+pc = []
+pc.extend(nukeAgDataAll['capacitySummer'])
+df['PCAll'] = pc
+
+df.to_csv('nuke-panel-data.csv', header = False, index = False, index_label = False)
+
 
 
 
