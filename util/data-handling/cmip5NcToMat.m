@@ -59,16 +59,16 @@ for k = 1:length(ncFileNames)
     % check for output folder and make it if it doesn't exist
     folDataTarget = [outputDir, '/', modelName, '/', runName, '/', emissionsScenario, '/', varName, '/', startDate, '-', endDate];
     
-    if isdir([outputDir, '/', modelName, '/', runName, '/', emissionsScenario, '/', varName, '/regrid/world/', startDate, '-', endDate])
-        continue;
-    end
+%     if isdir([outputDir, '/', modelName, '/', runName, '/', emissionsScenario, '/', varName, '/regrid/world/', startDate, '-', endDate])
+%         continue;
+%     end
     
     if ~isdir(folDataTarget)
         mkdir(folDataTarget);
     else
-        if skipExistingFolders
-            continue;
-        end
+%         if skipExistingFolders
+%             continue;
+%         end
     end
     
     dimIdLat = -1;
@@ -209,7 +209,7 @@ for k = 1:length(ncFileNames)
         startDateVec = datevec(startDate);
         endDateVec = datevec(endDate);
         for y = startDateVec(1):endDateVec(1)
-            yearDays(end+1) = yeardays(y);
+            yearDays(end+1) = addtodate(datenum([y,1,1,0,0,0]),1,'year')-datenum(datenum([y,1,1,0,0,0]));
         end
         
         curTimeStepStart = 0;

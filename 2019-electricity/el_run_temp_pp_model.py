@@ -48,7 +48,7 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 pPolyData = {}
 #regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
 if newFit:
-    zPoly3, pPoly3 = el_temp_pp_model.buildPolyTempPPModel('txSummer', 1000, 3)
+    models = el_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
     
         # unpack polyfit coefs into lists
     (p1,p2,p3,p4) = zip(*[(p[0], p[1], p[2], p[3]) for p in pPoly3])

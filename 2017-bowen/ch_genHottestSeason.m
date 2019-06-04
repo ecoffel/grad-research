@@ -1,7 +1,7 @@
 txxrel = true;
 onlyRegularTxx = false;
 
-dataset = 'era';
+dataset = 'cmip5';
 models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cmcc-cm', 'cmcc-cms', 'cmcc-cesm', 'cnrm-cm5', 'csiro-mk3-6-0', ...
               'fgoals-g2', 'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', ...
@@ -9,19 +9,21 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
           
 % for wb
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
-          'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
-          'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
-          'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
+%           'canesm2', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', 'gfdl-cm3', 'gfdl-esm2g', ...
+%           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
+%           'ipsl-cm5b-lr', 'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
 % for era
-models = {''};
+% models = {''};
 hottestSeason = [];
 hottestSeasonLength = [];
 
-var = 'wb-davies-jones-full';
+var = 'tasmax';
 timePeriod = 'historical';
 
+lat = [];
+lon = [];
 
 if ~exist('tasmax')
         for m = 1:length(models)
@@ -29,7 +31,9 @@ if ~exist('tasmax')
             
             if strcmp(dataset, 'cmip5')
                 if strcmp(timePeriod, 'historical')
-                    tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/regrid/world'], 'startYear', 1981, 'endYear', 2005);
+                    tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/historical/' var '/'], 'startYear', 1981, 'endYear', 2005);
+                    lat = tasmax{1};
+                    lon = tasmax{2};
                     timePeriodStr = '1981-2005';
                 elseif strcmp(timePeriod, 'future')
                     tasmax = loadDailyData(['e:/data/cmip5/output/' models{m} '/r1i1p1/rcp85/' var '/regrid/world'], 'startYear', 2061, 'endYear', 2085);
@@ -128,7 +132,18 @@ end
 load lat;
 load lon;
 
-plotModelData({lat,lon,nanmedian(hottestSeasonLength, 3)},'world','caxis',[1 12])
+result = {lat, lon, hottestSeasonNoRegrid};
+
+saveData = struct('data', {result}, ...
+                  'plotRegion', 'world', ...
+                  'plotRange', [1, 13], ...
+                  'cbXTicks', 1:12, ...
+                  'plotTitle', [], ...
+                  'fileTitle', ['hottest-season-no-regrid.eps'], ...
+                  'plotXUnits', ['Month'], ...
+                  'blockWater', true, ...
+                  'colormap', circshift(brewermap(12,'Spectral'),6,1));
+plotFromDataFile(saveData);
 
 if txxrel
     if onlyRegularTxx

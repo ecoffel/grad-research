@@ -102,6 +102,8 @@ def buildPolyTempPPModel(tempVar, nBootstrap, order):
     pBootstrap = []
     zBootstrap = []
     
+    np.random.seed(231)
+    
     for i in range(nBootstrap):
         resampleInd = np.random.choice(len(xtotal), int(len(xtotal)))
         
@@ -119,6 +121,68 @@ def buildPolyTempPPModel(tempVar, nBootstrap, order):
     return (zBootstrap,pBootstrap)
 
 
+def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
+    eData = {}
+    with open('eData.dat', 'rb') as f:
+        eData = pickle.load(f)
+    
+    
+    entsoeAgDataAll = eData['entsoeAgDataAll']
+    nukeAgDataAll = eData['nukeAgDataAll']
+    
+    txtotal = []
+    txtotal.extend(nukeAgDataAll['txSummer'])
+    txtotal.extend(entsoeAgDataAll['txSummer'])
+    txtotal = np.array(txtotal)
+    
+    
+    qstotal = []
+    qstotal.extend(nukeAgDataAll['qsAnomSummer'])
+    qstotal.extend(entsoeAgDataAll['qsAnomSummer'])
+    qstotal = np.array(qstotal)
+    
+    plantIds = []
+    plantIds.extend(nukeAgDataAll['plantIds'])
+    plantIds.extend(entsoeAgDataAll['plantIds'])
+    plantIds = np.array(plantIds)
+    
+    
+    pctotal = []
+    pctotal.extend(nukeAgDataAll['capacitySummer'])
+    pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
+    pctotal = np.array(pctotal)
+      
+    ind = np.where((pctotal <= 100.1) & (txtotal > 20))[0]
+    txtotal = txtotal[ind]
+    qstotal = qstotal[ind]
+    plantIds = plantIds[ind]
+    pctotal = pctotal[ind]
+    
+    np.random.seed(231)
+    
+    models = []
+    
+    for i in range(nBootstrap):
+        ind = np.random.choice(len(txtotal), int(len(txtotal)))
+    
+        data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, 'T3':txtotal[ind]**3, \
+                'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, 'QS3':qstotal[ind]**3, 'QS4':qstotal[ind]**4, 'QS5':qstotal[ind]**5, \
+                'PlantIds':plantIds[ind], 'PC':pctotal[ind]}
+        
+        df = pd.DataFrame(data, \
+                          columns=['T1', 'T2', 'T3', \
+                                   'QS1', 'QS2', 'QS3', 'QS4', 'QS5', \
+                                   'PlantIds', 'PC'])
+        
+        df = df.dropna()
+        
+        X = sm.add_constant(df[['T1', 'T2', 'T3', \
+                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'PlantIds']])
+        mdl = sm.OLS(df['PC'], X).fit()
+        models.append(mdl)
+    
+    return np.array(models)
+    
 
 def exportNukeEntsoePlantLocations():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
@@ -150,6 +214,9 @@ def exportNukeEntsoePlantLocations():
         for i in range(len(nukeLat)):
             csvWriter.writerow([n, nukeLat[i], nukeLon[i]])
             n += 1
+
+
+
 
 
 

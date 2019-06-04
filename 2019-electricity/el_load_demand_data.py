@@ -10,7 +10,11 @@ import numpy as np
 import pandas as pd
 import pickle
 
-plotFigs = True
+plotFigs = False
+
+returnPeriods = np.array([50, 30, 10, 5, 1, .5, .1])
+returnPeriodsPrc = 1 / returnPeriods
+returnPeriodLabels = ['50', '30', '10', '5', '1', '1/2', '1/10']
 
 genData = {}
 with open('genData.dat', 'rb') as f:
@@ -49,7 +53,6 @@ for i in range(1000):
     pBootstrap.append(p)
 
 
-
 # unpack polyfit coefs into lists
 (p1,p2,p3,p4) = zip(*[(p[0], p[1], p[2], p[3]) for p in pBootstrap])
 p1 = np.array(p1)
@@ -73,6 +76,13 @@ yPolyAll = np.array([pBootstrap[i](xd) for i in range(len(pBootstrap))])
 yPolyd10 = np.array(pBootstrap[indPoly10[0]](xd))
 yPolyd50 = np.array(pBootstrap[indPoly50[0]](xd))
 yPolyd90 = np.array(pBootstrap[indPoly90[0]](xd))
+
+demandPercentiles = []
+for w in [0,1,2,3,4]:
+    demandPercentiles.append(np.nanpercentile(pBootstrap[indPoly90[0]](txAll+w), 100-returnPeriodsPrc))
+demandPercentiles = np.array(demandPercentiles)
+
+
 
 plt.figure(figsize=(4,4))
 plt.ylim([-.1, 1.5])

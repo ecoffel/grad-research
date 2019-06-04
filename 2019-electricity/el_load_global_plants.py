@@ -33,7 +33,7 @@ def fuelCheck(s):
         return False
 
 def capacityCheck(c):
-    if c >= 400:
+    if c >= 100:
         return True
     else:
         return False

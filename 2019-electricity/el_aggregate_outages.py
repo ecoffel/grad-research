@@ -20,7 +20,7 @@ import sys
 dataDir = 'e:/data/'
 
 plotFigs = False
-regenAggOutages = False
+regenAggOutages = True
 
 globalPlants = el_load_global_plants.loadGlobalPlants()
 globalWx = el_load_global_plants.loadGlobalWx(wxdata='all')
@@ -46,6 +46,10 @@ yearlyOutageAcc10 = []
 yearlyOutageAcc50 = []
 yearlyOutageAcc90 = []
 
+yearlyOutageAccDaily10 = []
+yearlyOutageAccDaily50 = []
+yearlyOutageAccDaily90 = []
+
 if not regenAggOutages:
     with open('aggOutages.dat', 'rb') as f:
         agOutages = pickle.load(f)
@@ -60,6 +64,10 @@ else:
         yearlyOutageAcc50.append([])
         yearlyOutageAcc90.append([])
         
+        yearlyOutageAccDaily10.append([])
+        yearlyOutageAccDaily50.append([])
+        yearlyOutageAccDaily90.append([])
+        
         for p in range(0, plantTxData.shape[0]):
             
             normCap = globalPlants['caps'][p]
@@ -68,23 +76,36 @@ else:
             yearlyOutageAcc50[w].append([])
             yearlyOutageAcc90[w].append([])
             
+            yearlyOutageAccDaily10[w].append([])
+            yearlyOutageAccDaily50[w].append([])
+            yearlyOutageAccDaily90[w].append([])
+            
             for year in range(1981, 2018+1):
                 ind = np.where((plantYearData==year) & ((plantMonthData == 7) | (plantMonthData == 8)))[0]
                 yearlyOutageAcc10[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly10'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly10'][0]](20))/100))
                 yearlyOutageAcc50[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly50'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly50'][0]](20))/100))
                 yearlyOutageAcc90[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly90'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly90'][0]](20))/100))
+                
+                yearlyOutageAccDaily10[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly10'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly10'][0]](20))/100)
+                yearlyOutageAccDaily50[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly50'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly50'][0]](20))/100)
+                yearlyOutageAccDaily90[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly90'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly90'][0]](20))/100)
     
     # convert MW to TW by dividing by 1e6
     yearlyOutageAcc10 = np.array(yearlyOutageAcc10)/1e6
     yearlyOutageAcc50 = np.array(yearlyOutageAcc50)/1e6
     yearlyOutageAcc90 = np.array(yearlyOutageAcc90)/1e6
     
+    yearlyOutageAccDaily10 = np.array(yearlyOutageAccDaily10)/1e6
+    yearlyOutageAccDaily50 = np.array(yearlyOutageAccDaily50)/1e6
+    yearlyOutageAccDaily90 = np.array(yearlyOutageAccDaily90)/1e6
+    
+    
     aggOutages = {'yearlyOutageAcc10':yearlyOutageAcc10, \
                   'yearlyOutageAcc50':yearlyOutageAcc50, \
                   'yearlyOutageAcc90':yearlyOutageAcc90}
     
-    with open('aggOutages.dat', 'wb') as f:
-        pickle.dump(aggOutages, f)
+#    with open('aggOutages.dat', 'wb') as f:
+#        pickle.dump(aggOutages, f)
 
 
 # sum across plants and convert to TWh by multiplying by 24
@@ -176,7 +197,7 @@ histPolyTx90 = np.poly1d(z)
 
 plt.figure(figsize=(4,4))
 plt.xlim([0, 105])
-plt.ylim([-20, 0])
+plt.ylim([-25, 0])
 plt.grid(True, alpha = 0.5)
 
 plt.plot(xd, histPolyTx10(xd), '-', linewidth = 3, color = cmx.tab20(0), alpha = .8)
@@ -204,11 +225,11 @@ plt.plot([55, 70, 85, 100], \
           np.nanmean(meanDaily90[4,:])], \
           'o', markersize=7, color=cmx.tab20(6), label='90th Percentile')
 
-plt.plot([38,38], [-20, 0], '--', linewidth=2, color='black')
+plt.plot([38,38], [-25, 0], '--', linewidth=2, color='black')
 
 plt.gca().set_xticks([1, 38, 55, 70, 85, 100])
 plt.gca().set_xticklabels([1981, 2018, '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
-plt.gca().set_yticks(range(-20, 1, 5))
+plt.gca().set_yticks(range(-25, 1, 5))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -225,7 +246,7 @@ leg.get_frame().set_linewidth(0.0)
 
 # create labels for 2nd y-axis
 ax2 = plt.gca().twinx()
-plt.gca().set_ylim([-20, 0])
+plt.gca().set_ylim([-25, 0])
 plt.ylabel('# Average size power plants', fontname = 'Helvetica', fontsize=16)
 plt.gca().set_yticks(np.arange(-20, 1, 5))
 plantsLost = -1 * np.round(((np.arange(-20, 1, 5) * 1e3) / np.nanmean(globalPlants['caps'])))

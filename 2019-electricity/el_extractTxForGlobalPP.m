@@ -17,16 +17,16 @@ for y = startYear:endYear
 %         temp{3} = temp{3} - 273.15;
 %     end
     
-%     temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
-    
-    temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', y, 'endYear', y);
+    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
         temp{3} = temp{3} - 273.15;
     end
     
+%     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', y, 'endYear', y);
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+%         temp{3} = temp{3} - 273.15;
+%     end
+%     
 
     for i = 1:size(plantLatLon, 1)
         ind = plantLatLon(i,1);
@@ -81,5 +81,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/global-pp-tx-ncep.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/global-pp-tx-cpc.csv', plantTxTimeSeries);
 
