@@ -9,20 +9,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 import el_temp_pp_model
-import pickle
-import sys
+import pickle, gzip
+import sys, os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
 plotFigs = False
-newFit = False
+newFit = True
 
 smoothingLen = 4
 
 yearRange = [1981, 2018]
 # load wx data for global plants
-fileName = 'entsoe-nuke-pp-tx-era.csv'
+fileName = 'entsoe-nuke-pp-tx-all.csv'
 
 plantList = []
 with open(fileName, 'r') as f:
@@ -46,34 +46,50 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
 
 pPolyData = {}
-#regr, mdl = el_temp_pp_model.buildLinearTempPPModel()
+
 if newFit:
     models = el_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
     
-        # unpack polyfit coefs into lists
-    (p1,p2,p3,p4) = zip(*[(p[0], p[1], p[2], p[3]) for p in pPoly3])
-    p1 = np.array(p1)
-    p2 = np.array(p2)
-    p3 = np.array(p3)
-    p4 = np.array(p4)
+    # find fit percentiles for temperature
+    t = 50
+    q = 0
     
-    pSel = p4
+    pcEval = []
+    for i in range(len(models)):
+        pcEval.append(models[i].predict([1, t, t**2, t**3, \
+                                         q, q**2, q**3, q**4, q**5, 0])[0])
     
-    # find percentiles for quadratic coef
-    pPoly10 = np.percentile(pSel, 10)
-    pPoly50 = np.percentile(pSel, 50)
-    pPoly90 = np.percentile(pSel, 90)
+    pc10 = np.percentile(pcEval, 10)
+    pc50 = np.percentile(pcEval, 50)
+    pc90 = np.percentile(pcEval, 90)
     
-    indPoly10 = np.where(abs(pSel-pPoly10) == np.nanmin(abs(pSel-pPoly10)))[0]
-    indPoly50 = np.where(abs(pSel-pPoly50) == np.nanmin(abs(pSel-pPoly50)))[0]
-    indPoly90 = np.where(abs(pSel-pPoly90) == np.nanmin(abs(pSel-pPoly90)))[0]
-    
+    indPc10 = np.where(abs(pcEval-pc10) == np.nanmin(abs(pcEval-pc10)))[0]
+    indPc50 = np.where(abs(pcEval-pc50) == np.nanmin(abs(pcEval-pc50)))[0]
+    indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
     
     
-    pPolyData = {'pPoly3':pPoly3, 'indPoly10':indPoly10, 'indPoly50':indPoly50, \
-                 'indPoly90':indPoly90}
-    with open('pPolyData.dat', 'wb') as f:
-        pickle.dump(pPolyData, f)
+    # find fit percentiles for runoff
+    t = 35
+    q = -2.5
+    
+    pcEval = []
+    for i in range(len(models)):
+        pcEval.append(models[i].predict([1, t, t**2, t**3, \
+                                         q, q**2, q**3, q**4, q**5, 0])[0])
+    
+    pc10 = np.percentile(pcEval, 10)
+    pc50 = np.percentile(pcEval, 50)
+    pc90 = np.percentile(pcEval, 90)
+    
+    indPcQs10 = np.where(abs(pcEval-pc10) == np.nanmin(abs(pcEval-pc10)))[0]
+    indPcQs50 = np.where(abs(pcEval-pc50) == np.nanmin(abs(pcEval-pc50)))[0]
+    indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
+    
+    
+    if not os.path.isfile('pPolyData.dat'):
+        pPolyData = {'pc10':models[indPc10], 'pc50':models[indPc50], 'pc90':models[indPc90]}
+        with gzip.open('pPolyData.dat', 'wb') as f:
+            pickle.dump(pPolyData, f)
 else:
     with open('pPolyData.dat', 'rb') as f:
         pPolyData = pickle.load(f)
@@ -84,12 +100,31 @@ else:
     indPoly90 = pPolyData['indPoly90']
     
 
-xd = np.linspace(20, 50, 200)
-yPolyAll = np.array([pPoly3[i](xd) for i in range(len(pPoly3))])
-yPolyd10 = np.array(pPoly3[indPoly10[0]](xd))
-yPolyd50 = np.array(pPoly3[indPoly50[0]](xd))
-yPolyd90 = np.array(pPoly3[indPoly90[0]](xd))
+xd = np.linspace(20, 50, 50)
+qd = np.array([0]*50)
 
+ydAll = []
+for i in range(len(models)):
+    ydAll.append([])
+    for k in range(len(xd)):
+        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+ydAll = np.array(ydAll)
+
+yd10 = []
+yd50 = []
+yd90 = []
+
+for k in range(len(xd)):
+    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
+    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
+    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
 
 
 
@@ -98,10 +133,10 @@ plt.xlim([19, 51])
 plt.ylim([75, 100])
 plt.grid(True)
 
-plt.plot(xd, yPolyAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
-p1 = plt.plot(xd, yPolyd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
-p2 = plt.plot(xd, yPolyd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
-p3 = plt.plot(xd, yPolyd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
+plt.plot(xd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
+p1 = plt.plot(xd, yd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
+p2 = plt.plot(xd, yd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
+p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
 
 
 for m in plantMeanTemps:
@@ -133,6 +168,84 @@ sys.exit()
 
 if plotFigs:
     plt.savefig('hist-pc-temp-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
+
+
+
+xd = np.array([20]*50)
+qd = np.linspace(-3, 3, 50)
+
+ydAll = []
+for i in range(len(models)):
+    ydAll.append([])
+    for k in range(len(xd)):
+        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+ydAll = np.array(ydAll)
+
+yd10 = []
+yd50 = []
+yd90 = []
+
+for k in range(len(xd)):
+    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
+    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
+    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+    
+
+
+
+plt.figure(figsize=(4,4))
+plt.xlim([-3.1, 3.1])
+plt.ylim([75, 100])
+plt.grid(True)
+
+plt.plot(qd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
+p1 = plt.plot(qd, yd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
+p2 = plt.plot(qd, yd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
+p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
+
+plt.gca().set_xticks(range(-3, 4, 1))
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
+
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center right')
+leg.get_frame().set_linewidth(0.0)
+    
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+
+plt.show()
+if plotFigs:
+    plt.savefig('hist-pc-runoff-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -12,7 +12,8 @@ from sklearn import linear_model
 import statsmodels.api as sm
 import el_entsoe_utils
 import el_nuke_utils
-import pickle
+import pickle, gzip
+import os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
@@ -122,11 +123,11 @@ def buildPolyTempPPModel(tempVar, nBootstrap, order):
 
 
 def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
+    
     eData = {}
     with open('eData.dat', 'rb') as f:
         eData = pickle.load(f)
-    
-    
+
     entsoeAgDataAll = eData['entsoeAgDataAll']
     nukeAgDataAll = eData['nukeAgDataAll']
     
@@ -181,7 +182,9 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
         mdl = sm.OLS(df['PC'], X).fit()
         models.append(mdl)
     
-    return np.array(models)
+    models = np.array(models)
+
+    return models
     
 
 def exportNukeEntsoePlantLocations():

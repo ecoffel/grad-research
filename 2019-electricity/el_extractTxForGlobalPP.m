@@ -2,7 +2,7 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
 
 plantTxTimeSeries = [];
 
@@ -12,21 +12,21 @@ for y = startYear:endYear
     
     fprintf('processing %d\n', y)
     
-%     temp = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', y, 'endYear', y);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
-    
-    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-        temp{3} = temp{3} - 273.15;
+    tempEra = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', y, 'endYear', y);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(tempEra{3}))))) > 100
+        tempEra{3} = tempEra{3} - 273.15;
     end
     
-%     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', y, 'endYear', y);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
-%     
+    tempCpc = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', y, 'endYear', y);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(tempCpc{3}))))) > 100
+        tempCpc{3} = tempCpc{3} - 273.15;
+    end
+    
+    tempNcep = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', y, 'endYear', y);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(tempNcep{3}))))) > 100
+        tempNcep{3} = tempNcep{3} - 273.15;
+    end
+    
 
     for i = 1:size(plantLatLon, 1)
         ind = plantLatLon(i,1);
@@ -36,10 +36,17 @@ for y = startYear:endYear
             lon = lon+360;
         end
 
-        [latEraInd, lonEraInd] = latLonIndex(temp, [lat, lon]);
+        [latEraInd, lonEraInd] = latLonIndex(tempEra, [lat, lon]);
+        txEra = squeeze(tempEra{3}(latEraInd, lonEraInd, :, :, :));
+        
+        [latCpcInd, lonCpcInd] = latLonIndex(tempCpc, [lat, lon]);
+        txCpc = squeeze(tempCpc{3}(latCpcInd, lonCpcInd, :, :, :));
+        
+        [latNcepInd, lonNcepInd] = latLonIndex(tempNcep, [lat, lon]);
+        txNcep = squeeze(tempNcep{3}(latNcepInd, lonNcepInd, :, :, :));
 
-        tx = squeeze(temp{3}(latEraInd, lonEraInd, :, :, :));
-
+        tx = (txEra + txCpc + txNcep) ./ 3;
+        
         curDate = datenum(y, 1, 1, 1, 0, 0);
         txClean = [];
         txYears = [];
@@ -81,5 +88,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/global-pp-tx-cpc.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-nuke-pp-tx-all.csv', plantTxTimeSeries);
 

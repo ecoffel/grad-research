@@ -13,7 +13,7 @@ import statsmodels.api as sm
 import el_temp_pp_model
 import pickle
 
-plotFigs = True
+plotFigs = False
 
 models = el_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
 
