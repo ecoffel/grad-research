@@ -104,7 +104,7 @@ def loadWxData(eba, wxdata):
         cdd = np.genfromtxt(fileNameCDD, delimiter=',')
     
     
-    fileNameGldas = 'nuke-qs-gldas.csv'
+    fileNameGldas = 'nuke-qs-gldas-all.csv'
     qs = np.genfromtxt(fileNameGldas, delimiter=',')
     
     # these ids store the line numbers for plant level outage and capacity data in the EBA file

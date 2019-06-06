@@ -275,7 +275,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
     fileName = ''
     fileNameCDD = ''
     
-    fileNameQs = 'entsoe-qs-gldas.csv'
+    fileNameQs = 'entsoe-qs-gldas-all.csv'
     
     #for averaging cdd, tx
     smoothingLen = 4

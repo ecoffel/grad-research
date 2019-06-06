@@ -53,26 +53,40 @@ for y = startYear:endYear
         txMonths = [];
         txDays = [];
 
-        for year = 1:size(tx, 1)
-            for month = 1:size(tx, 2)
-                for day = 1:size(tx, 3)
+        vec = datevec(curDate);
+        while vec(1) < y+1            
+            
+            txYears(end+1) = vec(1);
+            txMonths(end+1) = vec(2);
+            txDays(end+1) = vec(3);
 
-                    vec = datevec(curDate);
-                    txYears(end+1) = vec(1);
-                    txMonths(end+1) = vec(2);
-                    txDays(end+1) = vec(3);
-                    
-                    curTx = squeeze(tx(year, month, day));
-                    if ~isnan(curTx)
-                        txClean(end+1) = curTx;
-                    else
-                        txClean(end+1) = NaN;
-                    end
-                    
-                    curDate = addtodate(curDate, 1, 'day');
-                end
-            end
+            curTx = squeeze(tx(vec(2), vec(3)));
+            txClean(end+1) = curTx;
+
+            curDate = addtodate(curDate, 1, 'day');
+            vec = datevec(curDate);
         end
+            
+%         for year = 1:size(tx, 1)
+%             for month = 1:size(tx, 2)
+%                 for day = 1:size(tx, 3)
+% 
+%                     vec = datevec(curDate);
+%                     txYears(end+1) = vec(1);
+%                     txMonths(end+1) = vec(2);
+%                     txDays(end+1) = vec(3);
+%                     
+%                     curTx = squeeze(tx(year, month, day));
+%                     if ~isnan(curTx)
+%                         txClean(end+1) = curTx;
+%                     else
+%                         txClean(end+1) = NaN;
+%                     end
+%                     
+%                     curDate = addtodate(curDate, 1, 'day');
+%                 end
+%             end
+%         end
 
         if i == 1
             curPlantTxTimeSeries(1, :) = txYears;

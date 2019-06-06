@@ -21,23 +21,26 @@ qsrange = np.arange(-2, 2.1, .1)
 
 yds = []
 
-for q in qsrange:
-    qs = np.array([q]*200)
-    xd = np.linspace(20,50,40)
+for m in range(len(models)):
+    # current contour surface for this model
+    curCont = []
     
-    yd = []
-    
-    for i in range(len(xd)):
-        yd.append(models[0].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-                                    qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, 2])[0])
-    
-    yds.append(yd)
+    for q in qsrange:
+        qs = np.array([q]*200)
+        xd = np.linspace(20,50,40)
+        
+        yd = []    
+        for i in range(len(xd)):
+            yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
+                                        qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, 2])[0])
+        curCont.append(yd)
+        
+    yds.append(curCont)
 
 yds = np.array(yds)
+yds = np.squeeze(np.nanmean(yds, axis=0))
 
-
-
-plt.contourf(xd, qsrange, yds, levels=np.arange(70,100,1), cmap = 'Reds_r')
+plt.contourf(xd, qsrange, yds, levels=np.arange(75,100,1), cmap = 'Reds_r')
 cb = plt.colorbar()
 
 plt.plot([20, 50], [0, 0], '--k', lw=2)
@@ -66,107 +69,4 @@ if plotFigs:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-qsrange = np.arange(-2, 2.1, .1)
-
-yds = []
-
-for m in range(len(models)):
-    qs = np.array([0]*200)
-    xd = np.linspace(20,50,40)
-    
-    yd = []
-    
-    for i in range(len(xd)):
-        yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-                                    qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, 2])[0])
-    
-    yds.append(yd)
-
-yds = np.array(yds)
-
-
-plt.figure(figsize=(4,4))
-plt.xlim([19, 51])
-plt.ylim([75, 100])
-plt.grid(True)
-
-plt.plot(xd, yds.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
-
-plt.gca().set_xticks(range(20, 51, 5))
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
-
-#leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
-#leg.get_frame().set_linewidth(0.0)
-    
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-
-
-
-
-
-yds = []
-
-for m in range(len(models)):
-    qs = np.linspace(-3, 3, 50)
-    xd = np.array([35]*50)
-    
-    yd = []
-    
-    for i in range(len(xd)):
-        yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-                                    qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, 2])[0])
-    
-    yds.append(yd)
-
-yds = np.array(yds)
-
-
-plt.figure(figsize=(4,4))
-plt.xlim([-3.1, 3.1])
-plt.ylim([75, 100])
-plt.grid(True)
-
-plt.plot(qs, yds.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
-
-plt.gca().set_xticks(np.arange(-3, 3.1, 1))
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
-
-#leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
-#leg.get_frame().set_linewidth(0.0)
-    
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
