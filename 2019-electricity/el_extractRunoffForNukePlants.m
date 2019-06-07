@@ -53,6 +53,7 @@ for i = 1:size(plantLatLon, 1)
     end
         
     plantWbTimeSeries(i, :) = [ind, qsClean'];
+    figure;plot(qsClean)
 end
 
  csvwrite('2019-electricity/nuke-qs-gldas-all.csv', plantWbTimeSeries);

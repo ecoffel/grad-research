@@ -6,7 +6,7 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
           'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'inmcm4', ...
           'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
-rcp = 'rcp85';
+rcp = 'rcp45';
 
 startYear = 2050;
 endYear = 2080;
@@ -22,9 +22,6 @@ tempEra = loadDailyData('E:\data\era-interim\output\mx2t', 'startYear', 1988, 'e
 if nanmean(nanmean(nanmean(nanmean(nanmean(tempEra{3}))))) > 100
     tempEra{3} = tempEra{3} - 273.15;
 end
-
-
-
 
 for model = 1:length(models)
     modelPlantTxTimeSeries = [];
@@ -105,7 +102,7 @@ for model = 1:length(models)
     end
 
 
-    csvwrite(['2019-electricity/future-temps/entnsoe-nuke-pp-rcp85-tx-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
+    csvwrite(['2019-electricity/future-temps/entnsoe-nuke-pp-' rcp '-tx-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
     
 end
 

@@ -81,10 +81,9 @@ indPcQs50 = np.where(abs(pcEval-pc50) == np.nanmin(abs(pcEval-pc50)))[0]
 indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
-if not os.path.isfile('pPolyData.dat'):
-    pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
-    with gzip.open('pPolyData.dat', 'wb') as f:
-        pickle.dump(pPolyData, f)
+pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
+with gzip.open('pPolyData.dat', 'wb') as f:
+    pickle.dump(pPolyData, f)
 
 
 xd = np.linspace(20, 50, 50)

@@ -159,7 +159,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     plantIds = plantIds[ind]
     pctotal = pctotal[ind]
     
-    np.random.seed(231)
+    np.random.seed(1024)
     
     models = []
     

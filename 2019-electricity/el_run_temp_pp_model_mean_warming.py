@@ -41,14 +41,14 @@ summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
 # load historical runoff data for all plants in US and EU
-fileNameRunoff = 'entsoe-nuke-pp-runoff-all.csv'
+fileNameRunoff = 'entsoe-nuke-pp-runoff-anom-all.csv'
 plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-plantQsData = plantQsData[3:,1:].copy()
+plantQsAnomData = plantQsData[3:,1:].copy()
 
-plantQsAnomData = []
-for p in range(plantQsData.shape[0]):
-    plantQsAnomData.append((plantQsData[p,:]-np.nanmean(plantQsData[p,:]))/np.nanstd(plantQsData[p,:]))
-plantQsAnomData = np.array(plantQsAnomData)
+#plantQsAnomData = []
+#for p in range(plantQsData.shape[0]):
+#    plantQsAnomData.append((plantQsData[p,:]-np.nanmean(plantQsData[p,:]))/np.nanstd(plantQsData[p,:]))
+#plantQsAnomData = np.array(plantQsAnomData)
 
 pcModel10 = []
 pcModel50 = []
@@ -67,10 +67,8 @@ pCapTxx10 = []
 pCapTxx50 = []
 pCapTxx90 = []
 
-annualTx = []
-annualTxx = []
-
-warming = [0,1,2,3,4]
+warming = [0,0,0,0,0]#1,2,3,4]
+drying = [0, -.25, -.5, -.75, -1]
 
 for w in range(len(warming)):
     pCapTx10.append([])
@@ -91,9 +89,6 @@ for w in range(len(warming)):
         plantPcTxx50 = []
         plantPcTxx90 = []
         
-        curAnnualTx = []
-        curAnnualTxx = []
-        
         indTxMean = np.where((plantMonthData >= 7) & (plantMonthData <= 8))[0]
         txMean = np.nanmean(plantTxData[p, indTxMean])
         
@@ -103,10 +98,9 @@ for w in range(len(warming)):
         for year in range(yearRange[0], yearRange[1]+1):
 
             ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
-    #        ind = np.where((plantYearData == year))[0]
             
             curTx = tx[ind] + warming[w]
-            curQs = qs[ind]
+            curQs = qs[ind] - drying[w]
             
             nn = np.where(~np.isnan(curTx))[0]
             
@@ -119,30 +113,34 @@ for w in range(len(warming)):
                 plantPcTxx50.append(np.nan)
                 plantPcTxx90.append(np.nan)
                 
-                if w==0:
-                    curAnnualTx.append(np.nan)
-                    curAnnualTxx.append(np.nan)
                 continue
             
             curTx = curTx[nn]
             curQs = curQs[nn]
             
+            # calculate 90th tx percentile in this year
+            txPrc90 = np.nanpercentile(curTx, 90)
+            
+            # ind of the txx day in this year
             indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
+            
+            # inds where tx is > 90th percentile in this year
+            indTx90 = np.where(curTx > txPrc90)[0]
+            
             curTxx = curTx[indTxx]
             curQsTxx = curQs[indTxx]
             
-            if w==0:
-                curAnnualTx.append(np.nanmean(curTx))
-                curAnnualTxx.append(curTxx)
+            curTxPrc90 = curTx[indTx90]
+            curQsPrc90 = curQs[indTx90]
             
             curPcPred10 = []
             curPcPred50 = []
             curPcPred90 = []
             
-            for i in range(len(curTx)):
+            for i in range(len(curTxPrc90)):
                 
-                t = curTx[i]
-                q = curQs[i]
+                t = curTxPrc90[i]
+                q = curQsPrc90[i]
                 
                 curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
                                                      q, q**2, q**3, q**4, q**5, 0])[0]
@@ -175,10 +173,6 @@ for w in range(len(warming)):
             plantPcTxx10.append(curPcPredTxx10)
             plantPcTxx50.append(curPcPredTxx50)
             plantPcTxx90.append(curPcPredTxx90)
-        
-        if w==0:
-            annualTx.append(np.array(curAnnualTx))
-            annualTxx.append(np.array(curAnnualTxx))
         
         pCapTx10[w].append(np.array(plantPcTx10))
         pCapTx50[w].append(np.array(plantPcTx50))
@@ -258,9 +252,9 @@ plt.plot([55, 70, 85, 100], \
           np.nanmean(np.nanmean(pCapTxx90[4,:,:], axis=1), axis=0)], \
           'o', markersize=7, color=cmx.tab20(0))
 
-plt.plot([37,37], [90,100], '--', linewidth=2, color='black')
+plt.plot([38,38], [90,100], '--', linewidth=2, color='black')
 
-plt.gca().set_xticks([1, 37, 55, 70, 85, 100])
+plt.gca().set_xticks([1, 38, 55, 70, 85, 100])
 plt.gca().set_xticklabels([1981, 2018, '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
 
 for tick in plt.gca().xaxis.get_major_ticks():
