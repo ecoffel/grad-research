@@ -155,11 +155,17 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     nukeLon = []
     
     plantCapacity = []
-    
     plantPercCapacity = []
     plantTx = []
+    plantTxSummer = []
     plantCDD = []
+    
+    plantQsSummer = []
+    plantQsAnomSummer = []
+    
+    plantQsTmp = []
     plantQs = []
+    plantQsAnom = []
     
     plantYears = []
     plantMonths = []
@@ -177,7 +183,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantMonths.append(eba[ids[i,0]]['month'])
             plantDays.append(eba[ids[i,0]]['day'])
             
-            plantQs.append(qs[i])
+            plantQsTmp.append(qs[i])
             
             nukeLat.append(eba[ids[i,0]]['lat'])
             nukeLon.append(eba[ids[i,0]]['lon'])
@@ -196,14 +202,12 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantYears = np.array(plantYears)
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
-    plantQs = np.array(plantQs)
+    plantQsTmp = np.array(plantQsTmp)
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)
     
     finalPlantPercCapacity = []
     finalPlantPercCapacitySummer = []
-    plantQsSummer = []
-    plantQsAnomSummer = []
     
     for i in range(plantPercCapacity.shape[0]):
         
@@ -211,12 +215,17 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
         curTx = tx[i,1:]
         curCDD = cdd[i,1:]
         
-        curQs = plantQs[i]
+        curQs = plantQsTmp[i]
         
         if len(curPC)==len(curTx):
             
+            # append without restricting to summer
             finalPlantPercCapacity.append(curPC)
+            plantTx.append(curTx)
+            plantQs.append(curQs)
+            plantQsAnom.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
             
+            # restrict to summer only
             curPC = curPC[summerInds]
             curTx = curTx[summerInds]
             curCDD = curCDD[summerInds]
@@ -227,27 +236,34 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             curCDD = curCDD[nn]
             curQs = curQs[nn]
             
+            # now aggregate summer-restricted variables for this plant
             finalPlantPercCapacitySummer.append(curPC)
-            plantTx.append(curTx)
+            plantTxSummer.append(curTx)
             plantCDD.append(curCDD)
             plantQsSummer.append(curQs)
             plantQsAnomSummer.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
-    
+            
+            
     plantTx = np.array(plantTx)
+    plantTxSummer = np.array(plantTxSummer)
     plantCDD = np.array(plantCDD)
+    
+    plantQs = np.array(plantQs)
+    plantQsAnom = np.array(plantQsAnom)
     plantQsSummer = np.array(plantQsSummer)
     plantQsAnomSummer = np.array(plantQsAnomSummer)
+    
     finalPlantPercCapacity = np.array(finalPlantPercCapacity)
     finalPlantPercCapacitySummer = np.array(finalPlantPercCapacitySummer)
     
-    d = {'txSummer': plantTx, 'cddSummer':plantCDD, 'qsSummer':plantQsSummer, \
-         'qsAnomSummer':plantQsAnomSummer, \
-         'capacitySummer':finalPlantPercCapacitySummer, \
-         'capacity':finalPlantPercCapacity, \
+    d = {'txSummer': plantTxSummer, 'tx':plantTx, 'cddSummer':plantCDD, \
+         'qsSummer':plantQsSummer, 'qsAnomSummer':plantQsAnomSummer, \
+         'qs':plantQs, 'qsAnom':plantQsAnom, \
+         'capacitySummer':finalPlantPercCapacitySummer, 'capacity':finalPlantPercCapacity, \
          'normalCapacity':plantCapacity, \
          'summerInds':summerInds, \
          'plantLats':nukeLat, 'plantLons':nukeLon, \
-         'plantYears':plantYears, 'plantMonths':plantMonths, 'plantDays':plantDays}
+         'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, 'plantDaysAll':plantDays}
     return d
 
 
@@ -378,7 +394,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
             
             plantIdsAcc.extend(plantIds[i,summerInds])
             plantMeanTempsAcc.extend([np.nanmean(plantTx)]*len(plantTx))
-            monthsAcc.extend(plantYears[i,summerInds])
+            yearsAcc.extend(plantYears[i,summerInds])
             monthsAcc.extend(plantMonths[i,summerInds])
             daysAcc.extend(plantDays[i,summerInds])            
             
@@ -405,7 +421,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
          'qsSummer':plantQsTotal, 'qsAnomSummer':plantQsAnomTotal, \
          'capacitySummer':plantCapTotal, 'percCapacity':percCapacity, \
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
-         'plantMeanTemps':plantMeanTempsAcc, 'plantYears':plantYears, 'plantMonths':plantMonths, \
+         'plantMeanTemps':plantMeanTempsAcc, 'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, \
          'plantYearsSummer':yearsAcc, 'plantMonthsSummer':monthsAcc, 'plantDaysSummer':daysAcc}
     return d
 

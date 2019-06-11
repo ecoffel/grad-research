@@ -1,15 +1,22 @@
 
 dataset = 'e:/data/cmip5/output';
 
-models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
-          'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', ...
-          'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'inmcm4', ...
-          'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+% models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', ...
+%           'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', ...
+%           'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'inmcm4', ...
+%           'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
 
+models = {'bcc-csm1-1-m', 'canesm2', ...
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', ...
+              'gfdl-esm2g', 'gfdl-esm2m', ...
+              'inmcm4', 'miroc5', 'miroc-esm', ...
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
+      
+      
 rcp = 'rcp45';
 
-startYear = 2050;
-endYear = 2080;
+startYear = 2020;
+endYear = 2050;
 
 plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
 
@@ -27,9 +34,9 @@ for model = 1:length(models)
     modelPlantTxTimeSeries = [];
     
     
-%     if exist(['2019-electricity/entnsoe-nuke-pp-rcp85-tx-cmip5-' models{model} '-2020-2050.csv'], 'file')
-%         %continue;
-%     end
+    if exist(['2019-electricity/future-temps/us-eu-pp-' rcp '-tx-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], 'file')
+        %continue;
+    end
     
     fprintf('processing %s/historical...\n', models{model})
     tempHist = loadDailyData(['E:/data/cmip5/output/' models{model} '/r1i1p1/historical/tasmax/regrid/world'], 'startYear', 1981, 'endYear', 2005);
@@ -64,7 +71,7 @@ for model = 1:length(models)
         txCleanNoChg = [];
         
         % construct future dates (range from 2020 - 2050)
-        curDate = datenum(startYear, 1, 1, 1, 0, 0);
+%         curDate = datenum(startYear, 1, 1, 1, 0, 0);
         txYears = [];
         txMonths = [];
         txDays = [];
@@ -72,19 +79,17 @@ for model = 1:length(models)
         for year = 1:size(tx, 1)
             for month = 1:size(tx, 2)
                 for day = 1:size(tx, 3)
+%                     vec = datevec(curDate);
                     
-                    if ~isnan(tx(year, month, day))
-                    
-                        vec = datevec(curDate);
-                        txYears(end+1) = vec(1);
-                        txMonths(end+1) = vec(2);
-                        txDays(end+1) = vec(3);
+                    if month == 7 || month == 8
+                        txYears(end+1) = year;
+                        txMonths(end+1) = month;
+                        txDays(end+1) = day;
 
-                        curDate = addtodate(curDate, 1, 'day');
                         txClean(end+1) = tx(year, month, day) + (txFut(month) - txHist(month));
                         txCleanNoChg(end+1) = tx(year, month, day);
-                        
                     end
+%                     curDate = addtodate(curDate, 1, 'day');
                 end
             end
         end
@@ -102,7 +107,7 @@ for model = 1:length(models)
     end
 
 
-    csvwrite(['2019-electricity/future-temps/entnsoe-nuke-pp-' rcp '-tx-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
+    csvwrite(['2019-electricity/future-temps/us-eu-pp-' rcp '-tx-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
     
 end
 

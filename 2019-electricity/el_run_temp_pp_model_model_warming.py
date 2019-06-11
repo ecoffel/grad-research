@@ -17,15 +17,16 @@ dataDir = 'e:/data/'
 plotFigs = False
 newFit = True
 
-models = ['access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', 'canesm2', \
-          'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', 'fgoals-g2', \
-          'gfdl-esm2g', 'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'inmcm4', \
-          'ipsl-cm5a-mr', 'miroc5', 'miroc-esm', 'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
+models = ['bcc-csm1-1-m', 'canesm2', \
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
+              'gfdl-esm2g', 'gfdl-esm2m', \
+              'inmcm4', 'miroc5', 'miroc-esm', \
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 
 yearRangeHist = [1981, 2018]
-yearRange1 = [2020, 2050]
-yearRange2 = [2050, 2080]
+yearRangeFut1 = [2020, 2050]
+yearRangeFut2 = [2050, 2080]
 
 # load historical temp data for all plants in US and EU
 fileNameTemp = 'entsoe-nuke-pp-tx-all.csv'
@@ -64,8 +65,10 @@ with gzip.open('pPolyData.dat', 'rb') as f:
 pCapTxHist = [[], [], []]
 pCapTxxHist = [[], [], []]
 
-pCapTxFut = []
-pCapTxxFut = []
+pCapTxFut1 = [[], [], []]
+pCapTxxFut1 = [[], [], []]
+pCapTxFut2 = [[], [], []]
+pCapTxxFut2 = [[], [], []]
 
 for p in range(len(plantList)):
     
@@ -173,7 +176,7 @@ pCapTxxHist = np.array(pCapTxxHist)
 
 for m in range(len(models)):
     
-    fileNameTemp = 'entnsoe-nuke-pp-rcp85-tx-cmip5-%s-2020-2050.csv'%(models[m])
+    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2020-2050.csv'%(models[m])
 
     plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
     plantTxYearData = plantTxData[0,1:].copy()
@@ -181,17 +184,13 @@ for m in range(len(models)):
     plantTxDayData = plantTxData[2,1:].copy()
     plantTxData = plantTxData[3:,1:].copy()
     
+    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-anom-cmip5-%s-2020-2050.csv'%(models[m])
     
-    fileNameTemp = 'entnsoe-nuke-pp-rcp85-runoff-cmip5-%s-2020-2050.csv'%(models[m])
-    
-    plantQsData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
     plantQsYearData = plantTxData[0,1:].copy()
     plantQsMonthData = plantTxData[1,1:].copy()
-    plantQsData = plantTxData[3:,1:].copy()
-    
-    summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-    plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-    
+    plantQsDayData = plantTxData[2,1:].copy()
+    plantQsData = plantQsData[3:,1:].copy()
     
     for p in range(len(plantList)):
         
@@ -203,22 +202,22 @@ for m in range(len(models)):
         plantPcTxx50 = []
         plantPcTxx90 = []
         
-        indTxMean = np.where((plantMonthData >= 7) & (plantMonthData <= 8))[0]
-        txMean = np.nanmean(plantTxData[p, indTxMean])
-        
         tx = plantTxData[p, :]
-        qs = plantQsAnomData[p, :]
+        qs = plantQsData[p, :]
         
-        for year in range(yearRangeHist[0], yearRangeHist[1]+1):
+        for year in range(yearRangeFut1[0], yearRangeFut1[1]+1):
     
-            ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
+            indTx = np.where((plantTxYearData == year) & (plantTxMonthData >= 7) & (plantTxMonthData <= 8))[0]
             
-            curTx = tx[ind]
-            curQs = qs[ind]
+            curTx = tx[indTx]
+            curQs = qs[indTx]
             
             nn = np.where(~np.isnan(curTx))[0]
             
             if len(nn) == 0:
+                
+                print('problem')
+                sys.exit()
                 plantPcTx10.append(np.nan)
                 plantPcTx50.append(np.nan)
                 plantPcTx90.append(np.nan)
@@ -278,17 +277,17 @@ for m in range(len(models)):
             plantPcTxx50.append(curPcPredTxx50)
             plantPcTxx90.append(curPcPredTxx90)
         
-        pCapTxHist[0].append(np.array(plantPcTx10))
-        pCapTxHist[1].append(np.array(plantPcTx50))
-        pCapTxHist[2].append(np.array(plantPcTx90))
+        pCapTxFut1[0].append(np.array(plantPcTx10))
+        pCapTxFut1[1].append(np.array(plantPcTx50))
+        pCapTxFut1[2].append(np.array(plantPcTx90))
         
-        pCapTxxHist[0].append(plantPcTxx10)
-        pCapTxxHist[1].append(plantPcTxx50)
-        pCapTxxHist[2].append(plantPcTxx90)
-            
+        pCapTxxFut1[0].append(plantPcTxx10)
+        pCapTxxFut1[1].append(plantPcTxx50)
+        pCapTxxFut1[2].append(plantPcTxx90)
+    sys.exit()            
 
-pCapTxHist = np.array(pCapTxHist)
-pCapTxxHist = np.array(pCapTxxHist)
+pCapTxFut1 = np.array(pCapTxFut1)
+pCapTxxFut1 = np.array(pCapTxxFut1)
 
 
 

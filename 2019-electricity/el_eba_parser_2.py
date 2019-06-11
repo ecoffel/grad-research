@@ -142,7 +142,8 @@ if not 'dailySeries' in locals():
     tx = tx[3:,1:]
     
     dailySeries = {'year':year, 'month':month, 'day':day, 'tempData':[], \
-                       'genData':[], 'intData':[], 'demData':[], 'demFctData':[]}
+                       'genData':[], 'intData':[], 'demData':[], 'demFctData':[], \
+                       'genDataSmooth':[], 'intDataSmooth':[], 'demDataSmooth':[], 'demFctDataSmooth':[]}
     
     for subgrid in subgrids.keys():
 
@@ -152,6 +153,12 @@ if not 'dailySeries' in locals():
         dailySeries['demData'].append([])
         dailySeries['intData'].append([])
         dailySeries['demFctData'].append([])
+        
+        dailySeries['genDataSmooth'].append([])
+        dailySeries['demDataSmooth'].append([])
+        dailySeries['intDataSmooth'].append([])
+        dailySeries['demFctDataSmooth'].append([])
+        
         dailySeries['tempData'].append([])
 
         genId = subgrids[subgrid]['genId']
@@ -191,10 +198,15 @@ if not 'dailySeries' in locals():
             dailySeries['tempData'][-1].append(meanTx / len(subgrids[subgrid]['states']))
             
             if len(indGen) == 1 and len(indInt) == 1 and len(indDem) == 1 and len(indDemFct) == 1:
-                dailySeries['genData'][-1].extend(eba[genId]['dataMaxSmooth'][indGen])
-                dailySeries['intData'][-1].extend(eba[intId]['dataMinSmooth'][indInt])
-                dailySeries['demData'][-1].extend(eba[demId]['dataMaxSmooth'][indDem])
-                dailySeries['demFctData'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])    
+                dailySeries['genDataSmooth'][-1].extend(eba[genId]['dataMaxSmooth'][indGen])
+                dailySeries['intDataSmooth'][-1].extend(eba[intId]['dataMinSmooth'][indInt])
+                dailySeries['demDataSmooth'][-1].extend(eba[demId]['dataMaxSmooth'][indDem])
+                dailySeries['demFctDataSmooth'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])    
+                
+                dailySeries['genData'][-1].extend(eba[genId]['dataMax'][indGen])
+                dailySeries['intData'][-1].extend(eba[intId]['dataMin'][indInt])
+                dailySeries['demData'][-1].extend(eba[demId]['dataMax'][indDem])
+                dailySeries['demFctData'][-1].extend(eba[demFctId]['dataMax'][indDemFct])    
             else:
                 dailySeries['genData'][-1].append(np.nan)
                 dailySeries['intData'][-1].append(np.nan)
@@ -204,10 +216,18 @@ if not 'dailySeries' in locals():
     dailySeries['year'] = np.array(dailySeries['year'])
     dailySeries['month'] = np.array(dailySeries['month'])
     dailySeries['day'] = np.array(dailySeries['day'])
+    
     dailySeries['genData'] = np.array(dailySeries['genData'])
     dailySeries['intData'] = np.array(dailySeries['intData'])
     dailySeries['demData'] = np.array(dailySeries['demData'])
     dailySeries['demFctData'] = np.array(dailySeries['demFctData'])
+    
+    dailySeries['genDataSmooth'] = np.array(dailySeries['genDataSmooth'])
+    dailySeries['intDataSmooth'] = np.array(dailySeries['intDataSmooth'])
+    dailySeries['demDataSmooth'] = np.array(dailySeries['demDataSmooth'])
+    dailySeries['demFctDataSmooth'] = np.array(dailySeries['demFctDataSmooth'])
+    
+    
     dailySeries['tempData'] = np.array(dailySeries['tempData'])
 
 intTx = []
@@ -217,11 +237,14 @@ demFctTx = []
 
 genTxScatter = []
 txScatter = []
+monthScatter = []
 
 for s in range(len(subgrids)):
     elecInd = np.where(~np.isnan(dailySeries['genData'][s]))[0]
     
     dailyTx = dailySeries['tempData'][s][elecInd]
+    
+    dailyMonth = dailySeries['month'][elecInd]
     
     intTx.append([])
     genTx.append([])
@@ -230,6 +253,7 @@ for s in range(len(subgrids)):
     
     txScatter.append(dailyTx)
     genTxScatter.append(dailySeries['genData'][s][elecInd])
+    monthScatter.append(dailyMonth)
     
     range1 = -20
     range2 = 40
@@ -250,12 +274,15 @@ for s in range(len(subgrids)):
 
 txScatter = np.array(txScatter)
 genTxScatter = np.array(genTxScatter)
+monthScatter = np.array(monthScatter)
 
-genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, \
+genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, 'monthScatter':monthScatter, \
            'allTx':dailySeries['tempData'], \
-           'year':dailySeries['year'], 'month':dailySeries['month'], 'day':dailySeries['day']}
+           'allYears':dailySeries['year'], 'allMonths':dailySeries['month'], 'allDays':dailySeries['day']}
 with open('genData.dat', 'wb') as f:
     pickle.dump(genData, f)
+
+sys.exit()
 
 demTx = np.transpose(np.array(demTx))
 genTx = np.transpose(np.array(genTx))

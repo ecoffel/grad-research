@@ -56,46 +56,75 @@ for model = 1:length(models)
             lon = lon+360;
         end
 
-%         [latIndGldas, lonIndGldas] = latLonIndexRange(qsGldas, [lat-.5, lat+.5], [lon-.5, lon+.5]);
         [latIndCmip5, lonIndCmip5] = latLonIndex(runoffHist, [lat, lon]);
         
-        cmip5MrroHist = squeeze(runoffHist{3}(latIndCmip5, lonIndCmip5, :, 7:8));
-        cmip5MrroFut = squeeze(runoffFut{3}(latIndCmip5, lonIndCmip5, :, 7:8));
+        cmip5MrroHist = squeeze(runoffHist{3}(latIndCmip5, lonIndCmip5, :, :));
+        cmip5MrroFut = squeeze(runoffFut{3}(latIndCmip5, lonIndCmip5, :, :));
 
-%         qsObs = squeeze(nanmean(nanmean(qsGldas{3}(latIndGldas, lonIndGldas, :, :, :), 2), 1));
-        qsHist = reshape(permute(cmip5MrroHist, [2, 1]), [numel(cmip5MrroHist), 1]);        
-        qsFut = reshape(permute(cmip5MrroFut, [2, 1]), [numel(cmip5MrroFut), 1]);
+        qsHistTimeSeries = [];
+        qsFutTimeSeries = [];
+        
+        % construct historical time series
+        curDate = datenum(1981, 1, 1, 1, 0, 0);
+        vec = datevec(curDate);
+        while vec(1) < 2005+1
+            if vec(2) == 7 || vec(2) == 8
+                qsHistTimeSeries(end+1) = cmip5MrroHist(vec(1)-1981+1, vec(2));
+            end
+            
+            curDate = addtodate(curDate, 1, 'day');
+            vec = datevec(curDate);
+        end
+        
         
         % construct future dates (range from 2020 - 2050)
         curDate = datenum(startYear, 1, 1, 1, 0, 0);
         qsYears = [];
         qsMonths = [];
-
-        for year = 1:size(cmip5MrroFut, 1)
-            for month = 1:size(cmip5MrroFut, 2)                    
-                vec = datevec(curDate);
+        qsDays = [];
+        
+        vec = datevec(curDate);
+        while vec(1) < endYear+1
+            if vec(2) == 7 || vec(2) == 8
                 qsYears(end+1) = vec(1);
                 qsMonths(end+1) = vec(2);
+                qsDays(end+1) = vec(3);
 
-                curDate = addtodate(curDate, 1, 'month');
+                qsFutTimeSeries(end+1) = cmip5MrroFut(vec(1)-startYear+1, vec(2));
             end
+            
+            curDate = addtodate(curDate, 1, 'day');
+            vec = datevec(curDate);
         end
+        
+        qsAnomTimeSeries = (qsFutTimeSeries-nanmean(qsHistTimeSeries)) ./ nanstd(qsHistTimeSeries);
+        
+%         for year = 1:size(cmip5MrroFut, 1)
+%             for month = 1:size(cmip5MrroFut, 2)                    
+%                 vec = datevec(curDate);
+%                 qsYears(end+1) = vec(1);
+%                 qsMonths(end+1) = vec(2);
+% 
+%                 curDate = addtodate(curDate, 1, 'month');
+%             end
+%         end
 
         % add date/time data (these should be same length as
         % data time series
         if i == 1
             modelPlantTxTimeSeries(1, :) = qsYears;
             modelPlantTxTimeSeries(2, :) = qsMonths;
+            modelPlantTxTimeSeries(3, :) = qsDays;
         end
         
         % add current year of temps to current plant
-        modelPlantTxTimeSeries(i+2, :) = (qsFut-nanmean(qsHist))/nanstd(qsHist);
+        modelPlantTxTimeSeries(i+3, :) = qsAnomTimeSeries;
     end
 
 
     modelChg = [modelChg; nanmean(modelPlantTxTimeSeries(3:end,:),2)];
     
-    csvwrite(['2019-electricity/future-temps/entnsoe-nuke-pp-rcp85-runoff-anom-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
+    csvwrite(['2019-electricity/future-temps/us-eu-pp-rcp85-runoff-anom-cmip5-' models{model} '-' num2str(startYear) '-' num2str(endYear) '.csv'], modelPlantTxTimeSeries);   
     
 end
 

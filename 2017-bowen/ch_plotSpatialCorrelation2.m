@@ -17,40 +17,40 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 showbar = false;
 
 for m = 1:length(models)
-    load(['E:\data\projects\bowen\derived-chg\txx-amp\txxChg-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\txx-amp\txxChg-' models{m}]);
     txxChgOnTxx(:, :, m) = txxChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/wbTxxChg-movingWarm-txxDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/wbTxxChg-movingWarm-txxDays-' models{m} '.mat']);
     wbOnTxx(:,:,m) = wbTxxChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/hussTxxChg-movingWarm-txxDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/hussTxxChg-movingWarm-txxDays-' models{m} '.mat']);
     hussOnTxx(:,:,m) = hussTxxChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-txxDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-txxDays-' models{m} '.mat']);
     efOnTxx(:,:,m) = efTxxChg;
     
-    load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChg-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\txx-amp\wbChg-' models{m}]);
     wbChgOnWb(:, :, m) = wbChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/tasmaxTxxChg-movingWarm-wbDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/tasmaxTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     txxOnWb(:,:,m) = tasmaxTxxChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/hussTxxChg-movingWarm-wbDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/hussTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     hussOnWb(:,:,m) = hussTxxChg;
     
-    load(['e:/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
+    load(['e:/data/ecoffel/data/projects/bowen/derived-chg/var-txx-amp/efTxxChg-movingWarm-wbDays-' models{m} '.mat']);
     efOnWb(:,:,m) = efTxxChg;
     
-    load(['E:\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\txx-amp\txChgWarm-' models{m}]);
     txChgWarmSeason(:, :, m) = txChgWarm;
     
-    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\var-txx-amp\efWarmChg-movingWarm-' models{m}]);
     efChgWarmSeason(:, :, m) = efWarmChg;
     
-    load(['E:\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\var-txx-amp\hussWarmChg-movingWarm-' models{m}]);
     hussChgWarmSeason(:, :, m) = hussWarmChg;
     
-    load(['E:\data\projects\bowen\derived-chg\txx-amp\wbChgWarm-' models{m}]);
+    load(['E:\data\ecoffel\data\projects\bowen\derived-chg\txx-amp\wbChgWarm-' models{m}]);
     wbChgWarmSeason(:, :, m) = wbChgWarm;
 end
 
@@ -83,7 +83,7 @@ if showbar
 
     for m = 1:length(models)
 
-        load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+        load(['E:\data\ecoffel\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
 
         efGroup(waterGrid) = NaN;
         efGroup(1:15,:) = NaN;
@@ -490,8 +490,8 @@ if showbar
 end
     
 
-amp = hussChgWarmSeason .* 1000;
-driverRaw = txChgWarmSeason;
+amp = wbChgOnWb-wbChgWarmSeason;
+driverRaw = (hussOnWb-hussChgWarmSeason) .* 1000;
 % amp = wbOnTxx;
 % driverRaw = efOnTxx;
 
@@ -509,7 +509,7 @@ dchg = [];
 
 for m = 1:length(models)
 
-   load(['E:\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
+   load(['E:\data\ecoffel\data\projects\bowen\derived-chg\var-stats\efGroup-' models{m} '.mat']);
     %efGroup = twGroup;
     
     a = squeeze(amp(:,:,m));
@@ -691,17 +691,19 @@ plot([0 6], [0 0], '--k', 'linewidth', 2);
 %ylim(yrange);
 %set(gca, 'YTick', yticks);
 xlim([.5 5.5]);
-%ylim([-.5 1]);
+% ylim([.2 .9]);
 set(gca, 'FontSize', 36);
 set(gca, 'XTick', 1:5, 'XTickLabel', {'Arid', 'Semi-arid', 'Temperate', 'Tropical', 'All'});
 %set(gca, 'XTick', 1:5, 'XTickLabel', {'10', '30', '50', '70', '90'});
 set(gca, 'YTick', -.5:.1:1);
 xtickangle(45);
-%xlabel('Climate zone');
-ylabel(['g/kg per ' char(176) 'C Tx']);
+
+% ylabel(['g/kg per ' char(176) 'C T_W']);
+ylabel([char(176) 'C T_W per g/kg']);
+
 %set(b,{'LineWidth', 'Color'},{2, [85/255.0, 158/255.0, 237/255.0]})
 %lines = findobj(gcf, 'type', 'line', 'Tag', 'Median');
 %set(lines, 'Color', [249, 153, 57]./255, 'LineWidth', 2);
 set(gcf, 'Position', get(0,'Screensize'));
-export_fig(['spatial-huss-per-tx-chg-efgroup.eps']);
+export_fig(['spatial-huss-per-tw-chg-efgroup.eps']);
 close all;

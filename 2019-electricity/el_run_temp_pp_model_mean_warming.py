@@ -67,8 +67,8 @@ pCapTxx10 = []
 pCapTxx50 = []
 pCapTxx90 = []
 
-warming = [0,0,0,0,0]#1,2,3,4]
-drying = [0, -.25, -.5, -.75, -1]
+warming = [0,1,2,3,4]
+drying = [0,-.025,-.05,-.075,-.1]#-.25, -.5, -.75, -1]
 
 for w in range(len(warming)):
     pCapTx10.append([])
@@ -271,6 +271,9 @@ x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
+if plotFigs:
+    plt.savefig('hist-pp-chg-over-time.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
 sys.exit()
 
 
@@ -279,12 +282,6 @@ sys.exit()
 
 
 
-
-
-
-
-if plotFigs:
-    plt.savefig('hist-pp-chg-over-time.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.figure(figsize=(1,4))
 plt.grid(True)

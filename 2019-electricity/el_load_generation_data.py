@@ -9,6 +9,7 @@ import matplotlib.cm as cmx
 import numpy as np
 import pandas as pd
 import pickle
+import sys
 
 plotFigs = False
 
@@ -111,6 +112,8 @@ leg.get_frame().set_linewidth(0.0)
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+sys.exit()
 
 if plotFigs:
     plt.savefig('hist-demand-temp-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
