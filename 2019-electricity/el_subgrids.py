@@ -36,8 +36,8 @@ subgrids['NYIS'] = {'genId':576, \
                     'demId': 28, \
                     'states':['NY']}
 
-subgrids['SWPP'] = {'genId':-1, \
-                    'intId':-1, \
-                    'demFctId':-1, \
-                    'demId': -1, \
+subgrids['SWPP'] = {'genId':480, \
+                    'intId':481, \
+                    'demFctId':479, \
+                    'demId': 75, \
                     'states':['OK', 'KS', 'NE', 'SD']}

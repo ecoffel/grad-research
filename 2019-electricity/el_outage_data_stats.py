@@ -16,7 +16,7 @@ import sys
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = True
+plotFigs = False
 
 
 if not 'eData' in locals():
@@ -92,7 +92,7 @@ plt.xlim([0, 13])
 plt.ylim([4, 35])
 plt.grid(True, alpha=.5)
 
-plt.plot(list(range(1,13)), histTempsByMonth, '-k', lw=3)
+plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=3, color=snsColors[0])
 plt.plot(list(range(1,13)), histTempsByMonth+3, '--', lw=1, color=snsColors[1])
 plt.plot(list(range(1,13)), histTempsByMonth+4, '-', lw=3, color=snsColors[1])
 plt.plot(list(range(1,13)), histTempsByMonth+5, '--', lw=1, color=snsColors[1])
@@ -160,7 +160,10 @@ plt.xlim([0, 13])
 plt.ylim([.5, 1.7])
 plt.grid(True, alpha=.5)
 
+plt.plot([0,13], [1,1], '--k', lw=1)
 plt.plot(list(range(1,13)), genByMonth, '-k', lw=3)
+
+plt.yticks([.6, 1, 1.5])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -183,6 +186,45 @@ plt.tick_params(
 
 if plotFigs:
     plt.savefig('gen-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+
+mon = nukeData['plantMonthsAll']
+qsAnom = nukePlants['qsAnom']
+histQsByMonth = []
+
+for m in range(1, 13):
+    ind = np.where(mon[0,:] == m)[0]
+    histQsByMonth.append(np.array(np.nanmean(np.nanmean(qsAnom[:, ind], axis=1))))
+histQsByMonth = np.array(histQsByMonth)
+
+plt.figure(figsize=(4,1))
+plt.xlim([0, 13])
+plt.ylim([-.5, .8])
+plt.grid(True, alpha=.5)
+
+plt.plot([0,13], [0,0], '--k', lw=1)
+plt.plot(list(range(1,13)), histQsByMonth, '-', lw=3, color='#8c4e23')
+
+plt.yticks([-.4, 0, .6])
+         
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(10)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(10)
+
+plt.gca().spines['bottom'].set_visible(False)
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+if plotFigs:
+    plt.savefig('qs-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 sys.exit()

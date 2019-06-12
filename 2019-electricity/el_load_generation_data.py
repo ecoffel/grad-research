@@ -24,18 +24,22 @@ with open('genData.dat', 'rb') as f:
 tx = genData['txScatter']
 gen = genData['genTxScatter']
 
-subgrid = 5
+
+subplotTxSummerMean = []
+for s in range(tx.shape[0]):
+    ind = np.where((genData['monthScatter'][s] == 7) | (genData['monthScatter'][s] == 8))[0]
+    subplotTxSummerMean.append(np.nanmean(tx[s][ind]))
+subplotTxSummerMean = np.array(subplotTxSummerMean)
 
 txAll = []
 genAll = []
-
 
 for s in range(tx.shape[0]):
     txAll.extend(tx[s])
     genAll.extend(gen[s])
 
 txAll = np.array(txAll)
-genAll = np.array(genAll) * 100
+genAll = np.array(genAll)
 
 pBootstrap = []
 zBootstrap = []
@@ -86,13 +90,17 @@ demandPercentiles = np.array(demandPercentiles)
 
 
 plt.figure(figsize=(4,4))
-plt.ylim([-.1, 1.5])
+plt.ylim([0.02, 0.07])
 plt.grid(True)
 
 plt.plot(xd, yPolyAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
 p1 = plt.plot(xd, yPolyd10, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
 p2 = plt.plot(xd, yPolyd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
 p3 = plt.plot(xd, yPolyd90, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
+
+for s in range(len(subplotTxSummerMean)):
+    plt.plot([subplotTxSummerMean[s], subplotTxSummerMean[s]], [0.02, 0.023], lw=3, color=cmx.tab20(0))
+    plt.plot([subplotTxSummerMean[s]+4, subplotTxSummerMean[s]+4], [0.02, 0.023], lw=3, color=cmx.tab20(6))
 
 plt.gca().set_xticks(range(0, 51, 10))
 
@@ -106,14 +114,12 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Normalized subgrid generation', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'})
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-sys.exit()
 
 if plotFigs:
     plt.savefig('hist-demand-temp-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -124,7 +130,7 @@ warming = [0, 1, 2, 3, 4]
 
 txx = np.zeros([len(warming), genData['allTx'].shape[0], len(range(1981, 2018+1))])
 for year in range(1981, 2018+1):
-    ind = np.where(genData['year'] == year)[0]
+    ind = np.where(genData['allYears'] == year)[0]
     
     for s in range(genData['allTx'].shape[0]):
         for w in range(len(warming)):
@@ -143,16 +149,16 @@ pcFut90 = np.linspace(95.7, 94, 5)/100
 
 pcWorst = np.linspace(95.7, 85, 5)/100
 
-z = np.polyfit(xd, histGen10[0,subgrid,:], 1)
+z = np.polyfit(xd, np.nanmean(histGen10[0,:,:], axis=0), 1)
 histPolyTxx10 = np.poly1d(z)
-z = np.polyfit(xd, histGen50[0,subgrid,:], 1)
+z = np.polyfit(xd, np.nanmean(histGen50[0,:,:], axis=0), 1)
 histPolyTxx50 = np.poly1d(z)
-z = np.polyfit(xd, histGen90[0,subgrid,:], 1)
+z = np.polyfit(xd, np.nanmean(histGen90[0,:,:], axis=0), 1)
 histPolyTxx90 = np.poly1d(z)
 
 plt.figure(figsize=(4,4))
 plt.xlim([-1, 105])
-plt.ylim([0, .6])
+plt.ylim([0.034, 0.042])
 plt.grid(True)
 
 plt.plot(xd, histPolyTxx10(xd), '-', linewidth = 3, color = cmx.tab20(0), alpha = .8)
@@ -164,26 +170,26 @@ plt.plot(xd, histPolyTxx50(xd), '-', linewidth = 3, color = [0, 0, 0], alpha = .
 plt.plot(xd, histPolyTxx90(xd), '-', linewidth = 3, color = cmx.tab20(6), alpha = .8)
 #plt.plot(xd, histPolyTxx90(xd)*(pc[0]-pc+1), '--', linewidth = 3, color = cmx.tab20(6), alpha = .8)
 
-warmGen10 = [np.nanmean(histGen10[1,subgrid,:], axis=0), \
-          np.nanmean(histGen10[2,subgrid,:], axis=0), \
-          np.nanmean(histGen10[3,subgrid,:], axis=0), \
-          np.nanmean(histGen10[4,subgrid,:], axis=0)]
+warmGen10 = [np.nanmean(np.nanmean(histGen10[1,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen10[2,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen10[3,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen10[4,:,:], axis=1), axis=0)]
 plt.plot([55, 70, 85, 100], \
          warmGen10, \
           'o', markersize=7, color=cmx.tab20(0))
 
-warmGen50 = [np.nanmean(histGen50[1,subgrid,:], axis=0), \
-          np.nanmean(histGen50[2,subgrid,:], axis=0), \
-          np.nanmean(histGen50[3,subgrid,:], axis=0), \
-          np.nanmean(histGen50[4,subgrid,:], axis=0)]
+warmGen50 = [np.nanmean(np.nanmean(histGen50[1,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen50[2,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen50[3,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen50[4,:,:], axis=1), axis=0)]
 p1 = plt.plot([55, 70, 85, 100], \
          warmGen50, \
           'o', markersize=7, color='black', label='Without curtailment')
 
-warmGen90 = [np.nanmean(histGen90[1,subgrid,:], axis=0), \
-          np.nanmean(histGen90[2,subgrid,:], axis=0), \
-          np.nanmean(histGen90[3,subgrid,:], axis=0), \
-          np.nanmean(histGen90[4,subgrid,:], axis=0)]
+warmGen90 = [np.nanmean(np.nanmean(histGen90[1,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen90[2,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen90[3,:,:], axis=1), axis=0), \
+          np.nanmean(np.nanmean(histGen90[4,:,:], axis=1), axis=0)]
 plt.plot([55, 70, 85, 100], \
          warmGen90, \
           'o', markersize=7, color=cmx.tab20(6))

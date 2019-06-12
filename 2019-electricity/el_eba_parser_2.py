@@ -92,9 +92,12 @@ if not 'eba' in locals():
             curLineNew['month'] = np.array(curLineNew['month'])
             curLineNew['day'] = np.array(curLineNew['day'])
             curLineNew['hour'] = np.array(curLineNew['hour'])
+            
+            # normalize electricity data
             curLineNew['dataMax'] = normalize(np.array(curLineNew['dataMax']))
             curLineNew['dataMin'] = normalize(np.array(curLineNew['dataMin']))
             curLineNew['dataMean'] = normalize(np.array(curLineNew['dataMean']))
+            
 #            curLineNew['dataMax'] = np.array(curLineNew['dataMax'])
 #            curLineNew['dataMin'] = np.array(curLineNew['dataMin'])
 #            curLineNew['dataMean'] = np.array(curLineNew['dataMean'])
@@ -135,11 +138,22 @@ if not 'dailySeries' in locals():
                 parts = line.split(',')
                 stateList.append(parts[0])
             i += 1
-    tx = np.genfromtxt('subgrid-tx-era-1981-2018.csv', delimiter=',', skip_header=1)
-    year = tx[0,1:]
-    month = tx[1,1:]
-    day = tx[2,1:]
-    tx = tx[3:,1:]
+    txEra = np.genfromtxt('subgrid-tx-era-1981-2018.csv', delimiter=',', skip_header=1)
+    txCpc = np.genfromtxt('subgrid-tx-cpc-1981-2018.csv', delimiter=',', skip_header=1)
+    txNcep = np.genfromtxt('subgrid-tx-ncep-1981-2018.csv', delimiter=',', skip_header=1)
+    year = txEra[0,1:]
+    month = txEra[1,1:]
+    day = txEra[2,1:]
+    
+    # average tx over the 3 datasets (ncep, cpc, era)
+    tx = []
+    for p in range(3, txEra.shape[0]):
+        stateTx = []
+        for i in range(1,txEra.shape[1]):
+            stateTx.append(np.nanmean([txEra[p,i], txCpc[p,i], txNcep[p,i]]))
+        tx.append(stateTx)
+    
+    tx = np.array(tx)
     
     dailySeries = {'year':year, 'month':month, 'day':day, 'tempData':[], \
                        'genData':[], 'intData':[], 'demData':[], 'demFctData':[], \
@@ -276,13 +290,15 @@ txScatter = np.array(txScatter)
 genTxScatter = np.array(genTxScatter)
 monthScatter = np.array(monthScatter)
 
+sys.exit()
+
 genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, 'monthScatter':monthScatter, \
            'allTx':dailySeries['tempData'], \
            'allYears':dailySeries['year'], 'allMonths':dailySeries['month'], 'allDays':dailySeries['day']}
 with open('genData.dat', 'wb') as f:
     pickle.dump(genData, f)
 
-sys.exit()
+
 
 demTx = np.transpose(np.array(demTx))
 genTx = np.transpose(np.array(genTx))

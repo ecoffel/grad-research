@@ -41,7 +41,7 @@ for y = year1:year2
     
     
     
-%     temp = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', year1, 'endYear', year2);
+%     temp = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', y, 'endYear', y);
 %     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
 %         temp{3} = temp{3} - 273.15;
 %     end
@@ -79,7 +79,7 @@ for y = year1:year2
     
     
     
-    temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax\regrid\world', 'startYear', year1, 'endYear', year2);
+    temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax\regrid\world', 'startYear', y, 'endYear', y);
     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
         temp{3} = temp{3} - 273.15;
     end
@@ -117,68 +117,69 @@ for y = year1:year2
     
     
     
-    stateIds = {};
-    stateLats = [];
-    stateLons = [];
+    if y == year1
+        stateIds = {};
+        stateLats = [];
+        stateLons = [];
 
-    fid = fopen('2019-electricity/us-state-coords.csv');
-    line = fgetl(fid);
-    line = fgetl(fid);
-    while ischar(line)
-        C = strsplit(line,',');
+        fid = fopen('2019-electricity/us-state-coords.csv');
         line = fgetl(fid);
+        line = fgetl(fid);
+        while ischar(line)
+            C = strsplit(line,',');
+            line = fgetl(fid);
 
-        if strcmp(C{1}, 'AK') || strcmp(C{1}, 'HI')
-            continue;
+            if strcmp(C{1}, 'AK') || strcmp(C{1}, 'HI')
+                continue;
+            end
+            stateIds{end+1} = C{1};
+            stateLats(end+1) = str2num(C{2});
+            stateLons(end+1) = str2num(C{3});
         end
-        stateIds{end+1} = C{1};
-        stateLats(end+1) = str2num(C{2});
-        stateLons(end+1) = str2num(C{3});
-    end
-    fclose(fid);
+        fclose(fid);
 
-    stateGridPoints = {};
-    for s = 1:length(stateIds)
-        stateGridPoints{s} = [];
-    end
+        stateGridPoints = {};
+        for s = 1:length(stateIds)
+            stateGridPoints{s} = [];
+        end
 
-    % for each grid box, find closest state
-    for xlat = 1:size(tempLat, 1)
-        for ylon = 1:size(tempLon, 2)
-            if length(find(isnan(tempData(xlat, ylon, :, :, :)))) < numel(tempData(xlat, ylon, :, :, :))
-                lat1 = tempLat(xlat, ylon);
-                lon1 = tempLon(xlat, ylon);
-                if lon1 < 0
-                    lon1 = 360 - lon1;
-                end
-
-                xList = [];
-                yList = [];
-                dInd = -1;
-                dMax = -1;
-
-                for s = 1:length(stateIds)
-                    latState = stateLats(s);
-                    lonState = stateLons(s);
-                    if lonState < 0
-                        lonState = lonState+360;
+        % for each grid box, find closest state
+        for xlat = 1:size(tempLat, 1)
+            for ylon = 1:size(tempLon, 2)
+                if length(find(isnan(tempData(xlat, ylon, :, :, :)))) < numel(tempData(xlat, ylon, :, :, :))
+                    lat1 = tempLat(xlat, ylon);
+                    lon1 = tempLon(xlat, ylon);
+                    if lon1 < 0
+                        lon1 = 360 - lon1;
                     end
 
-                    d = distance(lat1, lon1, latState, lonState);
-                    if dMax == -1
-                        dMax = d;
-                        dInd = s;
-                    elseif d < dMax
-                        dMax = d;
-                        dInd = s;
-                    end
-                end
+                    xList = [];
+                    yList = [];
+                    dInd = -1;
+                    dMax = -1;
 
-                stateGridPoints{dInd} = [stateGridPoints{dInd}; [xlat, ylon]];
+                    for s = 1:length(stateIds)
+                        latState = stateLats(s);
+                        lonState = stateLons(s);
+                        if lonState < 0
+                            lonState = lonState+360;
+                        end
+
+                        d = distance(lat1, lon1, latState, lonState);
+                        if dMax == -1
+                            dMax = d;
+                            dInd = s;
+                        elseif d < dMax
+                            dMax = d;
+                            dInd = s;
+                        end
+                    end
+
+                    stateGridPoints{dInd} = [stateGridPoints{dInd}; [xlat, ylon]];
+                end
             end
         end
     end
-
     
     stateTxTmp = [];
 
@@ -223,23 +224,36 @@ for y = year1:year2
         txYears = [];
         txMonths = [];
         txDays = [];
-        for year = 1:size(tempData, 3)
-            for m = 1:size(tempData, 4)
-                for d = 1:size(tempData, 5)
-
-                    curTx = nanmean(nanmean(squeeze(tempData(xlist, ylist, year, m, d)), 2), 1);
-                    if ~isnan(curTx)
-                        vec = datevec(curDate);
-                        txYears(end+1) = vec(1);
-                        txMonths(end+1) = vec(2);
-                        txDays(end+1) = vec(3);
-                        tx(end+1) = curTx;
-                        curDate = addtodate(curDate, 1, 'day');
-                    end
-
-                end
-            end
+        
+        vec = datevec(curDate);
+        while vec(1) < y+1
+            curTx = nanmean(nanmean(squeeze(tempData(xlist, ylist, 1, vec(2), vec(3))), 2), 1);
+            
+            txYears(end+1) = vec(1);
+            txMonths(end+1) = vec(2);
+            txDays(end+1) = vec(3);
+            tx(end+1) = curTx;
+            
+            curDate = addtodate(curDate, 1, 'day');
+            vec = datevec(curDate);
         end
+        
+%         for year = 1:size(tempData, 3)
+%             for m = 1:size(tempData, 4)
+%                 for d = 1:size(tempData, 5)
+% 
+%                     curTx = nanmean(nanmean(squeeze(tempData(xlist, ylist, year, m, d)), 2), 1);
+%                     
+%                     vec = datevec(curDate);
+%                     txYears(end+1) = vec(1);
+%                     txMonths(end+1) = vec(2);
+%                     txDays(end+1) = vec(3);
+%                     tx(end+1) = curTx;
+%                     curDate = addtodate(curDate, 1, 'day');
+% 
+%                 end
+%             end
+%         end
 
         if s == 1
             stateYearsTmp = [stateYearsTmp; txYears'];
