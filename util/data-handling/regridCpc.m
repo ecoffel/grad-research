@@ -1,7 +1,7 @@
 % needs to handle plev
 %baseGridModel = 'e:/data/cpc-temp/output';
 baseGridModel = 'e:/data/cpc-temp/output';
-regridVar = 'tmin';
+regridVar = 'tmax';
 %regridVar = 'precip';
 gridSpacing = 2;
 

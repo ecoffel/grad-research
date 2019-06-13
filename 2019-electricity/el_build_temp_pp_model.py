@@ -246,21 +246,25 @@ def buildOneNonlinearTempQsPPModel(tempVar, qsVar):
     return mdl
 
 def exportNukeEntsoePlantLocations():
-    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
+    
+    eData = {}
+    with open('eData.dat', 'rb') as f:
+        eData = pickle.load(f) 
+    
+    entsoeData = eData['entsoeData']
+    nukeData = eData['nukePlantDataAll']
+    
     
     uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
     entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
     entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
-    
-    nukeData = el_nuke_utils.loadNukeData(dataDir)
-    nukeTx, nukeTxIds = el_nuke_utils.loadWxData(nukeData, wxdata='era')
-    
+        
     nukeLat = []
     nukeLon = []
     
-    for i in range(nukeTxIds.shape[0]):
-        nukeLat.append(nukeData[nukeTxIds[i,0]]['lat'])
-        nukeLon.append(nukeData[nukeTxIds[i,0]]['lon'])
+    for i in range(len(nukeData['plantLats'])):
+        nukeLat.append(nukeData['plantLats'][i])
+        nukeLon.append(nukeData['plantLons'][i])
     
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)

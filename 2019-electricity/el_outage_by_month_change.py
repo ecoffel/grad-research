@@ -25,6 +25,16 @@ dataDir = 'e:/data/'
 
 plotFigs = False
 
+models = ['bcc-csm1-1-m', 'canesm2', \
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
+              'gfdl-esm2g', 'gfdl-esm2m', \
+              'inmcm4', 'miroc5', 'miroc-esm', \
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
+
+
+yearRangeHist = [1981, 2018]
+yearRangeFut1 = [2020, 2050]
+yearRangeFut2 = [2050, 2080]
 
 if not 'eData' in locals():
     eData = {}
@@ -34,10 +44,6 @@ if not 'eData' in locals():
 nukePlants = eData['nukePlantDataAll']
 nukeData = eData['nukeAgDataAll']
 
-normalCap = nukePlants['normalCapacity']
-cap = nukeData['percCapacity']
-mon = nukeData['plantMonthsAll']
-
 
 # calculate the mean outage in the base nuke dataset
 meanOutage = []
@@ -45,7 +51,6 @@ for m in range(1, 13):
     ind = np.where(mon[0,:] == m)[0]
     meanOutage.append(100-np.array(np.nanmean(cap[:,ind], axis=1)))
 meanOutage = np.array(meanOutage)
-
 
 
 # load temp-runoff outage models
@@ -59,7 +64,7 @@ with gzip.open('pPolyData.dat', 'rb') as f:
     pcModel90 = pPolyData['pcModel90'][0]
 
 
-# find monthly mean qs and tx for plants
+# find historical monthly mean qs and tx for plants
 qsAnomMonthlyMean = []
 txMonthlyMean = []
 txMonthlyMax = []
@@ -84,27 +89,88 @@ for p in range(nukePlants['qsAnom'].shape[0]):
             plantMonthlyTxMax[m].append(np.nanmax(nukePlants['tx'][p][ind]))
 
     txMonthlyMax.append(plantMonthlyTxMax)
-    
-    
-    
 qsAnomMonthlyMean = np.array(qsAnomMonthlyMean)
 txMonthlyMean = np.array(txMonthlyMean)
 txMonthlyMax = np.nanmean(np.array(txMonthlyMax), axis=2)
 
+
+# find future monthly mean qs and tx for plants
+
+qsAnomMonthlyMeanFut = []
+txMonthlyMeanFut = []
+txMonthlyMaxFut = []
+    
+# loop over all models
+for m in range(len(models)):
+    fileNameTemp = 'future-temps/us-pp-rcp85-tx-cmip5-%s-2020-2050.csv'%(models[m])
+    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+    plantTxYearData = plantTxData[0,1:].copy()
+    plantTxMonthData = plantTxData[1,1:].copy()
+    plantTxDayData = plantTxData[2,1:].copy()
+    plantTxData = plantTxData[3:,1:].copy()
+    
+#    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-anom-cmip5-%s-2020-2050.csv'%(models[m])
+#    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+#    plantQsYearData = plantTxData[0,1:].copy()
+#    plantQsMonthData = plantTxData[1,1:].copy()
+#    plantQsDayData = plantTxData[2,1:].copy()
+#    plantQsData = plantQsData[3:,1:].copy()
+
+    qsAnomMonthlyMeanFutCurModel = []
+    txMonthlyMeanFutCurModel = []
+    txMonthlyMaxFutCurModel = []
+
+    for p in range(plantTxData.shape[0]):
+        plantMonthlyTxMeanFut = []
+        plantMonthlyTxMaxFut = []
+#        plantMonthlyQsAnomMeanFut = []
+        
+        for month in range(1,13):
+            ind = np.where((plantTxMonthData==month))[0]
+            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
+#            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
+        
+#        qsAnomMonthlyMeanFut.append(plantMonthlyQsAnomMeanFut)
+        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
+        
+        for month in range(0,12):
+            plantMonthlyTxMaxFut.append([])
+            for y in np.unique(plantTxYearData):
+                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
+                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
+    
+        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
+#    qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
+    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
+    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
+    
+    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
+    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
+
+txMonthlyMeanFut = np.array(txMonthlyMeanFut)
+txMonthlyMaxFut = np.array(txMonthlyMaxFut)
+
+
+sys.exit()
+
+
+
 plantMonthlyOutageChg = [[], [], []]
+
+# loop over all plants
 for p in range(nukePlants['qsAnom'].shape[0]):
     curPlantMonthlyOutageChgQm10 = []
     curPlantMonthlyOutageChgQ0 = []
     curPlantMonthlyOutageChgQ10 = []
     
-    for m in range(0,12):
-        t0 = txMonthlyMax[p,m]
+    for month in range(0,12):
+        t0 = txMonthlyMax[p,month]
         
         if t0 >= 20:
-            q0 = qsAnomMonthlyMean[p,m]
+            q0 = qsAnomMonthlyMean[p,month]
             
-            t1 = txMonthlyMax[p,m]+4
-            q1 = qsAnomMonthlyMean[p,m]*.9
+            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
+            q1 = qsAnomMonthlyMean[p,month]*.9
             
             pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
                              q0, q0**2, q0**3, q0**4, q0**5, \
@@ -115,8 +181,8 @@ for p in range(nukePlants['qsAnom'].shape[0]):
             curPlantMonthlyOutageChgQm10.append(pc1-pc0)
             
         
-            t1 = txMonthlyMax[p,m]+4
-            q1 = qsAnomMonthlyMean[p,m]
+            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
+            q1 = qsAnomMonthlyMean[p,month]
             
             pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
                              q0, q0**2, q0**3, q0**4, q0**5, \
@@ -128,8 +194,8 @@ for p in range(nukePlants['qsAnom'].shape[0]):
             
             
             
-            t1 = txMonthlyMax[p,m]+4
-            q1 = qsAnomMonthlyMean[p,m]*1.1
+            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
+            q1 = qsAnomMonthlyMean[p,month]*1.1
             
             pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
                              q0, q0**2, q0**3, q0**4, q0**5, \
@@ -177,11 +243,13 @@ plt.tick_params(
     top=False,         # ticks along the top edge are off
     labelbottom=False) # labels along the bottom edge are off
 
+sys.exit()
+
+
 if plotFigs:
     plt.savefig('outage-chg-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-sys.exit()
 
 
 
