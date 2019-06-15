@@ -250,14 +250,17 @@ demTx = []
 demFctTx = []
 
 genTxScatter = []
+demTxScatter = []
 txScatter = []
 monthScatter = []
+yearScatter = []
 
 for s in range(len(subgrids)):
     elecInd = np.where(~np.isnan(dailySeries['genData'][s]))[0]
     
     dailyTx = dailySeries['tempData'][s][elecInd]
     
+    dailyYear = dailySeries['year'][elecInd]
     dailyMonth = dailySeries['month'][elecInd]
     
     intTx.append([])
@@ -267,7 +270,9 @@ for s in range(len(subgrids)):
     
     txScatter.append(dailyTx)
     genTxScatter.append(dailySeries['genData'][s][elecInd])
+    demTxScatter.append(dailySeries['demData'][s][elecInd])
     monthScatter.append(dailyMonth)
+    yearScatter.append(dailyYear)
     
     range1 = -20
     range2 = 40
@@ -288,17 +293,18 @@ for s in range(len(subgrids)):
 
 txScatter = np.array(txScatter)
 genTxScatter = np.array(genTxScatter)
+demTxScatter = np.array(demTxScatter)
 monthScatter = np.array(monthScatter)
+yearScatter = np.array(yearScatter)
 
-sys.exit()
-
-genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, 'monthScatter':monthScatter, \
-           'allTx':dailySeries['tempData'], \
-           'allYears':dailySeries['year'], 'allMonths':dailySeries['month'], 'allDays':dailySeries['day']}
+genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, 'demTxScatter':demTxScatter, \
+           'yearScatter':yearScatter, 'monthScatter':monthScatter, \
+           'allTx':dailySeries['tempData'], 'allYears':dailySeries['year'], \
+           'allMonths':dailySeries['month'], 'allDays':dailySeries['day']}
 with open('genData.dat', 'wb') as f:
     pickle.dump(genData, f)
 
-
+sys.exit()
 
 demTx = np.transpose(np.array(demTx))
 genTx = np.transpose(np.array(genTx))

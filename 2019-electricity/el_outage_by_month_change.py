@@ -45,14 +45,6 @@ nukePlants = eData['nukePlantDataAll']
 nukeData = eData['nukeAgDataAll']
 
 
-# calculate the mean outage in the base nuke dataset
-meanOutage = []
-for m in range(1, 13):
-    ind = np.where(mon[0,:] == m)[0]
-    meanOutage.append(100-np.array(np.nanmean(cap[:,ind], axis=1)))
-meanOutage = np.array(meanOutage)
-
-
 # load temp-runoff outage models
 pcModel10 = []
 pcModel50 = []
@@ -78,7 +70,7 @@ for p in range(nukePlants['qsAnom'].shape[0]):
         ind = np.where((nukePlants['plantMonthsAll'][p]==m))[0]
         plantMonthlyTxMean.append(np.nanmean(nukePlants['tx'][p][ind]))
         plantMonthlyQsAnomMean.append(np.nanmean(nukePlants['qsAnom'][p][ind]))
-    
+
     qsAnomMonthlyMean.append(plantMonthlyQsAnomMean)
     txMonthlyMean.append(plantMonthlyTxMean)
     
@@ -102,19 +94,19 @@ txMonthlyMaxFut = []
     
 # loop over all models
 for m in range(len(models)):
-    fileNameTemp = 'future-temps/us-pp-rcp85-tx-cmip5-%s-2020-2050.csv'%(models[m])
+    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
     plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
     plantTxYearData = plantTxData[0,1:].copy()
     plantTxMonthData = plantTxData[1,1:].copy()
     plantTxDayData = plantTxData[2,1:].copy()
-    plantTxData = plantTxData[3:,1:].copy()
+    plantTxData = plantTxData[3+29:,1:].copy()
     
-#    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-anom-cmip5-%s-2020-2050.csv'%(models[m])
-#    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-#    plantQsYearData = plantTxData[0,1:].copy()
-#    plantQsMonthData = plantTxData[1,1:].copy()
-#    plantQsDayData = plantTxData[2,1:].copy()
-#    plantQsData = plantQsData[3:,1:].copy()
+    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
+    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    plantQsYearData = plantTxData[0,1:].copy()
+    plantQsMonthData = plantTxData[1,1:].copy()
+    plantQsDayData = plantTxData[2,1:].copy()
+    plantQsData = plantQsData[3:,1:].copy()
 
     qsAnomMonthlyMeanFutCurModel = []
     txMonthlyMeanFutCurModel = []
@@ -123,14 +115,14 @@ for m in range(len(models)):
     for p in range(plantTxData.shape[0]):
         plantMonthlyTxMeanFut = []
         plantMonthlyTxMaxFut = []
-#        plantMonthlyQsAnomMeanFut = []
+        plantMonthlyQsAnomMeanFut = []
         
         for month in range(1,13):
             ind = np.where((plantTxMonthData==month))[0]
             plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
-#            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
+            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
         
-#        qsAnomMonthlyMeanFut.append(plantMonthlyQsAnomMeanFut)
+        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
         txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
         
         for month in range(0,12):
@@ -140,93 +132,76 @@ for m in range(len(models)):
                 plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
     
         txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
-#    qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
+    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
     txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
     txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
     
+    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
     txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
     txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
 
+qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
 txMonthlyMeanFut = np.array(txMonthlyMeanFut)
 txMonthlyMaxFut = np.array(txMonthlyMaxFut)
 
 
-sys.exit()
+modelRange = np.nanmean(np.nanmean(txMonthlyMaxFut,axis=2),axis=1)
+modelRangeSorted = sorted(modelRange)
+ind10 = np.where(modelRange == modelRangeSorted[1])[0]
+ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
 
-
-
-plantMonthlyOutageChg = [[], [], []]
+plantMonthlyOutageChg = []
 
 # loop over all plants
 for p in range(nukePlants['qsAnom'].shape[0]):
-    curPlantMonthlyOutageChgQm10 = []
-    curPlantMonthlyOutageChgQ0 = []
-    curPlantMonthlyOutageChgQ10 = []
+    curPlantMonthlyOutageChg = []
     
     for month in range(0,12):
         t0 = txMonthlyMax[p,month]
         
-        if t0 >= 20:
-            q0 = qsAnomMonthlyMean[p,month]
-            
-            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
-            q1 = qsAnomMonthlyMean[p,month]*.9
-            
-            pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
-                             q0, q0**2, q0**3, q0**4, q0**5, \
-                             0])
-            pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
-                                     q1, q1**2, q1**3, q1**4, q1**5, \
-                                     0])
-            curPlantMonthlyOutageChgQm10.append(pc1-pc0)
-            
+        curPlantMonthlyOutageChg.append([])
         
-            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
-            q1 = qsAnomMonthlyMean[p,month]
+        if t0 >= 20:
             
-            pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
-                             q0, q0**2, q0**3, q0**4, q0**5, \
-                             0])
-            pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
-                                     q1, q1**2, q1**3, q1**4, q1**5, \
-                                     0])
-            curPlantMonthlyOutageChgQ0.append(pc1-pc0)
+            for model in range(len(models)):
+                q0 = qsAnomMonthlyMean[p,month]
+                
+                t1 = txMonthlyMaxFut[model,p,month]
+                q1 = qsAnomMonthlyMeanFut[model,p,month]
+                
+                pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
+                                 q0, q0**2, q0**3, q0**4, q0**5, \
+                                 0])
+                pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
+                                         q1, q1**2, q1**3, q1**4, q1**5, \
+                                         0])
+                curPlantMonthlyOutageChg[month].append(pc1-pc0)
+                
             
-            
-            
-            t1 = np.nanmean(txMonthlyMaxFut[:,p,month], axis=0)
-            q1 = qsAnomMonthlyMean[p,month]*1.1
-            
-            pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
-                             q0, q0**2, q0**3, q0**4, q0**5, \
-                             0])
-            pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
-                                     q1, q1**2, q1**3, q1**4, q1**5, \
-                                     0])
-            curPlantMonthlyOutageChgQ10.append(pc1-pc0)
         else:
-            curPlantMonthlyOutageChgQm10.append(0)
-            curPlantMonthlyOutageChgQ0.append(0)
-            curPlantMonthlyOutageChgQ10.append(0)
+            for model in range(len(models)):
+                curPlantMonthlyOutageChg[month].append(0)
             
-    plantMonthlyOutageChg[0].append(curPlantMonthlyOutageChgQm10)
-    plantMonthlyOutageChg[1].append(curPlantMonthlyOutageChgQ0)
-    plantMonthlyOutageChg[2].append(curPlantMonthlyOutageChgQ10)
+    plantMonthlyOutageChg.append(curPlantMonthlyOutageChg)
 plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
 
+plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=0),axis=1)
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
 fig = plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
-plt.ylim([-1.4, 0.05])
+plt.ylim([-4, 0.1])
 plt.grid(True, alpha=.5)
 
 plt.plot([0, 13], [0, 0], '--k', lw=1)
-plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChg[0,:,:], axis=0), '-', lw=3, color=snsColors[1])
+plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,1], '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChgSorted, axis=1), '-', lw=3, color=snsColors[1])
+plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-2], '--', lw=1, color=snsColors[1])
 
-plt.yticks([-1.3, -.7, 0])
+plt.xticks(list(range(1,13)))
+plt.yticks([-3.1, -1.5, 0])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -243,13 +218,10 @@ plt.tick_params(
     top=False,         # ticks along the top edge are off
     labelbottom=False) # labels along the bottom edge are off
 
-sys.exit()
-
-
 if plotFigs:
     plt.savefig('outage-chg-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+sys.exit()
 
 
 

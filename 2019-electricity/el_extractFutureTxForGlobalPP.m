@@ -13,7 +13,7 @@ models = {'bcc-csm1-1-m', 'canesm2', ...
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m'};
       
       
-rcp = 'rcp85';
+rcp = 'rcp45';
 
 startYear = 2050;
 endYear = 2080;

@@ -32,6 +32,18 @@ cap = nukeData['percCapacity']
 mon = nukeData['plantMonthsAll']
 
 
+models = ['bcc-csm1-1-m', 'canesm2', \
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
+              'gfdl-esm2g', 'gfdl-esm2m', \
+              'inmcm4', 'miroc5', 'miroc-esm', \
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
+
+
+yearRangeHist = [1981, 2018]
+yearRangeFut1 = [2020, 2050]
+yearRangeFut2 = [2050, 2080]
+
+
 meanOutage = []
 
 for m in range(1, 13):
@@ -55,6 +67,8 @@ for i in range(len(b)):
         b[i].set_edgecolor('black')
     else:
         b[i].set_color(snsColors[0])
+
+plt.xticks(list(range(1,13)))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -87,15 +101,83 @@ for m in range(1, 13):
 histTempsByMonth = np.array(histTempsByMonth)
 
 
+
+# load future temps and runoff values
+qsAnomMonthlyMeanFut = []
+txMonthlyMeanFut = []
+txMonthlyMaxFut = []
+    
+# loop over all models
+for m in range(len(models)):
+    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
+    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+    plantTxYearData = plantTxData[0,1:].copy()
+    plantTxMonthData = plantTxData[1,1:].copy()
+    plantTxDayData = plantTxData[2,1:].copy()
+    plantTxData = plantTxData[3+29:,1:].copy()
+    
+    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
+    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    plantQsYearData = plantTxData[0,1:].copy()
+    plantQsMonthData = plantTxData[1,1:].copy()
+    plantQsDayData = plantTxData[2,1:].copy()
+    plantQsData = plantQsData[3+29:,1:].copy()
+
+    qsAnomMonthlyMeanFutCurModel = []
+    txMonthlyMeanFutCurModel = []
+    txMonthlyMaxFutCurModel = []
+
+    for p in range(plantTxData.shape[0]):
+        plantMonthlyTxMeanFut = []
+        plantMonthlyTxMaxFut = []
+        plantMonthlyQsAnomMeanFut = []
+        
+        for month in range(1,13):
+            ind = np.where((plantTxMonthData==month))[0]
+            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
+            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
+        
+        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
+        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
+        
+        for month in range(0,12):
+            plantMonthlyTxMaxFut.append([])
+            for y in np.unique(plantTxYearData):
+                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
+                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
+    
+        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
+    
+    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
+    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
+    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
+    
+    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
+    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
+    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
+
+qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
+txMonthlyMeanFut = np.array(txMonthlyMeanFut)
+txMonthlyMaxFut = np.array(txMonthlyMaxFut)
+
+
+modelRange = np.nanmean(np.nanmean(txMonthlyMeanFut,axis=2),axis=1)
+modelRangeSorted = sorted(modelRange)
+ind10 = np.where(modelRange == modelRangeSorted[1])[0]
+ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
+
+
 fig = plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
 plt.ylim([4, 35])
 plt.grid(True, alpha=.5)
 
 plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=3, color=snsColors[0])
-plt.plot(list(range(1,13)), histTempsByMonth+3, '--', lw=1, color=snsColors[1])
-plt.plot(list(range(1,13)), histTempsByMonth+4, '-', lw=3, color=snsColors[1])
-plt.plot(list(range(1,13)), histTempsByMonth+5, '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(txMonthlyMeanFut[ind10[0],:,:], axis=0), '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFut, axis=1), axis=0), '-', lw=3, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(txMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color=snsColors[1])
+
+plt.xticks(list(range(1,13)))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -130,29 +212,29 @@ with open('genData.dat', 'rb') as f:
     genData = pickle.load(f)
 
 tx = genData['txScatter']
-gen = genData['genTxScatter']
+dem = genData['demTxScatter']
 mon = genData['monthScatter']    
 
 txAll = []
-genAll = []
+demAll = []
 monAll = []
 
 for s in range(tx.shape[0]):
     txAll.extend(tx[s])
-    genAll.extend(gen[s])
+    demAll.extend(dem[s])
     monAll.extend(mon[s])
 
 txAll = np.array(txAll)
-genAll = np.array(genAll) * 100
+demAll = np.array(demAll) * 100
 monAll = np.array(monAll)
     
 
-genByMonth = []
+demByMonth = []
 for m in range(1, 13):    
     ind = np.where(monAll == m)[0]
-    genByMonth.append(np.array(np.nanmean(genAll[ind])))
-genByMonth = np.array(genByMonth)
-genByMonth = 1 + ((genByMonth - np.nanmean(genByMonth)) / (np.nanmax(genByMonth) - np.nanmin(genByMonth)))
+    demByMonth.append(np.array(np.nanmean(demAll[ind])))
+demByMonth = np.array(demByMonth)
+demByMonth = 1 + ((demByMonth - np.nanmean(demByMonth)) / (np.nanmax(demByMonth) - np.nanmin(demByMonth)))
 
 
 plt.figure(figsize=(4,1))
@@ -161,8 +243,9 @@ plt.ylim([.5, 1.7])
 plt.grid(True, alpha=.5)
 
 plt.plot([0,13], [1,1], '--k', lw=1)
-plt.plot(list(range(1,13)), genByMonth, '-k', lw=3)
+plt.plot(list(range(1,13)), demByMonth, '-k', lw=3)
 
+plt.xticks(list(range(1,13)))
 plt.yticks([.6, 1, 1.5])
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -185,8 +268,13 @@ plt.tick_params(
 #plt.ylabel('Generation', fontname = 'Helvetica', fontsize=12)
 
 if plotFigs:
-    plt.savefig('gen-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+
+modelRange = np.nanmean(np.nanmean(txMonthlyMeanFut,axis=2),axis=1)
+modelRangeSorted = sorted(modelRange)
+ind10 = np.where(modelRange == modelRangeSorted[1])[0]
+ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
 
 
 mon = nukeData['plantMonthsAll']
@@ -200,13 +288,18 @@ histQsByMonth = np.array(histQsByMonth)
 
 plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
-plt.ylim([-.5, .8])
+plt.ylim([-.9, 1.3])
 plt.grid(True, alpha=.5)
 
 plt.plot([0,13], [0,0], '--k', lw=1)
-plt.plot(list(range(1,13)), histQsByMonth, '-', lw=3, color='#8c4e23')
+plt.plot(list(range(1,13)), histQsByMonth, '-', lw=3, color=snsColors[0])
 
-plt.yticks([-.4, 0, .6])
+plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind10[0],:,:], axis=0), '--', lw=1, color='#8c4e23')
+plt.plot(list(range(1,13)), np.nanmean(np.nanmean(qsAnomMonthlyMeanFut, axis=1), axis=0), '-', lw=3, color='#8c4e23')
+plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color='#8c4e23')
+
+plt.xticks(list(range(1,13)))
+plt.yticks([-.6, 0, .7])
          
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
