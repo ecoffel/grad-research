@@ -2,10 +2,10 @@ startYear = 2015;
 endYear = 2018;
 
 if ~exist('temp')
-%     temp = loadDailyData('E:\data\era-interim\output\mx2t\', 'startYear', startYear, 'endYear', endYear);
-%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-%         temp{3} = temp{3} - 273.15;
-%     end
+    temp = loadDailyData('E:\data\era-interim\output\mx2t\', 'startYear', startYear, 'endYear', endYear);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
+    end
 %   
 % 
 %     temp = loadDailyData('E:\data\ncep-reanalysis\output\tmax', 'startYear', 2015, 'endYear', 2018);
@@ -13,13 +13,13 @@ if ~exist('temp')
 %         temp{3} = temp{3} - 273.15;
 %     end
     
-    temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2015, 'endYear', 2018);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
-        temp{3} = temp{3} - 273.15;
-    end
+%     temp = loadDailyData('E:\data\cpc-temp\output\tmax', 'startYear', 2015, 'endYear', 2018);
+%     if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+%         temp{3} = temp{3} - 273.15;
+%     end
 end
 
-plantLatLon = csvread('2019-electricity/entsoe-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/entsoe-lat-lon-nonforced.csv');
 plantTxTimeSeries = [];
 
 for i = 1:size(plantLatLon, 1)
@@ -72,7 +72,7 @@ for i = 1:size(plantLatLon, 1)
     plantTxTimeSeries(end+1,:) = txClean;
 end
 
-csvwrite('2019-electricity/entsoe-tx-cpc.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-tx-era-nonforced.csv', plantTxTimeSeries);
 %  
 % T = table(countryTxTimeSeries, 'RowNames', {'year', 'month', 'day', countryIds{countryIdInds}});
 %  

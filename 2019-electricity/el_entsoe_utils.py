@@ -44,7 +44,7 @@ def getFuelType(s):
         if t in s.lower() or s.lower() in t:
             return t
 
-def loadEntsoeWithLatLon(dataDir):
+def loadEntsoeWithLatLon(dataDir, forced):
     
     print('loading entsoe plant locations...')
     ppCommissionYear = []
@@ -136,8 +136,9 @@ def loadEntsoeWithLatLon(dataDir):
                     if len(lineParts) < 20:
                         continue
                     
-                    if lineParts[8] != 'Forced':
-                        continue
+                    if not forced:
+                        if lineParts[8] != 'Forced':
+                            continue
                     
                     if 'Hydro' in lineParts[15] or \
                         'hydro' in lineParts[15] or \
@@ -271,11 +272,14 @@ def loadEntsoe(dataDir):
 
 
 
-def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
+def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
     fileName = ''
     fileNameCDD = ''
     
-    fileNameQs = 'entsoe-qs-gldas-all.csv'
+    if forced:
+        fileNameQs = 'entsoe-qs-gldas-all.csv'
+    else:
+        fileNameQs = 'entsoe-qs-gldas-all-nonforced.csv'
     
     #for averaging cdd, tx
     smoothingLen = 4
@@ -290,7 +294,11 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
         fileName = 'entsoe-tx-ncep.csv'
         fileNameCDD = 'entsoe-cdd-ncep.csv'
     elif wxdata == 'all':
-        fileName = ['entsoe-tx-cpc.csv', 'entsoe-tx-era.csv', 'entsoe-tx-ncep.csv']
+        if forced:
+            fileName = ['entsoe-tx-cpc.csv', 'entsoe-tx-era.csv', 'entsoe-tx-ncep.csv']
+        else:
+            fileName = ['entsoe-tx-cpc-nonforced.csv', 'entsoe-tx-era-nonforced.csv', 'entsoe-tx-ncep-nonforced.csv']
+            
         fileNameCDD = ['entsoe-cdd-cpc.csv', 'entsoe-cdd-era.csv', 'entsoe-cdd-ncep.csv']
     
     
@@ -386,20 +394,20 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
                              (entsoeData['lons'] == entsoeLon[c]))[0]
         
         
-        curTxAvg = []
-        for d in range(tx.shape[1]):
-            if d > smoothingLen-1:
-                curTxAvg.append(np.nanmean(tx[c,d-(smoothingLen-1):d+1]))
-            else:
-                curTxAvg.append(np.nan)
-                
-        curCDDAcc = []
-        for d in range(cdd.shape[1]):
-            if d < smoothingLen-1:
-                curCDDAcc.append(np.nan)
-            else:
-                curCDDAcc.append(np.nansum(cdd[c,d-(smoothingLen-1):d+1]))
-                
+#        curTxAvg = []
+#        for d in range(tx.shape[1]):
+#            if d > smoothingLen-1:
+#                curTxAvg.append(np.nanmean(tx[c,d-(smoothingLen-1):d+1]))
+#            else:
+#                curTxAvg.append(np.nan)
+#                
+#        curCDDAcc = []
+#        for d in range(cdd.shape[1]):
+#            if d < smoothingLen-1:
+#                curCDDAcc.append(np.nan)
+#            else:
+#                curCDDAcc.append(np.nansum(cdd[c,d-(smoothingLen-1):d+1]))
+#                
         # and each day
         for i in range(tx.shape[1]):
             curYear = txYears[i]
@@ -444,15 +452,15 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
                 
             finalOutagesCount[c].append(len(curDayIndEntsoe))
             finalTx[c].append(tx[c,i])
-            finalTxAvg[c].append(curTxAvg[i])
-            finalCDDAcc[c].append(curCDDAcc[i])
+#            finalTxAvg[c].append(curTxAvg[i])
+#            finalCDDAcc[c].append(curCDDAcc[i])
             finalQs[c].append(qs[c,i])
             
             # record temps for only summer days
             if curMonth == 7 or curMonth == 8:
                 finalTxSummer[c].append(tx[c,i])
-                finalTxAvgSummer[c].append(curTxAvg[i])
-                finalCDDAccSummer[c].append(curCDDAcc[i])    
+#                finalTxAvgSummer[c].append(curTxAvg[i])
+#                finalCDDAccSummer[c].append(curCDDAcc[i])    
                 finalQsSummer[c].append(qs[c,i])
         
         outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
@@ -471,11 +479,11 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
     finalQsAnomSummer = np.array(finalQsAnomSummer)
     
     finalTx = np.array(finalTx)
-    finalTxAvg = np.array(finalTxAvg)
-    finalCDDAcc = np.array(finalCDDAcc)
+#    finalTxAvg = np.array(finalTxAvg)
+#    finalCDDAcc = np.array(finalCDDAcc)
     finalTxSummer = np.array(finalTxSummer)
-    finalTxAvgSummer = np.array(finalTxAvgSummer)
-    finalCDDAccSummer = np.array(finalCDDAccSummer)
+#    finalTxAvgSummer = np.array(finalTxAvgSummer)
+#    finalCDDAccSummer = np.array(finalCDDAccSummer)
     finalCapacity = np.array(finalCapacity)
     finalCapacitySummer = np.array(finalCapacitySummer)
     finalOutagesBool = np.array(finalOutagesBool)
@@ -487,8 +495,8 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata):
     entsoeLon = np.array(entsoeLon)
     
     d = {'tx':finalTx, 'txSummer':finalTxSummer, \
-         'txAvg':finalTxAvg, 'txAvgSummer':finalTxAvgSummer, \
-         'cdd':finalCDDAcc, 'cddSummer':finalCDDAccSummer, \
+#         'txAvg':finalTxAvg, 'txAvgSummer':finalTxAvgSummer, \
+#         'cdd':finalCDDAcc, 'cddSummer':finalCDDAccSummer, \
          'qs':finalQs, 'qsAnom':finalQsAnom, \
          'qsSummer':finalQsSummer, 'qsAnomSummer':finalQsAnomSummer, \
          'years':txYears, 'months':txMonths, 'days':txDays, \
@@ -622,8 +630,8 @@ def aggregateEntsoeData(entsoeMatchData):
         curQsAnom = entsoeMatchData['qsAnom'][c,inds]
         curQs = entsoeMatchData['qs'][c,inds]
         curTx = entsoeMatchData['tx'][c,inds]
-        curTxAvg = entsoeMatchData['txAvg'][c,inds]
-        curCdd = entsoeMatchData['cdd'][c,inds]
+#        curTxAvg = entsoeMatchData['txAvg'][c,inds]
+#        curCdd = entsoeMatchData['cdd'][c,inds]
         curCapacity = entsoeMatchData['capacity'][c,inds]
         curOutageBool = entsoeMatchData['outagesBool'][c,inds]
         curOutageCount = entsoeMatchData['outagesCount'][c,inds]
@@ -631,12 +639,12 @@ def aggregateEntsoeData(entsoeMatchData):
         # at least one outage reported for this country/plant
         if np.nansum(curOutageCount) > 0:
             txAll.extend(curTx)
-            txAvgAll.extend(curTxAvg)
+#            txAvgAll.extend(curTxAvg)
             
             qsAll.extend(curQs)
             qsAnomAll.extend(curQsAnom)
             
-            cddAll.extend(curCdd)
+#            cddAll.extend(curCdd)
             plantMeanTemps.extend([np.nanmean(curTx)]*len(curTx))
             capacityAll.extend(curCapacity)
             outageBoolAll.extend(curOutageBool)
@@ -646,10 +654,10 @@ def aggregateEntsoeData(entsoeMatchData):
             plantDays.extend(entsoeMatchData['days'][inds])
     
     txAll = np.array(txAll)
-    txAvgAll = np.array(txAvgAll)
+#    txAvgAll = np.array(txAvgAll)
     qsAll = np.array(qsAll)
     qsAnomAll = np.array(qsAnomAll)
-    cddAll = np.array(cddAll)
+#    cddAll = np.array(cddAll)
     capacityAll = np.array(capacityAll)
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
@@ -657,8 +665,7 @@ def aggregateEntsoeData(entsoeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     
-    d = {'txSummer':txAll, 'txAvgSummer':txAvgAll, 'cddSummer':cddAll, \
-         'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, \
+    d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, \
          'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
          'outagesCount':outageCountAll, 'plantMonths':plantMonths, \
          'plantDays':plantDays, 'plantIds':plantIds, 'plantMeanTemps':plantMeanTemps}
@@ -673,7 +680,7 @@ def exportLatLon(entsoeData):
     entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
     
     i = 0
-    with open('entsoe-lat-lon.csv', 'w') as f:
+    with open('entsoe-lat-lon-nonforced.csv', 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(entsoeLat)):
             csvWriter.writerow([i, entsoeLat[i], entsoeLon[i]])

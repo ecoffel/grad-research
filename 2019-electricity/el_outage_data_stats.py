@@ -31,6 +31,7 @@ normalCap = nukePlants['normalCapacity']
 cap = nukeData['percCapacity']
 mon = nukeData['plantMonthsAll']
 
+entsoePlants = eData['entsoePlantDataAll']
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -47,8 +48,15 @@ yearRangeFut2 = [2050, 2080]
 meanOutage = []
 
 for m in range(1, 13):
+    curMonthOutage = []
+    
     ind = np.where(mon[0,:] == m)[0]
-    meanOutage.append(100-np.array(np.nanmean(cap[:,ind], axis=1)))
+    curMonthOutage.extend(np.nanmean(cap[:,ind], axis=1))
+    
+    ind = np.where(entsoePlants['months'] == m)[0]
+    curMonthOutage.extend(100*np.nanmean(entsoePlants['capacity'][:,ind], axis=1))
+    
+    meanOutage.append(curMonthOutage)
 meanOutage = np.array(meanOutage)
 
 
@@ -56,8 +64,9 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([0, 28])
+plt.ylim([77, 100])
 plt.grid(True, alpha=.5)
+plt.gca().set_axisbelow(True)
 
 b = plt.bar(range(1, 13), np.nanmean(meanOutage, axis=1), \
             yerr = np.nanstd(meanOutage, axis=1)/2, error_kw = dict(lw=1.5, capsize=3, capthick=1.5, ecolor=[.25, .25, .25]))
@@ -68,7 +77,7 @@ for i in range(len(b)):
     else:
         b[i].set_color(snsColors[0])
 
-plt.xticks(list(range(1,13)))
+#plt.xticks(list(range(1,13)))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -77,7 +86,15 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(10)
 
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+
+#plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 #plt.ylabel('Mean outage (%)', fontname = 'Helvetica', fontsize=12)
 
 #x0,x1 = plt.gca().get_xlim()
@@ -96,6 +113,9 @@ tx = nukePlants['tx']
 histTempsByMonth = []
 
 for m in range(1, 13):
+    ind = np.where(mon[0,:] == m)[0]
+    histTempsByMonth.append(np.array(np.nanmean(np.nanmean(tx[:, ind], axis=1))))
+    
     ind = np.where(mon[0,:] == m)[0]
     histTempsByMonth.append(np.array(np.nanmean(np.nanmean(tx[:, ind], axis=1))))
 histTempsByMonth = np.array(histTempsByMonth)
@@ -271,7 +291,7 @@ if plotFigs:
     plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-modelRange = np.nanmean(np.nanmean(txMonthlyMeanFut,axis=2),axis=1)
+modelRange = np.nanmean(np.nanmean(txMonthlyMaxFut,axis=2),axis=1)
 modelRangeSorted = sorted(modelRange)
 ind10 = np.where(modelRange == modelRangeSorted[1])[0]
 ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
@@ -299,7 +319,7 @@ plt.plot(list(range(1,13)), np.nanmean(np.nanmean(qsAnomMonthlyMeanFut, axis=1),
 plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color='#8c4e23')
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-.6, 0, .7])
+plt.yticks([-.5, 0, .7])
          
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

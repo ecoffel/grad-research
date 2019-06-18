@@ -24,12 +24,12 @@ dataDir = 'e:/data/'
 
     
 if not 'entsoeData' in locals():
-    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir)
+    entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir, forced=False)
     
-    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era')
-    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc')
-    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep')
-    entsoePlantDataAll = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='all')
+    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era', forced=False)
+    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc', forced=False)
+    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep', forced=False)
+    entsoePlantDataAll = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='all', forced=False)
     
 #    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
     entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)

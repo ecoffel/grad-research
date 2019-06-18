@@ -15,11 +15,15 @@ import sys, os
 dataDir = 'e:/data/'
 
 plotFigs = False
-newFit = True
-
-smoothingLen = 4
 
 yearRange = [1981, 2018]
+
+models = ['bcc-csm1-1-m', 'canesm2', \
+              'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
+              'gfdl-esm2g', 'gfdl-esm2m', \
+              'inmcm4', 'miroc5', 'miroc-esm', \
+              'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
+
 
 # load historical temp data for all plants in US and EU
 fileNameTemp = 'entsoe-nuke-pp-tx-all.csv'
@@ -45,11 +49,6 @@ fileNameRunoff = 'entsoe-nuke-pp-runoff-anom-all.csv'
 plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
 plantQsAnomData = plantQsData[3:,1:].copy()
 
-#plantQsAnomData = []
-#for p in range(plantQsData.shape[0]):
-#    plantQsAnomData.append((plantQsData[p,:]-np.nanmean(plantQsData[p,:]))/np.nanstd(plantQsData[p,:]))
-#plantQsAnomData = np.array(plantQsAnomData)
-
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
@@ -67,120 +66,108 @@ pCapTxx10 = []
 pCapTxx50 = []
 pCapTxx90 = []
 
-warming = [0,1,2,3,4]
-drying = [0,-.025,-.05,-.075,-.1]#-.25, -.5, -.75, -1]
-
-for w in range(len(warming)):
-    pCapTx10.append([])
-    pCapTx50.append([])
-    pCapTx90.append([])
+for p in range(len(plantList)):
     
-    pCapTxx10.append([])
-    pCapTxx50.append([])
-    pCapTxx90.append([])
+    plantPcTx10 = []
+    plantPcTx50 = []
+    plantPcTx90 = []
     
-    for p in range(len(plantList)):
-        
-        plantPcTx10 = []
-        plantPcTx50 = []
-        plantPcTx90 = []
-        
-        plantPcTxx10 = []
-        plantPcTxx50 = []
-        plantPcTxx90 = []
-        
-        indTxMean = np.where((plantMonthData >= 7) & (plantMonthData <= 8))[0]
-        txMean = np.nanmean(plantTxData[p, indTxMean])
-        
-        tx = plantTxData[p, :]
-        qs = plantQsAnomData[p, :]
-        
-        for year in range(yearRange[0], yearRange[1]+1):
+    plantPcTxx10 = []
+    plantPcTxx50 = []
+    plantPcTxx90 = []
+    
+    indTxMean = np.where((plantMonthData >= 7) & (plantMonthData <= 8))[0]
+    txMean = np.nanmean(plantTxData[p, indTxMean])
+    
+    tx = plantTxData[p, :]
+    qs = plantQsAnomData[p, :]
+    
+    for year in range(yearRange[0], yearRange[1]+1):
 
-            ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
-            
-            curTx = tx[ind] + warming[w]
-            curQs = qs[ind] - drying[w]
-            
-            nn = np.where(~np.isnan(curTx))[0]
-            
-            if len(nn) == 0:
-                plantPcTx10.append(np.nan)
-                plantPcTx50.append(np.nan)
-                plantPcTx90.append(np.nan)
-                
-                plantPcTxx10.append(np.nan)
-                plantPcTxx50.append(np.nan)
-                plantPcTxx90.append(np.nan)
-                
-                continue
-            
-            curTx = curTx[nn]
-            curQs = curQs[nn]
-            
-            # calculate 90th tx percentile in this year
-            txPrc90 = np.nanpercentile(curTx, 90)
-            
-            # ind of the txx day in this year
-            indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
-            
-            # inds where tx is > 90th percentile in this year
-            indTx90 = np.where(curTx > txPrc90)[0]
-            
-            curTxx = curTx[indTxx]
-            curQsTxx = curQs[indTxx]
-            
-            curTxPrc90 = curTx[indTx90]
-            curQsPrc90 = curQs[indTx90]
-            
-            curPcPred10 = []
-            curPcPred50 = []
-            curPcPred90 = []
-            
-            for i in range(len(curTxPrc90)):
-                
-                t = curTxPrc90[i]
-                q = curQsPrc90[i]
-                
-                curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                curDayPc50 = pcModel50.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                curDayPc90 = pcModel90.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                if curDayPc10 > 100: curDayPc10 = 100
-                if curDayPc50 > 100: curDayPc50 = 100
-                if curDayPc90 > 100: curDayPc90 = 100
-                
-                curPcPred10.append(curDayPc10)
-                curPcPred50.append(curDayPc50)
-                curPcPred90.append(curDayPc90)
-            
-            curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            if curPcPredTxx10 > 100: curPcPredTxx10 = 100
-            if curPcPredTxx50 > 100: curPcPredTxx50 = 100
-            if curPcPredTxx90 > 100: curPcPredTxx90 = 100
-                        
-            plantPcTx10.append(np.nanmean(curPcPred50))
-            plantPcTx50.append(np.nanmean(curPcPred50))
-            plantPcTx90.append(np.nanmean(curPcPred90))
-            
-            plantPcTxx10.append(curPcPredTxx10)
-            plantPcTxx50.append(curPcPredTxx50)
-            plantPcTxx90.append(curPcPredTxx90)
+        ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
         
-        pCapTx10[w].append(np.array(plantPcTx10))
-        pCapTx50[w].append(np.array(plantPcTx50))
-        pCapTx90[w].append(np.array(plantPcTx90))
+        curTx = tx[ind]
+        curQs = qs[ind]
         
-        pCapTxx10[w].append(plantPcTxx10)
-        pCapTxx50[w].append(plantPcTxx50)
-        pCapTxx90[w].append(plantPcTxx90)
+        nn = np.where(~np.isnan(curTx))[0]
+        
+        if len(nn) == 0:
+            plantPcTx10.append(np.nan)
+            plantPcTx50.append(np.nan)
+            plantPcTx90.append(np.nan)
+            
+            plantPcTxx10.append(np.nan)
+            plantPcTxx50.append(np.nan)
+            plantPcTxx90.append(np.nan)
+            
+            continue
+        
+        curTx = curTx[nn]
+        curQs = curQs[nn]
+        
+        # calculate 90th tx percentile in this year
+        txPrc90 = np.nanpercentile(curTx, 90)
+        
+        # ind of the txx day in this year
+        indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
+        
+        # inds where tx is > 90th percentile in this year
+        indTx90 = np.where(curTx > txPrc90)[0]
+        
+        curTxx = curTx[indTxx]
+        curQsTxx = curQs[indTxx]
+        
+        curTxPrc90 = curTx[indTx90]
+        curQsPrc90 = curQs[indTx90]
+        
+        curPcPred10 = []
+        curPcPred50 = []
+        curPcPred90 = []
+        
+        for i in range(len(curTxPrc90)):
+            
+            t = curTxPrc90[i]
+            q = curQsPrc90[i]
+            
+            curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
+                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+            curDayPc50 = pcModel50.predict([1, t, t**2, t**3, \
+                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+            curDayPc90 = pcModel90.predict([1, t, t**2, t**3, \
+                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+            if curDayPc10 > 100: curDayPc10 = 100
+            if curDayPc50 > 100: curDayPc50 = 100
+            if curDayPc90 > 100: curDayPc90 = 100
+            
+            curPcPred10.append(curDayPc10)
+            curPcPred50.append(curDayPc50)
+            curPcPred90.append(curDayPc90)
+        
+        curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+        curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+        curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+        if curPcPredTxx10 > 100: curPcPredTxx10 = 100
+        if curPcPredTxx50 > 100: curPcPredTxx50 = 100
+        if curPcPredTxx90 > 100: curPcPredTxx90 = 100
+                    
+        plantPcTx10.append(np.nanmean(curPcPred50))
+        plantPcTx50.append(np.nanmean(curPcPred50))
+        plantPcTx90.append(np.nanmean(curPcPred90))
+        
+        plantPcTxx10.append(curPcPredTxx10)
+        plantPcTxx50.append(curPcPredTxx50)
+        plantPcTxx90.append(curPcPredTxx90)
+    
+    pCapTx10.append(np.array(plantPcTx10))
+    pCapTx50.append(np.array(plantPcTx50))
+    pCapTx90.append(np.array(plantPcTx90))
+    
+    pCapTxx10.append(plantPcTxx10)
+    pCapTxx50.append(plantPcTxx50)
+    pCapTxx90.append(plantPcTxx90)
             
 
 pCapTx10 = np.array(pCapTx10)
@@ -191,28 +178,154 @@ pCapTxx10 = np.array(pCapTxx10)
 pCapTxx50 = np.array(pCapTxx50)
 pCapTxx90 = np.array(pCapTxx90)
 
-pcChg = {'pCapTx10':pCapTx10, 'pCapTx50':pCapTx50, 'pCapTx90':pCapTx90, \
-         'pCapTxx10':pCapTxx10, 'pCapTxx50':pCapTxx50, 'pCapTxx90':pCapTxx90}
-with open('plantPcChange.dat', 'wb') as f:
-    pickle.dump(pcChg, f)
+#pcChg = {'pCapTx10':pCapTx10, 'pCapTx50':pCapTx50, 'pCapTx90':pCapTx90, \
+#         'pCapTxx10':pCapTxx10, 'pCapTxx50':pCapTxx50, 'pCapTxx90':pCapTxx90}
+#with open('plantPcChange.dat', 'wb') as f:
+#    pickle.dump(pcChg, f)
+
+pcTxx10 = np.squeeze(np.nanmean(pCapTxx10, axis=0))
+pcTxx50 = np.squeeze(np.nanmean(pCapTxx50, axis=0))
+pcTxx90 = np.squeeze(np.nanmean(pCapTxx90, axis=0))
 
 
-pcTx10 = np.squeeze(np.nanmean(pCapTx10[0,:,:], axis=0))
-pcTx50 = np.squeeze(np.nanmean(pCapTx50[0,:,:], axis=0))
-pcTx90 = np.squeeze(np.nanmean(pCapTx90[0,:,:], axis=0))
 
-pcTxx10 = np.squeeze(np.nanmean(pCapTxx10[0,:,:], axis=0))
-pcTxx50 = np.squeeze(np.nanmean(pCapTxx50[0,:,:], axis=0))
-pcTxx90 = np.squeeze(np.nanmean(pCapTxx90[0,:,:], axis=0))
+
+
+# load future mean warming data and recompute PC
+pCapTxxFutMeanWarming10 = []
+pCapTxxFutMeanWarming50 = []
+pCapTxxFutMeanWarming90 = []
+
+for w in range(1, 4+1):
+    pCapTxxFutCurGMT10 = []
+    pCapTxxFutCurGMT50 = []
+    pCapTxxFutCurGMT90 = []
+    
+    for m in range(len(models)):
+        
+        pCapTxxFutCurModel10 = []
+        pCapTxxFutCurModel50 = []
+        pCapTxxFutCurModel90 = []
+        
+        # load data for current model and warming level
+        fileNameTemp = 'gmt-anomaly-temps/us-eu-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+    
+        if not os.path.isfile(fileNameTemp):
+            # add a nan for each plant in current model
+            filler = []
+            for p in range(90):
+                filler.append(np.nan)
+            pCapTxxFutCurGMT10.append(filler)
+            pCapTxxFutCurGMT50.append(filler)
+            pCapTxxFutCurGMT90.append(filler)
+            continue
+    
+        plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+        
+        if len(plantTxData) == 0:
+            # add a nan for each plant in current model
+            filler = []
+            for p in range(90):
+                filler.append(np.nan)
+            pCapTxxFutCurGMT10.append(filler)
+            pCapTxxFutCurGMT50.append(filler)
+            pCapTxxFutCurGMT90.append(filler)
+            continue
+        
+        plantTxYearData = plantTxData[0,1:].copy()
+        plantTxMonthData = plantTxData[1,1:].copy()
+        plantTxDayData = plantTxData[2,1:].copy()
+        plantTxData = plantTxData[3:,1:].copy()
+        
+    #    fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
+    #    
+    #    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    #    plantQsYearData = plantTxData[0,1:].copy()
+    #    plantQsMonthData = plantTxData[1,1:].copy()
+    #    plantQsDayData = plantTxData[2,1:].copy()
+    #    plantQsData = plantQsData[3:,1:].copy()
+        
+        # loop over all plants
+        for p in range(plantTxData.shape[0]):
+            
+            plantPcTxx10 = []
+            plantPcTxx50 = []
+            plantPcTxx90 = []
+            
+            # tx for current plant
+            tx = plantTxData[p, :]
+#            qs = plantQsAnomData[p, :]
+            
+            # loop over all years for current model/GMT anomaly
+            for year in range(int(min(plantTxYearData)), int(max(plantTxYearData))+1):
+        
+                # tx for current year's summer
+                ind = np.where((plantTxYearData == year) & (plantTxMonthData >= 7) & (plantTxMonthData <= 8))[0]
+                
+                curTx = tx[ind]
+#                curQs = qs[ind]
+                
+                nn = np.where(~np.isnan(curTx))[0]
+                
+                if len(nn) == 0:
+                    plantPcTx10.append(np.nan)
+                    plantPcTx50.append(np.nan)
+                    plantPcTx90.append(np.nan)
+                    
+                    plantPcTxx10.append(np.nan)
+                    plantPcTxx50.append(np.nan)
+                    plantPcTxx90.append(np.nan)
+                    continue
+                
+                curTx = curTx[nn]
+#                curQs = curQs[nn]
+                
+                # ind of the txx day in this year
+                indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
+                
+                curTxx = curTx[indTxx]
+                curQsTxx = 0
+                
+                curPcPred10 = []
+                curPcPred50 = []
+                curPcPred90 = []
+                
+                curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                
+                if curPcPredTxx10 > 100: curPcPredTxx10 = 100
+                if curPcPredTxx50 > 100: curPcPredTxx50 = 100
+                if curPcPredTxx90 > 100: curPcPredTxx90 = 100
+                     
+                plantPcTxx10.append(curPcPredTxx10)
+                plantPcTxx50.append(curPcPredTxx50)
+                plantPcTxx90.append(curPcPredTxx90)
+            
+            pCapTxxFutCurModel10.append(np.nanmean(plantPcTxx10))
+            pCapTxxFutCurModel50.append(np.nanmean(plantPcTxx50))
+            pCapTxxFutCurModel90.append(np.nanmean(plantPcTxx90))
+        
+        pCapTxxFutCurGMT10.append(pCapTxxFutCurModel10)
+        pCapTxxFutCurGMT50.append(pCapTxxFutCurModel50)
+        pCapTxxFutCurGMT90.append(pCapTxxFutCurModel90)
+    
+    pCapTxxFutMeanWarming10.append(pCapTxxFutCurGMT10)
+    pCapTxxFutMeanWarming50.append(pCapTxxFutCurGMT50)
+    pCapTxxFutMeanWarming90.append(pCapTxxFutCurGMT90)
+
+
+pCapTxxFutMeanWarming10 = np.array(pCapTxxFutMeanWarming10)
+pCapTxxFutMeanWarming50 = np.array(pCapTxxFutMeanWarming50)
+pCapTxxFutMeanWarming90 = np.array(pCapTxxFutMeanWarming90)
+
+
+sys.exit()
 
 xd = np.array(list(range(1981, 2018+1)))-1981+1
-
-z = np.polyfit(xd, pcTx10, 1)
-histPolyTx10 = np.poly1d(z)
-z = np.polyfit(xd, pcTx50, 1)
-histPolyTx50 = np.poly1d(z)
-z = np.polyfit(xd, pcTx90, 1)
-histPolyTx90 = np.poly1d(z)
 
 z = np.polyfit(xd, pcTxx10, 1)
 histPolyTxx10 = np.poly1d(z)
@@ -221,41 +334,54 @@ histPolyTxx50 = np.poly1d(z)
 z = np.polyfit(xd, pcTxx90, 1)
 histPolyTxx90 = np.poly1d(z)
 
+xpos = np.array([65, 90, 115, 140])
 
-plt.figure(figsize=(4,4))
-plt.xlim([0, 105])
-plt.ylim([93,96])
+plt.figure(figsize=(6,4))
+plt.xlim([0, 155])
+plt.ylim([89, 97])
 plt.grid(True)
 
-plt.plot(xd, histPolyTxx10(xd), '-', linewidth = 3, color = cmx.tab20(6), alpha = .8)
-p2 = plt.plot(xd, histPolyTxx50(xd), '-', linewidth = 3, color = [0, 0, 0], alpha = .8, label='TXx')
-plt.plot(xd, histPolyTxx90(xd), '-', linewidth = 3, color = cmx.tab20(0), alpha = .8)
+plt.plot(xd, histPolyTxx10(xd), '-', linewidth = 3, color = cmx.tab20(6), alpha = .8, label='90th Percentile')
+plt.plot(xd, histPolyTxx50(xd), '-', linewidth = 3, color = [0, 0, 0], alpha = .8, label='50th Percentile')
+plt.plot(xd, histPolyTxx90(xd), '-', linewidth = 3, color = cmx.tab20(0), alpha = .8, label='10th Percentile')
 
-plt.plot([55, 70, 85, 100], \
-         [np.nanmean(np.nanmean(pCapTxx10[1,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx10[2,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx10[3,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx10[4,:,:], axis=1), axis=0)], \
-          'o', markersize=7, color=cmx.tab20(6))
+plt.plot(xpos-5, \
+         np.nanmean(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1), \
+          'o', markersize=5, color=cmx.tab20(6))
 
-plt.plot([55, 70, 85, 100], \
-         [np.nanmean(np.nanmean(pCapTxx50[1,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx50[2,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx50[3,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx50[4,:,:], axis=1), axis=0)], \
-          'o', markersize=7, color='black')
+plt.errorbar(xpos-5, \
+             np.nanmean(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1), \
+             yerr = [np.nanmean(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1)-np.nanmin(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1), \
+                     np.nanmax(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1)-np.nanmean(np.nanmean(pCapTxxFutMeanWarming10,axis=2),axis=1)], \
+             ecolor = cmx.tab20(6), elinewidth = 1, capsize = 3, fmt = 'none')
 
-plt.plot([55, 70, 85, 100], \
-         [np.nanmean(np.nanmean(pCapTxx90[1,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx90[2,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx90[3,:,:], axis=1), axis=0), \
-          np.nanmean(np.nanmean(pCapTxx90[4,:,:], axis=1), axis=0)], \
-          'o', markersize=7, color=cmx.tab20(0))
+plt.plot(xpos, \
+         np.nanmean(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1), \
+          'o', markersize=5, color='black')
 
-plt.plot([38,38], [90,100], '--', linewidth=2, color='black')
+plt.errorbar(xpos, \
+             np.nanmean(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1), \
+             yerr = [np.nanmean(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1)-np.nanmin(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1), \
+                     np.nanmax(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1)-np.nanmean(np.nanmean(pCapTxxFutMeanWarming50,axis=2),axis=1)], \
+             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
 
-plt.gca().set_xticks([1, 38, 55, 70, 85, 100])
+
+plt.plot(xpos+5, \
+         np.nanmean(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1), \
+          'o', markersize=5, color=cmx.tab20(0))
+
+plt.errorbar(xpos+5, \
+             np.nanmean(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1), \
+             yerr = [np.nanmean(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1)-np.nanmin(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1), \
+                     np.nanmax(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1)-np.nanmean(np.nanmean(pCapTxxFutMeanWarming90,axis=2),axis=1)], \
+             ecolor = cmx.tab20(0), elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot([38,38], [88,100], '--', linewidth=2, color='black')
+
+plt.gca().set_xticks([1, 38, xpos[0], xpos[1], xpos[2], xpos[3]])
 plt.gca().set_xticklabels([1981, 2018, '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
+
+plt.yticks(range(89, 99, 2))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -272,7 +398,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pp-chg-over-time.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('pp-chg-hist-mean-warming.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 sys.exit()
 

@@ -25,7 +25,7 @@ for m = 1:12
     qsGldasMosaic{3}(:, :, :, m) = qsGldasMosaic{3}(:, :, :, m) .* 3600 .* 24 .* monthLens(m);
 end
 
-plantLatLon = csvread('2019-electricity/entsoe-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/entsoe-lat-lon-nonforced.csv');
 plantTxTimeSeries = [];
 
 for i = 1:size(plantLatLon, 1)
@@ -78,4 +78,4 @@ for i = 1:size(plantLatLon, 1)
     plantTxTimeSeries(end+1,:) = qsClean;
 end
 
-csvwrite('2019-electricity/entsoe-qs-gldas-all.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-qs-gldas-all-nonforced.csv', plantTxTimeSeries);

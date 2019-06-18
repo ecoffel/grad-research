@@ -15,7 +15,6 @@ import sys, os
 dataDir = 'e:/data/'
 
 plotFigs = False
-newFit = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -176,7 +175,7 @@ pCapTxxHist = np.array(pCapTxxHist)
 
 for m in range(len(models)):
     
-    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2020-2050.csv'%(models[m])
+    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
 
     plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
     plantTxYearData = plantTxData[0,1:].copy()
@@ -184,7 +183,7 @@ for m in range(len(models)):
     plantTxDayData = plantTxData[2,1:].copy()
     plantTxData = plantTxData[3:,1:].copy()
     
-    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-anom-cmip5-%s-2020-2050.csv'%(models[m])
+    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
     
     plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
     plantQsYearData = plantTxData[0,1:].copy()
@@ -216,8 +215,7 @@ for m in range(len(models)):
             
             if len(nn) == 0:
                 
-                print('problem')
-                sys.exit()
+                
                 plantPcTx10.append(np.nan)
                 plantPcTx50.append(np.nan)
                 plantPcTx90.append(np.nan)

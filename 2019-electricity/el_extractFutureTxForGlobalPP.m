@@ -15,8 +15,8 @@ models = {'bcc-csm1-1-m', 'canesm2', ...
       
 rcp = 'rcp45';
 
-startYear = 2050;
-endYear = 2080;
+startYear = 2020;
+endYear = 2050;
 
 plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
 
