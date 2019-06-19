@@ -10,14 +10,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 import statsmodels.api as sm
-import el_temp_pp_model
+import el_build_temp_pp_model
 import pickle
 
 plotFigs = False
 
-models = el_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsSummer', 1000)
 
-qsrange = np.arange(-2, 2.1, .1)
+#qsrange = np.arange(-2, 2.1, .1)
+qsrange = np.arange(0,10, .1)
 
 yds = []
 

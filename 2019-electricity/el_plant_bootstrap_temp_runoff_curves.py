@@ -43,7 +43,7 @@ summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsSummer', 100)
 
 # find fit percentiles for temperature
 t = 50
@@ -65,7 +65,7 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 # find fit percentiles for runoff
 t = 35
-q = -2.5
+q = 0
 
 pcEval = []
 for i in range(len(models)):
@@ -81,9 +81,9 @@ indPcQs50 = np.where(abs(pcEval-pc50) == np.nanmin(abs(pcEval-pc50)))[0]
 indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
-pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
-with gzip.open('pPolyData.dat', 'wb') as f:
-    pickle.dump(pPolyData, f)
+#pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
+#with gzip.open('pPolyData.dat', 'wb') as f:
+#    pickle.dump(pPolyData, f)
 
 
 xd = np.linspace(20, 50, 50)
@@ -158,7 +158,8 @@ if plotFigs:
 
 
 
-xd = np.array([20]*50)
+xd = np.array([35]*50)
+#qd = np.linspace(-3, 3, 50)
 qd = np.linspace(-3, 3, 50)
 
 ydAll = []

@@ -65,7 +65,7 @@ for i = 1:size(plantLatLon, 1)
         qsYears(end+1) = yr;
         qsMonths(end+1) = mn;
         qsDays(end+1) = dy;
-        qsClean(end+1) = qs(yr-startYear+1, mn);
+        qsClean(end+1) = qs(yr-startYear+1, mn)/nanmean(qs(:,mn));
         curDate = addtodate(curDate, 1, 'day');
     end
         
@@ -78,4 +78,4 @@ for i = 1:size(plantLatLon, 1)
     plantTxTimeSeries(end+1,:) = qsClean;
 end
 
-csvwrite('2019-electricity/entsoe-qs-gldas-all-nonforced.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/entsoe-qs-gldas-all-nonforced-perc.csv', plantTxTimeSeries);

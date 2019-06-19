@@ -132,14 +132,14 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     nukeAgDataAll = eData['nukeAgDataAll']
     
     txtotal = []
-    txtotal.extend(nukeAgDataAll['txSummer'])
-    txtotal.extend(entsoeAgDataAll['txSummer'])
+    txtotal.extend(nukeAgDataAll[tempVar])
+    txtotal.extend(entsoeAgDataAll[tempVar])
     txtotal = np.array(txtotal)
     
     
     qstotal = []
-    qstotal.extend(nukeAgDataAll['qsAnomSummer'])
-    qstotal.extend(entsoeAgDataAll['qsAnomSummer'])
+    qstotal.extend(nukeAgDataAll[qsVar])
+    qstotal.extend(entsoeAgDataAll[qsVar])
     qstotal = np.array(qstotal)
     
     plantIds = []

@@ -48,12 +48,11 @@ for i = 1:size(plantLatLon, 1)
     for year = 1:length(startYear:endYear)
         for month = 1:12
             curDate = addtodate(curDate, 1, 'month');
-            qsClean = [qsClean; squeeze(qs(year, month))];
+            qsClean = [qsClean; squeeze(qs(year, month))/nanmean(qs(:,month))];
         end
     end
         
     plantWbTimeSeries(i, :) = [ind, qsClean'];
-    figure;plot(qsClean)
 end
 
- csvwrite('2019-electricity/nuke-qs-gldas-all.csv', plantWbTimeSeries);
+ csvwrite('2019-electricity/nuke-qs-gldas-all-perc.csv', plantWbTimeSeries);
