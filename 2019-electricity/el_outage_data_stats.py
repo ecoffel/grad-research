@@ -13,6 +13,8 @@ import statsmodels.api as sm
 import pickle
 import sys,os
 
+import el_build_temp_demand_model
+
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
@@ -402,13 +404,89 @@ if plotFigs:
     plt.savefig('temps-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-genData = {}
+# load data on demand, generation, and temperature across US subgrids
+demData = {}
 with open('genData.dat', 'rb') as f:
-    genData = pickle.load(f)
+    demData = pickle.load(f)
 
-tx = genData['txScatter']
-dem = genData['demTxScatter']
-mon = genData['monthScatter']    
+demTempModels = el_build_temp_demand_model.buildNonlinearDemandModel(10)
+
+
+entsoeMonthlyTxMaxHist = []
+for y in np.unique(entsoePlants['years']):
+    entsoeMonthlyTxMaxHistCurYear = []
+    for m in range(1, 13):
+        ind = np.where((entsoePlants['years'] == y) & (entsoePlants['months'] == m))[0]
+        txx = np.nanmax(entsoePlants['tx'][:, ind], axis=1)
+        entsoeMonthlyTxMaxHistCurYear.append(txx)
+    entsoeMonthlyTxMaxHist.append(entsoeMonthlyTxMaxHistCurYear)
+entsoeMonthlyTxMaxHist = np.nanmean(np.array(entsoeMonthlyTxMaxHist), axis=0)
+
+nukeMonthlyTxMaxHist = []
+for y in np.unique(nukePlants['plantYearsAll']):
+    nukeMonthlyTxMaxHistCurYear = []
+    for m in range(1, 13):
+        ind = np.where((nukePlants['plantYearsAll'][0,:] == y) & (nukePlants['plantMonthsAll'][0,:] == m))[0]
+        txx = np.nanmax(nukePlants['tx'][:, ind], axis=1)
+        nukeMonthlyTxMaxHistCurYear.append(txx)
+    nukeMonthlyTxMaxHist.append(nukeMonthlyTxMaxHistCurYear)
+nukeMonthlyTxMaxHist = np.nanmean(np.array(nukeMonthlyTxMaxHist), axis=0)
+
+monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist), axis=1)
+
+
+demHist = []
+for plant in range(monthlyTxMaxHist.shape[1]):
+    demHistPlant = []
+    for month in range(0,12):
+        demHistMonth = []
+        for d in range(len(demTempModels)):
+            tx = monthlyTxMaxHist[month, plant]
+            txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+            demHistMonth.append(txProj)
+        
+        demHistPlant.append(demHistMonth)
+    demHist.append(demHistPlant)
+demHist = np.squeeze(np.nanmean(np.nanmean(np.array(demHist), axis=2), axis=0))
+
+# project future demand at GMT thresholds
+demProj = []
+for w in range(4):
+    demProjCurGMT = []
+    for model in range(txMonthlyMaxFutGMT.shape[1]):
+        demProjCurModel = []
+        for plant in range(txMonthlyMaxFutGMT.shape[2]):
+            demProjCurPlant = []
+            for month in range(txMonthlyMaxFutGMT.shape[3]):
+                demProjCurMonth = []
+                
+                tx = txMonthlyMaxFutGMT[w, model, plant, month]
+                
+                for d in range(len(demTempModels)):
+                    txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+                    demProjCurMonth.append(txProj)
+                
+                demProjCurPlant.append(demProjCurMonth)
+            demProjCurModel.append(demProjCurPlant)
+        demProjCurGMT.append(demProjCurModel)
+    demProj.append(demProjCurGMT)
+demProj = np.squeeze(np.array(demProj))
+demProj = np.nanmean(np.nanmean(demProj, axis=4), axis=2)
+
+demMult = []
+for w in range(demProj.shape[0]):
+    demMultGMT = []
+    for model in range(demProj.shape[1]):
+        demMultModel = []
+        for month in range(0, 12):
+            demMultModel.append(demProj[w, model, month] / demHist[month])
+        demMultGMT.append(demMultModel)
+    demMult.append(demMultGMT)
+demMult = np.array(demMult)
+
+tx = demData['txScatter']
+dem = demData['demTxScatter']
+mon = demData['monthScatter']    
 
 txAll = []
 demAll = []
@@ -432,16 +510,33 @@ demByMonth = np.array(demByMonth)
 demByMonth = 1 + ((demByMonth - np.nanmean(demByMonth)) / (np.nanmax(demByMonth) - np.nanmin(demByMonth)))
 
 
+demByMonthFut = []
+for w in range(4):
+    demByMonthFutCurGMT = []
+    for model in range(demMult.shape[1]):
+        demByMonthFutCurModel = []
+        for month in range(12):
+            demByMonthFutCurModel.append(demByMonth[month] * demMult[w,model,month])
+        demByMonthFutCurGMT.append(demByMonthFutCurModel)
+    demByMonthFut.append(demByMonthFutCurGMT)
+demByMonthFut = np.array(demByMonthFut)
+
+demByMonthFutSorted = np.sort(demByMonthFut, axis=1)
+
 plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
-plt.ylim([.5, 1.7])
+plt.ylim([.5, 2.3])
 plt.grid(True, alpha=.5)
 
 plt.plot([0,13], [1,1], '--k', lw=1)
-plt.plot(list(range(1,13)), demByMonth, '-k', lw=3)
+plt.plot(list(range(1,13)), np.squeeze(np.nanmean(demByMonthFut[1,:,:], axis=0)), '-', lw=2, color='#ffb835')
+plt.plot(list(range(1,13)), np.squeeze(demByMonthFutSorted[1,-1,:]), '--', lw=1, color='#ffb835')
+plt.plot(list(range(1,13)), np.squeeze(np.nanmean(demByMonthFut[3,:,:], axis=0)), '-', lw=2, color=snsColors[1])
+plt.plot(list(range(1,13)), np.squeeze(demByMonthFutSorted[3,-2,:]), '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), demByMonth, '-k', lw=2)
 
 plt.xticks(list(range(1,13)))
-plt.yticks([.6, 1, 1.5])
+plt.yticks([.6, 1, 1.5, 2])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

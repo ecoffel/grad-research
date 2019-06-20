@@ -8,6 +8,7 @@ Created on Thu May  2 16:56:07 2019
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
+import seaborn as sns
 import el_build_temp_pp_model
 import pickle, gzip
 import sys, os
@@ -16,34 +17,22 @@ import sys, os
 dataDir = 'e:/data/'
 
 plotFigs = False
-newFit = True
-
-
 
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
 fileName = 'entsoe-nuke-pp-tx-all.csv'
-
-plantList = []
-with open(fileName, 'r') as f:
-    i = 0
-    for line in f:
-        if i >= 3:
-            parts = line.split(',')
-            plantList.append(parts[0])
-        i += 1
 plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,1:].copy()
-plantMonthData = plantTxData[1,1:].copy()
-plantDayData = plantTxData[2,1:].copy()
-plantTxData = plantTxData[3:,1:].copy()
+plantYearData = plantTxData[0,:].copy()
+plantMonthData = plantTxData[1,:].copy()
+plantDayData = plantTxData[2,:].copy()
+plantTxData = plantTxData[3:,:].copy()
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsSummer', 100)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
 
 # find fit percentiles for temperature
 t = 50
@@ -52,7 +41,7 @@ q = 0
 pcEval = []
 for i in range(len(models)):
     pcEval.append(models[i].predict([1, t, t**2, t**3, \
-                                     q, q**2, q**3, q**4, q**5, 0])[0])
+                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -65,12 +54,12 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 # find fit percentiles for runoff
 t = 35
-q = 0
+q = -3
 
 pcEval = []
 for i in range(len(models)):
     pcEval.append(models[i].predict([1, t, t**2, t**3, \
-                                     q, q**2, q**3, q**4, q**5, 0])[0])
+                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -81,9 +70,9 @@ indPcQs50 = np.where(abs(pcEval-pc50) == np.nanmin(abs(pcEval-pc50)))[0]
 indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
-#pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
-#with gzip.open('pPolyData.dat', 'wb') as f:
-#    pickle.dump(pPolyData, f)
+pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
+with gzip.open('pPolyData.dat', 'wb') as f:
+    pickle.dump(pPolyData, f)
 
 
 xd = np.linspace(20, 50, 50)
@@ -94,7 +83,7 @@ for i in range(len(models)):
     ydAll.append([])
     for k in range(len(xd)):
         ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
 ydAll = np.array(ydAll)
 
 yd10 = []
@@ -103,26 +92,26 @@ yd90 = []
 
 for k in range(len(xd)):
     yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
     yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
     yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
 
-
+snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 plt.figure(figsize=(4,4))
 plt.xlim([19, 51])
 plt.ylim([75, 100])
 plt.grid(True)
 
-plt.plot(xd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
-p1 = plt.plot(xd, yd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
+plt.plot(xd, ydAll.T, '-', linewidth = 1, color = [.65, .65, .65], alpha = .2)
+p1 = plt.plot(xd, yd10, '-', linewidth = 2.5, color = snsColors[1], label='90th Percentile')
 p2 = plt.plot(xd, yd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
-p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
+p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th Percentile')
 
 
 colors = plt.get_cmap('Reds')
@@ -159,7 +148,6 @@ if plotFigs:
 
 
 xd = np.array([35]*50)
-#qd = np.linspace(-3, 3, 50)
 qd = np.linspace(-3, 3, 50)
 
 ydAll = []
@@ -167,7 +155,7 @@ for i in range(len(models)):
     ydAll.append([])
     for k in range(len(xd)):
         ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
 ydAll = np.array(ydAll)
 
 yd10 = []
@@ -176,13 +164,13 @@ yd90 = []
 
 for k in range(len(xd)):
     yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
     yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
     yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, 0])[0])
+                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
     
 
 
@@ -193,9 +181,9 @@ plt.ylim([75, 100])
 plt.grid(True)
 
 plt.plot(qd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
-p1 = plt.plot(qd, yd10, '-', linewidth = 2.5, color = cmx.tab20(6), label='90th Percentile')
+p1 = plt.plot(qd, yd10, '-', linewidth = 2.5, color = snsColors[1], label='90th Percentile')
 p2 = plt.plot(qd, yd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
-p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = cmx.tab20(0), label='10th Percentile')
+p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th Percentile')
 
 plt.gca().set_xticks(range(-3, 4, 1))
 
@@ -206,7 +194,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Standardized runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center right')
@@ -218,7 +206,6 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
     plt.savefig('hist-pc-runoff-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
 
 sys.exit()
 

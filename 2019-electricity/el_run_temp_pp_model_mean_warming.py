@@ -26,20 +26,17 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 
 # load historical temp data for all plants in US and EU
+fileNamePlantLatLon = 'entsoe-nuke-lat-lon.csv'
+plantList = np.genfromtxt(fileNamePlantLatLon, delimiter=',', skip_header=0)
+plantList = plantList[:,0]
+
+
 fileNameTemp = 'entsoe-nuke-pp-tx-all.csv'
-plantList = []
-with open(fileNameTemp, 'r') as f:
-    i = 0
-    for line in f:
-        if i >= 3:
-            parts = line.split(',')
-            plantList.append(parts[0])
-        i += 1
 plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,1:].copy()
-plantMonthData = plantTxData[1,1:].copy()
-plantDayData = plantTxData[2,1:].copy()
-plantTxData = plantTxData[3:,1:].copy()
+plantYearData = plantTxData[0,:].copy()
+plantMonthData = plantTxData[1,:].copy()
+plantDayData = plantTxData[2,:].copy()
+plantTxData = plantTxData[3:,:].copy()
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
@@ -47,7 +44,7 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 # load historical runoff data for all plants in US and EU
 fileNameRunoff = 'entsoe-nuke-pp-runoff-anom-all.csv'
 plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-plantQsAnomData = plantQsData[3:,1:].copy()
+plantQsAnomData = plantQsData[3:,:].copy()
 
 pcModel10 = []
 pcModel50 = []
@@ -130,11 +127,11 @@ for p in range(len(plantList)):
             q = curQsPrc90[i]
             
             curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+                                                 q, q**2, q**3, q**4, q**5, q*t, plantList[p]])[0]
             curDayPc50 = pcModel50.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+                                                 q, q**2, q**3, q**4, q**5, q*t, plantList[p]])[0]
             curDayPc90 = pcModel90.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
+                                                 q, q**2, q**3, q**4, q**5, q*t, plantList[p]])[0]
             if curDayPc10 > 100: curDayPc10 = 100
             if curDayPc50 > 100: curDayPc50 = 100
             if curDayPc90 > 100: curDayPc90 = 100
@@ -144,11 +141,11 @@ for p in range(len(plantList)):
             curPcPred90.append(curDayPc90)
         
         curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
         curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
         curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
         if curPcPredTxx10 > 100: curPcPredTxx10 = 100
         if curPcPredTxx50 > 100: curPcPredTxx50 = 100
         if curPcPredTxx90 > 100: curPcPredTxx90 = 100
@@ -237,13 +234,13 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,1:].copy()
         plantTxData = plantTxData[3:,1:].copy()
         
-    #    fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
-    #    
-    #    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-    #    plantQsYearData = plantTxData[0,1:].copy()
-    #    plantQsMonthData = plantTxData[1,1:].copy()
-    #    plantQsDayData = plantTxData[2,1:].copy()
-    #    plantQsData = plantQsData[3:,1:].copy()
+        fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        
+        plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+        plantQsYearData = plantQsData[0,1:].copy()
+        plantQsMonthData = plantQsData[1,1:].copy()
+        plantQsDayData = plantQsData[2,1:].copy()
+        plantQsData = plantQsData[3:,1:].copy()
         
         # loop over all plants
         for p in range(plantTxData.shape[0]):
@@ -254,7 +251,7 @@ for w in range(1, 4+1):
             
             # tx for current plant
             tx = plantTxData[p, :]
-#            qs = plantQsAnomData[p, :]
+            qs = plantQsAnomData[p, :]
             
             # loop over all years for current model/GMT anomaly
             for year in range(int(min(plantTxYearData)), int(max(plantTxYearData))+1):
@@ -263,7 +260,7 @@ for w in range(1, 4+1):
                 ind = np.where((plantTxYearData == year) & (plantTxMonthData >= 7) & (plantTxMonthData <= 8))[0]
                 
                 curTx = tx[ind]
-#                curQs = qs[ind]
+                curQs = qs[ind]
                 
                 nn = np.where(~np.isnan(curTx))[0]
                 
@@ -278,24 +275,24 @@ for w in range(1, 4+1):
                     continue
                 
                 curTx = curTx[nn]
-#                curQs = curQs[nn]
+                curQs = curQs[nn]
                 
                 # ind of the txx day in this year
                 indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
                 
                 curTxx = curTx[indTxx]
-                curQsTxx = 0
+                curQsTxx = curQs[indTxx]
                 
                 curPcPred10 = []
                 curPcPred50 = []
                 curPcPred90 = []
                 
                 curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
                 curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
                 curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
+                                                         curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, curTxx*curQsTxx, plantList[p]])[0]
                 
                 if curPcPredTxx10 > 100: curPcPredTxx10 = 100
                 if curPcPredTxx50 > 100: curPcPredTxx50 = 100
@@ -323,8 +320,6 @@ pCapTxxFutMeanWarming50 = np.array(pCapTxxFutMeanWarming50)
 pCapTxxFutMeanWarming90 = np.array(pCapTxxFutMeanWarming90)
 
 
-sys.exit()
-
 xd = np.array(list(range(1981, 2018+1)))-1981+1
 
 z = np.polyfit(xd, pcTxx10, 1)
@@ -338,7 +333,7 @@ xpos = np.array([65, 90, 115, 140])
 
 plt.figure(figsize=(6,4))
 plt.xlim([0, 155])
-plt.ylim([89, 97])
+plt.ylim([91, 99])
 plt.grid(True)
 
 plt.plot(xd, histPolyTxx10(xd), '-', linewidth = 3, color = cmx.tab20(6), alpha = .8, label='90th Percentile')
@@ -381,7 +376,7 @@ plt.plot([38,38], [88,100], '--', linewidth=2, color='black')
 plt.gca().set_xticks([1, 38, xpos[0], xpos[1], xpos[2], xpos[3]])
 plt.gca().set_xticklabels([1981, 2018, '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
 
-plt.yticks(range(89, 99, 2))
+plt.yticks(range(91, 100, 2))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

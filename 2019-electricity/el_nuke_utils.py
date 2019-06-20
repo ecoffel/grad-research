@@ -104,7 +104,7 @@ def loadWxData(eba, wxdata):
         cdd = np.genfromtxt(fileNameCDD, delimiter=',')
     
     
-    fileNameGldas = 'nuke-qs-gldas-all-perc.csv'
+    fileNameGldas = 'nuke-qs-gldas-all.csv'
     qs = np.genfromtxt(fileNameGldas, delimiter=',')
     
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
@@ -171,6 +171,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantMonths = []
     plantDays = []
     
+    plantIds = []
+    
     for i in range(ids.shape[0]):
         out = np.array(eba[ids[i,0]]['data'])
         cap = np.array(eba[ids[i,1]]['data'])     
@@ -187,6 +189,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             
             nukeLat.append(eba[ids[i,0]]['lat'])
             nukeLon.append(eba[ids[i,0]]['lon'])
+            
+            plantIds.append(i)
             
             # find total generating capacity for this plant
             for p in range(len(eba)):
@@ -253,6 +257,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantQsSummer = np.array(plantQsSummer)
     plantQsAnomSummer = np.array(plantQsAnomSummer)
     
+    plantIds = np.array(plantIds)
+    
     finalPlantPercCapacity = np.array(finalPlantPercCapacity)
     finalPlantPercCapacitySummer = np.array(finalPlantPercCapacitySummer)
     
@@ -261,7 +267,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
          'qs':plantQs, 'qsAnom':plantQsAnom, \
          'capacitySummer':finalPlantPercCapacitySummer, 'capacity':finalPlantPercCapacity, \
          'normalCapacity':plantCapacity, \
-         'summerInds':summerInds, \
+         'plantIds':plantIds, 'summerInds':summerInds, \
          'plantLats':nukeLat, 'plantLons':nukeLon, \
          'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, 'plantDaysAll':plantDays}
     return d

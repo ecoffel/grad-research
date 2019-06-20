@@ -15,7 +15,14 @@ models = {'bcc-csm1-1-m', 'canesm2', ...
       
 rcp = 'rcp85';
 
-plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+useGlobalPlants = true;
+
+if useGlobalPlants
+    plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
+else
+    plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+end
+
 
 load('2019-electricity/GMTYears.mat');
 
@@ -52,7 +59,13 @@ for g = 1:4
     
     for model = 1:length(models)
         
-        if exist(['2019-electricity/gmt-anomaly-temps/us-eu-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'], 'file')
+        if useGlobalPlants
+            fileTarget = ['2019-electricity/gmt-anomaly-temps/global-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
+        else
+            fileTarget = ['2019-electricity/gmt-anomaly-temps/us-eu-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
+        end
+        
+        if exist(fileTarget, 'file')
             continue;
         end
         
@@ -182,7 +195,7 @@ for g = 1:4
             end
         end
         
-        csvwrite(['2019-electricity/gmt-anomaly-temps/us-eu-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'], modelPlantTxTimeSeries);   
+        csvwrite(fileTarget, modelPlantTxTimeSeries);   
         
     end
 

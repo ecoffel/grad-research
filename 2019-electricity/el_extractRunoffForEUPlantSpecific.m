@@ -65,7 +65,7 @@ for i = 1:size(plantLatLon, 1)
         qsYears(end+1) = yr;
         qsMonths(end+1) = mn;
         qsDays(end+1) = dy;
-        qsClean(end+1) = qs(yr-startYear+1, mn)/nanmean(qs(:,mn));
+        qsClean(end+1) = qs(yr-startYear+1, mn)/nanmean(nanmean(qs(:,[7,8])));
         curDate = addtodate(curDate, 1, 'day');
     end
         

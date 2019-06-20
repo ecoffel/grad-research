@@ -277,12 +277,12 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
     fileNameCDD = ''
     
     if forced:
-        fileNameQs = 'entsoe-qs-gldas-all-perc.csv'
+        fileNameQs = 'entsoe-qs-gldas-all.csv'
     else:
-        fileNameQs = 'entsoe-qs-gldas-all-nonforced-perc.csv'
+        fileNameQs = 'entsoe-qs-gldas-all-nonforced.csv'
     
     #for averaging cdd, tx
-    smoothingLen = 4
+#    smoothingLen = 4
     
     if wxdata == 'cpc':
         fileName = 'entsoe-tx-cpc.csv'
@@ -308,6 +308,10 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
     txYears = []
     txMonths = []
     txDays = []
+    plantIds = []
+    
+    # the number to start the IDs at to differentiate from the nuke data
+    baseId = 100
     
     if wxdata == 'all':
         tx1 = np.genfromtxt(fileName[0], delimiter=',')    
@@ -374,7 +378,10 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
     
     # loop over each power plant
     for c in range(len(entsoeLat)):
-    
+        
+        plantIds.append(c + baseId)
+        
+        
         finalTx.append([])
         finalTxAvg.append([])
         finalQs.append([])
@@ -500,6 +507,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
          'qs':finalQs, 'qsAnom':finalQsAnom, \
          'qsSummer':finalQsSummer, 'qsAnomSummer':finalQsAnomSummer, \
          'years':txYears, 'months':txMonths, 'days':txDays, \
+         'plantIds':plantIds, \
          'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
          'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount, \
          'lats':entsoeLat, 'lons':entsoeLon}
@@ -621,8 +629,6 @@ def aggregateEntsoeData(entsoeMatchData):
     plantDays = []
     plantIds = []
     plantMeanTemps = []
-    # the number to start the IDs at to differentiate from the nuke data
-    baseId = 100
     
     for c in range(entsoeMatchData['capacity'].shape[0]):
         inds = np.where((entsoeMatchData['months'] > 6) & (entsoeMatchData['months'] < 9))[0]
@@ -649,7 +655,7 @@ def aggregateEntsoeData(entsoeMatchData):
             capacityAll.extend(curCapacity)
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
-            plantIds.extend([c+baseId] * len(curTx))
+            plantIds.extend([entsoeMatchData['plantIds'][c]] * len(curTx))
             plantMonths.extend(entsoeMatchData['months'][inds])
             plantDays.extend(entsoeMatchData['days'][inds])
     

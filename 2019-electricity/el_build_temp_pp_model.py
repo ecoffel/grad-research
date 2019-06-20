@@ -136,7 +136,6 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     txtotal.extend(entsoeAgDataAll[tempVar])
     txtotal = np.array(txtotal)
     
-    
     qstotal = []
     qstotal.extend(nukeAgDataAll[qsVar])
     qstotal.extend(entsoeAgDataAll[qsVar])
@@ -147,13 +146,15 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     plantIds.extend(entsoeAgDataAll['plantIds'])
     plantIds = np.array(plantIds)
     
-    
     pctotal = []
     pctotal.extend(nukeAgDataAll['capacitySummer'])
     pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
     pctotal = np.array(pctotal)
       
-    ind = np.where((pctotal <= 100.1) & (txtotal > 20))[0]
+    ind = np.where((pctotal <= 100.1) & (txtotal > 20) & \
+                   (~np.isnan(txtotal)) & (~np.isnan(qstotal)) & \
+                   (~np.isnan(pctotal)))[0]
+            
     txtotal = txtotal[ind]
     qstotal = qstotal[ind]
     plantIds = plantIds[ind]
@@ -168,17 +169,18 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
         data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, 'T3':txtotal[ind]**3, \
                 'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, 'QS3':qstotal[ind]**3, 'QS4':qstotal[ind]**4, 'QS5':qstotal[ind]**5, \
+                'QST':txtotal[ind]*qstotal[ind], \
                 'PlantIds':plantIds[ind], 'PC':pctotal[ind]}
         
         df = pd.DataFrame(data, \
                           columns=['T1', 'T2', 'T3', \
                                    'QS1', 'QS2', 'QS3', 'QS4', 'QS5', \
-                                   'PlantIds', 'PC'])
+                                   'QST', 'PlantIds', 'PC'])
         
         df = df.dropna()
         
         X = sm.add_constant(df[['T1', 'T2', 'T3', \
-                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'PlantIds']])
+                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'QST', 'PlantIds']])
         mdl = sm.OLS(df['PC'], X).fit()
         models.append(mdl)
     
@@ -251,33 +253,39 @@ def exportNukeEntsoePlantLocations():
     with open('eData.dat', 'rb') as f:
         eData = pickle.load(f) 
     
-    entsoeData = eData['entsoeData']
+    entsoeData = eData['entsoePlantDataAll']
     nukeData = eData['nukePlantDataAll']
     
+    entsoeLat = entsoeData['lats']
+    entsoeLon = entsoeData['lons']
+    entsoeIds = entsoeData['plantIds']
     
-    uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
-    entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
-    entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
+#    uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
+#    entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
+#    entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
         
     nukeLat = []
     nukeLon = []
+    nukeIds = []
     
     for i in range(len(nukeData['plantLats'])):
         nukeLat.append(nukeData['plantLats'][i])
         nukeLon.append(nukeData['plantLons'][i])
+        nukeIds.append(nukeData['plantIds'][i])
     
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)
+    nukeIds = np.array(nukeIds)
 
     import csv
     n = 0
     with open('entsoe-nuke-lat-lon.csv', 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(entsoeLat)):
-            csvWriter.writerow([n, entsoeLat[i], entsoeLon[i]])
+            csvWriter.writerow([entsoeIds[i], entsoeLat[i], entsoeLon[i]])
             n += 1
         for i in range(len(nukeLat)):
-            csvWriter.writerow([n, nukeLat[i], nukeLon[i]])
+            csvWriter.writerow([nukeIds[i], nukeLat[i], nukeLon[i]])
             n += 1
 
 

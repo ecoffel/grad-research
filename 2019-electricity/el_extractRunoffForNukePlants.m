@@ -48,7 +48,7 @@ for i = 1:size(plantLatLon, 1)
     for year = 1:length(startYear:endYear)
         for month = 1:12
             curDate = addtodate(curDate, 1, 'month');
-            qsClean = [qsClean; squeeze(qs(year, month))/nanmean(qs(:,month))];
+            qsClean = [qsClean; squeeze(qs(year, month))/nanmean(nanmean(qs(:,[7,8])))];
         end
     end
         
