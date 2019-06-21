@@ -229,18 +229,18 @@ for w in range(1, 4+1):
             pCapTxxFutCurGMT90.append(filler)
             continue
         
-        plantTxYearData = plantTxData[0,1:].copy()
-        plantTxMonthData = plantTxData[1,1:].copy()
-        plantTxDayData = plantTxData[2,1:].copy()
-        plantTxData = plantTxData[3:,1:].copy()
+        plantTxYearData = plantTxData[0,0:].copy()
+        plantTxMonthData = plantTxData[1,0:].copy()
+        plantTxDayData = plantTxData[2,0:].copy()
+        plantTxData = plantTxData[3:,0:].copy()
         
         fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-        plantQsYearData = plantQsData[0,1:].copy()
-        plantQsMonthData = plantQsData[1,1:].copy()
-        plantQsDayData = plantQsData[2,1:].copy()
-        plantQsData = plantQsData[3:,1:].copy()
+        plantQsYearData = plantQsData[0,0:].copy()
+        plantQsMonthData = plantQsData[1,0:].copy()
+        plantQsDayData = plantQsData[2,0:].copy()
+        plantQsData = plantQsData[3:,0:].copy()
         
         # loop over all plants
         for p in range(plantTxData.shape[0]):

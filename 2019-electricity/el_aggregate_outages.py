@@ -41,7 +41,7 @@ with open('eData.dat', 'rb') as f:
 
 yearRange = [1981, 2018]
 
-agOutages = {}
+
 yearlyOutageAcc10 = []
 yearlyOutageAcc50 = []
 yearlyOutageAcc90 = []
@@ -50,63 +50,50 @@ yearlyOutageAccDaily10 = []
 yearlyOutageAccDaily50 = []
 yearlyOutageAccDaily90 = []
 
-if not regenAggOutages:
-    with open('aggOutages.dat', 'rb') as f:
-        agOutages = pickle.load(f)
-        yearlyOutageAcc10 = agOutages['yearlyOutageAcc10']
-        yearlyOutageAcc50 = agOutages['yearlyOutageAcc50']
-        yearlyOutageAcc90 = agOutages['yearlyOutageAcc90']
-else:
-    warming = [0, 1, 2, 3, 4]
+for w in range(1,4+1):
+    plantPercentilesFutCurGMT = []
+#    futPercentileScoresCurGMT = []
     
-    for w in range(len(warming)):
-        yearlyOutageAcc10.append([])
-        yearlyOutageAcc50.append([])
-        yearlyOutageAcc90.append([])
+    for model in range(len(models)):
+        plantPercentilesFutCurModel = []
+#        futPercentileScoresCurModel = []
         
-        yearlyOutageAccDaily10.append([])
-        yearlyOutageAccDaily50.append([])
-        yearlyOutageAccDaily90.append([])
+        fileName = 'global-pc-future/global-pc-future-%ddeg-%s.dat'%(w, models[model])
         
-        for p in range(0, plantTxData.shape[0]):
+        if not os.path.isfile(fileName):
+            filler = []
+            for p in range(syswidePCHist10.shape[0]):
+                filler.append([np.nan]*len(returnPeriodsPrc))
+            plantPercentilesFutCurGMT.append(filler)
+            continue
+        
+        print('calculating percentiles for %s/+%dC'%(models[model],w))
+        
+        with gzip.open(fileName, 'rb') as f:
+            globalPC = pickle.load(f)
             
-            normCap = globalPlants['caps'][p]
+            globalPCFut10 = globalPC['globalPCFut10']
+            globalPCFut50 = globalPC['globalPCFut50']
+            globalPCFut90 = globalPC['globalPCFut90']
+        
+        for p in range(syswidePCHist10.shape[0]):
+            plantTx1d = np.reshape(globalPCFut10[p,:,:], (globalPCFut10[p,:,:].shape[0]*globalPCFut10[p,:,:].shape[1]), order='C')
+            plantPercentilesFutCurModel.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
             
-            yearlyOutageAcc10[w].append([])
-            yearlyOutageAcc50[w].append([])
-            yearlyOutageAcc90[w].append([])
-            
-            yearlyOutageAccDaily10[w].append([])
-            yearlyOutageAccDaily50[w].append([])
-            yearlyOutageAccDaily90[w].append([])
-            
-            for year in range(1981, 2018+1):
-                ind = np.where((plantYearData==year) & ((plantMonthData == 7) | (plantMonthData == 8)))[0]
-                yearlyOutageAcc10[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly10'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly10'][0]](20))/100))
-                yearlyOutageAcc50[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly50'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly50'][0]](20))/100))
-                yearlyOutageAcc90[w][-1].append(np.nansum(normCap*(pPolyData['pPoly3'][pPolyData['indPoly90'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly90'][0]](20))/100))
-                
-                yearlyOutageAccDaily10[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly10'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly10'][0]](20))/100)
-                yearlyOutageAccDaily50[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly50'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly50'][0]](20))/100)
-                yearlyOutageAccDaily90[w][-1].extend(normCap*(pPolyData['pPoly3'][pPolyData['indPoly90'][0]](plantTxData[p,ind]+warming[w])-pPolyData['pPoly3'][pPolyData['indPoly90'][0]](20))/100)
+            # calc future prctile scores for mean plant capacity levels 
+#            plantPercLevels = []
+#            for percLevel in futPercentileLevels:
+#                plantPercLevels.append(stats.percentileofscore(plantTx1d, percLevel))
+#            futPercentileScoresCurModel.append(plantPercLevels)
+#        
+        plantPercentilesFutCurGMT.append(plantPercentilesFutCurModel)
+#        futPercentileScoresCurGMT.append(futPercentileScoresCurModel)
     
-    # convert MW to TW by dividing by 1e6
-    yearlyOutageAcc10 = np.array(yearlyOutageAcc10)/1e6
-    yearlyOutageAcc50 = np.array(yearlyOutageAcc50)/1e6
-    yearlyOutageAcc90 = np.array(yearlyOutageAcc90)/1e6
+    plantPercentilesFut.append(plantPercentilesFutCurGMT)
+#    futPercentileScores.append(futPercentileScoresCurGMT)
     
-    yearlyOutageAccDaily10 = np.array(yearlyOutageAccDaily10)/1e6
-    yearlyOutageAccDaily50 = np.array(yearlyOutageAccDaily50)/1e6
-    yearlyOutageAccDaily90 = np.array(yearlyOutageAccDaily90)/1e6
-    
-    
-    aggOutages = {'yearlyOutageAcc10':yearlyOutageAcc10, \
-                  'yearlyOutageAcc50':yearlyOutageAcc50, \
-                  'yearlyOutageAcc90':yearlyOutageAcc90}
-    
-#    with open('aggOutages.dat', 'wb') as f:
-#        pickle.dump(aggOutages, f)
-
+plantPercentilesFut = np.array(plantPercentilesFut)
+plantPercentilesFut = np.nanmean(plantPercentilesFut, axis=2)
 
 # sum across plants and convert to TWh by multiplying by 24
 mean10 = np.nansum(yearlyOutageAcc10*24, axis=1)

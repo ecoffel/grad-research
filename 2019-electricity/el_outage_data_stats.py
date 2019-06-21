@@ -59,14 +59,14 @@ for m in range(1, 13):
     curMonthOutage.extend(100*np.nanmean(entsoePlants['capacity'][:,ind], axis=1))
     
     meanOutage.append(curMonthOutage)
-meanOutage = np.array(meanOutage)
+meanOutage = 100-np.array(meanOutage)
 
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([77, 100])
+plt.ylim([0, 22])
 plt.grid(True, alpha=.5)
 plt.gca().set_axisbelow(True)
 
@@ -79,7 +79,8 @@ for i in range(len(b)):
     else:
         b[i].set_color(snsColors[0])
 
-#plt.xticks(list(range(1,13)))
+plt.xticks(list(range(1,13)))
+plt.gca().invert_yaxis()
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -94,7 +95,6 @@ plt.tick_params(
     bottom=False,      # ticks along the bottom edge are off
     top=False,         # ticks along the top edge are off
     labelbottom=False) # labels along the bottom edge are off
-
 
 #plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 #plt.ylabel('Mean outage (%)', fontname = 'Helvetica', fontsize=12)
@@ -412,6 +412,7 @@ with open('genData.dat', 'rb') as f:
 demTempModels = el_build_temp_demand_model.buildNonlinearDemandModel(10)
 
 
+# calculate monthly mean maximum temp for entsoe and nuke plants
 entsoeMonthlyTxMaxHist = []
 for y in np.unique(entsoePlants['years']):
     entsoeMonthlyTxMaxHistCurYear = []
@@ -473,6 +474,7 @@ for w in range(4):
 demProj = np.squeeze(np.array(demProj))
 demProj = np.nanmean(np.nanmean(demProj, axis=4), axis=2)
 
+# calculate change factor between future modeled demand and historical
 demMult = []
 for w in range(demProj.shape[0]):
     demMultGMT = []
@@ -502,6 +504,7 @@ demAll = np.array(demAll) * 100
 monAll = np.array(monAll)
     
 
+# calculate historical demand by month
 demByMonth = []
 for m in range(1, 13):    
     ind = np.where(monAll == m)[0]
@@ -510,6 +513,7 @@ demByMonth = np.array(demByMonth)
 demByMonth = 1 + ((demByMonth - np.nanmean(demByMonth)) / (np.nanmax(demByMonth) - np.nanmin(demByMonth)))
 
 
+# and multiply that historical demand by the modeled demand change factor due to warming
 demByMonthFut = []
 for w in range(4):
     demByMonthFutCurGMT = []
