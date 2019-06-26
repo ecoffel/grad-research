@@ -355,10 +355,10 @@ for w in range(0, 4):
                     
                     pc0 = pcModel90.predict([1, t0, t0**2, t0**3, \
                                      q0, q0**2, q0**3, q0**4, q0**5, \
-                                     0])
+                                     t1*q1,0])
                     pc1 = pcModel90.predict([1, t1, t1**2, t1**3, \
                                              q1, q1**2, q1**3, q1**4, q1**5, \
-                                             0])
+                                             t1*q1, 0])
         
                     # if projected PC < 0... limit to 0
                     if pc1 < 0:
@@ -384,8 +384,8 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
-plt.ylim([-5.5, 0])
-plt.grid(True, alpha=.5)
+plt.ylim([-6.5, 0])
+plt.grid(True, alpha=.5, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[1,:,:,:],axis=2),axis=0), '-', lw=2, color='#ffb835')
@@ -399,7 +399,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=1, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-5.2, -2.4, 0])
+plt.yticks([-6, -3, 0])
 
 plt.xticks(list(range(1,13)))
 
@@ -420,10 +420,11 @@ for tick in plt.gca().yaxis.get_major_ticks():
 
 plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 
+
+
 if plotFigs:
     plt.savefig('outage-chg-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-sys.exit()
 
 
 

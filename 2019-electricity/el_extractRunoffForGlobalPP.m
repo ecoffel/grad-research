@@ -2,7 +2,8 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+% plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
 
 plantQsTimeSeries = [];
 
@@ -12,21 +13,21 @@ for y = startYear:endYear
     
     fprintf('processing %d\n', y)
     
-%     qsGldasVic = loadMonthlyData('E:\data\gldas\output\vic-1\Qs', 'Qs', 'startYear', y, 'endYear', y);
+    qsGldasVic = loadMonthlyData('E:\data\gldas\output\vic-1\Qs', 'Qs', 'startYear', y, 'endYear', y);
     qsbGldasVic = loadMonthlyData('E:\data\gldas\output\vic-1\Qsb', 'Qsb', 'startYear', y, 'endYear', y);
-    qsGldasVic{3} = qsbGldasVic{3};% + qsbGldasVic{3};
+    qsGldasVic{3} = qsbGldasVic{3} + qsbGldasVic{3};
     qsGldasVic{2}(qsGldasVic{2} < 0) = 360 + qsGldasVic{2}(qsGldasVic{2} < 0);
     
     
-%     qsGldasNoah = loadMonthlyData('E:\data\gldas\output\noah-1-1979-2018\Qs', 'Qs', 'startYear', y, 'endYear', y);
+    qsGldasNoah = loadMonthlyData('E:\data\gldas\output\noah-1-1979-2018\Qs', 'Qs', 'startYear', y, 'endYear', y);
     qsbGldasNoah = loadMonthlyData('E:\data\gldas\output\noah-1-1979-2018\Qsb', 'Qsb', 'startYear', y, 'endYear', y);
-    qsGldasNoah{3} = qsbGldasNoah{3};% + qsbGldasNoah{3};
+    qsGldasNoah{3} = qsbGldasNoah{3} + qsbGldasNoah{3};
     qsGldasNoah{2}(qsGldasNoah{2} < 0) = 360 + qsGldasNoah{2}(qsGldasNoah{2} < 0);
     
     
-%     qsGldasMosaic = loadMonthlyData('E:\data\gldas\output\mosaic-1-1979-2018\Qs', 'Qs', 'startYear', y, 'endYear', y);
+    qsGldasMosaic = loadMonthlyData('E:\data\gldas\output\mosaic-1-1979-2018\Qs', 'Qs', 'startYear', y, 'endYear', y);
     qsbGldasMosaic = loadMonthlyData('E:\data\gldas\output\mosaic-1-1979-2018\Qsb', 'Qsb', 'startYear', y, 'endYear', y);
-    qsGldasMosaic{3} = qsbGldasMosaic{3};% + qsbGldasMosaic{3};
+    qsGldasMosaic{3} = qsbGldasMosaic{3} + qsbGldasMosaic{3};
     qsGldasMosaic{2}(qsGldasMosaic{2} < 0) = 360 + qsGldasMosaic{2}(qsGldasMosaic{2} < 0);
 
     monthLens = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -95,6 +96,6 @@ for p = 4:size(plantQsTimeSeries, 1)
     finalQsAnomTimeSeries(p,:) = (plantQsTimeSeries(p,:)-movmean(plantQsTimeSeries(p,:),365*10))./movstd(plantQsTimeSeries(p,:),365*10);
 end
 
-csvwrite('2019-electricity/entsoe-nuke-pp-runoff-all.csv', plantQsTimeSeries);
-csvwrite('2019-electricity/entsoe-nuke-pp-runoff-anom-all.csv', finalQsAnomTimeSeries);
+csvwrite('2019-electricity/global-pp-runoff-all.csv', plantQsTimeSeries);
+csvwrite('2019-electricity/global-pp-runoff-anom-all.csv', finalQsAnomTimeSeries);
 

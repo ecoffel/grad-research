@@ -19,9 +19,6 @@ import sys,os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = False
-regenAggOutages = False
-
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -37,6 +34,9 @@ plantYearData = plantTxData[0,:]
 plantMonthData = plantTxData[1,:]
 plantDayData = plantTxData[2,:]
 plantTxData = plantTxData[3:,:]
+
+plantQsData = np.genfromtxt('global-pp-runoff-anom-all.csv', delimiter=',', skip_header=0)
+plantQsData = plantQsData[3:,:]
 
 pcModel10 = []
 pcModel50 = []
@@ -56,11 +56,12 @@ print('computing historical systemwide PC...')
 # loop over all global plants
 for p in range(0, plantTxData.shape[0]):
     
+    if p%50 == 0:
+        print('processing historical plant %d...'%p)
+    
     syswidePCHistCurPlant10 = []
     syswidePCHistCurPlant50 = []
     syswidePCHistCurPlant90 = []
-    
-    normCap = globalPlants['caps'][p]
     
     for year in range(1981, 2018+1):
         
@@ -68,30 +69,51 @@ for p in range(0, plantTxData.shape[0]):
         syswidePCHistCurYear50 = []
         syswidePCHistCurYear90 = []
         
-        ind = np.where((plantYearData==year) & ((plantMonthData == 7) | (plantMonthData == 8)))[0]
+        for month in range(1,13):
         
-        # loop over all days in current year
-        for day in range(len(ind)):
-            tx = plantTxData[p,ind[day]]
-            qs = 0#plantTxData[p,ind[day]]
+            syswidePCHistCurMonth10 = []
+            syswidePCHistCurMonth50 = []
+            syswidePCHistCurMonth90 = []
             
-            # predict plant capacity for current historical day
-            pcPred10 = pcModel10.predict([1, tx, tx**2, tx**3, \
-                                          qs, qs**2, qs**3, qs**4, qs**5, \
-                                          tx*qs,
-                                          0])
-            pcPred50 = pcModel10.predict([1, tx, tx**2, tx**3, \
-                                          qs, qs**2, qs**3, qs**4, qs**5, \
-                                          tx*qs,
-                                          0])
-            pcPred90 = pcModel10.predict([1, tx, tx**2, tx**3, \
-                                          qs, qs**2, qs**3, qs**4, qs**5, \
-                                          tx*qs,
-                                          0])
+            ind = np.where((plantYearData == year) & \
+                           (plantMonthData == month))[0]
             
-            syswidePCHistCurYear10.append(pcPred10)
-            syswidePCHistCurYear50.append(pcPred50)
-            syswidePCHistCurYear90.append(pcPred90)
+            # loop over all days in current year
+            for day in range(len(ind)):
+                tx = plantTxData[p,ind[day]]
+                qs = plantQsData[p,ind[day]]
+                
+                if tx >= 20:
+                    # predict plant capacity for current historical day
+                    pcPred10 = pcModel10.predict([1, tx, tx**2, tx**3, \
+                                                  qs, qs**2, qs**3, qs**4, qs**5, \
+                                                  tx*qs,
+                                                  0])[0]
+                    pcPred50 = pcModel10.predict([1, tx, tx**2, tx**3, \
+                                                  qs, qs**2, qs**3, qs**4, qs**5, \
+                                                  tx*qs,
+                                                  0])[0]
+                    pcPred90 = pcModel10.predict([1, tx, tx**2, tx**3, \
+                                                  qs, qs**2, qs**3, qs**4, qs**5, \
+                                                  tx*qs,
+                                                  0])[0]
+                else:
+                    pcPred10 = 100
+                    pcPred50 = 100
+                    pcPred90 = 100
+                
+                
+                if pcPred10 > 100: pcPred10 = 100
+                if pcPred50 > 100: pcPred50 = 100
+                if pcPred90 > 100: pcPred90 = 100
+    
+                syswidePCHistCurMonth10.append(pcPred10)
+                syswidePCHistCurMonth50.append(pcPred50)
+                syswidePCHistCurMonth90.append(pcPred90)
+            
+            syswidePCHistCurYear10.append(syswidePCHistCurMonth10)
+            syswidePCHistCurYear50.append(syswidePCHistCurMonth50)
+            syswidePCHistCurYear90.append(syswidePCHistCurMonth90)
         
         syswidePCHistCurPlant10.append(syswidePCHistCurYear10)
         syswidePCHistCurPlant50.append(syswidePCHistCurYear50)
@@ -105,27 +127,26 @@ syswidePCHist10 = np.array(syswidePCHist10)
 syswidePCHist50 = np.array(syswidePCHist50)
 syswidePCHist90 = np.array(syswidePCHist90)
 
-globalPC = {'globalPCHist10':np.array(syswidePCHist10), \
-            'globalPCHist50':np.array(syswidePCHist50), \
-            'globalPCHist90':np.array(syswidePCHist90)}
+globalPC10 = {'globalPCHist10':np.array(syswidePCHist10)}
+globalPC50 = {'globalPCHist50':np.array(syswidePCHist50)}
+globalPC90 = {'globalPCHist90':np.array(syswidePCHist90)}
 
-with gzip.open('global-pc-future/global-pc-hist.dat', 'wb') as f:
-    pickle.dump(globalPC, f)
+print('writing gzip files...')
+
+with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-10.dat', 'wb') as f:
+    pickle.dump(globalPC10, f)
+with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-50.dat', 'wb') as f:
+    pickle.dump(globalPC50, f)
+with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-90.dat', 'wb') as f:
+    pickle.dump(globalPC90, f)
 
 # load future mean warming data and recompute PC
-syswidePCFut10 = []
-syswidePCFut50 = []
-syswidePCFut90 = []
-
 print('computing future systemwide PC...')
 for w in range(1, 4+1):
-    syswidePCFutCurGMT10 = []
-    syswidePCFutCurGMT50 = []
-    syswidePCFutCurGMT90 = []
-    
+        
     for m in range(len(models)):
         
-        fileName = 'global-pc-future/global-pc-future-%ddeg-%s.dat'%(w, models[m])
+        fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-future-%ddeg-%s.dat'%(w, models[m])
         
         if os.path.isfile(fileName):
             continue
@@ -175,33 +196,49 @@ for w in range(1, 4+1):
                 syswidePCFutCurYear90 = []
                 
                 # tx for current year's summer
-                ind = np.where((plantTxYearData == year) & (plantTxMonthData >= 7) & (plantTxMonthData <= 8))[0]
+                for month in range(1,13):
+                    
+                    syswidePCFutCurMonth10 = []
+                    syswidePCFutCurMonth50 = []
+                    syswidePCFutCurMonth90 = []
                 
-                if len(ind) == 0:
-                    for day in range(62):    
-                        syswidePCFutCurYear10.append(np.nan)
-                        syswidePCFutCurYear50.append(np.nan)
-                        syswidePCFutCurYear90.append(np.nan)
-                else:
-                    for day in range(len(ind)):
-                        curTx = plantTxData[p, ind[day]]
-                        curQs = plantQsData[p, ind[day]]
-                    
-                        pcPred10 = pcModel10.predict([1, curTx, curTx**2, curTx**3, \
-                                                                 curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
-                        pcPred50 = pcModel50.predict([1, curTx, curTx**2, curTx**3, \
-                                                                 curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
-                        pcPred90 = pcModel90.predict([1, curTx, curTx**2, curTx**3, \
-                                                                 curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                    ind = np.where((plantTxYearData == year) & \
+                                   (plantTxMonthData == month))[0]
+                
+                    if len(ind) == 0:
+                        for day in range(62):    
+                            syswidePCFutCurMonth10.append(np.nan)
+                            syswidePCFutCurMonth50.append(np.nan)
+                            syswidePCFutCurMonth90.append(np.nan)
+                    else:
+                        for day in range(len(ind)):
+                            curTx = plantTxData[p, ind[day]]
+                            curQs = plantQsData[p, ind[day]]
                         
-                        if pcPred10 > 100: pcPred10 = 100
-                        if pcPred50 > 100: pcPred50 = 100
-                        if pcPred90 > 100: pcPred90 = 100
-                         
-                        syswidePCFutCurYear10.append(pcPred10)
-                        syswidePCFutCurYear50.append(pcPred50)
-                        syswidePCFutCurYear90.append(pcPred90)
-                    
+                            if curTx >= 20:
+                                pcPred10 = pcModel10.predict([1, curTx, curTx**2, curTx**3, \
+                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                                pcPred50 = pcModel50.predict([1, curTx, curTx**2, curTx**3, \
+                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                                pcPred90 = pcModel90.predict([1, curTx, curTx**2, curTx**3, \
+                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                            else:
+                                pcPred10 = 100
+                                pcPred50 = 100
+                                pcPred90 = 100
+                                
+                            if pcPred10 > 100: pcPred10 = 100
+                            if pcPred50 > 100: pcPred50 = 100
+                            if pcPred90 > 100: pcPred90 = 100
+                            
+                            syswidePCFutCurMonth10.append(pcPred10)
+                            syswidePCFutCurMonth50.append(pcPred50)
+                            syswidePCFutCurMonth90.append(pcPred90)
+                        
+                    syswidePCFutCurYear10.append(syswidePCFutCurMonth10)
+                    syswidePCFutCurYear50.append(syswidePCFutCurMonth50)
+                    syswidePCFutCurYear90.append(syswidePCFutCurMonth90)
+                        
                 syswidePCFutCurPlant10.append(syswidePCFutCurYear10)
                 syswidePCFutCurPlant50.append(syswidePCFutCurYear50)
                 syswidePCFutCurPlant90.append(syswidePCFutCurYear90)
@@ -209,11 +246,6 @@ for w in range(1, 4+1):
             syswidePCFutCurModel10.append(syswidePCFutCurPlant10)
             syswidePCFutCurModel50.append(syswidePCFutCurPlant50)
             syswidePCFutCurModel90.append(syswidePCFutCurPlant90)
-        
-        # convert to np array because each model may have different # elements 
-        syswidePCFutCurGMT10.append(np.array(syswidePCFutCurModel10))
-        syswidePCFutCurGMT50.append(np.array(syswidePCFutCurModel50))
-        syswidePCFutCurGMT90.append(np.array(syswidePCFutCurModel90))
 
         globalPC = {'globalPCFut10':np.array(syswidePCFutCurModel10), \
                     'globalPCFut50':np.array(syswidePCFutCurModel50), \

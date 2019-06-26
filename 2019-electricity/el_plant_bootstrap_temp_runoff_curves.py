@@ -106,7 +106,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 plt.figure(figsize=(4,4))
 plt.xlim([19, 51])
 plt.ylim([75, 100])
-plt.grid(True)
+plt.grid(True, color=[.9, .9, .9])
 
 plt.plot(xd, ydAll.T, '-', linewidth = 1, color = [.65, .65, .65], alpha = .2)
 p1 = plt.plot(xd, yd10, '-', linewidth = 2.5, color = snsColors[1], label='90th Percentile')
@@ -178,7 +178,7 @@ for k in range(len(xd)):
 plt.figure(figsize=(4,4))
 plt.xlim([-3.1, 3.1])
 plt.ylim([75, 100])
-plt.grid(True)
+plt.grid(True, color=[.9, .9, .9])
 
 plt.plot(qd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
 p1 = plt.plot(qd, yd10, '-', linewidth = 2.5, color = snsColors[1], label='90th Percentile')

@@ -67,7 +67,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
 plt.ylim([0, 22])
-plt.grid(True, alpha=.5)
+plt.grid(True, alpha=.5, color=[.9, .9, .9])
 plt.gca().set_axisbelow(True)
 
 b = plt.bar(range(1, 13), np.nanmean(meanOutage, axis=1), \
@@ -119,8 +119,8 @@ for m in range(1, 13):
     ind = np.where(entsoePlants['months'] == m)[0]
     curMonth.extend(np.nanmean(entsoePlants['tx'][:, ind], axis=1))
     
-    ind = np.where(mon[0,:] == m)[0]
-    curMonth.extend(np.nanmean(tx[:, ind], axis=1))
+    ind = np.where(nukeData['plantMonthsAll'][0,:] == m)[0]
+    curMonth.extend(np.nanmean(nukePlants['tx'][:, ind], axis=1))
     
     histTempsByMonth.append(curMonth)
 
@@ -128,64 +128,64 @@ histTempsByMonth = np.array(histTempsByMonth)
 histTempsByMonth = np.nanmean(histTempsByMonth, axis=1)
 
 # load future temps and runoff values
-qsAnomMonthlyMeanFut = []
-txMonthlyMeanFut = []
-txMonthlyMaxFut = []
-    
-# loop over all models
-for m in range(len(models)):
-    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
-    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-    plantTxYearData = plantTxData[0,1:].copy()
-    plantTxMonthData = plantTxData[1,1:].copy()
-    plantTxDayData = plantTxData[2,1:].copy()
-    plantTxData = plantTxData[3:,1:].copy()
-    
-    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
-    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-    plantQsYearData = plantTxData[0,1:].copy()
-    plantQsMonthData = plantTxData[1,1:].copy()
-    plantQsDayData = plantTxData[2,1:].copy()
-    plantQsData = plantQsData[3:,1:].copy()
-
-    qsAnomMonthlyMeanFutCurModel = []
-    txMonthlyMeanFutCurModel = []
-    txMonthlyMaxFutCurModel = []
-
-    for p in range(plantTxData.shape[0]):
-        plantMonthlyTxMeanFut = []
-        plantMonthlyTxMaxFut = []
-        plantMonthlyQsAnomMeanFut = []
-        
-        for month in range(1,13):
-            ind = np.where((plantTxMonthData==month))[0]
-            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
-            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
-        
-        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
-        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
-        
-        for month in range(0,12):
-            plantMonthlyTxMaxFut.append([])
-            for y in np.unique(plantTxYearData):
-                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
-                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
-    
-        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
-    
-    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
-    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
-    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
-    
-    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
-    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
-    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
-
-qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
-txMonthlyMeanFut = np.array(txMonthlyMeanFut)
-txMonthlyMaxFut = np.array(txMonthlyMaxFut)
-
-
+#qsAnomMonthlyMeanFut = []
+#txMonthlyMeanFut = []
+#txMonthlyMaxFut = []
+#    
+## loop over all models
+#for m in range(len(models)):
+#    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
+#    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+#    plantTxYearData = plantTxData[0,1:].copy()
+#    plantTxMonthData = plantTxData[1,1:].copy()
+#    plantTxDayData = plantTxData[2,1:].copy()
+#    plantTxData = plantTxData[3:,1:].copy()
+#    
+#    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
+#    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+#    plantQsYearData = plantTxData[0,1:].copy()
+#    plantQsMonthData = plantTxData[1,1:].copy()
+#    plantQsDayData = plantTxData[2,1:].copy()
+#    plantQsData = plantQsData[3:,1:].copy()
+#
+#    qsAnomMonthlyMeanFutCurModel = []
+#    txMonthlyMeanFutCurModel = []
+#    txMonthlyMaxFutCurModel = []
+#
+#    for p in range(plantTxData.shape[0]):
+#        plantMonthlyTxMeanFut = []
+#        plantMonthlyTxMaxFut = []
+#        plantMonthlyQsAnomMeanFut = []
+#        
+#        for month in range(1,13):
+#            ind = np.where((plantTxMonthData==month))[0]
+#            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
+#            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
+#        
+#        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
+#        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
+#        
+#        for month in range(0,12):
+#            plantMonthlyTxMaxFut.append([])
+#            for y in np.unique(plantTxYearData):
+#                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
+#                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
+#    
+#        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
+#    
+#    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
+#    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
+#    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
+#    
+#    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
+#    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
+#    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
+#
+#qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
+#txMonthlyMeanFut = np.array(txMonthlyMeanFut)
+#txMonthlyMaxFut = np.array(txMonthlyMaxFut)
+#
+#
 
 
 
@@ -352,28 +352,18 @@ qsMonthlyMeanFutGMT = np.array(qsMonthlyMeanFutGMT)
 
 txMonthlyMeanFutGMTSorted = np.sort(np.nanmean(txMonthlyMeanFutGMT, axis=2), axis=1)
 
-modelRange = np.nanmean(np.nanmean(txMonthlyMeanFut,axis=2),axis=1)
-modelRangeSorted = sorted(modelRange)
-ind10 = np.where(modelRange == modelRangeSorted[1])[0]
-ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
-
 
 fig = plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
 plt.ylim([4, 38])
-plt.grid(True, alpha=.5)
+plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
-plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=2, color=snsColors[0])
+plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=2, color='black')
 
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFutGMT[1,:,:,:],axis=1),axis=0), '-', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), txMonthlyMeanFutGMTSorted[1,-1,:], '--', lw=1, color='#ffb835')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFutGMT[3,:,:,:],axis=1),axis=0), '-', lw=2, color=snsColors[1])
 plt.plot(list(range(1,13)), txMonthlyMeanFutGMTSorted[3,-2,:], '--', lw=1, color=snsColors[1])
-
-
-#plt.plot(list(range(1,13)), np.nanmean(txMonthlyMeanFut[ind10[0],:,:], axis=0), '--', lw=1, color=snsColors[1])
-#plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFut, axis=1), axis=0), '-', lw=3, color=snsColors[1])
-#plt.plot(list(range(1,13)), np.nanmean(txMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
 
@@ -399,6 +389,8 @@ plt.tick_params(
 #x0,x1 = plt.gca().get_xlim()
 #y0,y1 = plt.gca().get_ylim()
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+
 
 if plotFigs:
     plt.savefig('temps-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -530,7 +522,7 @@ demByMonthFutSorted = np.sort(demByMonthFut, axis=1)
 plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
 plt.ylim([.5, 2.3])
-plt.grid(True, alpha=.5)
+plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot([0,13], [1,1], '--k', lw=1)
 plt.plot(list(range(1,13)), np.squeeze(np.nanmean(demByMonthFut[1,:,:], axis=0)), '-', lw=2, color='#ffb835')
@@ -557,18 +549,11 @@ plt.tick_params(
     top=False,         # ticks along the top edge are off
     labelbottom=False) # labels along the bottom edge are off
 
-
 #plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 #plt.ylabel('Generation', fontname = 'Helvetica', fontsize=12)
 
 if plotFigs:
     plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
-
-modelRange = np.nanmean(np.nanmean(txMonthlyMaxFut,axis=2),axis=1)
-modelRangeSorted = sorted(modelRange)
-ind10 = np.where(modelRange == modelRangeSorted[1])[0]
-ind90 = np.where(modelRange == modelRangeSorted[-2])[0]
 
 
 mon = nukeData['plantMonthsAll']
@@ -592,15 +577,15 @@ qsMonthlyMeanFutGMTSorted = np.sort(np.nanmean(qsMonthlyMeanFutGMT, axis=2), axi
 plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
 plt.ylim([-1, 1.3])
-plt.grid(True, alpha=.5)
+plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot([0,13], [0,0], '--k', lw=1)
-plt.plot(list(range(1,13)), histQsByMonth, '-', lw=2, color=snsColors[0])
+plt.plot(list(range(1,13)), histQsByMonth, '-', lw=2, color='black')
 
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(qsMonthlyMeanFutGMT[1,:,:,:], axis=1), axis=0), '-', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), qsMonthlyMeanFutGMTSorted[1,0,:], '--', lw=1, color='#ffb835')
-plt.plot(list(range(1,13)), np.nanmean(np.nanmean(qsMonthlyMeanFutGMT[3,:,:,:], axis=1), axis=0), '-', lw=2, color='#8c4e23')
-plt.plot(list(range(1,13)), qsMonthlyMeanFutGMTSorted[3,0,:], '--', lw=1, color='#8c4e23')
+plt.plot(list(range(1,13)), np.nanmean(np.nanmean(qsMonthlyMeanFutGMT[3,:,:,:], axis=1), axis=0), '-', lw=2, color=snsColors[1])
+plt.plot(list(range(1,13)), qsMonthlyMeanFutGMTSorted[3,0,:], '--', lw=1, color=snsColors[1])
 
 
 #plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind10[0],:,:], axis=0), '--', lw=1, color='#8c4e23')

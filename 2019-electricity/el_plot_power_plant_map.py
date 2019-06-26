@@ -217,6 +217,6 @@ m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', lin
 #xpt, ypt = m(entsoeLat[np.array(cogenInds)], entsoeLon[np.array(cogenInds)])
 #m.scatter(ypt, xpt, s=mSize, color='pink', edgecolors="black", label='Cogen', zorder=10)
 
-plt.legend(markerscale=3, prop = {'size':12, 'family':'Helvetica'})
+plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'})
 #plt.show()
 plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)

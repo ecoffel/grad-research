@@ -2,7 +2,7 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
 
 plantTxTimeSeries = [];
 
@@ -67,27 +67,6 @@ for y = startYear:endYear
             vec = datevec(curDate);
         end
             
-%         for year = 1:size(tx, 1)
-%             for month = 1:size(tx, 2)
-%                 for day = 1:size(tx, 3)
-% 
-%                     vec = datevec(curDate);
-%                     txYears(end+1) = vec(1);
-%                     txMonths(end+1) = vec(2);
-%                     txDays(end+1) = vec(3);
-%                     
-%                     curTx = squeeze(tx(year, month, day));
-%                     if ~isnan(curTx)
-%                         txClean(end+1) = curTx;
-%                     else
-%                         txClean(end+1) = NaN;
-%                     end
-%                     
-%                     curDate = addtodate(curDate, 1, 'day');
-%                 end
-%             end
-%         end
-
         if i == 1
             curPlantTxTimeSeries(1, :) = txYears;
             curPlantTxTimeSeries(2, :) = txMonths;
@@ -102,5 +81,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/entsoe-nuke-pp-tx-all.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/global-pp-tx-all.csv', plantTxTimeSeries);
 
