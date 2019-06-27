@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import statsmodels.api as sm
-import pickle
+import pickle, gzip
 import sys,os
 
 import el_build_temp_demand_model
@@ -428,94 +428,114 @@ nukeMonthlyTxMaxHist = np.nanmean(np.array(nukeMonthlyTxMaxHist), axis=0)
 monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist), axis=1)
 
 
-demHist = []
-for plant in range(monthlyTxMaxHist.shape[1]):
-    demHistPlant = []
-    for month in range(0,12):
-        demHistMonth = []
-        for d in range(len(demTempModels)):
-            tx = monthlyTxMaxHist[month, plant]
-            txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
-            demHistMonth.append(txProj)
-        
-        demHistPlant.append(demHistMonth)
-    demHist.append(demHistPlant)
-demHist = np.squeeze(np.nanmean(np.nanmean(np.array(demHist), axis=2), axis=0))
-
-# project future demand at GMT thresholds
-demProj = []
-for w in range(4):
-    demProjCurGMT = []
-    for model in range(txMonthlyMaxFutGMT.shape[1]):
-        demProjCurModel = []
-        for plant in range(txMonthlyMaxFutGMT.shape[2]):
-            demProjCurPlant = []
-            for month in range(txMonthlyMaxFutGMT.shape[3]):
-                demProjCurMonth = []
-                
-                tx = txMonthlyMaxFutGMT[w, model, plant, month]
-                
-                for d in range(len(demTempModels)):
-                    txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
-                    demProjCurMonth.append(txProj)
-                
-                demProjCurPlant.append(demProjCurMonth)
-            demProjCurModel.append(demProjCurPlant)
-        demProjCurGMT.append(demProjCurModel)
-    demProj.append(demProjCurGMT)
-demProj = np.squeeze(np.array(demProj))
-demProj = np.nanmean(np.nanmean(demProj, axis=4), axis=2)
-
-# calculate change factor between future modeled demand and historical
-demMult = []
-for w in range(demProj.shape[0]):
-    demMultGMT = []
-    for model in range(demProj.shape[1]):
-        demMultModel = []
-        for month in range(0, 12):
-            demMultModel.append(demProj[w, model, month] / demHist[month])
-        demMultGMT.append(demMultModel)
-    demMult.append(demMultGMT)
-demMult = np.array(demMult)
-
-tx = demData['txScatter']
-dem = demData['demTxScatter']
-mon = demData['monthScatter']    
-
-txAll = []
-demAll = []
-monAll = []
-
-for s in range(tx.shape[0]):
-    txAll.extend(tx[s])
-    demAll.extend(dem[s])
-    monAll.extend(mon[s])
-
-txAll = np.array(txAll)
-demAll = np.array(demAll) * 100
-monAll = np.array(monAll)
+if os.path.isfile('demand-projections.dat'):
+    with gzip.open('demand-projections.dat', 'rb') as f:
+        pickle.load(f)
     
+    demHist = demData['demHist']
+    demProj = demData['demProj']
+    demMult = demData['demMult']
+    demByMonth = demData['demByMonthHist']
+    demByMonthFut = demData['demByMonthFut']
+    
+else:
 
-# calculate historical demand by month
-demByMonth = []
-for m in range(1, 13):    
-    ind = np.where(monAll == m)[0]
-    demByMonth.append(np.array(np.nanmean(demAll[ind])))
-demByMonth = np.array(demByMonth)
-demByMonth = 1 + ((demByMonth - np.nanmean(demByMonth)) / (np.nanmax(demByMonth) - np.nanmin(demByMonth)))
-
-
-# and multiply that historical demand by the modeled demand change factor due to warming
-demByMonthFut = []
-for w in range(4):
-    demByMonthFutCurGMT = []
-    for model in range(demMult.shape[1]):
-        demByMonthFutCurModel = []
-        for month in range(12):
-            demByMonthFutCurModel.append(demByMonth[month] * demMult[w,model,month])
-        demByMonthFutCurGMT.append(demByMonthFutCurModel)
-    demByMonthFut.append(demByMonthFutCurGMT)
-demByMonthFut = np.array(demByMonthFut)
+    demHist = []
+    for plant in range(monthlyTxMaxHist.shape[1]):
+        demHistPlant = []
+        for month in range(0,12):
+            demHistMonth = []
+            for d in range(len(demTempModels)):
+                tx = monthlyTxMaxHist[month, plant]
+                txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+                demHistMonth.append(txProj)
+            
+            demHistPlant.append(demHistMonth)
+        demHist.append(demHistPlant)
+    demHist = np.squeeze(np.nanmean(np.nanmean(np.array(demHist), axis=2), axis=0))
+    
+    # project future demand at GMT thresholds
+    demProj = []
+    for w in range(4):
+        demProjCurGMT = []
+        for model in range(txMonthlyMaxFutGMT.shape[1]):
+            demProjCurModel = []
+            for plant in range(txMonthlyMaxFutGMT.shape[2]):
+                demProjCurPlant = []
+                for month in range(txMonthlyMaxFutGMT.shape[3]):
+                    demProjCurMonth = []
+                    
+                    tx = txMonthlyMaxFutGMT[w, model, plant, month]
+                    
+                    for d in range(len(demTempModels)):
+                        txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+                        demProjCurMonth.append(txProj)
+                    
+                    demProjCurPlant.append(demProjCurMonth)
+                demProjCurModel.append(demProjCurPlant)
+            demProjCurGMT.append(demProjCurModel)
+        demProj.append(demProjCurGMT)
+    demProj = np.squeeze(np.array(demProj))
+    demProj = np.nanmean(np.nanmean(demProj, axis=4), axis=2)
+    
+    # calculate change factor between future modeled demand and historical
+    demMult = []
+    for w in range(demProj.shape[0]):
+        demMultGMT = []
+        for model in range(demProj.shape[1]):
+            demMultModel = []
+            for month in range(0, 12):
+                demMultModel.append(demProj[w, model, month] / demHist[month])
+            demMultGMT.append(demMultModel)
+        demMult.append(demMultGMT)
+    demMult = np.array(demMult)
+    
+    tx = demData['txScatter']
+    dem = demData['demTxScatter']
+    mon = demData['monthScatter']    
+    
+    txAll = []
+    demAll = []
+    monAll = []
+    
+    for s in range(tx.shape[0]):
+        txAll.extend(tx[s])
+        demAll.extend(dem[s])
+        monAll.extend(mon[s])
+    
+    txAll = np.array(txAll)
+    demAll = np.array(demAll) * 100
+    monAll = np.array(monAll)
+        
+    
+    # calculate historical demand by month
+    demByMonth = []
+    for m in range(1, 13):    
+        ind = np.where(monAll == m)[0]
+        demByMonth.append(np.array(np.nanmean(demAll[ind])))
+    demByMonth = np.array(demByMonth)
+    demByMonth = 1 + ((demByMonth - np.nanmean(demByMonth)) / (np.nanmax(demByMonth) - np.nanmin(demByMonth)))
+    
+    
+    # and multiply that historical demand by the modeled demand change factor due to warming
+    demByMonthFut = []
+    for w in range(4):
+        demByMonthFutCurGMT = []
+        for model in range(demMult.shape[1]):
+            demByMonthFutCurModel = []
+            for month in range(12):
+                demByMonthFutCurModel.append(demByMonth[month] * demMult[w,model,month])
+            demByMonthFutCurGMT.append(demByMonthFutCurModel)
+        demByMonthFut.append(demByMonthFutCurGMT)
+    demByMonthFut = np.array(demByMonthFut)
+    
+    with gzip.open('demand-projections.dat', 'wb') as f:
+        demData = {'demHist':demHist, \
+                   'demProj':demProj, \
+                   'demMult':demMult, \
+                   'demByMonthHist':demByMonth, \
+                   'demByMonthFut':demByMonthFut}
+        pickle.dump(demData, f)
 
 demByMonthFutSorted = np.sort(demByMonthFut, axis=1)
 

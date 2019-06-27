@@ -69,73 +69,99 @@ returnPeriodsPrc = 1/returnPeriods * (62.0/100.0)
 returnPeriodLabels = ['50', '30', '10', '5', '1', '1/2', '1/10']
 
 
-        
-
-print('calculating percentiles for historical')
-with gzip.open('global-pc-future/global-pc-hist.dat', 'rb') as f:
-    globalPCHist = pickle.load(f)
+if not os.path.isfile('plant-percentiles.dat'):
     
-    syswidePCHist10 = globalPCHist['globalPCHist10']
-    syswidePCHist50 = globalPCHist['globalPCHist50']
-    syswidePCHist90 = globalPCHist['globalPCHist90']
-    
-plantPercentilesHist = []
-for p in range(syswidePCHist10.shape[0]):
-    plantTx1d = np.reshape(syswidePCHist10[p,:,:], (syswidePCHist10[p,:,:].shape[0]*syswidePCHist10[p,:,:].shape[1]), order='C')
-    plantPercentilesHist.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
-plantPercentilesHist = np.array(plantPercentilesHist)
-plantPercentilesHist = np.nanmean(plantPercentilesHist, axis=0)
-
-plantPercentilesFut = []
-
-# these are the percentile scores under warming for different mean plant capacities
-#futPercentileLevels = np.arange(90,96,1)
-#futPercentileScores = []
-
-for w in range(1,4+1):
-    plantPercentilesFutCurGMT = []
-#    futPercentileScoresCurGMT = []
-    
-    for model in range(len(models)):
-        plantPercentilesFutCurModel = []
-#        futPercentileScoresCurModel = []
+    print('calculating percentiles for historical')
+    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-10.dat', 'rb') as f:
+        syswidePCHist10 = pickle.load(f)
+        syswidePCHist10 = syswidePCHist10['globalPCHist10']
+    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-50.dat', 'rb') as f:
+        syswidePCHist50 = pickle.load(f)
+        syswidePCHist50 = syswidePCHist50['globalPCHist50']
+    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-90.dat', 'rb') as f:
+        syswidePCHist90 = pickle.load(f)
+        syswidePCHist90 = syswidePCHist90['globalPCHist90']
         
-        fileName = 'global-pc-future/global-pc-future-%ddeg-%s.dat'%(w, models[model])
         
-        if not os.path.isfile(fileName):
-            filler = []
+    plantPercentilesHist = []
+    for p in range(syswidePCHist10.shape[0]):
+        plantTx1d = []
+        for year in range(syswidePCHist10.shape[1]):
+            for month in range(6,7+1):
+                for day in range(len(syswidePCHist10[p,year,month])):
+                    plantTx1d.append(syswidePCHist10[p,year,month][day])
+        plantTx1d = np.array(plantTx1d)
+        plantPercentilesHist.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
+    plantPercentilesHist = np.array(plantPercentilesHist)
+    plantPercentilesHist = np.nanmean(plantPercentilesHist, axis=0)
+    
+    plantPercentilesFut = []
+    
+    # these are the percentile scores under warming for different mean plant capacities
+    #futPercentileLevels = np.arange(90,96,1)
+    #futPercentileScores = []
+    
+    for w in range(1,4+1):
+        plantPercentilesFutCurGMT = []
+    #    futPercentileScoresCurGMT = []
+        
+        for model in range(len(models)):
+            plantPercentilesFutCurModel = []
+    #        futPercentileScoresCurModel = []
+            
+            fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-future-%ddeg-%s.dat'%(w, models[model])
+            
+            if not os.path.isfile(fileName):
+                filler = []
+                for p in range(syswidePCHist10.shape[0]):
+                    filler.append([np.nan]*len(returnPeriodsPrc))
+                plantPercentilesFutCurGMT.append(filler)
+                continue
+            
+            print('calculating percentiles for %s/+%dC'%(models[model],w))
+            
+            with gzip.open(fileName, 'rb') as f:
+                globalPC = pickle.load(f)
+                
+                globalPCFut10 = globalPC['globalPCFut10']
+                globalPCFut50 = globalPC['globalPCFut50']
+                globalPCFut90 = globalPC['globalPCFut90']
+            
             for p in range(syswidePCHist10.shape[0]):
-                filler.append([np.nan]*len(returnPeriodsPrc))
-            plantPercentilesFutCurGMT.append(filler)
-            continue
+                plantTx1d = []
+                for year in range(globalPCFut10.shape[1]):
+                    for month in range(6,7+1):
+                        for day in range(len(globalPCFut10[p,year,month])):
+                            plantTx1d.append(globalPCFut10[p,year,month][day])
+                plantTx1d = np.array(plantTx1d)
+                plantPercentilesFutCurModel.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
+                
+                # calc future prctile scores for mean plant capacity levels 
+    #            plantPercLevels = []
+    #            for percLevel in futPercentileLevels:
+    #                plantPercLevels.append(stats.percentileofscore(plantTx1d, percLevel))
+    #            futPercentileScoresCurModel.append(plantPercLevels)
+    #        
+            plantPercentilesFutCurGMT.append(plantPercentilesFutCurModel)
+    #        futPercentileScoresCurGMT.append(futPercentileScoresCurModel)
         
-        print('calculating percentiles for %s/+%dC'%(models[model],w))
+        plantPercentilesFut.append(plantPercentilesFutCurGMT)
+    #    futPercentileScores.append(futPercentileScoresCurGMT)
         
-        with gzip.open(fileName, 'rb') as f:
-            globalPC = pickle.load(f)
-            
-            globalPCFut10 = globalPC['globalPCFut10']
-            globalPCFut50 = globalPC['globalPCFut50']
-            globalPCFut90 = globalPC['globalPCFut90']
-        
-        for p in range(syswidePCHist10.shape[0]):
-            plantTx1d = np.reshape(globalPCFut10[p,:,:], (globalPCFut10[p,:,:].shape[0]*globalPCFut10[p,:,:].shape[1]), order='C')
-            plantPercentilesFutCurModel.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
-            
-            # calc future prctile scores for mean plant capacity levels 
-#            plantPercLevels = []
-#            for percLevel in futPercentileLevels:
-#                plantPercLevels.append(stats.percentileofscore(plantTx1d, percLevel))
-#            futPercentileScoresCurModel.append(plantPercLevels)
-#        
-        plantPercentilesFutCurGMT.append(plantPercentilesFutCurModel)
-#        futPercentileScoresCurGMT.append(futPercentileScoresCurModel)
+    plantPercentilesFut = np.array(plantPercentilesFut)
+    plantPercentilesFut = np.nanmean(plantPercentilesFut, axis=2)
     
-    plantPercentilesFut.append(plantPercentilesFutCurGMT)
-#    futPercentileScores.append(futPercentileScoresCurGMT)
+    with gzip.open('plant-percentiles.dat', 'wb') as f:
+        plantPercentiles = {'plantPercentilesHist':plantPercentilesHist, \
+                            'plantPercentilesFut':plantPercentilesFut}
+        pickle.dump(plantPercentiles, f)
     
-plantPercentilesFut = np.array(plantPercentilesFut)
-plantPercentilesFut = np.nanmean(plantPercentilesFut, axis=2)
+else:
+    
+    with gzip.open('plant-percentiles.dat', 'rb') as f:
+        plantPercentiles = pickle.load(f)
+        plantPercentilesHist = plantPercentiles['plantPercentilesHist']
+        plantPercentilesFut = plantPercentiles['plantPercentilesFut']
 
 ## convert perc score into return period
 #futPercentileScores = np.array(futPercentileScores)
@@ -168,16 +194,16 @@ xpos = np.arange(1,len(returnPeriods)+1)
 plt.figure(figsize=(4,4))
 plt.ylim([87,97])
 #plt.xlim([-3.1, 3.1])
-plt.grid(True, alpha = 0.5)
+plt.grid(True, color=[.9,.9,.9])
 
 plt.plot([5, 5], [80, 100], '--k', lw=1)
 
 plt.plot(xpos, plantPercentilesHist, 'ko', markersize=5, label='Historical')
-plt.plot(xpos+.15, np.nanmean(plantPercentilesFut[1,:,:], axis=0), 'o', markersize=5, color=snsColors[0], label='+ 2$\degree$C')
+plt.plot(xpos+.15, np.nanmean(plantPercentilesFut[1,:,:], axis=0), 'o', markersize=5, color='#ffb835', label='+ 2$\degree$C')
 plt.errorbar(xpos+.15, \
              np.nanmean(plantPercentilesFut[1,:,:], axis=0), \
              yerr = np.nanstd(plantPercentilesFut[1,:,:], axis=0), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
+             ecolor = '#ffb835', elinewidth = 1, capsize = 3, fmt = 'none')
 
 plt.plot(xpos-.15, np.nanmean(plantPercentilesFut[3,:,:], axis=0), 'o', markersize=5, color=snsColors[1], label='+ 4$\degree$C')
 plt.errorbar(xpos-.15, \

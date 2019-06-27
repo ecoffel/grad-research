@@ -28,8 +28,14 @@ plantMonthData = plantTxData[1,:].copy()
 plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
+fileName = 'entsoe-nuke-pp-runoff-anom-all.csv'
+plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+plantQsData = plantQsData[3:,:].copy()
+
+
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
+plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 
 models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
@@ -185,6 +191,11 @@ p1 = plt.plot(qd, yd10, '-', linewidth = 2.5, color = snsColors[1], label='90th 
 p2 = plt.plot(qd, yd50, '-', linewidth = 2.5, color = [0, 0, 0], label='50th Percentile')
 p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th Percentile')
 
+colors = plt.get_cmap('BrBG')
+
+for m in plantMeanRunoff:
+    plt.plot([m, m], [75,77], color=colors(m/max(plantMeanRunoff)), linewidth=1)
+
 plt.gca().set_xticks(range(-3, 4, 1))
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -194,7 +205,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Standardized runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center right')

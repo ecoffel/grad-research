@@ -89,24 +89,24 @@ if not os.path.isfile('aggregated-global-outages-hist-50.dat'):
                 
                 monthlyOutages10 = (100-np.array(globalPCHist10[p,year,month][:])) / 100.0
                 numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
-                monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1/1e6)
+                monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
                 
                 # divide by actual # of days in this month, then multiply by full summer (62 days)
                 # this accounts for model/years where there are nans
                 if numDays10 > 0:
                     monthlyTotal10 /= numDays10
-                    monthlyTotal10 *= monthLen[month]
+                    monthlyTotal10 *= monthLen[month] * 24 * 3600
                     
                     yearlyOutagesHistCurYear10.append(monthlyTotal10)
                     
                 
                 monthlyOutages50 = (100-np.array(globalPCHist50[p,year,month][:])) / 100.0
                 numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
-                monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1/1e6)
+                monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
                 
                 if numDays50 > 0:
                     monthlyTotal50 /= numDays50
-                    monthlyTotal50 *= monthLen[month]
+                    monthlyTotal50 *= monthLen[month] * 24 * 3600
                     
                     yearlyOutagesHistCurYear50.append(monthlyTotal50)
                     
@@ -114,11 +114,11 @@ if not os.path.isfile('aggregated-global-outages-hist-50.dat'):
                     
                 monthlyOutages90 = (100-np.array(globalPCHist90[p,year,month][:])) / 100.0
                 numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
-                monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1/1e6)
+                monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
                 
                 if numDays90 > 0:
                     monthlyTotal90 /= numDays90
-                    monthlyTotal90 *= monthLen[month]
+                    monthlyTotal90 *= monthLen[month] * 24 * 3600
                     
                     yearlyOutagesHistCurYear90.append(monthlyTotal90)
             
@@ -199,7 +199,6 @@ else:
 
 
 
-sys.exit()
 if not os.path.isfile('aggregated-global-outages-fut10.dat'):
     print('processing future...')
     
@@ -271,29 +270,29 @@ if not os.path.isfile('aggregated-global-outages-fut10.dat'):
                         monthlyOutages90[indBadData90] = np.nan
                         
                         numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
-                        monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1/1e6)
+                        monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
                         
                         # divide by actual # of days in this month, then multiply by full summer (62 days)
                         # this accounts for model/years where there are nans
                         if numDays10 > 0:
                             monthlyTotal10 /= numDays10
-                            monthlyTotal10 *= monthLen[month]                            
+                            monthlyTotal10 *= monthLen[month] * 24 * 3600                      
                             yearlyOutagesCurYear10.append(monthlyTotal10)
                         
                         numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
-                        monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1/1e6)
+                        monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
                         
                         if numDays50 > 0:
                             monthlyTotal50 /= numDays50
-                            monthlyTotal50 *= monthLen[month]                            
+                            monthlyTotal50 *= monthLen[month] * 24 * 3600                            
                             yearlyOutagesCurYear50.append(monthlyTotal50)
                         
                         numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
-                        monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1/1e6)
+                        monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
                         
                         if numDays90 > 0:
                             monthlyTotal90 /= numDays90
-                            monthlyTotal90 *= monthLen[month]
+                            monthlyTotal90 *= monthLen[month] * 24 * 3600
                             yearlyOutagesCurYear90.append(monthlyTotal90)
                         
                     
@@ -389,11 +388,17 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 #z = np.polyfit(xd, mean90[0,:], 1)
 #histPolyTx90 = np.poly1d(z)
 
+sys.exit()
+
+totalEnergy = np.nansum(globalPlants['caps'])*30*24*3600*1e6/1e18
+
+pctEnergyGrid = np.round(np.array([0, .025, .05, .075, .1, .125, .15, .175])/totalEnergy*100,decimals=1)
+
 xpos = np.arange(1,13)
                                
 plt.figure(figsize=(4,4))
 #plt.xlim([0, 7])
-plt.ylim([0, 2.3])
+plt.ylim([0, .18])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
@@ -407,8 +412,9 @@ plt.fill_between(xpos, yearlyOutagesHist50, np.nanmean(yearlyOutagesFut50[1],axi
 plt.fill_between(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), np.nanmean(yearlyOutagesFut50[3],axis=0), facecolor=snsColors[1], alpha=.5, interpolate=True)
 
 plt.xticks(xpos)
+plt.yticks([0, .025, .05, .075, .1, .125, .15, .175])
 plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Monthly US-EU outage (TW)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Monthly US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -420,9 +426,19 @@ for tick in plt.gca().yaxis.get_major_ticks():
 leg = plt.legend(prop = {'size':11, 'family':'Helvetica'})
 leg.get_frame().set_linewidth(0.0)
     
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+ax2 = plt.gca().twinx()
+plt.ylim([0, .18])
+plt.yticks([0, .025, .05, .075, .1, .125, .15, .175])
+plt.gca().set_yticklabels(pctEnergyGrid)
+plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)
+
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label2.set_fontname('Helvetica')    
+    tick.label2.set_fontsize(14)
+
+#x0,x1 = plt.gca().get_xlim()
+#y0,y1 = plt.gca().get_ylim()
+#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
     plt.savefig('accumulated-monthly-outage.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -432,8 +448,8 @@ xpos = np.array([1, 3, 4, 5, 6])
 
 plt.figure(figsize=(5,4))
 plt.xlim([0, 7])
-#plt.ylim([0, 2.3])
-plt.grid(True, alpha = 0.25)
+plt.ylim([.55, 1.175])
+plt.grid(True, color=[.9,.9,.9])
 
 plt.plot(xpos[0]-.15, np.nansum(yearlyOutagesHist10), 'o', markersize=5, color=snsColors[1])
 plt.plot(xpos[0], np.nansum(yearlyOutagesHist50), 'o', markersize=5, color='black')
@@ -519,7 +535,7 @@ plt.errorbar(xpos[4]+.15, \
 
 
 
-plt.ylabel('Annual US-EU outage (TW)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Annual US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
 plt.gca().set_xticks([1, 3, 4, 5, 6])
 plt.gca().set_xticklabels(['1981-2018', '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])

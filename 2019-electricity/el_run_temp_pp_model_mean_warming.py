@@ -320,6 +320,16 @@ pCapTxxFutMeanWarming50 = np.array(pCapTxxFutMeanWarming50)
 pCapTxxFutMeanWarming90 = np.array(pCapTxxFutMeanWarming90)
 
 
+with gzip.open('pc-change-gmt-change.dat', 'wb') as f:
+    pcChg = {'pCapTxxFutMeanWarming10':pCapTxxFutMeanWarming10, \
+             'pCapTxxFutMeanWarming50':pCapTxxFutMeanWarming50, \
+             'pCapTxxFutMeanWarming90':pCapTxxFutMeanWarming90, \
+             'pcTxx10':pcTxx10, \
+             'pcTxx50':pcTxx50, \
+             'pcTxx90':pcTxx90}
+    pickle.dump(pcChg, f)
+
+sys.exit()
 xd = np.array(list(range(1981, 2018+1)))-1981+1
 
 z = np.polyfit(xd, pcTxx10, 1)
