@@ -192,7 +192,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 xpos = np.arange(1,len(returnPeriods)+1)
 
 plt.figure(figsize=(4,4))
-plt.ylim([87,97])
+plt.ylim([88,97])
 #plt.xlim([-3.1, 3.1])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -211,7 +211,7 @@ plt.errorbar(xpos-.15, \
              yerr = np.nanstd(plantPercentilesFut[3,:,:], axis=0), \
              ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
 
-plt.yticks(np.arange(87,97,1))
+plt.yticks(np.arange(88,97,1))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

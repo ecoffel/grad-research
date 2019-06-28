@@ -2,7 +2,7 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
 
 plantTxTimeSeries = [];
 
@@ -81,5 +81,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/global-pp-tx-all.csv', plantTxTimeSeries);
+csvwrite('2019-electricity/global-pp-tx-all-cap.csv', plantTxTimeSeries);
 

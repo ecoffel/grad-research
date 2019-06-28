@@ -3,7 +3,7 @@ startYear = 1981;
 endYear = 2018;
 
 % plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
-plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
+plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
 
 plantQsTimeSeries = [];
 
@@ -96,6 +96,6 @@ for p = 4:size(plantQsTimeSeries, 1)
     finalQsAnomTimeSeries(p,:) = (plantQsTimeSeries(p,:)-movmean(plantQsTimeSeries(p,:),365*10))./movstd(plantQsTimeSeries(p,:),365*10);
 end
 
-csvwrite('2019-electricity/global-pp-runoff-all.csv', plantQsTimeSeries);
-csvwrite('2019-electricity/global-pp-runoff-anom-all.csv', finalQsAnomTimeSeries);
+csvwrite('2019-electricity/global-pp-runoff-all-cap.csv', plantQsTimeSeries);
+csvwrite('2019-electricity/global-pp-runoff-anom-all-cap.csv', finalQsAnomTimeSeries);
 

@@ -388,8 +388,23 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 #z = np.polyfit(xd, mean90[0,:], 1)
 #histPolyTx90 = np.poly1d(z)
 
-sys.exit()
+yearlyOutagesHist10 = yearlyOutagesHist10/1e18
+yearlyOutagesHist50 = yearlyOutagesHist50/1e18
+yearlyOutagesHist90 = yearlyOutagesHist90/1e18
 
+yearlyOutagesFut10 = yearlyOutagesFut10/1e18
+yearlyOutagesFut50 = yearlyOutagesFut50/1e18
+yearlyOutagesFut90 = yearlyOutagesFut90/1e18
+                               
+                               
+#yearlyOutagesHist10 = yearlyOutagesHist10*24*3600*1e6*1e6/1e18
+#yearlyOutagesHist50 = yearlyOutagesHist50*24*3600*1e6*1e6/1e18
+#yearlyOutagesHist90 = yearlyOutagesHist90*24*3600*1e6*1e6/1e18
+#
+#yearlyOutagesFut10 = yearlyOutagesFut10*24*3600*1e6*1e6/1e18
+#yearlyOutagesFut50 = yearlyOutagesFut50*24*3600*1e6*1e6/1e18
+#yearlyOutagesFut90 = yearlyOutagesFut90*24*3600*1e6*1e6/1e18
+#                               
 totalEnergy = np.nansum(globalPlants['caps'])*30*24*3600*1e6/1e18
 
 pctEnergyGrid = np.round(np.array([0, .025, .05, .075, .1, .125, .15, .175])/totalEnergy*100,decimals=1)
@@ -403,12 +418,12 @@ plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
 plt.plot(xpos, yearlyOutagesHist50, '-', lw=2, color='black', label='Historical')
-plt.plot(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), '-', lw=2, color=snsColors[0], label='+ 2$\degree$C')
+plt.plot(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
 plt.plot(xpos, np.nanmean(yearlyOutagesFut50[3],axis=0), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
 
 
 plt.fill_between(xpos, yearlyOutagesHist50, [0]*12, facecolor='black', alpha=.5, interpolate=True)
-plt.fill_between(xpos, yearlyOutagesHist50, np.nanmean(yearlyOutagesFut50[1],axis=0), facecolor=snsColors[0], alpha=.5, interpolate=True)
+plt.fill_between(xpos, yearlyOutagesHist50, np.nanmean(yearlyOutagesFut50[1],axis=0), facecolor='#ffb835', alpha=.5, interpolate=True)
 plt.fill_between(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), np.nanmean(yearlyOutagesFut50[3],axis=0), facecolor=snsColors[1], alpha=.5, interpolate=True)
 
 plt.xticks(xpos)

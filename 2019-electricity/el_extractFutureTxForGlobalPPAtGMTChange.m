@@ -18,7 +18,7 @@ rcp = 'rcp85';
 useGlobalPlants = true;
 
 if useGlobalPlants
-    plantLatLon = csvread('2019-electricity/global-pp-lat-lon.csv');
+    plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
 else
     plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
 end
@@ -60,7 +60,7 @@ for g = 1:4
     for model = 1:length(models)
         
         if useGlobalPlants
-            fileTarget = ['2019-electricity/gmt-anomaly-temps/global-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
+            fileTarget = ['2019-electricity/gmt-anomaly-temps/global-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '-all-cap.csv'];
         else
             fileTarget = ['2019-electricity/gmt-anomaly-temps/us-eu-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
         end

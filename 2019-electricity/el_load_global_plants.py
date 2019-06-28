@@ -33,7 +33,7 @@ def fuelCheck(s):
         return False
 
 def capacityCheck(c):
-    if c >= 100:
+    if c >= 0:
         return True
     else:
         return False
@@ -121,7 +121,7 @@ def loadGlobalWx(wxdata):
 
 def exportGlobalPlants(globalPlants):
     i = 0
-    with open('global-pp-lat-lon.csv', 'w') as f:
+    with open('global-pp-lat-lon-all-cap.csv', 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(globalPlants['lats'])):
             csvWriter.writerow([i, globalPlants['lats'][i], globalPlants['lons'][i]])
