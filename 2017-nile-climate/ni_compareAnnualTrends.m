@@ -8,7 +8,7 @@ rcp = 'historical';
 timePeriod = [1981 2016];
 
 plotTempPTrends = true;
-plotHotDryTrends = true;
+plotHotDryTrends = false;
 
 if ~exist('eraTemp', 'var')
     fprintf('loading ERA...\n');
@@ -104,7 +104,7 @@ if ~exist('udelt')
     udelt = {udelt{1}, udelt{2}, flipud(udelt{3})};
 end
 
-blue = true;
+blue = false;
 
 [regionInds, regions, regionNames] = ni_getRegions();
 regionBounds = regions('nile');
@@ -446,7 +446,7 @@ if plotTempPTrends
     set(gca, 'XTick', [1 2], 'XTickLabels', {'Temperature', 'Precipitation'});
     set(gca, 'YTick', -.3:.1:.3);
     set(gcf, 'Position', get(0,'Screensize'));
-    export_fig('annual-temp-pr-trends-total.eps');
+    export_fig('annual-temp-pr-trends-white.eps');
     close all;
 %     if blue
 %         export_fig('annual-temp-pr-trends-blue.eps');

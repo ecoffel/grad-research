@@ -98,11 +98,17 @@ fclose(fid);
 gmtMinYear = [-1, -1, -1, -1];
 gmtMaxYear = [-1, -1, -1, -1];
 
+gmtMeanYear = [0, 0, 0, 0];
+gmtMeanCnt = [0, 0, 0, 0];
+
 for m = 1:length(GMTYears)
     for g = 1:4
         if length(GMTYears{m}) < g || length(GMTYears{m}{g}) == 0
             continue;
         end
+        
+        gmtMeanYear(g) = gmtMeanYear(g) + nanmin(GMTYears{m}{g});
+        gmtMeanCnt(g) = gmtMeanCnt(g) + 1;
         
         if gmtMinYear(g) == -1 || nanmin(GMTYears{m}{g}) < gmtMinYear(g)
             gmtMinYear(g) = nanmin(GMTYears{m}{g});

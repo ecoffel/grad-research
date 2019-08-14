@@ -81,24 +81,36 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 xpos = np.arange(1,5)
 
 plt.figure(figsize=(3,4))
-plt.xlim([.25, 4.75])
+plt.xlim([.25, 5.25])
 plt.ylim([0, 24])
 plt.grid(True, color=[.9,.9,.9])
-plt.plot(xpos, np.nanmean(demDiffPct,axis=1), 'o', markersize=5, color = 'black', label='Warming')
+for i in range(demDiffPct.shape[0]):
+    pp = np.nanmean(demDiffPct[i,:])
+    plt.plot([0, xpos[i]+.4], [pp, pp], '--', color = 'black')
 
 ydata90 = np.nanmean(additionalGen90,axis=1)
 ydata50 = np.nanmean(additionalGen50,axis=1)
 ydata10 = np.nanmean(additionalGen10,axis=1)
 for x in range(len(xpos)):
-    plt.plot(xpos[x]-.25, ydata90[x], marker=6, markersize=8, color = snsColors[0], label='Warming & curtailment')
-    plt.plot(xpos[x], ydata50[x], marker=6, markersize=8, color = 'black', label='Warming & curtailment')
-    plt.plot(xpos[x]+.25, ydata10[x], marker=6, markersize=8, color = snsColors[1], label='Warming & curtailment')
+    
+    if x == 0:
+        label10 = '10th Percentile'
+        label50 = '50th Percentile'
+        label90 = '90th Percentile'
+    else:
+        label10 = None
+        label50 = None
+        label90 = None
+    
+    l1 = plt.plot(xpos[x]-.25, ydata90[x], marker='o', markersize=8, color = snsColors[0], label=label10)
+    l2 = plt.plot(xpos[x], ydata50[x], marker='o', markersize=8, color = 'black', label=label50)
+    l3 = plt.plot(xpos[x]+.25, ydata10[x], marker='o', markersize=8, color = snsColors[1], label=label90)
 
 yax = np.arange(0, 25, 3)
 
 plt.xticks(range(1,5))
 plt.yticks(yax)
-plt.ylabel('US-EU Generation growth (%)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Warming-driven growth (%)', fontname = 'Helvetica', fontsize=16)
 plt.xlabel('GMT Change', fontname = 'Helvetica', fontsize=16)
 plt.gca().set_xticklabels(['1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
 
@@ -109,12 +121,12 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-#leg = plt.legend(prop = {'size':12, 'family':'Helvetica'})
+#leg = plt.legend(prop = {'size':11, 'family':'Helvetica'}, loc = 'lower right')
 #leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()
 plt.ylim([0, 24])
-plt.ylabel('US-EU Generation growth (GW)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Warming-driven growth (GW)', fontname = 'Helvetica', fontsize=16)
 plt.yticks(yax)
 plt.gca().set_yticklabels([int(x) for x in np.round(yax/100 * np.nansum(globalPlants['caps']) / 1e3)])
 
@@ -122,14 +134,61 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label2.set_fontname('Helvetica')    
     tick.label2.set_fontsize(14)
 
+if plotFigs:
+    plt.savefig('gen-growth-warming-curtailment.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-plt.figure(figsize=(2,4))
-plt.grid(True, color=[.9,.9,.9])
-plt.plot(range(1,5), np.nanmean(additionalGenGrowth10,axis=1))
+ieaCurtailment = np.nansum(np.array([iea2017*np.nanmean(additionalGen50[0,:]/100), \
+                                     iea2025*np.nanmean(additionalGen50[1,:]/100), \
+                                     iea2030*np.nanmean(additionalGen50[1,:]/100), \
+                                     iea2035*np.nanmean(additionalGen50[1,:]/100), \
+                                     iea2040*np.nanmean(additionalGen50[2,:]/100)]), axis=1)
 
-plt.ylabel('Generation growth (%)', fontname = 'Helvetica', fontsize=16)
-plt.xticks(range(1,5))
+ieaCoal = np.array([iea2017[0], iea2025[0], iea2030[0], iea2035[0], iea2040[0]])
+ieaGas = np.array([iea2017[1], iea2025[1], iea2030[1], iea2035[1], iea2040[1]]) 
+ieaOil = np.array([iea2017[2], iea2025[2], iea2030[2], iea2035[2], iea2040[2]])
+ieaNuke = np.array([iea2017[3], iea2025[3], iea2030[3], iea2035[3], iea2040[3]])
+ieaBio = np.array([iea2017[4], iea2025[4], iea2030[4], iea2035[4], iea2040[4]])
+ieaDates = np.array([2017, 2025, 2030, 2035, 2040])
+ieaLegend = ['Coal', 'Gas', 'Oil', 'Nuke', 'Bio', 'Warming+\nCurtailment']
+
+barW = 2
+
+plt.figure(figsize=(4,4))
+plt.grid(True, color=[.9,.9,.9], axis='y')
+
+plt.bar(ieaDates, ieaCoal, width=barW, color='#f03b20')
+plt.bar(ieaDates, ieaGas, bottom=ieaCoal, width=barW, color='#3182bd')
+plt.bar(ieaDates, ieaOil, bottom=ieaCoal+ieaGas, width=barW, color='black')
+plt.bar(ieaDates, ieaNuke, bottom=ieaCoal+ieaGas+ieaOil, width=barW, color='orange')
+plt.bar(ieaDates, ieaBio, bottom=ieaCoal+ieaGas+ieaOil+ieaNuke, width=barW, color='#56a619')
+plt.bar(ieaDates, ieaCurtailment, bottom=ieaCoal+ieaGas+ieaOil+ieaNuke+ieaBio, width=barW, color='#7c7d7a', hatch='/')
+
+plt.xticks([2017, 2025, 2030, 2035, 2040])
+plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Energy (EJ)', fontname = 'Helvetica', fontsize=16)
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+leg = plt.legend(ieaLegend, prop = {'size':11, 'family':'Helvetica'}, \
+                 loc='right', bbox_to_anchor=(1.5, .5))
+leg.get_frame().set_linewidth(0.0)
+
+if plotFigs:
+    plt.savefig('gen-growth-by-type.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+#plt.figure(figsize=(2,4))
+#plt.grid(True, color=[.9,.9,.9])
+#plt.plot(range(1,5), np.nanmean(additionalGenGrowth50,axis=1))
+#
+#plt.ylabel('Generation growth (%)', fontname = 'Helvetica', fontsize=16)
+#plt.xticks(range(1,5))
 
 
 

@@ -39,7 +39,7 @@ def capacityCheck(c):
         return False
 
 def loadGlobalPlants():
-    globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[]}
+    globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[], 'yearCom':[]}
         
     with open('%s/ecoffel/data/projects/electricity/global_power_plant_database.csv'%dataDir, 'r', encoding='latin-1') as f:
         i = 0
@@ -54,18 +54,26 @@ def loadGlobalPlants():
             fuel = parts[7].strip()
             cap = float(parts[4].strip())
             
+            year = parts[11].strip()
+            if len(year) > 0:
+                year = float(year)
+            else:
+                year = np.nan
+            
             if countryCheck(country) and fuelCheck(fuel) and capacityCheck(cap):
                 globalPlants['countries'].append(country)
                 globalPlants['caps'].append(cap)
                 globalPlants['lats'].append(float(parts[5].strip()))
                 globalPlants['lons'].append(float(parts[6].strip()))
                 globalPlants['fuels'].append(fuel)
+                globalPlants['yearCom'].append(year)
     
     globalPlants['countries'] = np.array(globalPlants['countries'])
     globalPlants['caps'] = np.array(globalPlants['caps'])
     globalPlants['lats'] = np.array(globalPlants['lats'])
     globalPlants['lons'] = np.array(globalPlants['lons'])
     globalPlants['fuels'] = np.array(globalPlants['fuels'])
+    globalPlants['yearCom'] = np.array(globalPlants['yearCom'])
 
     return globalPlants
 
