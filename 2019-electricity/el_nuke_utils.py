@@ -107,6 +107,9 @@ def loadWxData(eba, wxdata):
     fileNameGldas = 'nuke-qs-gldas-all.csv'
     qs = np.genfromtxt(fileNameGldas, delimiter=',')
     
+    fileNameGrdc = 'nuke-qs-grdc.csv'
+    qsGrdc = np.genfromtxt(fileNameGrdc, delimiter=',')
+    
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []
     matchedQs = []
@@ -140,7 +143,7 @@ def loadWxData(eba, wxdata):
             matchedQs[i].append(qs[i,qsInd])
     matchedQs = np.array(matchedQs)
     
-    return {'tx':np.array(tx), 'cdd':np.array(cdd), 'qs':matchedQs, 'ids':np.array(ids)}
+    return {'tx':np.array(tx), 'cdd':np.array(cdd), 'qs':matchedQs, 'qsGrdc':qsGrdc[:,1:], 'ids':np.array(ids)}
 
 def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     
@@ -149,6 +152,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     tx = nukeMatchData['tx']
     cdd = nukeMatchData['cdd']
     qs = nukeMatchData['qs']
+    qsGrdc = nukeMatchData['qsGrdc']
     ids = nukeMatchData['ids']
     
     nukeLat = []
@@ -166,6 +170,13 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantQsTmp = []
     plantQs = []
     plantQsAnom = []
+    
+    plantQsGrdcSummer = []
+    plantQsGrdcAnomSummer = []
+    
+    plantQsGrdcTmp = []
+    plantQsGrdc = []
+    plantQsGrdcAnom = []
     
     plantYears = []
     plantMonths = []
@@ -186,6 +197,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantDays.append(eba[ids[i,0]]['day'])
             
             plantQsTmp.append(qs[i])
+            plantQsGrdcTmp.append(qsGrdc[i])
             
             nukeLat.append(eba[ids[i,0]]['lat'])
             nukeLon.append(eba[ids[i,0]]['lon'])
@@ -207,6 +219,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     plantQsTmp = np.array(plantQsTmp)
+    plantQsGrdcTmp = np.array(plantQsGrdcTmp)
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)
     
@@ -220,6 +233,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
         curCDD = cdd[i,1:]
         
         curQs = plantQsTmp[i]
+        curQsGrdc = plantQsGrdcTmp[i]
         
         if len(curPC)==len(curTx):
             
@@ -228,17 +242,21 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantTx.append(curTx)
             plantQs.append(curQs)
             plantQsAnom.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsGrdc.append(curQsGrdc)
+            plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
             
             # restrict to summer only
             curPC = curPC[summerInds]
             curTx = curTx[summerInds]
             curCDD = curCDD[summerInds]
             curQs = curQs[summerInds]
+            curQsGrdc = curQsGrdc[summerInds]
             nn = np.where((~np.isnan(curPC)) & (~np.isnan(curTx)) & (~np.isnan(curCDD)) & (~np.isnan(curQs)))[0]
             curPC = curPC[nn]
             curTx = curTx[nn]
             curCDD = curCDD[nn]
             curQs = curQs[nn]
+            curQsGrdc = curQsGrdc[nn]
             
             # now aggregate summer-restricted variables for this plant
             finalPlantPercCapacitySummer.append(curPC)
@@ -246,6 +264,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantCDD.append(curCDD)
             plantQsSummer.append(curQs)
             plantQsAnomSummer.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsGrdcSummer.append(curQsGrdc)
+            plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
             
             
     plantTx = np.array(plantTx)
@@ -257,6 +277,11 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     plantQsSummer = np.array(plantQsSummer)
     plantQsAnomSummer = np.array(plantQsAnomSummer)
     
+    plantQsGrdc = np.array(plantQsGrdc)
+    plantQsGrdcAnom = np.array(plantQsGrdcAnom)
+    plantQsGrdcSummer = np.array(plantQsGrdcSummer)
+    plantQsGrdcAnomSummer = np.array(plantQsGrdcAnomSummer)
+    
     plantIds = np.array(plantIds)
     
     finalPlantPercCapacity = np.array(finalPlantPercCapacity)
@@ -265,6 +290,8 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     d = {'txSummer': plantTxSummer, 'tx':plantTx, 'cddSummer':plantCDD, \
          'qsSummer':plantQsSummer, 'qsAnomSummer':plantQsAnomSummer, \
          'qs':plantQs, 'qsAnom':plantQsAnom, \
+         'qsGrdcSummer':plantQsGrdcSummer, 'qsGrdcAnomSummer':plantQsGrdcAnomSummer, \
+         'qsGrdc':plantQsGrdc, 'qsGrdcAnom':plantQsGrdcAnom, \
          'capacitySummer':finalPlantPercCapacitySummer, 'capacity':finalPlantPercCapacity, \
          'normalCapacity':plantCapacity, \
          'plantIds':plantIds, 'summerInds':summerInds, \
@@ -283,6 +310,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
     cdd = nukeMatchData['cdd']
     ids = nukeMatchData['ids']
     qs = nukeMatchData['qs']
+    qsGrdc = nukeMatchData['qsGrdc']
     
     # for averaging cdd and tx
     smoothingLen = 4
@@ -299,6 +327,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
     plantMonths = []
     plantDays = []
     plantQs = []
+    plantQsGrdc = []
     
     for i in range(ids.shape[0]):
         out = np.array(eba[ids[i,0]]['data'])
@@ -315,6 +344,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
             plantDays.append(eba[ids[i,0]]['day'])
             
             plantQs.append(qs[i])
+            plantQsGrdc.append(qsGrdc[i])
             
             if len(totalOut) == 0:
                 totalOut = out
@@ -329,11 +359,14 @@ def accumulateNukeWxData(eba, nukeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     plantQs = np.array(plantQs)
+    plantQsGrdc = np.array(plantQsGrdc)
     
     outageBool = []
     
     plantQsTotal = []
     plantQsAnomTotal = []
+    plantQsGrdcTotal = []
+    plantQsGrdcAnomTotal = []
     plantTxTotal = []
     plantTxAvgTotal = []
     plantCDDAccTotal = []
@@ -351,6 +384,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
         plantTx = tx[i,1:]
         plantCDD = cdd[i,1:]
         curQs = plantQs[i]
+        curQsGrdc = plantQsGrdc[i]
         
         # accumulate weekly cdd
         
@@ -380,11 +414,13 @@ def accumulateNukeWxData(eba, nukeMatchData):
             plantCDD = plantCDD[summerInds]
             plantCDDSmooth = plantCDDSmooth[summerInds]
             curQs = curQs[summerInds]
+            curQsGrdc = curQsGrdc[summerInds]
             
             nn = np.where((~np.isnan(plantCap)) & (~np.isnan(plantTx)) & (~np.isnan(plantTxAvg)) \
                           & (~np.isnan(plantCDD)) & (~np.isnan(plantCDDSmooth)) & (~np.isnan(curQs)))[0]
             
             curQs = curQs[nn]
+            curQsGrdc = curQsGrdc[nn]
             plantCap = plantCap[nn]
             plantTx = plantTx[nn]
             plantTxAvg = plantTxAvg[nn]
@@ -393,6 +429,8 @@ def accumulateNukeWxData(eba, nukeMatchData):
             
             plantQsTotal.extend(curQs)
             plantQsAnomTotal.extend((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsGrdcTotal.extend(curQsGrdc)
+            plantQsGrdcAnomTotal.extend((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
             plantCapTotal.extend(plantCap)
             plantTxTotal.extend(plantTx)
             plantTxAvgTotal.extend(plantTxAvg)
@@ -411,8 +449,9 @@ def accumulateNukeWxData(eba, nukeMatchData):
                     outageBool.append(0)
     
     plantQsTotal = np.array(plantQsTotal)
-    
     plantQsAnomTotal = np.array(plantQsAnomTotal)
+    plantQsGrdcTotal = np.array(plantQsGrdcTotal)
+    plantQsGrdcAnomTotal = np.array(plantQsGrdcAnomTotal)
     
     plantTxTotal = np.array(plantTxTotal)
     plantTxAvgTotal = np.array(plantTxAvgTotal)
@@ -425,6 +464,7 @@ def accumulateNukeWxData(eba, nukeMatchData):
     
     d = {'txSummer':plantTxTotal, 'txAvgSummer':plantTxAvgTotal, 'cddSummer':plantCDDAccTotal, \
          'qsSummer':plantQsTotal, 'qsAnomSummer':plantQsAnomTotal, \
+         'qsGrdcSummer':plantQsGrdcTotal, 'qsGrdcAnomSummer':plantQsGrdcAnomTotal, \
          'capacitySummer':plantCapTotal, 'percCapacity':percCapacity, \
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
          'plantMeanTemps':plantMeanTempsAcc, 'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, \

@@ -16,7 +16,7 @@ import el_load_global_plants
 
 np.random.seed(19680801)
 
-plotFigs = True
+plotFigs = False
 
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])

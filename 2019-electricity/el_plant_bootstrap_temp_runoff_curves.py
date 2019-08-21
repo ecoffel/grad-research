@@ -17,7 +17,7 @@ import sys, os
 dataDir = 'e:/data/'
 
 plotFigs = False
-
+dumpData = False
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -38,7 +38,8 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsAnomSummer', 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsGrdcAnomSummer', 1000)
+
 
 # find fit percentiles for temperature
 t = 50
@@ -77,8 +78,9 @@ indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
 pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
-with gzip.open('pPolyData.dat', 'wb') as f:
-    pickle.dump(pPolyData, f)
+if dumpData:
+    with gzip.open('pPolyData.dat', 'wb') as f:
+        pickle.dump(pPolyData, f)
 
 
 xd = np.linspace(20, 50, 50)
@@ -218,6 +220,7 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
     plt.savefig('hist-pc-runoff-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+plt.show()
 sys.exit()
 
 

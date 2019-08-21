@@ -86,7 +86,13 @@ plt.ylim([0, 24])
 plt.grid(True, color=[.9,.9,.9])
 for i in range(demDiffPct.shape[0]):
     pp = np.nanmean(demDiffPct[i,:])
-    plt.plot([0, xpos[i]+.4], [pp, pp], '--', color = 'black')
+    
+    if i == 0:
+        labelLine = 'Warming'
+    else:
+        labelLine = None
+    
+    plt.plot([0, xpos[i]+.4], [pp, pp], '--', color = 'black', label=labelLine)
 
 ydata90 = np.nanmean(additionalGen90,axis=1)
 ydata50 = np.nanmean(additionalGen50,axis=1)
@@ -121,8 +127,10 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-#leg = plt.legend(prop = {'size':11, 'family':'Helvetica'}, loc = 'lower right')
-#leg.get_frame().set_linewidth(0.0)
+
+leg = plt.legend(prop = {'size':9, 'family':'Helvetica'}, \
+                 loc='lower right')
+leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()
 plt.ylim([0, 24])
@@ -182,6 +190,7 @@ leg.get_frame().set_linewidth(0.0)
 if plotFigs:
     plt.savefig('gen-growth-by-type.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+plt.show()
 
 #plt.figure(figsize=(2,4))
 #plt.grid(True, color=[.9,.9,.9])
