@@ -13,12 +13,15 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import pickle
 
-plotFigs = False
+plotFigs = True
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsSummer', 1000)
+tempVar = 'txSummer'
+qsVar = 'qsGrdcAnomSummer'
 
-#qsrange = np.arange(-2, 2.1, .1)
-qsrange = np.arange(0,10, .1)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+
+qsrange = np.arange(-2, 2.1, .1)
+#qsrange = np.arange(0,10, .1)
 
 yds = []
 
@@ -33,7 +36,7 @@ for m in range(len(models)):
         yd = []    
         for i in range(len(xd)):
             yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-                                        qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, 2])[0])
+                                        qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, qs[i]*xd[i], 2])[0])
         curCont.append(yd)
         
     yds.append(curCont)
@@ -66,8 +69,8 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-temp-qs-regression-contour.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-%s-regression-contour.eps'%(tempVar,qsVar), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+plt.show()
 
 

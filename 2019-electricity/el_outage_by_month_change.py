@@ -384,7 +384,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(4,1))
 plt.xlim([0, 13])
-plt.ylim([-6.5, 0])
+plt.ylim([-9, 0])
 plt.grid(True, alpha=.5, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -399,7 +399,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=1, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-6, -3, 0])
+plt.yticks([-8, -4, 0])
 
 plt.xticks(list(range(1,13)))
 
@@ -430,34 +430,34 @@ if plotFigs:
 
 
                                
-                               
-plt.figure(figsize=(4,2))
-plt.xlim([0, 13])
-plt.ylim([0, 28])
-plt.grid(True, alpha=.5)
-
-b = plt.bar(range(1, 13), np.nanmean(meanOutage, axis=1), \
-            yerr = np.nanstd(meanOutage, axis=1)/2, error_kw = dict(lw=1.5, capsize=3, capthick=1.5, ecolor=[.25, .25, .25]))
-for i in range(len(b)):
-    if i == 6 or i == 7:
-        b[i].set_color(snsColors[1])
-        b[i].set_edgecolor('black')
-    else:
-        b[i].set_color(snsColors[0])
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(10)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(10)
-
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
-#plt.ylabel('Mean outage (%)', fontname = 'Helvetica', fontsize=12)
-
-#x0,x1 = plt.gca().get_xlim()
-#y0,y1 = plt.gca().get_ylim()
-#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-if plotFigs:
-    plt.savefig('outages-by-month-change-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+#                               
+#plt.figure(figsize=(4,2))
+#plt.xlim([0, 13])
+#plt.ylim([0, 28])
+#plt.grid(True, alpha=.5)
+#
+#b = plt.bar(range(1, 13), np.nanmean(meanOutage, axis=1), \
+#            yerr = np.nanstd(meanOutage, axis=1)/2, error_kw = dict(lw=1.5, capsize=3, capthick=1.5, ecolor=[.25, .25, .25]))
+#for i in range(len(b)):
+#    if i == 6 or i == 7:
+#        b[i].set_color(snsColors[1])
+#        b[i].set_edgecolor('black')
+#    else:
+#        b[i].set_color(snsColors[0])
+#
+#for tick in plt.gca().xaxis.get_major_ticks():
+#    tick.label.set_fontname('Helvetica')
+#    tick.label.set_fontsize(10)
+#for tick in plt.gca().yaxis.get_major_ticks():
+#    tick.label.set_fontname('Helvetica')    
+#    tick.label.set_fontsize(10)
+#
+#plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
+##plt.ylabel('Mean outage (%)', fontname = 'Helvetica', fontsize=12)
+#
+##x0,x1 = plt.gca().get_xlim()
+##y0,y1 = plt.gca().get_ylim()
+##plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+#
+#if plotFigs:
+#    plt.savefig('outages-by-month-change-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)

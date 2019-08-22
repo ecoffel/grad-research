@@ -21,7 +21,6 @@ import sys,os
 dataDir = 'e:/data/'
 
 plotFigs = False
-regenAggOutages = False
 
 
 models = ['bcc-csm1-1-m', 'canesm2', \

@@ -65,6 +65,9 @@ for p in range(plantLatLon.shape[0]):
             minDist = d
             minDistId = grdcRefData[g,0]
     
+    if minDist > 200:
+        minDistId = -1
+    
     grdcMatchIds.append((plantLatLon[p,0], minDistId))
 
 # these are the station ids that correspond to the plant lat/lons
@@ -110,89 +113,115 @@ for g in range(len(grdcMatchIds)):
     curGrdcData = np.zeros(len(yearRange))
     curGrdcData[curGrdcData == 0] = np.nan
     
-    # if the daily data exists...
-    if os.path.exists('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId)):
-    
-        i = 0
+    # if a station has been identified
+    if minDistId != -1:
+        # if the daily data exists...
+        if os.path.exists('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId)):
         
-        with open('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId), 'r') as f:
-            for line in f:
-                if line[0] == '#':
-                    continue
-                
-                if i == 0:
+            i = 0
+            
+            with open('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId), 'r') as f:
+                for line in f:
+                    if line[0] == '#':
+                        continue
+                    
+                    if i == 0:
+                        i += 1
+                        continue
+                    
+                    parts = line.split(';')
+                    
+                    date = parts[0]
+                    dateParts = date.split('-')
+                    
+                    curYear = int(dateParts[0])
+                    curMonth = int(dateParts[1])
+                    curDay = int(dateParts[2])
+                    
+                    # what index in the time series are we at
+                    curDateIndex = np.where((yearRange==curYear) & (monthRange==curMonth) & (dayRange==curDay))[0]
+                    
+                    value = float(parts[2])
+                    
+                    if value < -500:
+                        value = np.nan
+                    
+                    curGrdcData[curDateIndex] = value
+                    
                     i += 1
-                    continue
-                
-                parts = line.split(';')
-                
-                date = parts[0]
-                dateParts = date.split('-')
-                
-                curYear = int(dateParts[0])
-                curMonth = int(dateParts[1])
-                curDay = int(dateParts[2])
-                
-                # what index in the time series are we at
-                curDateIndex = np.where((yearRange==curYear) & (monthRange==curMonth) & (dayRange==curDay))[0]
-                
-                value = float(parts[2])
-                
-                if value < -500:
-                    value = np.nan
-                
-                curGrdcData[curDateIndex] = value
-                
-                i += 1
-    
-    # if no daily data, try monthly
-    elif os.path.exists('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId)):
         
-        i = 0
-        
-        with open('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId), 'r') as f:
-            for line in f:
-                if line[0] == '#':
-                    continue
-                
-                if i == 0:
+        # if no daily data, try monthly
+        elif os.path.exists('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId)):
+            
+            i = 0
+            
+            with open('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId), 'r') as f:
+                for line in f:
+                    if line[0] == '#':
+                        continue
+                    
+                    if i == 0:
+                        i += 1
+                        continue
+                    
+                    parts = line.split(';')
+                    
+                    date = parts[0]
+                    dateParts = date.split('-')
+                    
+                    curYear = int(dateParts[0])
+                    curMonth = int(dateParts[1])
+                    
+                    # what index in the time series are we at
+                    curDateIndex = np.where((yearRange==curYear) & (monthRange==curMonth))[0]
+                    
+                    value = float(parts[2])
+                    
+                    if value < -500:
+                        value = np.nan
+                    
+                    # fill all values in current month
+                    for index in curDateIndex:
+                        curGrdcData[index] = value
+                    
                     i += 1
-                    continue
-                
-                parts = line.split(';')
-                
-                date = parts[0]
-                dateParts = date.split('-')
-                
-                curYear = int(dateParts[0])
-                curMonth = int(dateParts[1])
-                
-                # what index in the time series are we at
-                curDateIndex = np.where((yearRange==curYear) & (monthRange==curMonth))[0]
-                
-                value = float(parts[2])
-                
-                if value < -500:
-                    value = np.nan
-                
-                # fill all values in current month
-                for index in curDateIndex:
-                    curGrdcData[index] = value
-                
-                i += 1
-    
-    
+        
     if plantId < 50:
-        grdcDataEntsoe.append(np.insert(curGrdcData, 0, plantId))
+        # don't insert the plant id for entsoe
+        grdcDataEntsoe.append(curGrdcData)
     else:
+        # do insert plant id for nuke
         grdcDataNuke.append(np.insert(curGrdcData, 0, plantId))
             
+
+grdcDataNuke = np.array(grdcDataNuke)
+grdcDataEntsoe = np.array(grdcDataEntsoe)
 
 # write runoff data to file
 np.savetxt("nuke-qs-grdc.csv", grdcDataNuke, delimiter=",", fmt='%f')
 
-
+yearHeader = []
+monthHeader = []
+dayHeader = []
 # gen dates for entsoe data
+for y in range(2015,2018+1):
+    for m in range(1,12+1):
+        curMonthRange = calendar.monthrange(y,m) 
+        for d in range(0, curMonthRange[1]):
+            yearHeader.append(y)
+            monthHeader.append(m)
+            dayHeader.append(d+1)
 
+yearHeader = np.array(yearHeader)
+monthHeader = np.array(monthHeader)
+dayHeader = np.array(dayHeader)
+
+grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, dayHeader, axis=0)
+grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, monthHeader, axis=0)
+grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, yearHeader, axis=0)
 np.savetxt("entsoe-qs-grdc.csv", grdcDataEntsoe, delimiter=",", fmt='%f')
+
+
+
+
 

@@ -16,8 +16,11 @@ import sys, os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
+tempVar = 'txSummer'
+qsVar = 'qsGrdcAnomSummer'
+
 plotFigs = False
-dumpData = False
+dumpData = True
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -38,7 +41,7 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel('txSummer', 'qsGrdcAnomSummer', 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
 
 
 # find fit percentiles for temperature
@@ -79,7 +82,7 @@ indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
 if dumpData:
-    with gzip.open('pPolyData.dat', 'wb') as f:
+    with gzip.open('pPolyData-grdc.dat', 'wb') as f:
         pickle.dump(pPolyData, f)
 
 
@@ -147,7 +150,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-temp-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-regression-perc.png'%tempVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 
@@ -218,7 +221,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-runoff-regression-perc.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-regression-perc.png'%qsVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()

@@ -18,6 +18,16 @@ np.random.seed(19680801)
 
 plotFigs = False
 
+
+# in gw
+# coal, gas, oil, nuke, bioenergy
+iea2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
+iea2025 = np.array([9896.2, 6828.9, 763.2, 3088.7, 890.4]) / 24 / 365 * 1e3
+iea2030 = np.array([10015.9, 7517.4, 675.7, 3252.7, 1056.9]) / 24 / 365 * 1e3
+iea2035 = np.array([10172.0, 8265.5, 597.3, 3520.0, 1238.2]) / 24 / 365 * 1e3
+iea2040 = np.array([10335.1, 9070.6, 527.2, 3725.8, 1427.3]) / 24 / 365 * 1e3
+
+
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])
 
@@ -54,7 +64,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
 plt.figure(figsize=(5,2))
 plt.xlim([1950,2100])
-plt.ylim([0, 1400])
+plt.ylim([0, 4000])
 plt.grid(True, color=[.9,.9,.9])
 
 plt.plot(yearsRange, livingPlants40, color=snsColors[1], lw=2, label='40 Year\nLifespan')
@@ -70,7 +80,7 @@ plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
-plt.yticks(np.arange(0,1400,300))
+plt.yticks(np.arange(0,4100,1000))
     
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -90,7 +100,7 @@ if plotFigs:
 
 plt.figure(figsize=(5,2))
 plt.xlim([1950,2100])
-plt.ylim([0, 1400])
+plt.ylim([0, 4000])
 plt.grid(True, color=[.9,.9,.9])
 
 plt.plot(yearsRange, livingPlants80, color=snsColors[2], lw=2, label='80 Year\nLifespan')
@@ -106,7 +116,7 @@ plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
-plt.yticks(np.arange(0,1400,300))
+plt.yticks(np.arange(0,4100,1000))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -121,7 +131,7 @@ leg.get_frame().set_linewidth(0.0)
 if plotFigs:
     plt.savefig('plant-lifespan-80.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+plt.show()
 sys.exit()
 
 ydata90 = np.nanmean(additionalGen90,axis=1)
