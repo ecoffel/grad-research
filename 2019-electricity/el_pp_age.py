@@ -18,7 +18,6 @@ np.random.seed(19680801)
 
 plotFigs = False
 
-
 # in gw
 # coal, gas, oil, nuke, bioenergy
 iea2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
@@ -27,14 +26,21 @@ iea2030 = np.array([10015.9, 7517.4, 675.7, 3252.7, 1056.9]) / 24 / 365 * 1e3
 iea2035 = np.array([10172.0, 8265.5, 597.3, 3520.0, 1238.2]) / 24 / 365 * 1e3
 iea2040 = np.array([10335.1, 9070.6, 527.2, 3725.8, 1427.3]) / 24 / 365 * 1e3
 
+# coal, gas, oil, nuke, bioenergy
+ieaSust2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
+ieaSust2025 = np.array([7193, 6810, 604, 3302, 1039]) / 24 / 365 * 1e3
+ieaSust2030 = np.array([4847, 6829, 413, 3887, 1324]) / 24 / 365 * 1e3
+ieaSust2035 = np.array([3050, 6254, 274, 4534, 1646]) / 24 / 365 * 1e3
+ieaSust2040 = np.array([1981, 5358, 197, 4960, 1967]) / 24 / 365 * 1e3
 
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])
 
-globalPlants = el_load_global_plants.loadGlobalPlants()
+globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
 yearsCom = globalPlants['yearCom']
 plantCaps = globalPlants['caps'] / 1e3
+
 ind = np.where(~np.isnan(yearsCom))
 yearsCom = yearsCom[ind]
 
@@ -50,24 +56,24 @@ yearsComFutY = yearsComHist[0]
 
 yearsRange = range(1910,2100)
 livingPlants40 = np.zeros([len(range(1910,2100)), 1])
-livingPlants80 = np.zeros([len(range(1910,2100)), 1])
+livingPlants60 = np.zeros([len(range(1910,2100)), 1])
 
 for i, y in enumerate(range(1910, 2100)):
     # every plants start date
     for p in range(len(yearsCom)):
         if y >= yearsCom[p] and y <= yearsCom[p] + 40:
             livingPlants40[i] += plantCaps[p]
-        if y >= yearsCom[p] and y <= yearsCom[p] + 80:
-            livingPlants80[i] += plantCaps[p]
+        if y >= yearsCom[p] and y <= yearsCom[p] + 60:
+            livingPlants60[i] += plantCaps[p]
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
 plt.figure(figsize=(5,2))
 plt.xlim([1950,2100])
-plt.ylim([0, 4000])
+plt.ylim([0, 3500])
 plt.grid(True, color=[.9,.9,.9])
 
-plt.plot(yearsRange, livingPlants40, color=snsColors[1], lw=2, label='40 Year\nLifespan')
+plt.plot(yearsRange, livingPlants40, color=snsColors[1], lw=2, label='40 Year Lifespan')
 
 # fill curve up to 2020
 plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor=snsColors[1], alpha=.5, interpolate=True)
@@ -76,11 +82,25 @@ for g in range(GMTyears.shape[0]):
     yr = GMTyears[g]
     plt.plot([yr,yr], [0, 5000], '--k')
 
+# plot iea capacities
+plt.plot([2017], sum(iea2017), 'ok', markersize=5)
+p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=5, label='IEA New Policies')
+plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=5)
+
+#plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
+p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=5, label='IEA\nSustainable')
+plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=5)
+
+
 plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
-plt.yticks(np.arange(0,4100,1000))
+plt.yticks(np.arange(0,3500,1000))
     
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -89,7 +109,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':11, 'family':'Helvetica'}, loc = 'upper left')
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', framealpha=0)
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:
@@ -100,23 +120,38 @@ if plotFigs:
 
 plt.figure(figsize=(5,2))
 plt.xlim([1950,2100])
-plt.ylim([0, 4000])
+plt.ylim([0, 3500])
 plt.grid(True, color=[.9,.9,.9])
 
-plt.plot(yearsRange, livingPlants80, color=snsColors[2], lw=2, label='80 Year\nLifespan')
+plt.plot(yearsRange, livingPlants60, color=snsColors[2], lw=2, label='60 Year\nLifespan')
 
 # fill curve up to 2020
-plt.fill_between(np.array(yearsRange[0:111]), livingPlants80[0:111,0], np.array([0]*(111)), facecolor=snsColors[2], alpha=.5, interpolate=True)
+plt.fill_between(np.array(yearsRange[0:111]), livingPlants60[0:111,0], np.array([0]*(111)), facecolor=snsColors[2], alpha=.5, interpolate=True)
 
 for g in range(GMTyears.shape[0]):
     yr = GMTyears[g]
     plt.plot([yr,yr], [0, 5000], '--k')
 
+
+# plot iea capacities
+plt.plot([2017], sum(iea2017), 'ok', markersize=5)
+plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=5)
+
+#plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=5)
+plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=5)
+
+
 plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
-plt.yticks(np.arange(0,4100,1000))
+plt.yticks(np.arange(0,3500,1000))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -129,7 +164,7 @@ leg = plt.legend(prop = {'size':11, 'family':'Helvetica'}, loc = 'upper left')
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:
-    plt.savefig('plant-lifespan-80.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('plant-lifespan-60.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()

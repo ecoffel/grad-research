@@ -2,7 +2,10 @@
 startYear = 1981;
 endYear = 2018;
 
-plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
+% world, useu, entsoe-nuke
+plantData = 'world';
+
+plantLatLon = csvread(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-lat-lon.csv']);
 
 plantTxTimeSeries = [];
 
@@ -81,5 +84,5 @@ for y = startYear:endYear
     
 end
 
-csvwrite('2019-electricity/global-pp-tx-all-cap.csv', plantTxTimeSeries);
+csvwrite(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-tx.csv'], plantTxTimeSeries);
 

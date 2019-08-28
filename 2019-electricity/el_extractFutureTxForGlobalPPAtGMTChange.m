@@ -15,16 +15,12 @@ models = {'bcc-csm1-1-m', 'canesm2', ...
       
 rcp = 'rcp85';
 
-useGlobalPlants = true;
+% world, useu, entsoe-nuke
+plantData = 'useu';
 
-if useGlobalPlants
-    plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
-else
-    plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
-end
+plantLatLon = csvread(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-lat-lon.csv']);
 
-
-load('2019-electricity/GMTYears.mat');
+load('E:/data/ecoffel/data/projects/electricity/script-data/GMTYears.mat');
 
 plantTxTimeSeries = [];
 
@@ -59,15 +55,11 @@ for g = 1:4
     
     for model = 1:length(models)
         
-        if useGlobalPlants
-            fileTarget = ['2019-electricity/gmt-anomaly-temps/global-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '-all-cap.csv'];
-        else
-            fileTarget = ['2019-electricity/gmt-anomaly-temps/us-eu-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
-        end
+        fileTarget = ['E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/' plantData '-pp-' num2str(g) 'deg-tx-cmip5-' models{model} '.csv'];
         
-        if exist(fileTarget, 'file')
-            continue;
-        end
+%         if exist(fileTarget, 'file')
+%             continue;
+%         end
         
         modelPlantTxTimeSeries = [];
 
@@ -104,6 +96,11 @@ for g = 1:4
 
         % for all plants
         for i = 1:size(plantLatLon, 1)
+            
+            if mod(i,1000) == 0
+                fprintf('plant %d...\n', i);
+            end
+            
             ind = plantLatLon(i,1);
             lat = plantLatLon(i,2);
             lon = plantLatLon(i,3);

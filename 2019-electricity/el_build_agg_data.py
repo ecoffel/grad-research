@@ -28,31 +28,35 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 #gldas or grdc
 runoffModel = 'grdc'
+plantData = 'world'
 
-globalPlants = el_load_global_plants.loadGlobalPlants()
+if plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+elif plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
 
-plantTxData = np.genfromtxt('global-pp-tx-all.csv', delimiter=',', skip_header=0)
+plantTxData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:]
 plantMonthData = plantTxData[1,:]
 plantDayData = plantTxData[2,:]
 plantTxData = plantTxData[3:,:]
 
-plantQsData = np.genfromtxt('global-pp-runoff-anom-all.csv', delimiter=',', skip_header=0)
+plantQsData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-anom.csv'%plantData, delimiter=',', skip_header=0)
 plantQsData = plantQsData[3:,:]
 
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('pPolyData-%s.dat'%runoffModel, 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffModel, 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
 
 
-histFileName10 = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-10.dat'%runoffModel
-histFileName50 = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-50.dat'%runoffModel
-histFileName90 = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-90.dat'%runoffModel
+histFileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-10.dat'%(runoffModel, plantData)
+histFileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-50.dat'%(runoffModel, plantData)
+histFileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-90.dat'%(runoffModel, plantData)
 
 if not os.path.isfile(histFileName10):
     
@@ -142,12 +146,12 @@ if not os.path.isfile(histFileName10):
     
     print('writing gzip files...')
     
-    with gzip.open(histFileName10, 'wb') as f:
-        pickle.dump(globalPC10, f)
-    with gzip.open(histFileName50, 'wb') as f:
-        pickle.dump(globalPC50, f)
-    with gzip.open(histFileName90, 'wb') as f:
-        pickle.dump(globalPC90, f)
+    with open(histFileName10, 'wb') as f:
+        pickle.dump(globalPC10, f, protocol=4)
+    with open(histFileName50, 'wb') as f:
+        pickle.dump(globalPC50, f, protocol=4)
+    with open(histFileName90, 'wb') as f:
+        pickle.dump(globalPC90, f, protocol=4)
 
 # load future mean warming data and recompute PC
 print('computing future systemwide PC...')
@@ -155,9 +159,12 @@ for w in range(1, 4+1):
         
     for m in range(len(models)):
         
-        fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-future-%ddeg-%s.dat'%(runoffModel, w, models[m])
+        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-%ddeg-%s.dat'%(runoffModel, plantData, w, models[m])
+        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-10-%ddeg-%s.dat'%(runoffModel, plantData, w, models[m])
+        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-50-%ddeg-%s.dat'%(runoffModel, plantData, w, models[m])
+        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-90-%ddeg-%s.dat'%(runoffModel, plantData, w, models[m])
         
-        if os.path.isfile(fileName):
+        if os.path.isfile(fileName10) or os.path.isfile(fileName):
             continue
         
         print('processing %s/+%dC'%(models[m], w))
@@ -167,7 +174,7 @@ for w in range(1, 4+1):
         syswidePCFutCurModel90 = []
         
         # load data for current model and warming level
-        fileNameTemp = 'gmt-anomaly-temps/global-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/%s-pp-%ddeg-tx-cmip5-%s.csv'%(plantData, w, models[m])
     
         if not os.path.isfile(fileNameTemp):
             continue
@@ -182,7 +189,7 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,0:].copy()
         plantTxData = plantTxData[3:,0:].copy()
         
-        fileNameRunoff = 'gmt-anomaly-temps/global-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/%s-pp-%ddeg-runoff-cmip5-%s.csv'%(plantData, w, models[m])
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
         plantQsYearData = plantQsData[0,0:].copy()
@@ -256,9 +263,13 @@ for w in range(1, 4+1):
             syswidePCFutCurModel50.append(syswidePCFutCurPlant50)
             syswidePCFutCurModel90.append(syswidePCFutCurPlant90)
 
-        globalPC = {'globalPCFut10':np.array(syswidePCFutCurModel10), \
-                    'globalPCFut50':np.array(syswidePCFutCurModel50), \
-                    'globalPCFut90':np.array(syswidePCFutCurModel90)}
+        globalPC10 = {'globalPCFut10':np.array(syswidePCFutCurModel10)}
+        globalPC50 = {'globalPCFut50':np.array(syswidePCFutCurModel50)}
+        globalPC90 = {'globalPCFut90':np.array(syswidePCFutCurModel90)}
 
-        with gzip.open(fileName, 'wb') as f:
-            pickle.dump(globalPC, f)
+        with open(fileName10, 'wb') as f:
+            pickle.dump(globalPC10, f, protocol=4)
+        with open(fileName50, 'wb') as f:
+            pickle.dump(globalPC50, f, protocol=4)
+        with open(fileName90, 'wb') as f:
+            pickle.dump(globalPC90, f, protocol=4)

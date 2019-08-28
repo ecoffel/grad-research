@@ -13,21 +13,20 @@ dataDir = 'e:/data'
 
 def countryCheck(s):
     
-#    countries = ['USA', 'AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', \
-#                 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', \
-#                 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', \
-#                 'SVK', 'SVN', 'ESP', 'SWE', 'GBR']
-#    
-#    if s.upper() in countries:
-#        return True
-#    else:
-#        return False
-#    
-    return True
+    countries = ['USA', 'AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', \
+                 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', \
+                 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', \
+                 'SVK', 'SVN', 'ESP', 'SWE', 'GBR']
+    
+    if s.upper() in countries:
+        return True
+    else:
+        return False
+    
 
 def fuelCheck(s):
     
-    fuels = ['gas', 'coal', 'oil', 'nuclear']
+    fuels = ['coal', 'gas', 'oil', 'nuclear', 'biomass']
     
     if s.lower() in fuels:
         return True
@@ -40,7 +39,7 @@ def capacityCheck(c):
     else:
         return False
 
-def loadGlobalPlants():
+def loadGlobalPlants(world = True):
     globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[], 'yearCom':[]}
         
     with open('%s/ecoffel/data/projects/electricity/global_power_plant_database.csv'%dataDir, 'r', encoding='latin-1') as f:
@@ -62,7 +61,7 @@ def loadGlobalPlants():
             else:
                 year = np.nan
             
-            if countryCheck(country) and fuelCheck(fuel) and capacityCheck(cap):
+            if (world or countryCheck(country)) and fuelCheck(fuel) and capacityCheck(cap):
                 globalPlants['countries'].append(country)
                 globalPlants['caps'].append(cap)
                 globalPlants['lats'].append(float(parts[5].strip()))
@@ -131,7 +130,7 @@ def loadGlobalWx(wxdata):
 
 def exportGlobalPlants(globalPlants):
     i = 0
-    with open('global-pp-lat-lon-all-cap.csv', 'w') as f:
+    with open('useu-pp-lat-lon.csv', 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(globalPlants['lats'])):
             csvWriter.writerow([i, globalPlants['lats'][i], globalPlants['lons'][i]])

@@ -16,6 +16,12 @@ dataDir = 'e:/data/'
 
 plotFigs = False
 
+# grdc or gldas
+runoffData = 'grdc'
+
+# world, useu, entsoe-nuke
+plantData = 'entsoe-nuke'
+
 yearRange = [1981, 2018]
 
 models = ['bcc-csm1-1-m', 'canesm2', \
@@ -26,12 +32,12 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 
 # load historical temp data for all plants in US and EU
-fileNamePlantLatLon = 'entsoe-nuke-lat-lon.csv'
+fileNamePlantLatLon = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-lat-lon.csv'%plantData
 plantList = np.genfromtxt(fileNamePlantLatLon, delimiter=',', skip_header=0)
 plantList = plantList[:,0]
 
 
-fileNameTemp = 'entsoe-nuke-pp-tx-all.csv'
+fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData
 plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:].copy()
 plantMonthData = plantTxData[1,:].copy()
@@ -42,14 +48,14 @@ summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 
 # load historical runoff data for all plants in US and EU
-fileNameRunoff = 'entsoe-nuke-pp-runoff-anom-all.csv'
+fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-anom.csv'%plantData
 plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
 plantQsAnomData = plantQsData[3:,:].copy()
 
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('pPolyData.dat', 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffData, 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
@@ -205,7 +211,7 @@ for w in range(1, 4+1):
         pCapTxxFutCurModel90 = []
         
         # load data for current model and warming level
-        fileNameTemp = 'gmt-anomaly-temps/us-eu-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/%s-pp-%ddeg-tx-cmip5-%s.csv'%(plantData, w, models[m])
     
         if not os.path.isfile(fileNameTemp):
             # add a nan for each plant in current model
@@ -234,7 +240,7 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,0:].copy()
         plantTxData = plantTxData[3:,0:].copy()
         
-        fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/%s-pp-%ddeg-runoff-cmip5-%s.csv'%(plantData, w, models[m])
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
         plantQsYearData = plantQsData[0,0:].copy()
@@ -320,7 +326,7 @@ pCapTxxFutMeanWarming50 = np.array(pCapTxxFutMeanWarming50)
 pCapTxxFutMeanWarming90 = np.array(pCapTxxFutMeanWarming90)
 
 
-with gzip.open('pc-change-gmt-change.dat', 'wb') as f:
+with gzip.open('pc-change-gmt-change-%s-%s.dat'%(plantData, runoffData), 'wb') as f:
     pcChg = {'pCapTxxFutMeanWarming10':pCapTxxFutMeanWarming10, \
              'pCapTxxFutMeanWarming50':pCapTxxFutMeanWarming50, \
              'pCapTxxFutMeanWarming90':pCapTxxFutMeanWarming90, \
@@ -330,6 +336,7 @@ with gzip.open('pc-change-gmt-change.dat', 'wb') as f:
     pickle.dump(pcChg, f)
 
 sys.exit()
+
 xd = np.array(list(range(1981, 2018+1)))-1981+1
 
 z = np.polyfit(xd, pcTxx10, 1)

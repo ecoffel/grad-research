@@ -27,25 +27,28 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 
-globalPlants = el_load_global_plants.loadGlobalPlants()
+globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+
+#grdc or gldas
+runoffData = 'grdc'
 
 yearRange = [1981, 2018]
 
 monthLen = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-if not os.path.isfile('aggregated-global-outages-hist-50.dat'):
+if not os.path.isfile('aggregated-global-outages-hist-%s-50.dat'%runoffData):
 
     if not 'globalPCHist50' in locals():
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-10.dat', 'rb') as f:
+        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-10.dat'%runoffData, 'rb') as f:
             globalPCHist = pickle.load(f)
             globalPCHist10 = globalPCHist['globalPCHist10']
         
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-50.dat', 'rb') as f:
+        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-50.dat'%runoffData, 'rb') as f:
             globalPCHist = pickle.load(f)
             globalPCHist50 = globalPCHist['globalPCHist50']
             
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-90.dat', 'rb') as f:
+        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-90.dat'%runoffData, 'rb') as f:
             globalPCHist = pickle.load(f)
             globalPCHist90 = globalPCHist['globalPCHist90']
             
@@ -178,28 +181,28 @@ if not os.path.isfile('aggregated-global-outages-hist-50.dat'):
     yearlyOutagesHist90 = np.array(yearlyOutagesHist90)
     yearlyOutagesHist90 = (np.nansum(yearlyOutagesHist90, axis=0)/numPlants90)*yearlyOutagesHist90.shape[0]
     
-    with gzip.open('aggregated-global-outages-hist-10.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-10.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesHist10, f)
         
-    with gzip.open('aggregated-global-outages-hist-50.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-50.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesHist50, f)
         
-    with gzip.open('aggregated-global-outages-hist-90.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-90.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
 else:
     
-    with gzip.open('aggregated-global-outages-hist-10.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-10.dat'%runoffData, 'rb') as f:
         yearlyOutagesHist10 = pickle.load(f)
         
-    with gzip.open('aggregated-global-outages-hist-50.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-50.dat'%runoffData, 'rb') as f:
         yearlyOutagesHist50 = pickle.load(f)
         
-    with gzip.open('aggregated-global-outages-hist-90.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-hist-%s-90.dat'%runoffData, 'rb') as f:
         yearlyOutagesHist90 = pickle.load(f)
 
 
 
-if not os.path.isfile('aggregated-global-outages-fut10.dat'):
+if not os.path.isfile('aggregated-global-outages-fut-%s-10.dat'%runoffData):
     print('processing future...')
     
     yearlyOutagesFut10 = []
@@ -216,7 +219,7 @@ if not os.path.isfile('aggregated-global-outages-fut10.dat'):
             yearlyOutagesCurModel50 = []
             yearlyOutagesCurModel90 = []
             
-            fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-future-%ddeg-%s.dat'%(w, models[model])
+            fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-future-%ddeg-%s.dat'%(runoffData, w, models[model])
             
             if not os.path.isfile(fileName):
                 continue
@@ -358,22 +361,22 @@ if not os.path.isfile('aggregated-global-outages-fut10.dat'):
     yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
     yearlyOutagesFut90 = np.array(yearlyOutagesFut90)
     
-    with gzip.open('aggregated-global-outages-fut10.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-10.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesFut10, f)
     
-    with gzip.open('aggregated-global-outages-fut50.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-50.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesFut50, f)
         
-    with gzip.open('aggregated-global-outages-fut90.dat', 'wb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-90.dat'%runoffData, 'wb') as f:
         pickle.dump(yearlyOutagesFut90, f)
         
 else:
     
-    with gzip.open('aggregated-global-outages-fut10.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-10.dat'%runoffData, 'rb') as f:
         yearlyOutagesFut10 = pickle.load(f)
-    with gzip.open('aggregated-global-outages-fut50.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-50.dat'%runoffData, 'rb') as f:
         yearlyOutagesFut50 = pickle.load(f)
-    with gzip.open('aggregated-global-outages-fut90.dat', 'rb') as f:
+    with gzip.open('aggregated-global-outages-fut-%s-90.dat'%runoffData, 'rb') as f:
         yearlyOutagesFut90 = pickle.load(f)
 
 
@@ -456,7 +459,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('accumulated-monthly-outage.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('accumulated-monthly-outage-%s.png'%runoffData, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 xpos = np.array([1, 3, 4, 5, 6])
@@ -571,7 +574,7 @@ leg.get_frame().set_linewidth(0.0)
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('accumulated-annual-outage.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('accumulated-annual-outage-%s.eps'%runoffData, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 

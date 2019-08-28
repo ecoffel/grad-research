@@ -2,8 +2,11 @@
 startYear = 1981;
 endYear = 2018;
 
+% world, useu, entsoe-nuke
+plantData = 'world';
+
 % plantLatLon = csvread('2019-electricity/entsoe-nuke-lat-lon.csv');
-plantLatLon = csvread('2019-electricity/global-pp-lat-lon-all-cap.csv');
+plantLatLon = csvread(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-lat-lon.csv']);
 
 plantQsTimeSeries = [];
 
@@ -96,6 +99,6 @@ for p = 4:size(plantQsTimeSeries, 1)
     finalQsAnomTimeSeries(p,:) = (plantQsTimeSeries(p,:)-movmean(plantQsTimeSeries(p,:),365*10))./movstd(plantQsTimeSeries(p,:),365*10);
 end
 
-csvwrite('2019-electricity/global-pp-runoff-all-cap.csv', plantQsTimeSeries);
-csvwrite('2019-electricity/global-pp-runoff-anom-all-cap.csv', finalQsAnomTimeSeries);
+csvwrite(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-runoff.csv'], plantQsTimeSeries);
+csvwrite(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-runoff-anom.csv'], finalQsAnomTimeSeries);
 
