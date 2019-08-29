@@ -20,6 +20,8 @@ chgMetric = 'txx-amp';
 
 var = 'wb-davies-jones-full';
 
+datadir = 'E:\data\projects\bowen\';
+
 thresh = 99;
 
 modelSubset = 'all';
@@ -143,22 +145,22 @@ for m = 1:length(models)
     
     % load and process change 1
     if strcmp(chgMetric, 'txx-amp')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-ann-max-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'txx-thresh')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-thresh-' num2str(thresh) '-' models{m} '-' rcp '-' timePeriod '-all-txx.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-thresh-' num2str(thresh) '-' models{m} '-' rcp '-' timePeriod '-all-txx.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-ann-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'warm-season-anom')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-warm-season-tx-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;        
     end
 
@@ -177,19 +179,19 @@ for m = 1:length(models)
 
     % load and process change 2
     if strcmp(chgMetric, 'txx-amp') || strcmp(chgMetric, 'txx-thresh')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-warm-season-tx-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-warm-season-tx-' var '-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'ann-max-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-ann-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'daily-max-min')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-daily-min-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     elseif strcmp(chgMetric, 'warm-season-anom')
-        load(['e:/data/projects/bowen/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
+        load([datadir '/temp-chg-data/chgData-cmip5-daily-max-' models{m} '-' rcp '-' timePeriod '.mat']);
         curChg = chgData;
     end
 
@@ -210,34 +212,34 @@ amp = chg1 - chg2;
 
 if strcmp(chgMetric, 'txx-amp')
     wbChgWarm = chg2;
-    save('e:/data/projects/bowen/derived-chg/wbAmp.mat', 'amp');
-    save('e:/data/projects/bowen/derived-chg/wbChgWarm.mat', 'wbChgWarm');
+    save([datadir '/derived-chg/wbAmp.mat'], 'amp');
+    save([datadir '/derived-chg/wbChgWarm.mat'], 'wbChgWarm');
     
     wbChg = chg1;
-    save('e:/data/projects/bowen/derived-chg/wbChg.mat', 'wbChg');
+    save([datadir '/derived-chg/wbChg.mat'], 'wbChg');
     
     for m = 1:length(models)
         wbChgWarm = chg2(:, :, m);
         wbAmp = amp(:, :, m);
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbAmp-' models{m} '.mat'], 'wbAmp');
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbChgWarm-' models{m} '.mat'], 'wbChgWarm');
+        save([datadir '/derived-chg/txx-amp/wbAmp-' models{m} '.mat'], 'wbAmp');
+        save([datadir '/derived-chg/txx-amp/wbChgWarm-' models{m} '.mat'], 'wbChgWarm');
 
         wbChg = chg1(:, :, m);
-        save(['e:/data/projects/bowen/derived-chg/txx-amp/wbChg-' models{m} '.mat'], 'wbChg');
+        save([datadir '/derived-chg/txx-amp/wbChg-' models{m} '.mat'], 'wbChg');
     end
 elseif strcmp(chgMetric, 'txx-thresh')
-    save(['e:/data/projects/bowen/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
+    save([datadir '/derived-chg/txxAmpThresh' num2str(thresh) '.mat'], 'amp');
     
     txxChg = chg1;
-    save(['e:/data/projects/bowen/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
+    save([datadir '/derived-chg/txxChgThresh' num2str(thresh) '.mat'], 'txxChg');
 elseif strcmp(chgMetric, 'warm-season-anom')
     txChgWarm = chg1;
-    save('e:/data/projects/bowen/derived-chg/txChgWarm.mat', 'txChgWarm');
+    save([datadir '/derived-chg/txChgWarm.mat'], 'txChgWarm');
     
     warmTxAnom = amp;
-    save('e:/data/projects/bowen/derived-chg/warmTxAnom.mat', 'warmTxAnom');
+    save([datadir '/derived-chg/warmTxAnom.mat'], 'warmTxAnom');
 elseif strcmp(chgMetric, 'ann-min')
-    save('e:/data/projects/bowen/derived-chg/tnnAmp.mat', 'amp');
+    save([datadir '/derived-chg/tnnAmp.mat'], 'amp');
 end
 
 % threshold in deg C to test for model agreement, if set to -1, search for

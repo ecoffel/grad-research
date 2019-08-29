@@ -27,30 +27,51 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 
-globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
-
 #grdc or gldas
 runoffData = 'grdc'
+
+# world, useu, or entsoe-nuke
+plantData = 'world'
+
+if plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+elif plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
 yearRange = [1981, 2018]
 
 monthLen = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-if not os.path.isfile('aggregated-global-outages-hist-%s-50.dat'%runoffData):
+if not os.path.isfile('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData)):
 
     if not 'globalPCHist50' in locals():
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-10.dat'%runoffData, 'rb') as f:
-            globalPCHist = pickle.load(f)
-            globalPCHist10 = globalPCHist['globalPCHist10']
+        try:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-10.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist10 = globalPCHist['globalPCHist10']
+        except:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-10.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist10 = globalPCHist['globalPCHist10']
         
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-50.dat'%runoffData, 'rb') as f:
-            globalPCHist = pickle.load(f)
-            globalPCHist50 = globalPCHist['globalPCHist50']
+        try:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-50.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist50 = globalPCHist['globalPCHist50']
+        except:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-50.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist50 = globalPCHist['globalPCHist50']
             
-        with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-hist-90.dat'%runoffData, 'rb') as f:
-            globalPCHist = pickle.load(f)
-            globalPCHist90 = globalPCHist['globalPCHist90']
+        try:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-90.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist90 = globalPCHist['globalPCHist90']
+        except:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-90.dat'%(runoffData, plantData), 'rb') as f:
+                globalPCHist = pickle.load(f)
+                globalPCHist90 = globalPCHist['globalPCHist90']
             
     yearlyOutagesHist10 = []
     yearlyOutagesHist50 = []
@@ -181,205 +202,240 @@ if not os.path.isfile('aggregated-global-outages-hist-%s-50.dat'%runoffData):
     yearlyOutagesHist90 = np.array(yearlyOutagesHist90)
     yearlyOutagesHist90 = (np.nansum(yearlyOutagesHist90, axis=0)/numPlants90)*yearlyOutagesHist90.shape[0]
     
-    with gzip.open('aggregated-global-outages-hist-%s-10.dat'%runoffData, 'wb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-10.dat'%(plantData, runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesHist10, f)
         
-    with gzip.open('aggregated-global-outages-hist-%s-50.dat'%runoffData, 'wb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesHist50, f)
         
-    with gzip.open('aggregated-global-outages-hist-%s-90.dat'%runoffData, 'wb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
 else:
     
-    with gzip.open('aggregated-global-outages-hist-%s-10.dat'%runoffData, 'rb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-10.dat'%(plantData, runoffData), 'rb') as f:
         yearlyOutagesHist10 = pickle.load(f)
         
-    with gzip.open('aggregated-global-outages-hist-%s-50.dat'%runoffData, 'rb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData), 'rb') as f:
         yearlyOutagesHist50 = pickle.load(f)
         
-    with gzip.open('aggregated-global-outages-hist-%s-90.dat'%runoffData, 'rb') as f:
+    with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'rb') as f:
         yearlyOutagesHist90 = pickle.load(f)
 
 
 
-if not os.path.isfile('aggregated-global-outages-fut-%s-10.dat'%runoffData):
-    print('processing future...')
-    
-    yearlyOutagesFut10 = []
-    yearlyOutagesFut50 = []
-    yearlyOutagesFut90 = []
-    
+print('processing future...')
+
+yearlyOutagesFut10 = []
+yearlyOutagesFut50 = []
+yearlyOutagesFut90 = []
+
+for model in range(len(models)):
+    yearlyOutagesCurModel10 = []
+    yearlyOutagesCurModel50 = []
+    yearlyOutagesCurModel90 = []
+
+    if os.path.isfile('aggregated-%s-outages-fut-%s-%s-10.dat'%(plantData, models[model], runoffData)):
+        continue
+
     for w in range(1,4+1):
+        
         yearlyOutagesCurGMT10 = []
         yearlyOutagesCurGMT50 = []
         yearlyOutagesCurGMT90 = []
         
-        for model in range(len(models)):
-            yearlyOutagesCurModel10 = []
-            yearlyOutagesCurModel50 = []
-            yearlyOutagesCurModel90 = []
-            
-            fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future-%s\global-pc-future-%ddeg-%s.dat'%(runoffData, w, models[model])
-            
-            if not os.path.isfile(fileName):
-                continue
-            
-            with gzip.open(fileName, 'rb') as f:
-                globalPC = pickle.load(f)
-                
-                globalPCFut10 = globalPC['globalPCFut10']
-                globalPCFut50 = globalPC['globalPCFut50']
-                globalPCFut90 = globalPC['globalPCFut90']
-            
-            print('calculating total capacity outage for %s/+%dC'%(models[model],w))
-            
-            # num plants for current model with data
-            numPlants10 = 0
-            numPlants50 = 0
-            numPlants90 = 0
-            
-            # over all plants
-            for p in range(globalPCFut10.shape[0]):                
-                yearlyOutagesCurPlant10 = []
-                yearlyOutagesCurPlant50 = []
-                yearlyOutagesCurPlant90 = []
-                
-                if p%100 == 0:
-                    print('plant %d...'%p)
-                
-                plantHasData10 = False
-                plantHasData50 = False
-                plantHasData90 = False
-                
-                # calculate the total outage (MW) on each day of each year
-                for year in range(globalPCFut10.shape[1]):
-                    yearlyOutagesCurYear10 = []
-                    yearlyOutagesCurYear50 = []
-                    yearlyOutagesCurYear90 = []
-                    
-                    for month in range(12):
-                
-                        monthlyOutages10 = (100-np.array(globalPCFut10[p,year,month][:])) / 100.0
-                        monthlyOutages50 = (100-np.array(globalPCFut50[p,year,month][:])) / 100.0
-                        monthlyOutages90 = (100-np.array(globalPCFut90[p,year,month][:])) / 100.0
-                        
-                        indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
-                        monthlyOutages10[indBadData10] = np.nan
-                        
-                        indBadData50 = np.where((monthlyOutages50 < 0) | (monthlyOutages50 > 1))[0]
-                        monthlyOutages50[indBadData50] = np.nan
-                        
-                        indBadData90 = np.where((monthlyOutages90 < 0) | (monthlyOutages90 > 1))[0]
-                        monthlyOutages90[indBadData90] = np.nan
-                        
-                        numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
-                        monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
-                        
-                        # divide by actual # of days in this month, then multiply by full summer (62 days)
-                        # this accounts for model/years where there are nans
-                        if numDays10 > 0:
-                            monthlyTotal10 /= numDays10
-                            monthlyTotal10 *= monthLen[month] * 24 * 3600                      
-                            yearlyOutagesCurYear10.append(monthlyTotal10)
-                        
-                        numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
-                        monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
-                        
-                        if numDays50 > 0:
-                            monthlyTotal50 /= numDays50
-                            monthlyTotal50 *= monthLen[month] * 24 * 3600                            
-                            yearlyOutagesCurYear50.append(monthlyTotal50)
-                        
-                        numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
-                        monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
-                        
-                        if numDays90 > 0:
-                            monthlyTotal90 /= numDays90
-                            monthlyTotal90 *= monthLen[month] * 24 * 3600
-                            yearlyOutagesCurYear90.append(monthlyTotal90)
-                        
-                    
-                    if len(yearlyOutagesCurYear10) == 12:
-                        yearlyOutagesCurPlant10.append(yearlyOutagesCurYear10)
-                        plantHasData10 = True
-                    else:
-                        yearlyOutagesCurPlant10.append([np.nan]*12)
-                    
-                    
-                    if len(yearlyOutagesCurYear50) == 12:
-                        yearlyOutagesCurPlant50.append(yearlyOutagesCurYear50)
-                        plantHasData50 = True
-                    else:
-                        yearlyOutagesCurPlant50.append([np.nan]*12)
-                    
-                    
-                    if len(yearlyOutagesCurYear90) == 12:
-                        yearlyOutagesCurPlant90.append(yearlyOutagesCurYear90)
-                        plantHasData90 = True
-                    else:
-                        yearlyOutagesCurPlant90.append([np.nan]*12)
-                
-                # divide by # of years to get total outage per year, if there is data
-                if len(yearlyOutagesCurPlant10) > 0:
-                    yearlyOutagesCurPlant10 = np.array(yearlyOutagesCurPlant10)
-                    yearlyOutagesCurPlant10 = np.nanmean(yearlyOutagesCurPlant10, axis=0)
-                    yearlyOutagesCurModel10.append(yearlyOutagesCurPlant10)                    
-                    if plantHasData10: numPlants10 += 1
-                
-                
-                if len(yearlyOutagesCurPlant50) > 0:
-                    yearlyOutagesCurPlant50 = np.array(yearlyOutagesCurPlant50)
-                    yearlyOutagesCurPlant50 = np.nanmean(yearlyOutagesCurPlant50, axis=0)
-                    yearlyOutagesCurModel50.append(yearlyOutagesCurPlant50)                    
-                    if plantHasData50: numPlants50 += 1
-                    
-                if len(yearlyOutagesCurPlant90) > 0:
-                    yearlyOutagesCurPlant90 = np.array(yearlyOutagesCurPlant90)
-                    yearlyOutagesCurPlant90 = np.nanmean(yearlyOutagesCurPlant90, axis=0)
-                    yearlyOutagesCurModel90.append(yearlyOutagesCurPlant90)
-                    if plantHasData90: numPlants90 += 1
-                    
-            
-            # correct for # of plants
-            yearlyOutagesCurModel10 = np.array(yearlyOutagesCurModel10)
-            yearlyOutagesCurModel10 = (np.nansum(yearlyOutagesCurModel10, axis=0)/numPlants10)*yearlyOutagesCurModel10.shape[0]
-            yearlyOutagesCurGMT10.append(yearlyOutagesCurModel10)
-            
-            yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
-            yearlyOutagesCurModel50 = (np.nansum(yearlyOutagesCurModel50, axis=0)/numPlants50)*yearlyOutagesCurModel50.shape[0]
-            yearlyOutagesCurGMT50.append(yearlyOutagesCurModel50)
-            
-            yearlyOutagesCurModel90 = np.array(yearlyOutagesCurModel90)
-            yearlyOutagesCurModel90 = (np.nansum(yearlyOutagesCurModel90, axis=0)/numPlants90)*yearlyOutagesCurModel90.shape[0]
-            yearlyOutagesCurGMT90.append(yearlyOutagesCurModel90)
-            
-        yearlyOutagesFut10.append(np.array(yearlyOutagesCurGMT10))
-        yearlyOutagesFut50.append(np.array(yearlyOutagesCurGMT50))
-        yearlyOutagesFut90.append(np.array(yearlyOutagesCurGMT90))
+        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
+        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-10-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
+        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-50-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
+        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-90-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
         
-    yearlyOutagesFut10 = np.array(yearlyOutagesFut10)
-    yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
-    yearlyOutagesFut90 = np.array(yearlyOutagesFut90)
+        if os.path.isfile(fileName):
+            try:
+                with gzip.open(fileName, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    
+                    globalPCFut10 = globalPC['globalPCFut10']
+                    globalPCFut50 = globalPC['globalPCFut50']
+                    globalPCFut90 = globalPC['globalPCFut90']
+            except:
+                with open(fileName, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    
+                    globalPCFut10 = globalPC['globalPCFut10']
+                    globalPCFut50 = globalPC['globalPCFut50']
+                    globalPCFut90 = globalPC['globalPCFut90']
+        elif os.path.isfile(fileName10):
+            try:
+                with gzip.open(fileName10, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut10 = globalPC['globalPCFut10']
+            except:
+                with open(fileName10, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut10 = globalPC['globalPCFut10']
+            
+            try:
+                with gzip.open(fileName50, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut50 = globalPC['globalPCFut50']
+            except:
+                with open(fileName50, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut50 = globalPC['globalPCFut50']
+            
+            try:
+                with gzip.open(fileName90, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut90 = globalPC['globalPCFut90']
+            except:
+                with open(fileName90, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    globalPCFut90 = globalPC['globalPCFut90']
+                
+        print('calculating total capacity outage for %s/+%dC'%(models[model],w))
+        
+        # num plants for current model with data
+        numPlants10 = 0
+        numPlants50 = 0
+        numPlants90 = 0
+        
+        # over all plants
+        for p in range(globalPCFut10.shape[0]):                
+            yearlyOutagesCurPlant10 = []
+            yearlyOutagesCurPlant50 = []
+            yearlyOutagesCurPlant90 = []
+            
+            if p%1000 == 0:
+                print('plant %d...'%p)
+            
+            plantHasData10 = False
+            plantHasData50 = False
+            plantHasData90 = False
+            
+            # calculate the total outage (MW) on each day of each year
+            for year in range(globalPCFut10.shape[1]):
+                yearlyOutagesCurYear10 = []
+                yearlyOutagesCurYear50 = []
+                yearlyOutagesCurYear90 = []
+                
+                for month in range(12):
+            
+                    monthlyOutages10 = (100-np.array(globalPCFut10[p,year,month][:])) / 100.0
+                    monthlyOutages50 = (100-np.array(globalPCFut50[p,year,month][:])) / 100.0
+                    monthlyOutages90 = (100-np.array(globalPCFut90[p,year,month][:])) / 100.0
+                    
+                    indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
+                    monthlyOutages10[indBadData10] = np.nan
+                    
+                    indBadData50 = np.where((monthlyOutages50 < 0) | (monthlyOutages50 > 1))[0]
+                    monthlyOutages50[indBadData50] = np.nan
+                    
+                    indBadData90 = np.where((monthlyOutages90 < 0) | (monthlyOutages90 > 1))[0]
+                    monthlyOutages90[indBadData90] = np.nan
+                    
+                    numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
+                    monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
+                    
+                    # divide by actual # of days in this month, then multiply by full summer (62 days)
+                    # this accounts for model/years where there are nans
+                    if numDays10 > 0:
+                        monthlyTotal10 /= numDays10
+                        monthlyTotal10 *= monthLen[month] * 24 * 3600                      
+                        yearlyOutagesCurYear10.append(monthlyTotal10)
+                    
+                    numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
+                    monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
+                    
+                    if numDays50 > 0:
+                        monthlyTotal50 /= numDays50
+                        monthlyTotal50 *= monthLen[month] * 24 * 3600                            
+                        yearlyOutagesCurYear50.append(monthlyTotal50)
+                    
+                    numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
+                    monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
+                    
+                    if numDays90 > 0:
+                        monthlyTotal90 /= numDays90
+                        monthlyTotal90 *= monthLen[month] * 24 * 3600
+                        yearlyOutagesCurYear90.append(monthlyTotal90)
+                    
+                
+                if len(yearlyOutagesCurYear10) == 12:
+                    yearlyOutagesCurPlant10.append(yearlyOutagesCurYear10)
+                    plantHasData10 = True
+                else:
+                    yearlyOutagesCurPlant10.append([np.nan]*12)
+                
+                
+                if len(yearlyOutagesCurYear50) == 12:
+                    yearlyOutagesCurPlant50.append(yearlyOutagesCurYear50)
+                    plantHasData50 = True
+                else:
+                    yearlyOutagesCurPlant50.append([np.nan]*12)
+                
+                
+                if len(yearlyOutagesCurYear90) == 12:
+                    yearlyOutagesCurPlant90.append(yearlyOutagesCurYear90)
+                    plantHasData90 = True
+                else:
+                    yearlyOutagesCurPlant90.append([np.nan]*12)
+            
+            # divide by # of years to get total outage per year, if there is data
+            if len(yearlyOutagesCurPlant10) > 0:
+                yearlyOutagesCurPlant10 = np.array(yearlyOutagesCurPlant10)
+                yearlyOutagesCurPlant10 = np.nanmean(yearlyOutagesCurPlant10, axis=0)
+                yearlyOutagesCurGMT10.append(yearlyOutagesCurPlant10)                    
+                if plantHasData10: numPlants10 += 1
+            
+            
+            if len(yearlyOutagesCurPlant50) > 0:
+                yearlyOutagesCurPlant50 = np.array(yearlyOutagesCurPlant50)
+                yearlyOutagesCurPlant50 = np.nanmean(yearlyOutagesCurPlant50, axis=0)
+                yearlyOutagesCurGMT50.append(yearlyOutagesCurPlant50)                    
+                if plantHasData50: numPlants50 += 1
+                
+            if len(yearlyOutagesCurPlant90) > 0:
+                yearlyOutagesCurPlant90 = np.array(yearlyOutagesCurPlant90)
+                yearlyOutagesCurPlant90 = np.nanmean(yearlyOutagesCurPlant90, axis=0)
+                yearlyOutagesCurGMT90.append(yearlyOutagesCurPlant90)
+                if plantHasData90: numPlants90 += 1
+                
+        
+        # correct for # of plants
+        yearlyOutagesCurGMT10 = np.array(yearlyOutagesCurGMT10)
+        yearlyOutagesCurGMT10 = (np.nansum(yearlyOutagesCurGMT10, axis=0)/numPlants10)*yearlyOutagesCurGMT10.shape[0]
+        yearlyOutagesCurModel10.append(yearlyOutagesCurGMT10)
+        
+        yearlyOutagesCurGMT50 = np.array(yearlyOutagesCurGMT50)
+        yearlyOutagesCurGMT50 = (np.nansum(yearlyOutagesCurGMT50, axis=0)/numPlants50)*yearlyOutagesCurGMT50.shape[0]
+        yearlyOutagesCurModel50.append(yearlyOutagesCurGMT50)
+        
+        yearlyOutagesCurGMT90 = np.array(yearlyOutagesCurGMT90)
+        yearlyOutagesCurGMT90 = (np.nansum(yearlyOutagesCurGMT90, axis=0)/numPlants90)*yearlyOutagesCurGMT90.shape[0]
+        yearlyOutagesCurModel90.append(yearlyOutagesCurGMT90)
     
-    with gzip.open('aggregated-global-outages-fut-%s-10.dat'%runoffData, 'wb') as f:
+    yearlyOutagesCurModel10 = np.array(yearlyOutagesCurModel10)
+    yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
+    yearlyOutagesCurModel90 = np.array(yearlyOutagesCurModel90)
+    
+    with gzip.open('aggregated-%s-outages-fut-%s-%s-10.dat'%(plantData, models[model], runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesFut10, f)
     
-    with gzip.open('aggregated-global-outages-fut-%s-50.dat'%runoffData, 'wb') as f:
+    with gzip.open('aggregated-%s-outages-fut-%s-%s-50.dat'%(plantData, models[model], runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesFut50, f)
         
-    with gzip.open('aggregated-global-outages-fut-%s-90.dat'%runoffData, 'wb') as f:
+    with gzip.open('aggregated-%s-outages-fut-%s-%s-90.dat'%(plantData, models[model], runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesFut90, f)
-        
-else:
     
-    with gzip.open('aggregated-global-outages-fut-%s-10.dat'%runoffData, 'rb') as f:
-        yearlyOutagesFut10 = pickle.load(f)
-    with gzip.open('aggregated-global-outages-fut-%s-50.dat'%runoffData, 'rb') as f:
-        yearlyOutagesFut50 = pickle.load(f)
-    with gzip.open('aggregated-global-outages-fut-%s-90.dat'%runoffData, 'rb') as f:
-        yearlyOutagesFut90 = pickle.load(f)
+#        yearlyOutagesFut10.append(np.array(yearlyOutagesCurGMT10))
+#        yearlyOutagesFut50.append(np.array(yearlyOutagesCurGMT50))
+#        yearlyOutagesFut90.append(np.array(yearlyOutagesCurGMT90))
+##        
+#    yearlyOutagesFut10 = np.array(yearlyOutagesFut10)
+#    yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
+#    yearlyOutagesFut90 = np.array(yearlyOutagesFut90)
+    
 
-
+sys.exit()
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 #xd = np.array(list(range(1981, 2018+1)))-1981+1

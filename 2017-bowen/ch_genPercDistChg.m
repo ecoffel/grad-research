@@ -3,10 +3,12 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
           'gfdl-esm2m', 'hadgem2-cc', 'hadgem2-es', 'ipsl-cm5a-mr', ...
           'miroc5', 'mri-cgcm3', 'noresm1-m'};
 
-load lat;
-load lon;
+datadir = 'E:\data\ecoffel\data\projects\bowen';
 
-load waterGrid.mat;
+load([datadir '/lat.mat']);
+load([datadir '/lon.mat']);
+
+load([datadir '/waterGrid.mat']);
 waterGrid = logical(waterGrid);
 
 plotDistChg = true;
@@ -18,38 +20,38 @@ threshChgEf = [];
 for m = 1:length(models)
     tind = 1;
     for t = 5:10:95
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTxTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTx(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTxHuss(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-huss-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwHuss(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         chgData(chgData > 1 | chgData < 0) = NaN;
         threshChgTxEf(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-ef-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -59,16 +61,16 @@ for m = 1:length(models)
         tind = tind+1;
     end
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-historical-1981-2005.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-historical-1981-2005.mat']);
     threshPercTwTxHist(:, :, :, m) = baseData;
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-wb-davies-jones-full-tasmax-' models{m} '-rcp85-2061-2085.mat']);
     threshPercTwTxFut(:, :, :, m) = futureData;
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-historical-1981-2005.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-historical-1981-2005.mat']);
     threshPercTxTwHist(:, :, :, m) = baseData;
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-percentile-percentile-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
     threshPercTxTwFut(:, :, :, m) = futureData;
 end
 

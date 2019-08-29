@@ -5,12 +5,16 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 
 load lat;
 load lon;
+% 
+% load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2010.mat
+% load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2060.mat
+% load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2070.mat
+% load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2060.mat
+% load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2070.mat
 
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2010.mat
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2060.mat
-load E:\data\ssp-pop\ssp3\output\ssp3\regrid\ssp3_2070.mat
-load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2060.mat
-load E:\data\ssp-pop\ssp5\output\ssp5\regrid\ssp5_2070.mat
+datadir = 'E:\data\ecoffel\data\projects\bowen';
+
+load([datadir '/bowen_ssp.mat']);
 
 histPop = ssp3_2010{3};
 futurePop3 = (ssp3_2060{3}+ssp3_2070{3}) ./ 2;
@@ -34,61 +38,61 @@ for m = 1:length(models)
     tind = 1;
     for t = 5:10:95
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp27(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-27-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTxAmp27(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp28(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-28-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTxAmp28(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp29(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-29-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTxAmp29(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp30(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-30-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwTxAmp30(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-no-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTwNoTxAmp31(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-tw-count-chg-tx-amp-' num2str(t) '-31-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;

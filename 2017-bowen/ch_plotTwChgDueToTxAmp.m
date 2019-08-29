@@ -6,6 +6,8 @@ models = {'access1-0', 'access1-3', 'bcc-csm1-1-m', 'bnu-esm', ...
 load lat;
 load lon;
 
+datadir = 'E:\data\projects\bowen\'
+
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
 
@@ -22,19 +24,19 @@ for m = 1:length(models)
     
     tind = 1;
     for t = 5:10:95
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-all-txx.mat']);
+        load([datadir 'temp-chg-data\chgData-cmip5-thresh-range-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-all-txx.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTx(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085']);
+        load([datadir 'temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-huss-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgHuss(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir 'temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -43,28 +45,28 @@ for m = 1:length(models)
         tind = tind+1;
     end
         
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-huss-med-temp-pred-' models{m} '-rcp85-2061-2085']);
+    load([datadir 'temp-chg-data\chgData-huss-med-temp-pred-' models{m} '-rcp85-2061-2085']);
     chgData = hchgDueToMedT;
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
     hussChgDueToT(:, :, m) = chgData;
 
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-temp-dist-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir 'temp-chg-data\chgData-tw-temp-dist-pred-huss-' models{m} '-rcp85-2061-2085.mat']);
     chgData = twchgMedT_predHuss;
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
     twChgPred(:, :, :, m) = chgData;
 
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-tw-temp-dist-full-huss-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir 'temp-chg-data\chgData-tw-temp-dist-full-huss-' models{m} '-rcp85-2061-2085.mat']);
     chgData = twchgMedT_fullHuss;
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
     twChgFull(:, :, :, m) = chgData;
 
-    load(['E:\data\projects\bowen\huss-chg-data\chgData-cmip5-warm-season-tx-huss-' models{m} '-rcp85-2061-2085']);
+    load([datadir 'huss-chg-data\chgData-cmip5-warm-season-tx-huss-' models{m} '-rcp85-2061-2085']);
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;

@@ -9,6 +9,8 @@ load lon;
 load waterGrid.mat;
 waterGrid = logical(waterGrid);
 
+datadir = 'E:\data\ecoffel\data\projects\bowen';
+
 plotDistChg = true;
 
 plotSpatialChg = false;
@@ -25,16 +27,16 @@ groups = [];
 
 for m = 1:length(models)
     
-    load(['e:/data/projects/bowen/derived-chg/var-stats/efGroup-' models{m} '.mat']);
+    load([datadir '/derived-chg/var-stats/efGroup-' models{m} '.mat']);
     groups(:,:,m) = efGroup;
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085.mat']);
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
     chgTw(:, :, m) = chgData;
     
-    load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-tasmax-' models{m} '-rcp85-2061-2085.mat']);
+    load([datadir '\temp-chg-data\chgData-cmip5-warm-season-tx-tasmax-' models{m} '-rcp85-2061-2085.mat']);
     chgData(waterGrid) = NaN;
     chgData(1:15,:) = NaN;
     chgData(75:90,:) = NaN;
@@ -42,13 +44,13 @@ for m = 1:length(models)
     
     tind = 1;
     for t = [5:10:95 100]
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-wb-davies-jones-full-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         threshChgTw(:, :, tind, m) = chgData;
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
+        load([datadir '\temp-chg-data\chgData-cmip5-percentile-chg-' num2str(t) '-tasmax-' models{m} '-rcp85-2061-2085-each-year.mat']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
@@ -68,13 +70,13 @@ if plotSpatialChg
     txGroupChg = [];
     
     for m = 1:length(models)
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-warm-season-tx-wb-davies-jones-full-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
         chgData =  reshape(chgData, [numel(chgData),1]);
         
-        load(['E:\data\projects\bowen\derived-chg\var-stats\twGroup-' models{m} '.mat']);
+        load([datadir '\derived-chg\var-stats\twGroup-' models{m} '.mat']);
         efGroup = twGroup;
         efGroup(waterGrid) = NaN;
         efGroup(1:15,:) = NaN;
@@ -85,7 +87,7 @@ if plotSpatialChg
             twGroupChg(t, m) = nanmean(chgData(find(efGroup == t)));
         end
         
-        load(['E:\data\projects\bowen\temp-chg-data\chgData-cmip5-warm-season-tx-tasmax-' models{m} '-rcp85-2061-2085']);
+        load([datadir '\temp-chg-data\chgData-cmip5-warm-season-tx-tasmax-' models{m} '-rcp85-2061-2085']);
         chgData(waterGrid) = NaN;
         chgData(1:15,:) = NaN;
         chgData(75:90,:) = NaN;
