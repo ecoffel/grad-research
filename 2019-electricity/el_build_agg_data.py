@@ -102,11 +102,11 @@ if not os.path.isfile(histFileName10):
                                                       qs, qs**2, qs**3, qs**4, qs**5, \
                                                       tx*qs,
                                                       0])[0]
-                        pcPred50 = pcModel10.predict([1, tx, tx**2, tx**3, \
+                        pcPred50 = pcModel50.predict([1, tx, tx**2, tx**3, \
                                                       qs, qs**2, qs**3, qs**4, qs**5, \
                                                       tx*qs,
                                                       0])[0]
-                        pcPred90 = pcModel10.predict([1, tx, tx**2, tx**3, \
+                        pcPred90 = pcModel90.predict([1, tx, tx**2, tx**3, \
                                                       qs, qs**2, qs**3, qs**4, qs**5, \
                                                       tx*qs,
                                                       0])[0]
@@ -152,6 +152,8 @@ if not os.path.isfile(histFileName10):
         pickle.dump(globalPC50, f, protocol=4)
     with open(histFileName90, 'wb') as f:
         pickle.dump(globalPC90, f, protocol=4)
+
+sys.exit()
 
 # load future mean warming data and recompute PC
 print('computing future systemwide PC...')
@@ -243,9 +245,9 @@ for w in range(1, 4+1):
                                 pcPred50 = 100
                                 pcPred90 = 100
                                 
-                            if pcPred10 > 100: pcPred10 = 100
-                            if pcPred50 > 100: pcPred50 = 100
-                            if pcPred90 > 100: pcPred90 = 100
+                            if pcPred10 > 100: pcPred10 = 97.5
+                            if pcPred50 > 100: pcPred50 = 97.5
+                            if pcPred90 > 100: pcPred90 = 97.5
                             
                             syswidePCFutCurMonth10.append(pcPred10)
                             syswidePCFutCurMonth50.append(pcPred50)

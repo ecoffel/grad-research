@@ -30,36 +30,17 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 
-globalPlants = el_load_global_plants.loadGlobalPlants()
+#gldas or grdc
+runoffModel = 'grdc'
+plantData = 'useu'
 
-plantTxData = np.genfromtxt('global-pp-tx-all.csv', delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,:]
-plantMonthData = plantTxData[1,:]
-plantDayData = plantTxData[2,:]
-plantTxData = plantTxData[3:,:]
+percentile = 50
 
-
-#globalWx = el_load_global_plants.loadGlobalWx(wxdata='all')
-#
-#plantList = globalWx['plantList']
-#plantYearData = globalWx['plantYearData']
-#plantMonthData = globalWx['plantMonthData']
-#plantDayData = globalWx['plantDayData']
-#plantTxData = globalWx['plantTxData']
-
-pcModel10 = []
-pcModel50 = []
-pcModel90 = []
-with gzip.open('pPolyData.dat', 'rb') as f:
-    pPolyData = pickle.load(f)
-    pcModel10 = pPolyData['pcModel10'][0]
-    pcModel50 = pPolyData['pcModel50'][0]
-    pcModel90 = pPolyData['pcModel90'][0]
-
-
-eData = {}
-with open('eData.dat', 'rb') as f:
-    eData = pickle.load(f)
+#plantTxData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData, delimiter=',', skip_header=0)
+#plantYearData = plantTxData[0,:]
+#plantMonthData = plantTxData[1,:]
+#plantDayData = plantTxData[2,:]
+#plantTxData = plantTxData[3:,:]
 
 yearRange = [1981, 2018]
 
@@ -68,27 +49,35 @@ returnPeriodsPrc = 1/returnPeriods * (62.0/100.0)
 returnPeriodLabels = ['50', '30', '10', '5', '1', '1/2', '1/10']
 
 
-if not os.path.isfile('plant-percentiles.dat'):
+if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/plant-percentiles-%d-%s-%s.dat'%(percentile, runoffModel, plantData)):
+    
+    
+    if plantData == 'world':
+        globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+    elif plantData == 'useu':
+        globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+
+    
+    histFileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-%d.dat'%(runoffModel, plantData, percentile)
     
     print('calculating percentiles for historical')
-    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-10.dat', 'rb') as f:
-        syswidePCHist10 = pickle.load(f)
-        syswidePCHist10 = syswidePCHist10['globalPCHist10']
-    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-50.dat', 'rb') as f:
-        syswidePCHist50 = pickle.load(f)
-        syswidePCHist50 = syswidePCHist50['globalPCHist50']
-    with gzip.open('E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-hist-90.dat', 'rb') as f:
-        syswidePCHist90 = pickle.load(f)
-        syswidePCHist90 = syswidePCHist90['globalPCHist90']
+    try:
+        with gzip.open(histFileName, 'rb') as f:
+            syswidePCHist = pickle.load(f)
+            syswidePCHist = syswidePCHist['globalPCHist%d'%percentile]
+    except:
+        with open(histFileName, 'rb') as f:
+            syswidePCHist = pickle.load(f)
+            syswidePCHist = syswidePCHist['globalPCHist%d'%percentile]
         
         
     plantPercentilesHist = []
-    for p in range(syswidePCHist10.shape[0]):
+    for p in range(syswidePCHist.shape[0]):
         plantTx1d = []
-        for year in range(syswidePCHist10.shape[1]):
+        for year in range(syswidePCHist.shape[1]):
             for month in range(6,7+1):
-                for day in range(len(syswidePCHist10[p,year,month])):
-                    plantTx1d.append(syswidePCHist10[p,year,month][day])
+                for day in range(len(syswidePCHist[p,year,month])):
+                    plantTx1d.append(syswidePCHist[p,year,month][day])
         plantTx1d = np.array(plantTx1d)
         plantPercentilesHist.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
     plantPercentilesHist = np.array(plantPercentilesHist)
@@ -97,9 +86,7 @@ if not os.path.isfile('plant-percentiles.dat'):
     plantPercentilesFut = []
     
     # these are the percentile scores under warming for different mean plant capacities
-    #futPercentileLevels = np.arange(90,96,1)
-    #futPercentileScores = []
-    
+
     for w in range(1,4+1):
         plantPercentilesFutCurGMT = []
     #    futPercentileScoresCurGMT = []
@@ -108,30 +95,42 @@ if not os.path.isfile('plant-percentiles.dat'):
             plantPercentilesFutCurModel = []
     #        futPercentileScoresCurModel = []
             
-            fileName = 'E:\data\ecoffel\data\projects\electricity\global-pc-future\global-pc-future-%ddeg-%s.dat'%(w, models[model])
-            
+            if plantData == 'useu':        
+                fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-%ddeg-%s.dat'%(runoffModel, plantData, w, models[model])
+            elif plantData == 'world':
+                fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-%d-%ddeg-%s.dat'%(runoffModel, plantData, percentile, w, models[model])
+    
+    
             if not os.path.isfile(fileName):
                 filler = []
-                for p in range(syswidePCHist10.shape[0]):
+                for p in range(syswidePCHist.shape[0]):
                     filler.append([np.nan]*len(returnPeriodsPrc))
                 plantPercentilesFutCurGMT.append(filler)
                 continue
             
             print('calculating percentiles for %s/+%dC'%(models[model],w))
             
-            with gzip.open(fileName, 'rb') as f:
-                globalPC = pickle.load(f)
-                
-                globalPCFut10 = globalPC['globalPCFut10']
-                globalPCFut50 = globalPC['globalPCFut50']
-                globalPCFut90 = globalPC['globalPCFut90']
+            try:
+                with gzip.open(fileName, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    
+    #                globalPCFut10 = globalPC['globalPCFut10']
+                    globalPCFut = globalPC['globalPCFut%d'%percentile]
+    #                globalPCFut90 = globalPC['globalPCFut90']
+            except:
+                with open(fileName, 'rb') as f:
+                    globalPC = pickle.load(f)
+                    
+    #                globalPCFut10 = globalPC['globalPCFut10']
+                    globalPCFut = globalPC['globalPCFut%d'%percentile]
+    #                globalPCFut90 = globalPC['globalPCFut90']
             
-            for p in range(syswidePCHist10.shape[0]):
+            for p in range(syswidePCHist.shape[0]):
                 plantTx1d = []
-                for year in range(globalPCFut10.shape[1]):
+                for year in range(globalPCFut.shape[1]):
                     for month in range(6,7+1):
-                        for day in range(len(globalPCFut10[p,year,month])):
-                            plantTx1d.append(globalPCFut10[p,year,month][day])
+                        for day in range(len(globalPCFut[p,year,month])):
+                            plantTx1d.append(globalPCFut[p,year,month][day])
                 plantTx1d = np.array(plantTx1d)
                 plantPercentilesFutCurModel.append(np.nanpercentile(plantTx1d, returnPeriodsPrc))
                 
@@ -150,18 +149,19 @@ if not os.path.isfile('plant-percentiles.dat'):
     plantPercentilesFut = np.array(plantPercentilesFut)
     plantPercentilesFut = np.nanmean(plantPercentilesFut, axis=2)
     
-    with gzip.open('plant-percentiles.dat', 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/plant-percentiles-%d-%s-%s.dat'%(percentile, runoffModel, plantData), 'wb') as f:
         plantPercentiles = {'plantPercentilesHist':plantPercentilesHist, \
                             'plantPercentilesFut':plantPercentilesFut}
         pickle.dump(plantPercentiles, f)
     
 else:
     
-    with gzip.open('plant-percentiles.dat', 'rb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/plant-percentiles-%d-%s-%s.dat'%(percentile, runoffModel, plantData), 'rb') as f:
         plantPercentiles = pickle.load(f)
         plantPercentilesHist = plantPercentiles['plantPercentilesHist']
         plantPercentilesFut = plantPercentiles['plantPercentilesFut']
 
+sys.exit()
 ## convert perc score into return period
 #futPercentileScores = np.array(futPercentileScores)
 #futPercentileScores = futPercentileScores/100.0
