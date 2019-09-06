@@ -7,6 +7,7 @@ Created on Mon Apr  1 09:47:36 2019
 
 import json
 import numpy as np
+import scipy.stats as st
 
 import sys
 
@@ -240,10 +241,34 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             # append without restricting to summer
             finalPlantPercCapacity.append(curPC)
             plantTx.append(curTx)
+            
+            
+            # find std of qs distribution
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQs))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQs[nn])
+                curQsStd = dist.std(*args)
+#                curQsStd = np.nanstd(curQs)
+            else:
+                curQsStd = np.nan
+            
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQsGrdc))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQsGrdc[nn])
+                curQsGrdcStd = dist.std(*args)
+#                curQsGrdcStd = np.nanstd(curQsGrdc)
+            else:
+                curQsGrdcStd = np.nan
+            
+            
             plantQs.append(curQs)
-            plantQsAnom.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+#            plantQsAnom.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsAnom.append((curQs-np.nanmean(curQs))/curQsStd)
             plantQsGrdc.append(curQsGrdc)
-            plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
+#            plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
+            plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
             
             # restrict to summer only
             curPC = curPC[summerInds]
@@ -258,14 +283,38 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             curQs = curQs[nn]
             curQsGrdc = curQsGrdc[nn]
             
+            
+            # find std of qs distribution
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQs))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQs)
+                curQsStd = dist.std(*args)
+#                curQsStd = np.nanstd(curQs)
+            else:
+                curQsStd = np.nan
+            
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQsGrdc))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQsGrdc)
+                curQsGrdcStd = dist.std(*args)
+#                curQsGrdcStd = np.nanstd(curQsGrdc)
+            else:
+                curQsGrdcStd = np.nan
+            
+            
             # now aggregate summer-restricted variables for this plant
             finalPlantPercCapacitySummer.append(curPC)
             plantTxSummer.append(curTx)
             plantCDD.append(curCDD)
             plantQsSummer.append(curQs)
-            plantQsAnomSummer.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+#            plantQsAnomSummer.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsAnomSummer.append((curQs-np.nanmean(curQs))/curQsStd)
+            
             plantQsGrdcSummer.append(curQsGrdc)
-            plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
+#            plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
+            plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
             
             
     plantTx = np.array(plantTx)
@@ -427,10 +476,30 @@ def accumulateNukeWxData(eba, nukeMatchData):
             plantCDD = plantCDD[nn]
             plantCDDSmooth = plantCDDSmooth[nn]
             
+            # find std of qs distribution
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQs))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQs[nn])
+                curQsStd = dist.std(*args)
+#                curQsStd = np.nanstd(curQs)
+            else:
+                curQsStd = np.nan
+            
+            dist = st.fatiguelife
+            nn = np.where(~np.isnan(curQsGrdc))[0]
+            if len(nn) > 10:
+                args = dist.fit(curQsGrdc[nn])
+                curQsGrdcStd = dist.std(*args)
+#                curQsGrdcStd = np.nanstd(curQsGrdc)
+            else:
+                curQsGrdcStd = np.nan
+            
             plantQsTotal.extend(curQs)
-            plantQsAnomTotal.extend((curQs-np.nanmean(curQs))/np.nanstd(curQs))
+            plantQsAnomTotal.extend((curQs-np.nanmean(curQs))/curQsStd)
             plantQsGrdcTotal.extend(curQsGrdc)
-            plantQsGrdcAnomTotal.extend((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
+            plantQsGrdcAnomTotal.extend((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
+            
             plantCapTotal.extend(plantCap)
             plantTxTotal.extend(plantTx)
             plantTxAvgTotal.extend(plantTxAvg)

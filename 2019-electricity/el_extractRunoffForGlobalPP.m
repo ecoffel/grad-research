@@ -1,6 +1,6 @@
 
 startYear = 1981;
-endYear = 2018;
+endYear = 2005;
 
 % world, useu, entsoe-nuke
 plantData = 'world';

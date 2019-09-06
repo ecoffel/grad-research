@@ -13,14 +13,14 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import pickle
 
-plotFigs = True
+plotFigs = False
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsAnomSummer'
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
 
-qsrange = np.arange(-2, 2.1, .1)
+qsrange = np.arange(-3, 3.1, .1)
 #qsrange = np.arange(0,10, .1)
 
 yds = []
@@ -30,25 +30,25 @@ for m in range(len(models)):
     curCont = []
     
     for q in qsrange:
-        qs = np.array([q]*200)
         xd = np.linspace(20,50,40)
         
         yd = []    
         for i in range(len(xd)):
             yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-                                        qs[i], qs[i]**2, qs[i]**3, qs[i]**4, qs[i]**5, qs[i]*xd[i], 2])[0])
+                                        q, q**2, q**3, q**4, q**5, q*xd[i], 0])[0])
         curCont.append(yd)
         
     yds.append(curCont)
 
 yds = np.array(yds)
-yds = np.squeeze(np.nanmean(yds, axis=0))
+yds = np.squeeze(np.nanmedian(yds, axis=0))
+yds[yds<75] = 75
 
 plt.contourf(xd, qsrange, yds, levels=np.arange(75,100,1), cmap = 'Reds_r')
 cb = plt.colorbar()
 
 plt.plot([20, 50], [0, 0], '--k', lw=2)
-plt.plot([35, 35], [-2, 2], '--k', lw=2)
+plt.plot([35, 35], [-3, 3], '--k', lw=2)
 
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)

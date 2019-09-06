@@ -12,6 +12,7 @@ import matplotlib.cm as cmx
 import seaborn as sns
 from scipy import stats
 import statsmodels.api as sm
+import scipy.stats as st
 import el_load_global_plants
 import gzip, pickle
 import sys,os
@@ -27,8 +28,8 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 #gldas or grdc
-runoffModel = 'grdc'
-plantData = 'world'
+runoffModel = 'gldas'
+plantData = 'useu'
 
 if plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
@@ -41,8 +42,25 @@ plantMonthData = plantTxData[1,:]
 plantDayData = plantTxData[2,:]
 plantTxData = plantTxData[3:,:]
 
-plantQsData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-anom.csv'%plantData, delimiter=',', skip_header=0)
-plantQsData = plantQsData[3:,:]
+if os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-distfit-anom.csv'%plantData):
+    plantQsData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-distfit-anom.csv'%plantData, delimiter=',', skip_header=0)
+else:
+    plantQsData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff.csv'%plantData, delimiter=',', skip_header=0)
+    plantQsData = plantQsData[3:,:]
+    
+    plantQsAnomData = []
+    dist = st.fatiguelife
+    for p in range(plantQsData.shape[0]):
+        q = plantQsData[p,:]
+        nn = np.where(~np.isnan(q))[0]
+        if len(nn) > 10:
+            args = dist.fit(q[nn])
+            curQsStd = dist.std(*args)
+        else:
+            curQsStd = np.nan
+        plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
+    plantQsData = np.array(plantQsAnomData)
+    np.savetxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-distfit-anom.csv'%plantData, plantQsAnomData)
 
 pcModel10 = []
 pcModel50 = []
@@ -54,9 +72,9 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-
     pcModel90 = pPolyData['pcModel90'][0]
 
 
-histFileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-10.dat'%(runoffModel, plantData)
-histFileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-50.dat'%(runoffModel, plantData)
-histFileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-90.dat'%(runoffModel, plantData)
+histFileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-qdistfit-10.dat'%(runoffModel, plantData)
+histFileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-qdistfit-50.dat'%(runoffModel, plantData)
+histFileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist-qdistfit-90.dat'%(runoffModel, plantData)
 
 if not os.path.isfile(histFileName10):
     
@@ -245,9 +263,9 @@ for w in range(1, 4+1):
                                 pcPred50 = 100
                                 pcPred90 = 100
                                 
-                            if pcPred10 > 100: pcPred10 = 97.5
-                            if pcPred50 > 100: pcPred50 = 97.5
-                            if pcPred90 > 100: pcPred90 = 97.5
+                            if pcPred10 > 100: pcPred10 = 100
+                            if pcPred50 > 100: pcPred50 = 100
+                            if pcPred90 > 100: pcPred90 = 100
                             
                             syswidePCFutCurMonth10.append(pcPred10)
                             syswidePCFutCurMonth50.append(pcPred50)

@@ -209,19 +209,8 @@ if not os.path.isfile('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffD
         
     with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
-else:
-    
-    with gzip.open('aggregated-%s-outages-hist-%s-10.dat'%(plantData, runoffData), 'rb') as f:
-        yearlyOutagesHist10 = pickle.load(f)
-        
-    with gzip.open('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData), 'rb') as f:
-        yearlyOutagesHist50 = pickle.load(f)
-        
-    with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'rb') as f:
-        yearlyOutagesHist90 = pickle.load(f)
 
 
-print('processing future...')
 
 
 for model in range(len(models)):
@@ -409,6 +398,7 @@ for model in range(len(models)):
         yearlyOutagesCurGMT90 = np.array(yearlyOutagesCurGMT90)
         yearlyOutagesCurGMT90 = (np.nansum(yearlyOutagesCurGMT90, axis=0)/numPlants90)*yearlyOutagesCurGMT90.shape[0]
         yearlyOutagesCurModel90.append(yearlyOutagesCurGMT90)
+        
     
     yearlyOutagesCurModel10 = np.array(yearlyOutagesCurModel10)
     yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
@@ -423,7 +413,16 @@ for model in range(len(models)):
     with gzip.open('aggregated-%s-outages-fut-%s-%s-90.dat'%(plantData, models[model], runoffData), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel90, f)
 
-sys.exit()
+
+
+with gzip.open('aggregated-%s-outages-hist-%s-10.dat'%(plantData, runoffData), 'rb') as f:
+    yearlyOutagesHist10 = pickle.load(f)
+    
+with gzip.open('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData), 'rb') as f:
+    yearlyOutagesHist50 = pickle.load(f)
+    
+with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'rb') as f:
+    yearlyOutagesHist90 = pickle.load(f)
 
 yearlyOutagesFut10 = []
 yearlyOutagesFut50 = []
@@ -476,7 +475,10 @@ yearlyOutagesFut10 = yearlyOutagesFut10/1e18
 yearlyOutagesFut50 = yearlyOutagesFut50/1e18
 yearlyOutagesFut90 = yearlyOutagesFut90/1e18
                                
-                               
+yearlyOutagesFut10 = np.moveaxis(yearlyOutagesFut10, 1, 0)
+yearlyOutagesFut50 = np.moveaxis(yearlyOutagesFut50, 1, 0)
+yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
+
 #yearlyOutagesHist10 = yearlyOutagesHist10*24*3600*1e6*1e6/1e18
 #yearlyOutagesHist50 = yearlyOutagesHist50*24*3600*1e6*1e6/1e18
 #yearlyOutagesHist90 = yearlyOutagesHist90*24*3600*1e6*1e6/1e18
@@ -491,7 +493,7 @@ yticks = np.array([0, .05, .1, .15, .2])
 
 pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
 
-xpos = np.arange(1,13)
+xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
 
 
 
@@ -500,14 +502,15 @@ outageSum2 = []
 outageSum4 = []
 
 for m in range(0,12):
-    outageSumHist.append(np.nansum(yearlyOutagesHist10[0:m+1]))
-    outageSum2.append(np.nansum(np.nanmean(yearlyOutagesFut10[1,:,0:m+1], axis=0)))
-    outageSum4.append(np.nansum(np.nanmean(yearlyOutagesFut10[3,:,0:m+1], axis=0)))
+    outageSumHist.append(np.nansum(yearlyOutagesHist50[0:m+1]))
+    outageSum2.append(np.nansum(np.nanmean(yearlyOutagesFut50[1,:,0:m+1], axis=0)))
+    outageSum4.append(np.nansum(np.nanmean(yearlyOutagesFut50[3,:,0:m+1], axis=0)))
     
 
-plt.figure(figsize=(4,4))
+plt.figure(figsize=(6,4))
 #plt.xlim([0, 7])
-plt.ylim([0, 1.2])
+#plt.ylim([0, 1.4])
+#plt.ylim([0, 3.5])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
@@ -520,8 +523,51 @@ plt.fill_between(xpos, outageSumHist, [0]*12, facecolor='black', alpha=.5, inter
 plt.fill_between(xpos, outageSum2, outageSumHist, facecolor='#ffb835', alpha=.5, interpolate=True)
 plt.fill_between(xpos, outageSum4, outageSum2, facecolor=snsColors[1], alpha=.5, interpolate=True)
 
-plt.xticks(xpos)
-plt.yticks(np.arange(0,1.2,.1))
+plt.plot(xpos[-1]+1.5-.25, np.nansum(yearlyOutagesHist10), 'o', markersize=5, color=snsColors[1])
+plt.plot(xpos[-1]+1.5, np.nansum(yearlyOutagesHist50), 'o', markersize=5, color='black')
+plt.plot(xpos[-1]+1.5+.25, np.nansum(yearlyOutagesHist90), 'o', markersize=5, color=snsColors[0])
+
+
+plt.plot(xpos[-1]+3-.25, np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), 'o', markersize=5, color=snsColors[1])
+plt.errorbar(xpos[-1]+3-.25, \
+             np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
+             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos[-1]+3, np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), 'o', markersize=5, color='black')
+plt.errorbar(xpos[-1]+3, \
+             np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
+             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos[-1]+3+.25, np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), 'o', markersize=5, color=snsColors[0])
+plt.errorbar(xpos[-1]+3+.25, \
+             np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[1], axis=1)), \
+             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
+
+
+plt.plot(xpos[-1]+4.5-.25, np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), 'o', markersize=5, color=snsColors[1])
+plt.errorbar(xpos[-1]+4.5-.25, \
+             np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
+             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos[-1]+4.5, np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), 'o', markersize=5, color='black')
+plt.errorbar(xpos[-1]+4.5, \
+             np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
+             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos[-1]+4.5+.25, np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), 'o', markersize=5, color=snsColors[0])
+plt.errorbar(xpos[-1]+4.5+.25, \
+             np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), \
+             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[3], axis=1)), \
+             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.xticks([1,2,3,4,5,6,7,8,9,10,11,12,13.5,15,16.5])
+plt.gca().set_xticklabels([1,2,3,4,5,6,7,8,9,10,11,12,'Hist', '2$\degree$C', '4$\degree$C'])
+plt.yticks(np.arange(0,1.4,.2))
 plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Monthly US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
@@ -532,12 +578,32 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
+leg.get_frame().set_linewidth(0.0)            
 
+sys.exit()
 
-                               
+if plotFigs:
+    plt.savefig('accumulated-annual-outage-cdf-%s-%s.png'%(plantData,runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 plt.figure(figsize=(4,4))
 #plt.xlim([0, 7])
-plt.ylim([0, .2])
+#plt.ylim([0, .2])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
@@ -587,7 +653,8 @@ xpos = np.array([1, 3, 4, 5, 6])
 
 plt.figure(figsize=(5,4))
 plt.xlim([0, 7])
-plt.ylim([.55, 1.175])
+#plt.ylim([.55, 1.175])
+plt.ylim([0, 1.2])
 plt.grid(True, color=[.9,.9,.9])
 
 plt.plot(xpos[0]-.15, np.nansum(yearlyOutagesHist10), 'o', markersize=5, color=snsColors[1])

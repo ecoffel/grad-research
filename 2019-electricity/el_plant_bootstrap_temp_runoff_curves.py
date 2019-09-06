@@ -17,7 +17,7 @@ import sys, os
 dataDir = 'e:/data/'
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsAnomSummer'
 
 plotFigs = False
 dumpData = True
@@ -82,7 +82,7 @@ indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
 if dumpData:
-    with gzip.open('pPolyData-grdc.dat', 'wb') as f:
+    with gzip.open('e:/data/ecoffel/data/projects/electricity/script-data/pPolyData-gldas.dat', 'wb') as f:
         pickle.dump(pPolyData, f)
 
 

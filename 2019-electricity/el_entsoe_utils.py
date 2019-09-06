@@ -6,6 +6,7 @@ Created on Sun Mar 31 18:49:31 2019
 """
 
 import numpy as np
+import scipy.stats as st
 
 def normalize(v):
     nn = np.where(~np.isnan(v))[0]
@@ -493,16 +494,50 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         finalOutageInds[c].extend(outageInd)
         
         curQs = np.array(finalQsSummer[c])
-        finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / np.nanstd(curQs))
+        # find std of qs distribution
+        dist = st.fatiguelife
+        nn = np.where(~np.isnan(curQs))[0]
+        if len(nn) > 10:
+            args = dist.fit(curQs[nn])
+            curQsStd = dist.std(*args)
+#                curQsStd = np.nanstd(curQs)
+        else:
+            curQsStd = np.nan
+        finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / curQsStd)
         
         curQsGrdc = np.array(finalQsGrdcSummer[c])
-        finalQsGrdcAnomSummer.append((curQsGrdc - np.nanmean(curQsGrdc)) / np.nanstd(curQsGrdc))
+        dist = st.fatiguelife
+        nn = np.where(~np.isnan(curQsGrdc))[0]
+        if len(nn) > 10:
+            args = dist.fit(curQsGrdc[nn])
+            curQsGrdcStd = dist.std(*args)
+#                curQsGrdcStd = np.nanstd(curQsGrdc)
+        else:
+            curQsGrdcStd = np.nan
+        finalQsGrdcAnomSummer.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
         
         curQs = np.array(finalQs[c])
-        finalQsAnom.append((curQs - np.nanmean(curQs)) / np.nanstd(curQs))
+        # find std of qs distribution
+        dist = st.fatiguelife
+        nn = np.where(~np.isnan(curQs))[0]
+        if len(nn) > 10:
+            args = dist.fit(curQs[nn])
+            curQsStd = dist.std(*args)
+#                curQsStd = np.nanstd(curQs)
+        else:
+            curQsStd = np.nan
+        finalQsAnom.append((curQs - np.nanmean(curQs)) / curQsStd)
         
         curQsGrdc = np.array(finalQsGrdc[c])
-        finalQsGrdcAnom.append((curQsGrdc - np.nanmean(curQsGrdc)) / np.nanstd(curQsGrdc))
+        dist = st.fatiguelife
+        nn = np.where(~np.isnan(curQsGrdc))[0]
+        if len(nn) > 10:
+            args = dist.fit(curQsGrdc[nn])
+            curQsGrdcStd = dist.std(*args)
+#                curQsGrdcStd = np.nanstd(curQsGrdc)
+        else:
+            curQsGrdcStd = np.nan
+        finalQsGrdcAnom.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
         
     
     finalQs = np.array(finalQs)

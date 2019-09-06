@@ -125,7 +125,7 @@ def buildPolyTempPPModel(tempVar, nBootstrap, order):
 def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     eData = {}
-    with open('eData.dat', 'rb') as f:
+    with open('e:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'rb') as f:
         eData = pickle.load(f)
 
     entsoeAgDataAll = eData['entsoeAgDataAll']

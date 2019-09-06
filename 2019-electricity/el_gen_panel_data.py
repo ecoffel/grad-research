@@ -80,10 +80,10 @@ eData = {'entsoeData':entsoeData, \
          'nukePlantDataNcep':nukePlantDataNcep, \
          'nukePlantDataAll':nukePlantDataAll}
 
-with open('eData.dat', 'wb') as f:
+with open('e:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'wb') as f:
     pickle.dump(eData, f)
 
-
+sys.exit()
 df = pd.DataFrame()
 
 temp = []
