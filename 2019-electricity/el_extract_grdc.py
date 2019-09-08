@@ -46,6 +46,7 @@ with open('%s/grdc/grdc_reference_stations/grdc_reference_stations.csv'%dataDir,
 grdcRefData = np.array(grdcRefData)
 
 grdcMatchIds = []
+grdcDists = []
 
 for p in range(plantLatLon.shape[0]):
     
@@ -65,14 +66,16 @@ for p in range(plantLatLon.shape[0]):
             minDist = d
             minDistId = grdcRefData[g,0]
     
+    
     if minDist > 200:
         minDistId = -1
+    else:
+        grdcDists.append(minDist)
     
     grdcMatchIds.append((plantLatLon[p,0], minDistId))
 
 # these are the station ids that correspond to the plant lat/lons
 grdcMatchIds = np.array(grdcMatchIds)
-
 
 grdcDataNuke = []
 grdcDataEntsoe = []

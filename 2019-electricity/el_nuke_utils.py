@@ -17,6 +17,10 @@ dataDir = 'e:/data/'
 useEra = True
 plotFigs = False
 
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0)) 
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
+
 def loadNukeData(dataDir):
     print('loading nuke eba...')
     eba = []
@@ -109,7 +113,15 @@ def loadWxData(eba, wxdata):
     qs = np.genfromtxt(fileNameGldas, delimiter=',')
     
     fileNameGrdc = 'nuke-qs-grdc.csv'
-    qsGrdc = np.genfromtxt(fileNameGrdc, delimiter=',')
+    qsGrdcRaw = np.genfromtxt(fileNameGrdc, delimiter=',')
+    
+    qsGrdc = []
+    for p in range(qsGrdcRaw.shape[0]):
+        curq = [np.nan]*30
+        curq.extend(running_mean(qsGrdcRaw[p,1:], 30))
+        qsGrdc.append(curq)
+    qsGrdc = np.array(qsGrdc)
+    
     
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []

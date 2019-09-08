@@ -16,7 +16,7 @@ models = {'bcc-csm1-1-m', 'canesm2', ...
 rcp = 'rcp85';
 
 % world, useu, entsoe-nuke
-plantData = 'world';
+plantData = 'useu';
 
 plantLatLon = csvread(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-lat-lon.csv']);
 
@@ -37,12 +37,14 @@ for g = 1:4
     for model = 1:length(models)
         
         fileTarget = ['E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/' plantData '-pp-' num2str(g) 'deg-runoff-cmip5-' models{model} '.csv'];
+        fileTargetRaw = ['E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/' plantData '-pp-' num2str(g) 'deg-runoff-raw-cmip5-' models{model} '.csv'];
         
-        if exist(fileTarget, 'file')
+        if exist(fileTarget, 'file') && exist(fileTargetRaw, 'file')
             continue;
         end
         
-        modelPlantTxTimeSeries = [];
+        modelPlantQsTimeSeries = [];
+        modelPlantQsRawTimeSeries = [];
 
         fprintf('loading %s/historical...\n', models{model})
         qsHist = loadMonthlyData(['E:/data/cmip5/output/' models{model} '/mon/r1i1p1/historical/mrro'], 'mrro', 'startYear', 1981, 'endYear', 2005);
@@ -90,6 +92,7 @@ for g = 1:4
 
             % bias corrected tx for all future years for this gmt anom
             qsFut1dStd = [];
+            qsFut1d = [];
             qsYears = [];
             qsMonths = [];
             qsDays = [];
@@ -117,9 +120,17 @@ for g = 1:4
                     end
 
                     if isnan(curQs)
-                        qsFut1dStd(end+1) = NaN;
+                        if ~exist(fileTarget, 'file')
+                            qsFut1dStd(end+1) = NaN;
+                        end
+                        qsFut1d(end+1) = NaN;
                     else
-                        qsFut1dStd(end+1) = (curQs - nanmean(qsHist1d)) ./ nanstd(qsHist1d);
+                        % only do this calc if necessary as it is time
+                        % consuming
+                        if ~exist(fileTarget, 'file')
+                            qsFut1dStd(end+1) = (curQs - nanmean(qsHist1d)) ./ nanstd(qsHist1d);
+                        end
+                        qsFut1d(end+1) = curQs;
                     end
 
                     curDate = addtodate(curDate, 1, 'day');
@@ -129,17 +140,30 @@ for g = 1:4
 
             if length(curGMTYears)
                 if i == 1
-                    modelPlantTxTimeSeries(1, :) = qsYears;
-                    modelPlantTxTimeSeries(2, :) = qsMonths;
-                    modelPlantTxTimeSeries(3, :) = qsDays;
+                    modelPlantQsTimeSeries(1, :) = qsYears;
+                    modelPlantQsTimeSeries(2, :) = qsMonths;
+                    modelPlantQsTimeSeries(3, :) = qsDays;
+                    
+                    modelPlantQsRawTimeSeries(1, :) = qsYears;
+                    modelPlantQsRawTimeSeries(2, :) = qsMonths;
+                    modelPlantQsRawTimeSeries(3, :) = qsDays;
                 end
 
                 % add current year of temps to current plant
-                modelPlantTxTimeSeries(i+3, :) = qsFut1dStd;
+                if ~exist(fileTarget, 'file')
+                    modelPlantQsTimeSeries(i+3, :) = qsFut1dStd;
+                end
+                modelPlantQsRawTimeSeries(i+3, :) = qsFut1d;
             end
         end
         
-        csvwrite(fileTarget, modelPlantTxTimeSeries);   
+        if ~exist(fileTarget, 'file')
+            csvwrite(fileTarget, modelPlantQsTimeSeries);   
+        end
+        
+        if ~exist(fileTargetRaw, 'file')
+            csvwrite(fileTargetRaw, modelPlantQsRawTimeSeries);   
+        end
         
     end
 
