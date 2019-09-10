@@ -13,7 +13,7 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import pickle
 
-plotFigs = False
+plotFigs = True
 
 tempVar = 'txSummer'
 qsVar = 'qsAnomSummer'

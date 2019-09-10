@@ -18,7 +18,7 @@ import sys, os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = False
+plotFigs = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -41,11 +41,39 @@ if plantData == 'useu':
 elif plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
+with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'rb') as f:
+    livingPlantsInds40 = pickle.load(f)
+
+pcModel10 = []
+pcModel50 = []
+pcModel90 = []
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffData, 'rb') as f:
+    pPolyData = pickle.load(f)
+    pcModel10 = pPolyData['pcModel10'][0]
+    pcModel50 = pPolyData['pcModel50'][0]
+    pcModel90 = pPolyData['pcModel90'][0]
+
 yearRange = [1981, 2018]
 
 monthLen = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, runoffData)):
+
+txBase = 20
+qsBase = 0
+basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
+                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                              txBase*qsBase,
+                              0])[0]
+basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
+                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                              txBase*qsBase,
+                              0])[0]
+basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
+                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                              txBase*qsBase,
+                              0])[0]
+
+if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit)):
 
     if not 'globalPCHist50' in locals():
         try:
@@ -85,10 +113,10 @@ if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\
     numPlants50 = 0
     numPlants90 = 0
     
-    # over all plants
-    for p in range(globalPCHist50.shape[0]):
+    # over all plants that are active in 2018
+    for p in livingPlantsInds40[2018]:#range(globalPCHist50.shape[0]):
         
-        if p % 25 == 0:
+        if p % 500 == 0:
             print('plant %d...'%p)
         
         numYears = 0
@@ -113,7 +141,8 @@ if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\
 
             for month in range(12):
                 
-                monthlyOutages10 = (100-np.array(globalPCHist10[p,year,month][:])) / 100.0
+                monthlyOutages10 = (basePred10-np.array(globalPCHist10[p,year,month][:])) / 100.0
+                monthlyOutages10[monthlyOutages10 < 0] = 0
                 numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
                 monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
                 
@@ -126,7 +155,8 @@ if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\
                     yearlyOutagesHistCurYear10.append(monthlyTotal10)
                     
                 
-                monthlyOutages50 = (100-np.array(globalPCHist50[p,year,month][:])) / 100.0
+                monthlyOutages50 = (basePred50-np.array(globalPCHist50[p,year,month][:])) / 100.0
+                monthlyOutages50[monthlyOutages50 < 0] = 0
                 numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
                 monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
                 
@@ -138,7 +168,8 @@ if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\
                     
                     
                     
-                monthlyOutages90 = (100-np.array(globalPCHist90[p,year,month][:])) / 100.0
+                monthlyOutages90 = (basePred90-np.array(globalPCHist90[p,year,month][:])) / 100.0
+                monthlyOutages90[monthlyOutages90 < 0] = 0
                 numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
                 monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
                 
@@ -204,24 +235,24 @@ if not os.path.isfile('E:\data\ecoffel\data\projects\electricity\agg-outages-%s\
     yearlyOutagesHist90 = np.array(yearlyOutagesHist90)
     yearlyOutagesHist90 = (np.nansum(yearlyOutagesHist90, axis=0)/numPlants90)*yearlyOutagesHist90.shape[0]
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit), 'wb') as f:
         pickle.dump(yearlyOutagesHist10, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(runoffData, plantData, qsfit, runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-50.dat'%(runoffData, plantData, qsfit), 'wb') as f:
         pickle.dump(yearlyOutagesHist50, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-90.dat'%(runoffData, plantData, qsfit), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
 
-sys.exit()
+
 
 for model in range(len(models)):
     yearlyOutagesCurModel10 = []
     yearlyOutagesCurModel50 = []
     yearlyOutagesCurModel90 = []
 
-    if os.path.isfile('aggregated-%s-outages-fut-%s-%s-10.dat'%(plantData, models[model], runoffData)) or \
-       os.path.isfile('aggregated-%s-outages-fut-%s-10.dat'%(plantData, runoffData)):
+    if os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model])) or \
+       os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-10.dat'%(runoffData, plantData, qsfit)):
         print('skipping %s...'%models[model])
         continue
 
@@ -231,10 +262,10 @@ for model in range(len(models)):
         yearlyOutagesCurGMT50 = []
         yearlyOutagesCurGMT90 = []
         
-        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
-        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-10-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
-        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-50-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
-        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future-90-%ddeg-%s.dat'%(runoffData, plantData, w, models[model])
+        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
+        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
+        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
+        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
         
         if os.path.isfile(fileName):
             try:
@@ -286,8 +317,8 @@ for model in range(len(models)):
         numPlants50 = 0
         numPlants90 = 0
         
-        # over all plants
-        for p in range(globalPCFut10.shape[0]):                
+        # over all plants living in 2018
+        for p in livingPlantsInds40[2018]:#range(globalPCFut10.shape[0]):                
             yearlyOutagesCurPlant10 = []
             yearlyOutagesCurPlant50 = []
             yearlyOutagesCurPlant90 = []
@@ -307,9 +338,12 @@ for model in range(len(models)):
                 
                 for month in range(12):
             
-                    monthlyOutages10 = (100-np.array(globalPCFut10[p,year,month][:])) / 100.0
-                    monthlyOutages50 = (100-np.array(globalPCFut50[p,year,month][:])) / 100.0
-                    monthlyOutages90 = (100-np.array(globalPCFut90[p,year,month][:])) / 100.0
+                    monthlyOutages10 = (basePred10-np.array(globalPCFut10[p,year,month][:])) / 100.0
+                    monthlyOutages10[monthlyOutages10<0] = 0
+                    monthlyOutages50 = (basePred50-np.array(globalPCFut50[p,year,month][:])) / 100.0
+                    monthlyOutages50[monthlyOutages50<0] = 0
+                    monthlyOutages90 = (basePred90-np.array(globalPCFut90[p,year,month][:])) / 100.0
+                    monthlyOutages90[monthlyOutages90<0] = 0
                     
                     indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
                     monthlyOutages10[indBadData10] = np.nan
@@ -406,23 +440,24 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
     yearlyOutagesCurModel90 = np.array(yearlyOutagesCurModel90)
     
-    with gzip.open('aggregated-%s-outages-fut-%s-%s-10.dat'%(plantData, models[model], runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel10, f)
     
-    with gzip.open('aggregated-%s-outages-fut-%s-%s-50.dat'%(plantData, models[model], runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-50.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel50, f)
         
-    with gzip.open('aggregated-%s-outages-fut-%s-%s-90.dat'%(plantData, models[model], runoffData), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-90.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel90, f)
+    
 
 
-with gzip.open('aggregated-%s-outages-hist-%s-10.dat'%(plantData, runoffData), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit), 'rb') as f:
     yearlyOutagesHist10 = pickle.load(f)
     
-with gzip.open('aggregated-%s-outages-hist-%s-50.dat'%(plantData, runoffData), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-50.dat'%(runoffData, plantData, qsfit), 'rb') as f:
     yearlyOutagesHist50 = pickle.load(f)
     
-with gzip.open('aggregated-%s-outages-hist-%s-90.dat'%(plantData, runoffData), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-90.dat'%(runoffData, plantData, qsfit), 'rb') as f:
     yearlyOutagesHist90 = pickle.load(f)
 
 yearlyOutagesFut10 = []
@@ -435,9 +470,10 @@ for model in range(len(models)):
     yearlyOutagesCurModel90 = []
 
 
-    fileName10 = 'aggregated-%s-outages-fut-%s-%s-10.dat'%(plantData, models[model], runoffData)
-    fileName50 = 'aggregated-%s-outages-fut-%s-%s-50.dat'%(plantData, models[model], runoffData)
-    fileName90 = 'aggregated-%s-outages-fut-%s-%s-90.dat'%(plantData, models[model], runoffData)
+    fileName10 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model])
+    fileName50 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-50.dat'%(runoffData, plantData, qsfit, models[model])
+    fileName90 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-90.dat'%(runoffData, plantData, qsfit, models[model])
+    
     if os.path.isfile(fileName10):
         
         with gzip.open(fileName10) as f:
@@ -447,9 +483,9 @@ for model in range(len(models)):
         with gzip.open(fileName90) as f:
             yearlyOutagesCurModel90 = pickle.load(f)
             
-    yearlyOutagesFut10.append(yearlyOutagesCurModel10)
-    yearlyOutagesFut50.append(yearlyOutagesCurModel50)
-    yearlyOutagesFut90.append(yearlyOutagesCurModel90)
+        yearlyOutagesFut10.append(yearlyOutagesCurModel10)
+        yearlyOutagesFut50.append(yearlyOutagesCurModel50)
+        yearlyOutagesFut90.append(yearlyOutagesCurModel90)
 
 yearlyOutagesFut10 = np.array(yearlyOutagesFut10)
 yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
@@ -468,109 +504,66 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 #z = np.polyfit(xd, mean90[0,:], 1)
 #histPolyTx90 = np.poly1d(z)
 
-yearlyOutagesHist10 = yearlyOutagesHist10/1e18
-yearlyOutagesHist50 = yearlyOutagesHist50/1e18
-yearlyOutagesHist90 = yearlyOutagesHist90/1e18
+# in PJ
+yearlyOutagesHist10 = yearlyOutagesHist10/1e18*1e3
+yearlyOutagesHist50 = yearlyOutagesHist50/1e18*1e3
+yearlyOutagesHist90 = yearlyOutagesHist90/1e18*1e3
 
-yearlyOutagesFut10 = yearlyOutagesFut10/1e18
-yearlyOutagesFut50 = yearlyOutagesFut50/1e18
-yearlyOutagesFut90 = yearlyOutagesFut90/1e18
+yearlyOutagesFut10 = yearlyOutagesFut10/1e18*1e3
+yearlyOutagesFut50 = yearlyOutagesFut50/1e18*1e3
+yearlyOutagesFut90 = yearlyOutagesFut90/1e18*1e3
                                
 yearlyOutagesFut10 = np.moveaxis(yearlyOutagesFut10, 1, 0)
 yearlyOutagesFut50 = np.moveaxis(yearlyOutagesFut50, 1, 0)
 yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 
-#yearlyOutagesHist10 = yearlyOutagesHist10*24*3600*1e6*1e6/1e18
-#yearlyOutagesHist50 = yearlyOutagesHist50*24*3600*1e6*1e6/1e18
-#yearlyOutagesHist90 = yearlyOutagesHist90*24*3600*1e6*1e6/1e18
-#
-#yearlyOutagesFut10 = yearlyOutagesFut10*24*3600*1e6*1e6/1e18
-#yearlyOutagesFut50 = yearlyOutagesFut50*24*3600*1e6*1e6/1e18
-#yearlyOutagesFut90 = yearlyOutagesFut90*24*3600*1e6*1e6/1e18
-#                               
-totalEnergy = np.nansum(globalPlants['caps'])*30*24*3600*1e6/1e18
 
-yticks = np.array([0, .05, .1, .15, .2])
-
-pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
-
+                            
+# PJ
+totalEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
 xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
-
+yticks = np.arange(0,180,50)
+pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
 
 
 outageSumHist = []
+outageSum1 = []
 outageSum2 = []
+outageSum3 = []
 outageSum4 = []
 
 for m in range(0,12):
     outageSumHist.append(np.nansum(yearlyOutagesHist50[0:m+1]))
-    outageSum2.append(np.nansum(np.nanmean(yearlyOutagesFut50[1,:,0:m+1], axis=0)))
-    outageSum4.append(np.nansum(np.nanmean(yearlyOutagesFut50[3,:,0:m+1], axis=0)))
-    
+    outageSum1.append(np.nansum(yearlyOutagesFut50[0,:,0:m+1], axis=1))
+    outageSum2.append(np.nansum(yearlyOutagesFut50[1,:,0:m+1], axis=1))
+    outageSum3.append(np.nansum(yearlyOutagesFut50[2,:,0:m+1], axis=1))
+    outageSum4.append(np.nansum(yearlyOutagesFut50[3,:,0:m+1], axis=1))
 
-plt.figure(figsize=(6,4))
-#plt.xlim([0, 7])
-#plt.ylim([0, 1.4])
-#plt.ylim([0, 3.5])
+outageSum1 = np.sort(np.array(outageSum1), axis=1)
+outageSum2 = np.sort(np.array(outageSum2), axis=1)
+outageSum3 = np.sort(np.array(outageSum3), axis=1)
+outageSum4 = np.sort(np.array(outageSum4), axis=1)
+
+plt.figure(figsize=(5,2))
+plt.xlim([0,13])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
-
 plt.plot(xpos, outageSumHist, '-', lw=2, color='black', label='Historical')
-plt.plot(xpos, outageSum2, '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
-plt.plot(xpos, outageSum4, '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
+plt.plot(xpos, np.nanmean(outageSum2, axis=1), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
+plt.plot(xpos, outageSum2[:,-1], '--', lw=2, color='#ffb835')
+plt.plot(xpos, np.nanmean(outageSum4, axis=1), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
+plt.plot(xpos, outageSum4[:,-1], '--', lw=2, color=snsColors[1])
 
 plt.fill_between(xpos, outageSumHist, [0]*12, facecolor='black', alpha=.5, interpolate=True)
-plt.fill_between(xpos, outageSum2, outageSumHist, facecolor='#ffb835', alpha=.5, interpolate=True)
-plt.fill_between(xpos, outageSum4, outageSum2, facecolor=snsColors[1], alpha=.5, interpolate=True)
+plt.fill_between(xpos, np.nanmean(outageSum2, axis=1), outageSumHist, facecolor='#ffb835', alpha=.5, interpolate=True)
+plt.fill_between(xpos, np.nanmean(outageSum4, axis=1), np.nanmean(outageSum2, axis=1), facecolor=snsColors[1], alpha=.5, interpolate=True)
 
-plt.plot(xpos[-1]+1.5-.25, np.nansum(yearlyOutagesHist10), 'o', markersize=5, color=snsColors[1])
-plt.plot(xpos[-1]+1.5, np.nansum(yearlyOutagesHist50), 'o', markersize=5, color='black')
-plt.plot(xpos[-1]+1.5+.25, np.nansum(yearlyOutagesHist90), 'o', markersize=5, color=snsColors[0])
-
-
-plt.plot(xpos[-1]+3-.25, np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), 'o', markersize=5, color=snsColors[1])
-plt.errorbar(xpos[-1]+3-.25, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[-1]+3, np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), 'o', markersize=5, color='black')
-plt.errorbar(xpos[-1]+3, \
-             np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[-1]+3+.25, np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), 'o', markersize=5, color=snsColors[0])
-plt.errorbar(xpos[-1]+3+.25, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[1], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-
-plt.plot(xpos[-1]+4.5-.25, np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), 'o', markersize=5, color=snsColors[1])
-plt.errorbar(xpos[-1]+4.5-.25, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[-1]+4.5, np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), 'o', markersize=5, color='black')
-plt.errorbar(xpos[-1]+4.5, \
-             np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[-1]+4.5+.25, np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), 'o', markersize=5, color=snsColors[0])
-plt.errorbar(xpos[-1]+4.5+.25, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[3], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.xticks([1,2,3,4,5,6,7,8,9,10,11,12,13.5,15,16.5])
-plt.gca().set_xticklabels([1,2,3,4,5,6,7,8,9,10,11,12,'Hist', '2$\degree$C', '4$\degree$C'])
-plt.yticks(np.arange(0,1.4,.2))
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Monthly US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
+plt.xticks(range(1,13))
+plt.gca().set_xticklabels(range(1,13))
+plt.yticks(yticks)
+#plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+#plt.ylabel('Cumulative US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -579,10 +572,13 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
-leg.get_frame().set_linewidth(0.0)            
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
 
-sys.exit()
 
 if plotFigs:
     plt.savefig('accumulated-annual-outage-cdf-%s-%s.png'%(plantData,runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -599,28 +595,30 @@ if plotFigs:
     
     
     
+
+yticks = np.arange(0,25,5)
+pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
     
-    
-    
-plt.figure(figsize=(4,4))
+plt.figure(figsize=(5,2))
 #plt.xlim([0, 7])
-#plt.ylim([0, .2])
+plt.xlim([0,13])
+plt.ylim([-1, 22])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
-plt.plot(xpos, yearlyOutagesHist10, '-', lw=2, color='black', label='Historical')
-plt.plot(xpos, np.nanmean(yearlyOutagesFut10[1],axis=0), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
-plt.plot(xpos, np.nanmean(yearlyOutagesFut10[3],axis=0), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
+plt.plot(xpos, yearlyOutagesHist50, '-', lw=2, color='black', label='Historical')
+plt.plot(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
+plt.plot(xpos, np.nanmean(yearlyOutagesFut50[3],axis=0), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
 
 
-plt.fill_between(xpos, yearlyOutagesHist10, [0]*12, facecolor='black', alpha=.5, interpolate=True)
-plt.fill_between(xpos, yearlyOutagesHist10, np.nanmean(yearlyOutagesFut10[1],axis=0), facecolor='#ffb835', alpha=.5, interpolate=True)
-plt.fill_between(xpos, np.nanmean(yearlyOutagesFut10[1],axis=0), np.nanmean(yearlyOutagesFut10[3],axis=0), facecolor=snsColors[1], alpha=.5, interpolate=True)
+plt.fill_between(xpos, yearlyOutagesHist50, [0]*12, facecolor='black', alpha=.5, interpolate=True)
+plt.fill_between(xpos, yearlyOutagesHist50, np.nanmean(yearlyOutagesFut50[1],axis=0), facecolor='#ffb835', alpha=.5, interpolate=True)
+plt.fill_between(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), np.nanmean(yearlyOutagesFut50[3],axis=0), facecolor=snsColors[1], alpha=.5, interpolate=True)
 
 plt.xticks(xpos)
 plt.yticks(yticks)
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Monthly US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
+#plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+#plt.ylabel('Monthly US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -629,14 +627,26 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':11, 'family':'Helvetica'})
-leg.get_frame().set_linewidth(0.0)
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
+leg.get_frame().set_linewidth(0.0)            
+
+#leg = plt.legend(prop = {'size':11, 'family':'Helvetica'})
+#leg.get_frame().set_linewidth(0.0)
     
 ax2 = plt.gca().twinx()
-plt.ylim([0, .2])
+plt.xlim([0,13])
+plt.ylim([-1, 22])
 plt.yticks(yticks)
 plt.gca().set_yticklabels(pctEnergyGrid)
-plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)
+#plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label2.set_fontname('Helvetica')    
@@ -649,6 +659,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
 if plotFigs:
     plt.savefig('accumulated-monthly-outage-%s.png'%runoffData, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+
+sys.exit()
 
 xpos = np.array([1, 3, 4, 5, 6])
 

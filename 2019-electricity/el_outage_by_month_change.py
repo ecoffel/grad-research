@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import statsmodels.api as sm
+import scipy.stats as st
 import pickle, gzip
 import sys, os
 
@@ -34,7 +35,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 if not 'eData' in locals():
     eData = {}
-    with open('eData.dat', 'rb') as f:
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'rb') as f:
         eData = pickle.load(f)
 
 nukePlants = eData['nukePlantDataAll']
@@ -45,7 +46,7 @@ entsoePlants = eData['entsoePlantDataAll']
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('pPolyData.dat', 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-gldas.dat', 'rb') as f:
     pPolyData = pickle.load(f)
     # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel90'][0]
@@ -188,7 +189,7 @@ for w in range(1, 4+1):
         curModelQsMonthlyMeanGMT = []
         
         # load data for current model and warming level
-        fileNameTemp = 'gmt-anomaly-temps/us-eu-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
     
         if not os.path.isfile(fileNameTemp):
             # add a nan for each plant in current model
@@ -223,9 +224,33 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,1:].copy()
         plantTxData = plantTxData[3:,1:].copy()
         
-        fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qdistfit-cmip5-%s.csv'%(w, models[m])
         
-        if not os.path.isfile(fileNameRunoff):
+        if os.path.isfile(fileNameRunoffDistFit):
+            plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
+        elif os.path.isfile(fileNameRunoff):
+            plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+            plantQsData = plantQsData[3:,:]
+            
+            print('calculating %s/+%dC qs distfit anomalies'%(models[m], w))
+            plantQsAnomData = []
+            dist = st.fatiguelife
+            for p in range(plantQsData.shape[0]):
+                if p%500 == 0:
+                    print('calculating qs anom for plant %d...'%p)
+                q = plantQsData[p,:]
+                nn = np.where(~np.isnan(q))[0]
+                if len(nn) > 10:
+                    args = dist.fit(q[nn])
+                    curQsStd = dist.std(*args)
+                else:
+                    curQsStd = np.nan
+                plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
+            plantQsData = np.array(plantQsAnomData)
+            np.savetxt(fileNameRunoffDistFit, plantQsData, delimiter=',')
+            
+        else:
             # add a nan for each plant in current model
             filler = []
             for p in range(90):
@@ -238,7 +263,7 @@ for w in range(1, 4+1):
             curQsMonthlyMeanGMT.append(filler)
             continue
         
-        plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+        
         
         if len(plantQsData) == 0:
             # add a nan for each plant in current model
@@ -256,7 +281,6 @@ for w in range(1, 4+1):
         plantQsYearData = plantTxData[0,1:].copy()
         plantQsMonthData = plantTxData[1,1:].copy()
         plantQsDayData = plantTxData[2,1:].copy()
-        plantQsData = plantQsData[3:,1:].copy()
         
         # loop over all plants
         for p in range(plantTxData.shape[0]):
@@ -360,6 +384,8 @@ for w in range(0, 4):
                                              q1, q1**2, q1**3, q1**4, q1**5, \
                                              t1*q1, 0])
         
+                    if pc0 > 100: pc0 = 100
+    
                     # if projected PC < 0... limit to 0
                     if pc1 < 0:
                         curPlantMonthlyOutageChg[month].append(-pc0)
@@ -382,16 +408,16 @@ plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=1),a
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
-fig = plt.figure(figsize=(4,1))
+fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-9, 0])
-plt.grid(True, alpha=.5, color=[.9,.9,.9])
+plt.ylim([-5.5, 0])
+plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[1,:,:,:],axis=2),axis=0), '-', lw=2, color='#ffb835')
-plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[1,:,0], '--', lw=1, color='#ffb835')
+plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[1,:,0], '--', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[3,:,:,:],axis=2),axis=0), '-', lw=2, color=snsColors[1])
-plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, color=snsColors[1])
 
 
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,0], '--', lw=1, color=snsColors[1])
@@ -399,16 +425,16 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=1, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-8, -4, 0])
+plt.yticks([-5, -4, -3, -2, -1, 0])
 
 plt.xticks(list(range(1,13)))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(10)
+    tick.label.set_fontsize(14)
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(10)
+    tick.label.set_fontsize(14)
 
 #plt.gca().spines['bottom'].set_visible(False)
 #plt.tick_params(
@@ -418,14 +444,14 @@ for tick in plt.gca().yaxis.get_major_ticks():
 #    top=False,         # ticks along the top edge are off
 #    labelbottom=False) # labels along the bottom edge are off
 
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
+plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 
 
 
 if plotFigs:
     plt.savefig('outage-chg-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+plt.show()
 
 
 

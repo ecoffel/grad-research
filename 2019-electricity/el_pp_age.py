@@ -18,6 +18,8 @@ np.random.seed(19680801)
 
 plotFigs = False
 
+plantData = 'useu'
+
 # in gw
 # coal, gas, oil, nuke, bioenergy
 iea2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
@@ -36,7 +38,10 @@ ieaSust2040 = np.array([1981, 5358, 197, 4960, 1967]) / 24 / 365 * 1e3
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])
 
-globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+if plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+elif plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
 
 yearsCom = globalPlants['yearCom']
 plantCaps = globalPlants['caps'] / 1e3
@@ -56,16 +61,27 @@ yearsComFutY = yearsComHist[0]
 
 yearsRange = range(1910,2100)
 livingPlants40 = np.zeros([len(range(1910,2100)), 1])
+livingPlantsInds40 = {}
 livingPlants60 = np.zeros([len(range(1910,2100)), 1])
 
 for i, y in enumerate(range(1910, 2100)):
+    
+    curYearInds = []
+    
     # every plants start date
     for p in range(len(yearsCom)):
         if y >= yearsCom[p] and y <= yearsCom[p] + 40:
             livingPlants40[i] += plantCaps[p]
+            curYearInds.append(p)
         if y >= yearsCom[p] and y <= yearsCom[p] + 60:
             livingPlants60[i] += plantCaps[p]
-
+    
+    livingPlantsInds40[y] = np.array(curYearInds)
+    
+with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
+    pickle.dump(livingPlantsInds40, f)
+    
+sys.exit()
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
 plt.figure(figsize=(5,2))

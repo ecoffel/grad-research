@@ -95,11 +95,26 @@ if not os.path.isfile(histFileName10):
     syswidePCHist50 = []
     syswidePCHist90 = []
     
+    txBase = 20
+    qsBase = 0
+    basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
+                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                  txBase*qsBase,
+                                  0])[0]
+    basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
+                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                  txBase*qsBase,
+                                  0])[0]
+    basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
+                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                  txBase*qsBase,
+                                  0])[0]
+    
     print('computing historical systemwide PC...')
     # loop over all global plants
     for p in range(0, plantTxData.shape[0]):
         
-        if p%50 == 0:
+        if p%500 == 0:
             print('processing historical plant %d...'%p)
         
         syswidePCHistCurPlant10 = []
@@ -127,6 +142,7 @@ if not os.path.isfile(histFileName10):
                     qs = plantQsData[p,ind[day]]
                     
                     if tx >= 20:
+                        
                         # predict plant capacity for current historical day
                         pcPred10 = pcModel10.predict([1, tx, tx**2, tx**3, \
                                                       qs, qs**2, qs**3, qs**4, qs**5, \
@@ -141,14 +157,14 @@ if not os.path.isfile(histFileName10):
                                                       tx*qs,
                                                       0])[0]
                     else:
-                        pcPred10 = 97.5
-                        pcPred50 = 97.5
-                        pcPred90 = 97.5
+                        pcPred10 = basePred10
+                        pcPred50 = basePred50
+                        pcPred90 = basePred90
                     
                     
-                    if pcPred10 > 100: pcPred10 = 97.5
-                    if pcPred50 > 100: pcPred50 = 97.5
-                    if pcPred90 > 100: pcPred90 = 97.5
+                    if pcPred10 > 100: pcPred10 = basePred10
+                    if pcPred50 > 100: pcPred50 = basePred50
+                    if pcPred90 > 100: pcPred90 = basePred90
         
                     syswidePCHistCurMonth10.append(pcPred10)
                     syswidePCHistCurMonth50.append(pcPred50)
@@ -254,8 +270,22 @@ for w in range(1, 4+1):
 #        plantQsDayData = plantQsData[2,0:].copy()
 #        plantQsData = plantQsData[3:,0:].copy()
         
-        
         print('calculating PC for %s/+%dC'%(models[m], w))
+        
+        txBase = 20
+        qsBase = 0
+        basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
+                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                      txBase*qsBase,
+                                      0])[0]
+        basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
+                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                      txBase*qsBase,
+                                      0])[0]
+        basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
+                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
+                                      txBase*qsBase,
+                                      0])[0]
         
         # loop over all plants
         for p in range(plantTxData.shape[0]):
@@ -291,21 +321,29 @@ for w in range(1, 4+1):
                             curTx = plantTxData[p, ind[day]]
                             curQs = plantQsData[p, ind[day]]
                         
-                            if curTx >= 20:
+                            if curTx >= 20:                                
+                                # predict plant capacity for current historical day
                                 pcPred10 = pcModel10.predict([1, curTx, curTx**2, curTx**3, \
-                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                                              curTx*curQs,
+                                                              0])[0]
                                 pcPred50 = pcModel50.predict([1, curTx, curTx**2, curTx**3, \
-                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
+                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                                              curTx*curQs,
+                                                              0])[0]
                                 pcPred90 = pcModel90.predict([1, curTx, curTx**2, curTx**3, \
-                                                                         curQs, curQs**2, curQs**3, curQs**4, curQs**5, curTx*curQs, 0])[0]
-                            else:
-                                pcPred10 = 97.5
-                                pcPred50 = 97.5
-                                pcPred90 = 97.5
+                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                                              curTx*curQs,
+                                                              0])[0]
                                 
-                            if pcPred10 > 100: pcPred10 = 97.5
-                            if pcPred50 > 100: pcPred50 = 97.5
-                            if pcPred90 > 100: pcPred90 = 97.5
+                            else:
+                                pcPred10 = basePred10
+                                pcPred50 = basePred50
+                                pcPred90 = basePred90
+                                
+                            if pcPred10 > 100: pcPred10 = basePred10
+                            if pcPred50 > 100: pcPred50 = basePred50
+                            if pcPred90 > 100: pcPred90 = basePred90
                             
                             syswidePCFutCurMonth10.append(pcPred10)
                             syswidePCFutCurMonth50.append(pcPred50)
@@ -333,3 +371,5 @@ for w in range(1, 4+1):
             pickle.dump(globalPC50, f, protocol=4)
         with open(fileName90, 'wb') as f:
             pickle.dump(globalPC90, f, protocol=4)
+        
+        

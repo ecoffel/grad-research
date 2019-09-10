@@ -23,7 +23,7 @@ plotFigs = False
 
 if not 'eData' in locals():
     eData = {}
-    with open('eData.dat', 'rb') as f:
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'rb') as f:
         eData = pickle.load(f)
 
 nukePlants = eData['nukePlantDataAll']
@@ -89,14 +89,14 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(10)
 
-plt.tick_params(
-    axis='x',          # changes apply to the x-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
+#plt.tick_params(
+#    axis='x',          # changes apply to the x-axis
+#    which='both',      # both major and minor ticks are affected
+#    bottom=False,      # ticks along the bottom edge are off
+#    top=False,         # ticks along the top edge are off
+#    labelbottom=False) # labels along the bottom edge are off
 
-#plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
+plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 #plt.ylabel('Mean outage (%)', fontname = 'Helvetica', fontsize=12)
 
 #x0,x1 = plt.gca().get_xlim()
@@ -211,7 +211,7 @@ for w in range(1, 4+1):
         curModelQsMonthlyMeanGMT = []
         
         # load data for current model and warming level
-        fileNameTemp = 'gmt-anomaly-temps/us-eu-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
     
         if not os.path.isfile(fileNameTemp):
             # add a nan for each plant in current model
@@ -224,6 +224,7 @@ for w in range(1, 4+1):
             curTxMonthlyMeanGMT.append(filler)
             curTxMonthlyMaxGMT.append(filler)
             curQsMonthlyMeanGMT.append(filler)
+            print('skipping %s'%fileNameTemp)
             continue
     
         plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
@@ -241,12 +242,12 @@ for w in range(1, 4+1):
             curQsMonthlyMeanGMT.append(filler)
             continue
         
-        plantTxYearData = plantTxData[0,1:].copy()
-        plantTxMonthData = plantTxData[1,1:].copy()
-        plantTxDayData = plantTxData[2,1:].copy()
-        plantTxData = plantTxData[3:,1:].copy()
+        plantTxYearData = plantTxData[0,:].copy()
+        plantTxMonthData = plantTxData[1,:].copy()
+        plantTxDayData = plantTxData[2,:].copy()
+        plantTxData = plantTxData[3:,:].copy()
         
-        fileNameRunoff = 'gmt-anomaly-temps/us-eu-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
         
         if not os.path.isfile(fileNameRunoff):
             # add a nan for each plant in current model
@@ -259,6 +260,7 @@ for w in range(1, 4+1):
             curTxMonthlyMeanGMT.append(filler)
             curTxMonthlyMaxGMT.append(filler)
             curQsMonthlyMeanGMT.append(filler)
+            print('skipping %s'%fileNameRunoff)
             continue
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
@@ -276,10 +278,12 @@ for w in range(1, 4+1):
             curQsMonthlyMeanGMT.append(filler)
             continue
         
-        plantQsYearData = plantTxData[0,1:].copy()
-        plantQsMonthData = plantTxData[1,1:].copy()
-        plantQsDayData = plantTxData[2,1:].copy()
-        plantQsData = plantQsData[3:,1:].copy()
+        plantQsYearData = plantTxData[0,:].copy()
+        plantQsMonthData = plantTxData[1,:].copy()
+        plantQsDayData = plantTxData[2,:].copy()
+        plantQsData = plantQsData[3:,:].copy()
+        
+        
         
         # loop over all plants
         for p in range(plantTxData.shape[0]):
@@ -430,7 +434,7 @@ monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist)
 
 if os.path.isfile('demand-projections.dat'):
     with gzip.open('demand-projections.dat', 'rb') as f:
-        pickle.load(f)
+        demData = pickle.load(f)
     
     demHist = demData['demHist']
     demProj = demData['demProj']
@@ -539,7 +543,7 @@ else:
 
 demByMonthFutSorted = np.sort(demByMonthFut, axis=1)
 
-plt.figure(figsize=(4,1))
+plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
 plt.ylim([.5, 2.3])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
@@ -594,7 +598,7 @@ histQsByMonth = np.nanmean(histQsByMonth, axis=1)
 
 qsMonthlyMeanFutGMTSorted = np.sort(np.nanmean(qsMonthlyMeanFutGMT, axis=2), axis=1)
 
-plt.figure(figsize=(4,1))
+plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
 plt.ylim([-1, 1.3])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
@@ -633,7 +637,7 @@ plt.tick_params(
 if plotFigs:
     plt.savefig('qs-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+plt.show()
 sys.exit()
 
 
