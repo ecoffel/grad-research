@@ -179,17 +179,21 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     
     plantQsSummer = []
     plantQsAnomSummer = []
+    plantQsPercentileSummer = []
     
     plantQsTmp = []
     plantQs = []
     plantQsAnom = []
+    plantQsPercentile = []
     
     plantQsGrdcSummer = []
     plantQsGrdcAnomSummer = []
+    plantQsGrdcPercentileSummer = []
     
     plantQsGrdcTmp = []
     plantQsGrdc = []
     plantQsGrdcAnom = []
+    plantQsGrdcPercentile = []
     
     plantYears = []
     plantMonths = []
@@ -254,23 +258,27 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             finalPlantPercCapacity.append(curPC)
             plantTx.append(curTx)
             
+            tmpQsPercentile = np.zeros(curQs.size)
+            tmpQsPercentile[tmpQsPercentile == 0] = np.nan
+            tmpQsGrdcPercentile = np.zeros(curQsGrdc.size)
+            tmpQsGrdcPercentile[tmpQsGrdcPercentile == 0] = np.nan
             
             # find std of qs distribution
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQs))[0]
             if len(nn) > 10:
                 args = dist.fit(curQs[nn])
                 curQsStd = dist.std(*args)
-#                curQsStd = np.nanstd(curQs)
+                tmpQsPercentile = dist.cdf(curQs, *args)
             else:
                 curQsStd = np.nan
             
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQsGrdc))[0]
             if len(nn) > 10:
                 args = dist.fit(curQsGrdc[nn])
                 curQsGrdcStd = dist.std(*args)
-#                curQsGrdcStd = np.nanstd(curQsGrdc)
+                tmpQsGrdcPercentile = dist.cdf(curQsGrdc, *args)
             else:
                 curQsGrdcStd = np.nan
             
@@ -278,9 +286,11 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantQs.append(curQs)
 #            plantQsAnom.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
             plantQsAnom.append((curQs-np.nanmean(curQs))/curQsStd)
+            plantQsPercentile.append(tmpQsPercentile)
             plantQsGrdc.append(curQsGrdc)
 #            plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
             plantQsGrdcAnom.append((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
+            plantQsGrdcPercentile.append(tmpQsGrdcPercentile)
             
             # restrict to summer only
             curPC = curPC[summerInds]
@@ -296,22 +306,27 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             curQsGrdc = curQsGrdc[nn]
             
             
+            tmpQsPercentileSummer = np.zeros(curQs.size)
+            tmpQsPercentileSummer[tmpQsPercentileSummer == 0] = np.nan
+            tmpQsGrdcPercentileSummer = np.zeros(curQsGrdc.size)
+            tmpQsGrdcPercentileSummer[tmpQsGrdcPercentileSummer == 0] = np.nan
+            
             # find std of qs distribution
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQs))[0]
             if len(nn) > 10:
                 args = dist.fit(curQs)
                 curQsStd = dist.std(*args)
-#                curQsStd = np.nanstd(curQs)
+                tmpQsPercentileSummer = dist.cdf(curQs, *args)
             else:
                 curQsStd = np.nan
             
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQsGrdc))[0]
             if len(nn) > 10:
                 args = dist.fit(curQsGrdc)
                 curQsGrdcStd = dist.std(*args)
-#                curQsGrdcStd = np.nanstd(curQsGrdc)
+                tmpQsGrdcPercentileSummer = dist.cdf(curQsGrdc, *args)
             else:
                 curQsGrdcStd = np.nan
             
@@ -323,10 +338,12 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             plantQsSummer.append(curQs)
 #            plantQsAnomSummer.append((curQs-np.nanmean(curQs))/np.nanstd(curQs))
             plantQsAnomSummer.append((curQs-np.nanmean(curQs))/curQsStd)
+            plantQsPercentileSummer.append(tmpQsPercentileSummer)
             
             plantQsGrdcSummer.append(curQsGrdc)
 #            plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/np.nanstd(curQsGrdc))
             plantQsGrdcAnomSummer.append((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
+            plantQsGrdcPercentileSummer.append(tmpQsGrdcPercentileSummer)
             
             
     plantTx = np.array(plantTx)
@@ -335,13 +352,17 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     
     plantQs = np.array(plantQs)
     plantQsAnom = np.array(plantQsAnom)
+    plantQsPercentile = np.array(plantQsPercentile)
     plantQsSummer = np.array(plantQsSummer)
     plantQsAnomSummer = np.array(plantQsAnomSummer)
+    plantQsPercentileSummer = np.array(plantQsPercentileSummer)
     
     plantQsGrdc = np.array(plantQsGrdc)
     plantQsGrdcAnom = np.array(plantQsGrdcAnom)
+    plantQsGrdcPercentile = np.array(plantQsGrdcPercentile)
     plantQsGrdcSummer = np.array(plantQsGrdcSummer)
     plantQsGrdcAnomSummer = np.array(plantQsGrdcAnomSummer)
+    plantQsGrdcPercentileSummer = np.array(plantQsGrdcPercentileSummer)
     
     plantIds = np.array(plantIds)
     
@@ -349,10 +370,10 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
     finalPlantPercCapacitySummer = np.array(finalPlantPercCapacitySummer)
     
     d = {'txSummer': plantTxSummer, 'tx':plantTx, 'cddSummer':plantCDD, \
-         'qsSummer':plantQsSummer, 'qsAnomSummer':plantQsAnomSummer, \
-         'qs':plantQs, 'qsAnom':plantQsAnom, \
-         'qsGrdcSummer':plantQsGrdcSummer, 'qsGrdcAnomSummer':plantQsGrdcAnomSummer, \
-         'qsGrdc':plantQsGrdc, 'qsGrdcAnom':plantQsGrdcAnom, \
+         'qsSummer':plantQsSummer, 'qsAnomSummer':plantQsAnomSummer, 'qsPercentileSummer':plantQsPercentileSummer, \
+         'qs':plantQs, 'qsAnom':plantQsAnom, 'qsPercentile':plantQsPercentile, \
+         'qsGrdcSummer':plantQsGrdcSummer, 'qsGrdcAnomSummer':plantQsGrdcAnomSummer, 'qsGrdcPercentileSummer':plantQsGrdcPercentileSummer, \
+         'qsGrdc':plantQsGrdc, 'qsGrdcAnom':plantQsGrdcAnom, 'qsGrdcPercentile':plantQsGrdcPercentile, \
          'capacitySummer':finalPlantPercCapacitySummer, 'capacity':finalPlantPercCapacity, \
          'normalCapacity':plantCapacity, \
          'plantIds':plantIds, 'summerInds':summerInds, \
@@ -426,8 +447,10 @@ def accumulateNukeWxData(eba, nukeMatchData):
     
     plantQsTotal = []
     plantQsAnomTotal = []
+    plantQsPercentileTotal = []
     plantQsGrdcTotal = []
     plantQsGrdcAnomTotal = []
+    plantQsGrdcPercentileTotal = []
     plantTxTotal = []
     plantTxAvgTotal = []
     plantCDDAccTotal = []
@@ -488,29 +511,38 @@ def accumulateNukeWxData(eba, nukeMatchData):
             plantCDD = plantCDD[nn]
             plantCDDSmooth = plantCDDSmooth[nn]
             
+            tmpQsPercentile = np.zeros(curQs.size)
+            tmpQsPercentile[tmpQsPercentile == 0] = np.nan
+            tmpQsGrdcPercentile = np.zeros(curQsGrdc.size)
+            tmpQsGrdcPercentile[tmpQsGrdcPercentile == 0] = np.nan
+            
             # find std of qs distribution
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQs))[0]
             if len(nn) > 10:
                 args = dist.fit(curQs[nn])
                 curQsStd = dist.std(*args)
+                tmpQsPercentile = dist.cdf(curQs, *args)
 #                curQsStd = np.nanstd(curQs)
             else:
                 curQsStd = np.nan
             
-            dist = st.fatiguelife
+            dist = st.gamma
             nn = np.where(~np.isnan(curQsGrdc))[0]
             if len(nn) > 10:
                 args = dist.fit(curQsGrdc[nn])
                 curQsGrdcStd = dist.std(*args)
+                tmpQsGrdcPercentile = dist.cdf(curQsGrdc, *args)
 #                curQsGrdcStd = np.nanstd(curQsGrdc)
             else:
                 curQsGrdcStd = np.nan
             
             plantQsTotal.extend(curQs)
             plantQsAnomTotal.extend((curQs-np.nanmean(curQs))/curQsStd)
+            plantQsPercentileTotal.extend(tmpQsPercentile)
             plantQsGrdcTotal.extend(curQsGrdc)
             plantQsGrdcAnomTotal.extend((curQsGrdc-np.nanmean(curQsGrdc))/curQsGrdcStd)
+            plantQsGrdcPercentileTotal.extend(tmpQsGrdcPercentile)
             
             plantCapTotal.extend(plantCap)
             plantTxTotal.extend(plantTx)
@@ -544,8 +576,8 @@ def accumulateNukeWxData(eba, nukeMatchData):
     daysAcc = np.array(daysAcc)
     
     d = {'txSummer':plantTxTotal, 'txAvgSummer':plantTxAvgTotal, 'cddSummer':plantCDDAccTotal, \
-         'qsSummer':plantQsTotal, 'qsAnomSummer':plantQsAnomTotal, \
-         'qsGrdcSummer':plantQsGrdcTotal, 'qsGrdcAnomSummer':plantQsGrdcAnomTotal, \
+         'qsSummer':plantQsTotal, 'qsAnomSummer':plantQsAnomTotal, 'qsPercentileSummer':plantQsPercentileTotal, \
+         'qsGrdcSummer':plantQsGrdcTotal, 'qsGrdcAnomSummer':plantQsGrdcAnomTotal, 'qsGrdcPercentileSummer':plantQsGrdcPercentileTotal, \
          'capacitySummer':plantCapTotal, 'percCapacity':percCapacity, \
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
          'plantMeanTemps':plantMeanTempsAcc, 'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, \

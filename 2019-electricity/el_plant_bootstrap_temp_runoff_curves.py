@@ -19,7 +19,7 @@ dataDir = 'e:/data/'
 tempVar = 'txSummer'
 qsVar = 'qsAnomSummer'
 
-plotFigs = True
+plotFigs = False
 dumpData = True
 
 # load historical weather data for plants to compute mean temps 
@@ -158,8 +158,8 @@ if plotFigs:
 
 
 
-xd = np.array([35]*50)
-qd = np.linspace(-3, 3, 50)
+xd = np.array([35]*100)
+qd = np.linspace(-6.5, 6.5, 100)
 
 ydAll = []
 for i in range(len(models)):
@@ -187,7 +187,7 @@ for k in range(len(xd)):
 
 
 plt.figure(figsize=(4,4))
-plt.xlim([-3.1, 3.1])
+plt.xlim([-6.1, 6.1])
 plt.ylim([75, 100])
 plt.grid(True, color=[.9, .9, .9])
 
@@ -201,7 +201,7 @@ colors = plt.get_cmap('BrBG')
 for m in plantMeanRunoff:
     plt.plot([m, m], [75,77], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
-plt.gca().set_xticks(range(-3, 4, 1))
+plt.gca().set_xticks(np.arange(-6, 6.1, 2))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

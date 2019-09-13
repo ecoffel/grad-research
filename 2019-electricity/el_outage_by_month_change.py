@@ -26,6 +26,10 @@ dataDir = 'e:/data/'
 
 plotFigs = False
 
+runoffModel = 'gldas'
+
+qstr = '-qdistfit-gamma'
+
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
               'gfdl-esm2g', 'gfdl-esm2m', \
@@ -46,12 +50,12 @@ entsoePlants = eData['entsoePlantDataAll']
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-gldas.dat', 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffModel, 'rb') as f:
     pPolyData = pickle.load(f)
     # these are mislabeled in dict for now (90 is 10, 10 is 90)
-    pcModel10 = pPolyData['pcModel90'][0]
+    pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
-    pcModel90 = pPolyData['pcModel10'][0]
+    pcModel90 = pPolyData['pcModel90'][0]
 
 
 # find historical monthly mean qs and tx for plants
@@ -225,30 +229,38 @@ for w in range(1, 4+1):
         plantTxData = plantTxData[3:,1:].copy()
         
         fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
-        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qdistfit-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoffDistPercentile = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-percentile-cmip5-%s.csv'%(w, models[m])
         
-        if os.path.isfile(fileNameRunoffDistFit):
-            plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
+        if os.path.isfile(fileNameRunoffDistPercentile):
+            plantQsData = np.genfromtxt(fileNameRunoffDistPercentile, delimiter=',', skip_header=0)
         elif os.path.isfile(fileNameRunoff):
             plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
             plantQsData = plantQsData[3:,:]
             
             print('calculating %s/+%dC qs distfit anomalies'%(models[m], w))
             plantQsAnomData = []
-            dist = st.fatiguelife
+            plantQsPercentileData = []
+            dist = st.gamma
             for p in range(plantQsData.shape[0]):
                 if p%500 == 0:
                     print('calculating qs anom for plant %d...'%p)
                 q = plantQsData[p,:]
+                qPercentile = np.zeros(q.shape)
+                qPercentile[qPercentile == 0] = np.nan
                 nn = np.where(~np.isnan(q))[0]
                 if len(nn) > 10:
                     args = dist.fit(q[nn])
                     curQsStd = dist.std(*args)
+                    qPercentile = dist.cdf(q, *args)
                 else:
                     curQsStd = np.nan
                 plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
+                plantQsPercentileData.append(qPercentile)
             plantQsData = np.array(plantQsAnomData)
+            plantQsPercentileData = np.array(plantQsPercentileData)
             np.savetxt(fileNameRunoffDistFit, plantQsData, delimiter=',')
+            np.savetxt(fileNameRunoffDistPercentile, plantQsPercentileData, delimiter=',')
             
         else:
             # add a nan for each plant in current model
@@ -349,13 +361,20 @@ for w in range(1, 4+1):
 txMonthlyMeanFutGMT = np.array(txMonthlyMeanFutGMT)
 txMonthlyMaxFutGMT = np.array(txMonthlyMaxFutGMT)
 qsMonthlyMeanFutGMT = np.array(qsMonthlyMeanFutGMT)
-qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>5] = np.nan
+qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>3] = np.nan
+qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
 
 
 
 
 
 plantMonthlyOutageChg = []
+
+t0 = 20#txMonthlyMax[p,month]
+q0 = 0
+pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
+                                     q0, q0**2, q0**3, q0**4, q0**5, \
+                                     t0*q0,0])[0]
 
 # loop over GMT warming levels
 for w in range(0, 4):
@@ -365,38 +384,34 @@ for w in range(0, 4):
         curPlantMonthlyOutageChg = []
         
         for month in range(0,12):
-            t0 = txMonthlyMax[p,month]
             
             curPlantMonthlyOutageChg.append([])
             
-            if t0 >= 20:
+            for model in range(len(models)):
+#                    q0 = 0#qsAnomMonthlyMean[p,month]
                 
-                for model in range(len(models)):
-                    q0 = qsAnomMonthlyMean[p,month]
-                    
-                    t1 = txMonthlyMaxFutGMT[w,model,p,month]
-                    q1 = qsMonthlyMeanFutGMT[w,model,p,month]
-                    
-                    pc0 = pcModel90.predict([1, t0, t0**2, t0**3, \
-                                     q0, q0**2, q0**3, q0**4, q0**5, \
-                                     t1*q1,0])
-                    pc1 = pcModel90.predict([1, t1, t1**2, t1**3, \
+                t1 = txMonthlyMaxFutGMT[w,model,p,month]
+                q1 = qsMonthlyMeanFutGMT[w,model,p,month]
+                
+                if t1 >= 20:
+            
+                    pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
                                              q1, q1**2, q1**3, q1**4, q1**5, \
-                                             t1*q1, 0])
+                                             t1*q1, 0])[0]
         
-                    if pc0 > 100: pc0 = 100
-    
-                    # if projected PC < 0... limit to 0
-                    if pc1 < 0:
-                        curPlantMonthlyOutageChg[month].append(-pc0)
-                    else:
-                        curPlantMonthlyOutageChg[month].append(pc1-pc0)
+                    if pc1 > 100: pc1 = 100
+                    if pc1 < 0: pc1 = 0
                     
-                
-            else:
-                for model in range(len(models)):
+                    outage = pc1-pc0
+                    if outage > 0: outage = 0
+                    # if projected PC < 0... limit to 0
+#                    if pc1 < 0:
+#                        curPlantMonthlyOutageChg[month].append(-pc0)
+#                    else:
+                    curPlantMonthlyOutageChg[month].append(outage)
+                else:
                     curPlantMonthlyOutageChg[month].append(0)
-                
+
         plantMonthlyOutageChgGMT.append(curPlantMonthlyOutageChg)
     
     plantMonthlyOutageChg.append(plantMonthlyOutageChgGMT)
@@ -410,7 +425,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-5.5, 0])
+plt.ylim([-4, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -425,7 +440,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-5, -4, -3, -2, -1, 0])
+plt.yticks([-3, -2, -1, 0])
 
 plt.xticks(list(range(1,13)))
 

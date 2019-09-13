@@ -18,7 +18,7 @@ import sys, os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = True
+plotFigs = False
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -596,19 +596,24 @@ if plotFigs:
     
     
 
-yticks = np.arange(0,25,5)
+yticks = np.arange(0,51,10)
 pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
-    
+
+yearlyOutagesFut50GMT2Sorted = np.sort(yearlyOutagesFut50[1,:,:],axis=0)
+yearlyOutagesFut50GMT4Sorted = np.sort(yearlyOutagesFut50[3,:,:],axis=0)
+
 plt.figure(figsize=(5,2))
 #plt.xlim([0, 7])
 plt.xlim([0,13])
-plt.ylim([-1, 22])
+plt.ylim([-1, 50])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
 plt.plot(xpos, yearlyOutagesHist50, '-', lw=2, color='black', label='Historical')
 plt.plot(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
+plt.plot(xpos, yearlyOutagesFut50GMT2Sorted[-1,:], '--', lw=2, color='#ffb835')
 plt.plot(xpos, np.nanmean(yearlyOutagesFut50[3],axis=0), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
+plt.plot(xpos, yearlyOutagesFut50GMT4Sorted[-1,:], '--', lw=2, color=snsColors[1])
 
 
 plt.fill_between(xpos, yearlyOutagesHist50, [0]*12, facecolor='black', alpha=.5, interpolate=True)
@@ -643,7 +648,7 @@ leg.get_frame().set_linewidth(0.0)
     
 ax2 = plt.gca().twinx()
 plt.xlim([0,13])
-plt.ylim([-1, 22])
+plt.ylim([-1, 50])
 plt.yticks(yticks)
 plt.gca().set_yticklabels(pctEnergyGrid)
 #plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)
