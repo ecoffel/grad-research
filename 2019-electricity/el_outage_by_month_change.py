@@ -26,7 +26,7 @@ dataDir = 'e:/data/'
 
 plotFigs = False
 
-runoffModel = 'gldas'
+runoffModel = 'grdc'
 
 qstr = '-qdistfit-gamma'
 
@@ -50,7 +50,7 @@ entsoePlants = eData['entsoePlantDataAll']
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffModel, 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-pow2.dat'%runoffModel, 'rb') as f:
     pPolyData = pickle.load(f)
     # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
@@ -232,8 +232,8 @@ for w in range(1, 4+1):
         fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-cmip5-%s.csv'%(w, models[m])
         fileNameRunoffDistPercentile = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-percentile-cmip5-%s.csv'%(w, models[m])
         
-        if os.path.isfile(fileNameRunoffDistPercentile):
-            plantQsData = np.genfromtxt(fileNameRunoffDistPercentile, delimiter=',', skip_header=0)
+        if os.path.isfile(fileNameRunoffDistFit):
+            plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
         elif os.path.isfile(fileNameRunoff):
             plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
             plantQsData = plantQsData[3:,:]
@@ -257,10 +257,12 @@ for w in range(1, 4+1):
                     curQsStd = np.nan
                 plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
                 plantQsPercentileData.append(qPercentile)
-            plantQsData = np.array(plantQsAnomData)
+            plantQsAnomData = np.array(plantQsAnomData)
             plantQsPercentileData = np.array(plantQsPercentileData)
-            np.savetxt(fileNameRunoffDistFit, plantQsData, delimiter=',')
+            np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
             np.savetxt(fileNameRunoffDistPercentile, plantQsPercentileData, delimiter=',')
+            
+            plantQsData = plantQsAnomData
             
         else:
             # add a nan for each plant in current model
@@ -370,10 +372,13 @@ qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
 
 plantMonthlyOutageChg = []
 
-t0 = 20#txMonthlyMax[p,month]
+t0 = 27#txMonthlyMax[p,month]
 q0 = 0
-pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
-                                     q0, q0**2, q0**3, q0**4, q0**5, \
+#pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
+#                                     q0, q0**2, q0**3, q0**4, q0**5, \
+#                                     t0*q0,0])[0]
+pc0 = pcModel50.predict([1, t0, t0**2, \
+                                     q0, q0**2, \
                                      t0*q0,0])[0]
 
 # loop over GMT warming levels
@@ -395,8 +400,11 @@ for w in range(0, 4):
                 
                 if t1 >= 20:
             
-                    pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
-                                             q1, q1**2, q1**3, q1**4, q1**5, \
+#                    pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
+#                                             q1, q1**2, q1**3, q1**4, q1**5, \
+#                                             t1*q1, 0])[0]
+                    pc1 = pcModel50.predict([1, t1, t1**2, \
+                                             q1, q1**2, \
                                              t1*q1, 0])[0]
         
                     if pc1 > 100: pc1 = 100
@@ -425,7 +433,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-4, 0])
+plt.ylim([-5, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -440,7 +448,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-3, -2, -1, 0])
+plt.yticks([-4, -3, -2, -1, 0])
 
 plt.xticks(list(range(1,13)))
 
@@ -464,7 +472,7 @@ plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 
 
 if plotFigs:
-    plt.savefig('outage-chg-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('outage-chg-by-month-%s%s.eps'%(runoffModel, qstr), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 

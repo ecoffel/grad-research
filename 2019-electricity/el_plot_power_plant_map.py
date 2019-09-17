@@ -53,10 +53,11 @@ nukeLatLon = nukeEntsoePlantData['nukeLatLon']
 fig = plt.figure(figsize=(6,6))
 ax = plt.axes([0,0,1,1]) 
 # A basic map
-m=Basemap(projection='cyl', llcrnrlon=-130, llcrnrlat=20,urcrnrlon=40,urcrnrlat=70)
+m=Basemap(projection='cyl', llcrnrlon=-130, llcrnrlat=20,urcrnrlon=40,urcrnrlat=70,\
+          resolution='h', area_thresh=1000)
 
 m.drawmapboundary(fill_color='white', linewidth=0)
-m.fillcontinents(color='#eeeeee', alpha=0.7, lake_color='white')
+m.fillcontinents(color='white', alpha=0.7, lake_color='white')
 m.drawcoastlines(linewidth=0.7, color="black")
 m.drawstates()
 m.drawcountries()
@@ -115,4 +116,4 @@ m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', lin
 
 plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False)
 #plt.show()
-#plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)

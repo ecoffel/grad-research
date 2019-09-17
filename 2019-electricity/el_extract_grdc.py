@@ -67,10 +67,10 @@ for p in range(plantLatLon.shape[0]):
             minDistId = grdcRefData[g,0]
     
     
-    if minDist > 200:
-        minDistId = -1
-    else:
-        grdcDists.append(minDist)
+#    if minDist > 200:
+#        minDistId = -1
+#    else:
+#        grdcDists.append(minDist)
     
     grdcMatchIds.append((plantLatLon[p,0], minDistId))
 

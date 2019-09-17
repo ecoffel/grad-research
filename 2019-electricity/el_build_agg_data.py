@@ -28,22 +28,27 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 #gldas or grdc
-runoffModel = 'gldas'
+runoffModel = 'grdc'
 plantData = 'useu'
 
+modelPower = 'pow2'
+
 # '-qdistfit' or ''
-qsdist = '-qdistfit'
+qsdist = '-qdistfit-gamma'
 
 if plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 elif plantData == 'useu':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
 
+baseTx = 27
+baseQs = 0
+
 
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffModel, 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-%s.dat'%(runoffModel, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
@@ -74,7 +79,7 @@ if not os.path.isfile(histFileName10):
         
         print('calculating historical qs distfit anomalies')
         plantQsAnomData = []
-        dist = st.fatiguelife
+        dist = st.gamma
         for p in range(plantQsData.shape[0]):
             if p%500 == 0:
                 print('calculating qs anom for plant %d...'%p)
@@ -95,19 +100,17 @@ if not os.path.isfile(histFileName10):
     syswidePCHist50 = []
     syswidePCHist90 = []
     
-    txBase = 20
-    qsBase = 0
-    basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
-                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                  txBase*qsBase,
+    basePred10 = pcModel10.predict([1, baseTx, baseTx**2, \
+                                  baseQs, baseQs**2, \
+                                  baseTx*baseQs,
                                   0])[0]
-    basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
-                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                  txBase*qsBase,
+    basePred50 = pcModel50.predict([1, baseTx, baseTx**2, \
+                                  baseQs, baseQs**2, \
+                                  baseTx*baseQs,
                                   0])[0]
-    basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
-                                  qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                  txBase*qsBase,
+    basePred90 = pcModel90.predict([1, baseTx, baseTx**2, \
+                                  baseQs, baseQs**2, \
+                                  baseTx*baseQs,
                                   0])[0]
     
     print('computing historical systemwide PC...')
@@ -144,16 +147,16 @@ if not os.path.isfile(histFileName10):
                     if tx >= 20:
                         
                         # predict plant capacity for current historical day
-                        pcPred10 = pcModel10.predict([1, tx, tx**2, tx**3, \
-                                                      qs, qs**2, qs**3, qs**4, qs**5, \
+                        pcPred10 = pcModel10.predict([1, tx, tx**2, \
+                                                      qs, qs**2, \
                                                       tx*qs,
                                                       0])[0]
-                        pcPred50 = pcModel50.predict([1, tx, tx**2, tx**3, \
-                                                      qs, qs**2, qs**3, qs**4, qs**5, \
+                        pcPred50 = pcModel50.predict([1, tx, tx**2, \
+                                                      qs, qs**2, \
                                                       tx*qs,
                                                       0])[0]
-                        pcPred90 = pcModel90.predict([1, tx, tx**2, tx**3, \
-                                                      qs, qs**2, qs**3, qs**4, qs**5, \
+                        pcPred90 = pcModel90.predict([1, tx, tx**2, \
+                                                      qs, qs**2, \
                                                       tx*qs,
                                                       0])[0]
                     else:
@@ -248,7 +251,7 @@ for w in range(1, 4+1):
             
             print('calculating %s/+%dC qs distfit anomalies'%(models[m], w))
             plantQsAnomData = []
-            dist = st.fatiguelife
+            dist = st.gamma
             for p in range(plantQsData.shape[0]):
                 if p%500 == 0:
                     print('calculating qs anom for plant %d...'%p)
@@ -264,27 +267,20 @@ for w in range(1, 4+1):
             plantQsData = np.array(plantQsAnomData)
             np.savetxt(fileNameRunoffDistfit, plantQsData, delimiter=',')
             
-#        plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-#        plantQsYearData = plantQsData[0,0:].copy()
-#        plantQsMonthData = plantQsData[1,0:].copy()
-#        plantQsDayData = plantQsData[2,0:].copy()
-#        plantQsData = plantQsData[3:,0:].copy()
         
         print('calculating PC for %s/+%dC'%(models[m], w))
         
-        txBase = 20
-        qsBase = 0
-        basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
-                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                      txBase*qsBase,
+        basePred10 = pcModel10.predict([1, baseTx, baseTx**2, \
+                                      baseQs, baseQs**2, \
+                                      baseTx*baseQs,
                                       0])[0]
-        basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
-                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                      txBase*qsBase,
+        basePred50 = pcModel50.predict([1, baseTx, baseTx**2, \
+                                      baseQs, baseQs**2, \
+                                      baseTx*baseQs,
                                       0])[0]
-        basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
-                                      qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                                      txBase*qsBase,
+        basePred90 = pcModel90.predict([1, baseTx, baseTx**2, \
+                                      baseQs, baseQs**2, \
+                                      baseTx*baseQs,
                                       0])[0]
         
         # loop over all plants
@@ -323,16 +319,16 @@ for w in range(1, 4+1):
                         
                             if curTx >= 20:                                
                                 # predict plant capacity for current historical day
-                                pcPred10 = pcModel10.predict([1, curTx, curTx**2, curTx**3, \
-                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                pcPred10 = pcModel10.predict([1, curTx, curTx**2, \
+                                                              curQs, curQs**2, \
                                                               curTx*curQs,
                                                               0])[0]
-                                pcPred50 = pcModel50.predict([1, curTx, curTx**2, curTx**3, \
-                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                pcPred50 = pcModel50.predict([1, curTx, curTx**2, \
+                                                              curQs, curQs**2, \
                                                               curTx*curQs,
                                                               0])[0]
-                                pcPred90 = pcModel90.predict([1, curTx, curTx**2, curTx**3, \
-                                                              curQs, curQs**2, curQs**3, curQs**4, curQs**5, \
+                                pcPred90 = pcModel90.predict([1, curTx, curTx**2, \
+                                                              curQs, curQs**2, \
                                                               curTx*curQs,
                                                               0])[0]
                                 

@@ -28,13 +28,13 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 
 #grdc or gldas
-runoffData = 'gldas'
+runoffData = 'grdc'
 
 # world, useu, or entsoe-nuke
 plantData = 'useu'
 
 # '-distfit' or ''
-qsfit = '-qdistfit'
+qsfit = '-qdistfit-gamma'
 
 if plantData == 'useu':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
@@ -143,6 +143,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                 
                 monthlyOutages10 = (basePred10-np.array(globalPCHist10[p,year,month][:])) / 100.0
                 monthlyOutages10[monthlyOutages10 < 0] = 0
+                monthlyOutages10[monthlyOutages10 > 1] = 0
                 numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
                 monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
                 
@@ -157,6 +158,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                 
                 monthlyOutages50 = (basePred50-np.array(globalPCHist50[p,year,month][:])) / 100.0
                 monthlyOutages50[monthlyOutages50 < 0] = 0
+                monthlyOutages50[monthlyOutages50 > 1] = 0
                 numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
                 monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
                 
@@ -170,6 +172,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                     
                 monthlyOutages90 = (basePred90-np.array(globalPCHist90[p,year,month][:])) / 100.0
                 monthlyOutages90[monthlyOutages90 < 0] = 0
+                monthlyOutages90[monthlyOutages90 > 1] = 0
                 numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
                 monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
                 
@@ -178,6 +181,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                     monthlyTotal90 *= monthLen[month] * 24 * 3600
                     
                     yearlyOutagesHistCurYear90.append(monthlyTotal90)
+            
             
             if len(yearlyOutagesHistCurYear10) == 12:
                 yearlyOutagesHistCurPlant10.append(yearlyOutagesHistCurYear10)
@@ -226,6 +230,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
         
             yearlyOutagesHist90.append(yearlyOutagesHistCurPlant90)
     
+    
     yearlyOutagesHist10 = np.array(yearlyOutagesHist10)
     yearlyOutagesHist10 = (np.nansum(yearlyOutagesHist10, axis=0)/numPlants10)*yearlyOutagesHist10.shape[0]
     
@@ -243,7 +248,6 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
         
     with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-90.dat'%(runoffData, plantData, qsfit), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
-
 
 
 for model in range(len(models)):
@@ -340,19 +344,24 @@ for model in range(len(models)):
             
                     monthlyOutages10 = (basePred10-np.array(globalPCFut10[p,year,month][:])) / 100.0
                     monthlyOutages10[monthlyOutages10<0] = 0
+                    monthlyOutages10[monthlyOutages10>1] = 0
+                    
                     monthlyOutages50 = (basePred50-np.array(globalPCFut50[p,year,month][:])) / 100.0
                     monthlyOutages50[monthlyOutages50<0] = 0
+                    monthlyOutages50[monthlyOutages50>1] = 0
+                    
                     monthlyOutages90 = (basePred90-np.array(globalPCFut90[p,year,month][:])) / 100.0
                     monthlyOutages90[monthlyOutages90<0] = 0
-                    
-                    indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
-                    monthlyOutages10[indBadData10] = np.nan
-                    
-                    indBadData50 = np.where((monthlyOutages50 < 0) | (monthlyOutages50 > 1))[0]
-                    monthlyOutages50[indBadData50] = np.nan
-                    
-                    indBadData90 = np.where((monthlyOutages90 < 0) | (monthlyOutages90 > 1))[0]
-                    monthlyOutages90[indBadData90] = np.nan
+                    monthlyOutages90[monthlyOutages90>1] = 0
+#                    
+#                    indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
+#                    monthlyOutages10[indBadData10] = np.nan
+#                    
+#                    indBadData50 = np.where((monthlyOutages50 < 0) | (monthlyOutages50 > 1))[0]
+#                    monthlyOutages50[indBadData50] = np.nan
+#                    
+#                    indBadData90 = np.where((monthlyOutages90 < 0) | (monthlyOutages90 > 1))[0]
+#                    monthlyOutages90[indBadData90] = np.nan
                     
                     numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
                     monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)

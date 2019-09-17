@@ -133,22 +133,22 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     txtotal = []
     txtotal.extend(nukeAgDataAll[tempVar])
-#    txtotal.extend(entsoeAgDataAll[tempVar])
+    txtotal.extend(entsoeAgDataAll[tempVar])
     txtotal = np.array(txtotal)
     
     qstotal = []
     qstotal.extend(nukeAgDataAll[qsVar])
-#    qstotal.extend(entsoeAgDataAll[qsVar])
+    qstotal.extend(entsoeAgDataAll[qsVar])
     qstotal = np.array(qstotal)
     
     plantIds = []
     plantIds.extend(nukeAgDataAll['plantIds'])
-#    plantIds.extend(entsoeAgDataAll['plantIds'])
+    plantIds.extend(entsoeAgDataAll['plantIds'])
     plantIds = np.array(plantIds)
     
     pctotal = []
     pctotal.extend(nukeAgDataAll['capacitySummer'])
-#    pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
+    pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
     pctotal = np.array(pctotal)
       
     ind = np.where((pctotal <= 100.1) & (txtotal > 20) & \
@@ -169,18 +169,20 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
         data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, 'T3':txtotal[ind]**3, \
                 'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, 'QS3':qstotal[ind]**3, 'QS4':qstotal[ind]**4, 'QS5':qstotal[ind]**5, \
-                'QST':txtotal[ind]*qstotal[ind], \
+                'QST':txtotal[ind]*qstotal[ind], 'QS2T2':(txtotal[ind]**2)*(qstotal[ind]**2), \
                 'PlantIds':plantIds[ind], 'PC':pctotal[ind]}
         
         df = pd.DataFrame(data, \
                           columns=['T1', 'T2', 'T3', \
                                    'QS1', 'QS2', 'QS3', 'QS4', 'QS5', \
-                                   'QST', 'PlantIds', 'PC'])
+                                   'QST', 'QS2T2', 'PlantIds', 'PC'])
         
         df = df.dropna()
         
-        X = sm.add_constant(df[['T1', 'T2', 'T3', \
-                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'QST', 'PlantIds']])
+#        X = sm.add_constant(df[['T1', 'T2', 'T3', \
+#                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'QST', 'PlantIds']])
+        X = sm.add_constant(df[['T1', 'T2', \
+                                'QS1', 'QS2', 'QST', 'QS2T2', 'PlantIds']])
         mdl = sm.OLS(df['PC'], X).fit()
         models.append(mdl)
     

@@ -495,7 +495,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         
         curQs = np.array(finalQsSummer[c])
         # find std of qs distribution
-        dist = st.fatiguelife
+        dist = st.gamma
         nn = np.where(~np.isnan(curQs))[0]
         if len(nn) > 10:
             args = dist.fit(curQs[nn])
@@ -506,7 +506,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / curQsStd)
         
         curQsGrdc = np.array(finalQsGrdcSummer[c])
-        dist = st.fatiguelife
+        dist = st.gamma
         nn = np.where(~np.isnan(curQsGrdc))[0]
         if len(nn) > 10:
             args = dist.fit(curQsGrdc[nn])
@@ -518,7 +518,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         
         curQs = np.array(finalQs[c])
         # find std of qs distribution
-        dist = st.fatiguelife
+        dist = st.gamma
         nn = np.where(~np.isnan(curQs))[0]
         if len(nn) > 10:
             args = dist.fit(curQs[nn])
@@ -529,7 +529,7 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         finalQsAnom.append((curQs - np.nanmean(curQs)) / curQsStd)
         
         curQsGrdc = np.array(finalQsGrdc[c])
-        dist = st.fatiguelife
+        dist = st.gamma
         nn = np.where(~np.isnan(curQsGrdc))[0]
         if len(nn) > 10:
             args = dist.fit(curQsGrdc[nn])

@@ -17,10 +17,12 @@ import sys, os
 dataDir = 'e:/data/'
 
 tempVar = 'txSummer'
-qsVar = 'qsAnomSummer'
+qsVar = 'qsGrdcAnomSummer'
+
+modelPower = 'pow2'
 
 plotFigs = False
-dumpData = True
+dumpData = False
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -41,7 +43,7 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
 
 
 # find fit percentiles for temperature
@@ -50,8 +52,10 @@ q = 0
 
 pcEval = []
 for i in range(len(models)):
-    pcEval.append(models[i].predict([1, t, t**2, t**3, \
-                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
+#    pcEval.append(models[i].predict([1, t, t**2, t**3, \
+#                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
+    pcEval.append(models[i].predict([1, t, t**2, \
+                                     q, q**2, q*t, (q**2)*(t**2), 0])[0])
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -68,8 +72,10 @@ q = -3
 
 pcEval = []
 for i in range(len(models)):
-    pcEval.append(models[i].predict([1, t, t**2, t**3, \
-                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
+#    pcEval.append(models[i].predict([1, t, t**2, t**3, \
+#                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
+    pcEval.append(models[i].predict([1, t, t**2, \
+                                     q, q**2, q*t, (q**2)*(t**2), 0])[0])
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -82,7 +88,11 @@ indPcQs90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel90':models[indPc90]}
 if dumpData:
-    with gzip.open('e:/data/ecoffel/data/projects/electricity/script-data/pPolyData-gldas.dat', 'wb') as f:
+    if 'grdc' in qsVar.lower():
+        polyDataTitle = 'pPolyData-grdc-pow2'
+    else:
+        polyDataTitle = 'pPolyData-gldas-pow2'
+    with gzip.open('e:/data/ecoffel/data/projects/electricity/script-data/%s.dat'%polyDataTitle, 'wb') as f:
         pickle.dump(pPolyData, f)
 
 
@@ -93,8 +103,11 @@ ydAll = []
 for i in range(len(models)):
     ydAll.append([])
     for k in range(len(xd)):
-        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, \
+                                                qd[k], qd[k]**2, \
+                                                qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
 ydAll = np.array(ydAll)
 
 yd10 = []
@@ -102,14 +115,23 @@ yd50 = []
 yd90 = []
 
 for k in range(len(xd)):
-    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
-    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
-    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
@@ -150,7 +172,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-%s-regression-perc.png'%tempVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-regression-%s.png'%(tempVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 
@@ -159,14 +181,17 @@ if plotFigs:
 
 
 xd = np.array([35]*100)
-qd = np.linspace(-6.5, 6.5, 100)
+qd = np.linspace(-4, 4, 100)
 
 ydAll = []
 for i in range(len(models)):
     ydAll.append([])
     for k in range(len(xd)):
-        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, \
+                                                    qd[k], qd[k]**2, \
+                                                    qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
 ydAll = np.array(ydAll)
 
 yd10 = []
@@ -174,20 +199,29 @@ yd50 = []
 yd90 = []
 
 for k in range(len(xd)):
-    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
-    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
-    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+#    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
+#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
+    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, \
+                                        qd[k], qd[k]**2, \
+                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
 
 
 
 plt.figure(figsize=(4,4))
-plt.xlim([-6.1, 6.1])
+plt.xlim([-4.1, 4.1])
 plt.ylim([75, 100])
 plt.grid(True, color=[.9, .9, .9])
 
@@ -201,7 +235,7 @@ colors = plt.get_cmap('BrBG')
 for m in plantMeanRunoff:
     plt.plot([m, m], [75,77], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
-plt.gca().set_xticks(np.arange(-6, 6.1, 2))
+plt.gca().set_xticks(np.arange(-4, 4.1, 1))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -213,7 +247,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center right')
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
@@ -221,7 +255,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-%s-regression-perc.png'%qsVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-regression-%s.png'%(qsVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()
