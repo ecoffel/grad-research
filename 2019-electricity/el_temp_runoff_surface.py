@@ -8,20 +8,64 @@ Created on Tue Jun  4 15:40:40 2019
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn import linear_model
 import statsmodels.api as sm
 import el_build_temp_pp_model
-import pickle
+import gzip, pickle
 
 plotFigs = False
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+# load historical weather data for plants to compute mean temps 
+# to display on bootstrap temp curve
+fileName = 'entsoe-nuke-pp-tx-all.csv'
+plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+plantYearData = plantTxData[0,:].copy()
+plantMonthData = plantTxData[1,:].copy()
+plantDayData = plantTxData[2,:].copy()
+plantTxData = plantTxData[3:,:].copy()
 
-qsrange = np.arange(-4, 3.1, .1)
-#qsrange = np.arange(0,10, .1)
+
+fileName = 'entsoe-nuke-pp-runoff-anom-all.csv'
+plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+plantQsData = plantQsData[3:,:].copy()
+
+
+summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
+plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
+plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
+
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'rb') as f:
+    ppFutureData = pickle.load(f)
+    txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
+    qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
+    tx2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][1,:,:,[6,7]])))
+    tx4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][3,:,:,[6,7]])))
+    qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
+    qs4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][3,:,:,[6,7]])))
+
+histPDF = []
+
+qsrange = np.arange(-4, 4.1, .5)
+txrange = np.arange(20, 51, 1)
+
+for qs in qsrange:
+    pdfrow = []
+    for t in txrange:
+        ind = np.where((plantTxData >= t-.5) & (plantTxData <= t+.5) & \
+                       (plantQsData >= qs-.25) & (plantQsData <= qs+.25))[0]
+        if len(ind) > 0:
+            pdfrow.append(1)
+        else:
+            pdfrow.append(0)
+    histPDF.append(pdfrow)
+histPDF = np.array(histPDF)
+
+
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
 
 yds = []
 
@@ -46,11 +90,22 @@ yds = np.array(yds)
 yds = np.squeeze(np.nanmedian(yds, axis=0))
 yds[yds<75] = 75
 
+snsColors = sns.color_palette(["#3498db", "#e74c3c"])
+
 plt.contourf(xd, qsrange, yds, levels=np.arange(75,100,1), cmap = 'Reds_r')
 cb = plt.colorbar()
 
-plt.plot([20, 50], [0, 0], '--k', lw=2)
-plt.plot([35, 35], [-4, 3], '--k', lw=2)
+plt.plot([20, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
+plt.plot([np.nanmean(plantMeanTemps), np.nanmean(plantMeanTemps)], [-4, 4], '-k', lw=2)
+
+for q in range(len(qsrange)):
+    for t in range(len(txrange)):
+        if histPDF[q, t] == 1:
+            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
+
+plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2, color=snsColors[0])
+plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835')
+plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1])
 
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)

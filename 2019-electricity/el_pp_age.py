@@ -18,7 +18,7 @@ np.random.seed(19680801)
 
 plotFigs = False
 
-plantData = 'useu'
+plantData = 'world'
 
 # in gw
 # coal, gas, oil, nuke, bioenergy
@@ -78,13 +78,13 @@ for i, y in enumerate(range(1910, 2100)):
     
     livingPlantsInds40[y] = np.array(curYearInds)
     
-with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
-    pickle.dump(livingPlantsInds40, f)
+#with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
+#    pickle.dump(livingPlantsInds40, f)
     
-sys.exit()
+
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
-plt.figure(figsize=(5,2))
+plt.figure(figsize=(5,4))
 plt.xlim([1950,2100])
 plt.ylim([0, 3500])
 plt.grid(True, color=[.9,.9,.9])
@@ -98,19 +98,25 @@ for g in range(GMTyears.shape[0]):
     yr = GMTyears[g]
     plt.plot([yr,yr], [0, 5000], '--k')
 
+msize = 6
+
 # plot iea capacities
-plt.plot([2017], sum(iea2017), 'ok', markersize=5)
-p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=5, label='IEA New Policies')
-plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=5)
-plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=5)
-plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=5)
+plt.plot([2017], sum(iea2017), 'ok', markersize=msize)
+p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=msize, label='IEA New Policies')
+plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 
 #plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
-p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=5, label='IEA\nSustainable')
-plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=5)
-plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=5)
-plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=5)
+p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
+plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=msize)
+plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=msize)
+plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 
+p2 = plt.plot([2025], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize, label='Constant')
+plt.plot([2030], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2035], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2040], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 
 plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
@@ -132,7 +138,8 @@ if plotFigs:
     plt.savefig('plant-lifespan-40.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-
+plt.show()
+sys.exit()
 
 plt.figure(figsize=(5,2))
 plt.xlim([1950,2100])
@@ -182,8 +189,7 @@ leg.get_frame().set_linewidth(0.0)
 if plotFigs:
     plt.savefig('plant-lifespan-60.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-plt.show()
-sys.exit()
+
 
 ydata90 = np.nanmean(additionalGen90,axis=1)
 ydata50 = np.nanmean(additionalGen50,axis=1)

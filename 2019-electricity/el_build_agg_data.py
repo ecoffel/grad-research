@@ -55,9 +55,9 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-
     pcModel90 = pPolyData['pcModel90'][0]
 
 
-histFileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-10.dat'%(runoffModel, plantData, qsdist)
-histFileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-50.dat'%(runoffModel, plantData, qsdist)
-histFileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-90.dat'%(runoffModel, plantData, qsdist)
+histFileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-10.dat'%(runoffModel, plantData, qsdist, modelPower)
+histFileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-50.dat'%(runoffModel, plantData, qsdist, modelPower)
+histFileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-90.dat'%(runoffModel, plantData, qsdist, modelPower)
 
 
 if not os.path.isfile(histFileName10):
@@ -102,15 +102,15 @@ if not os.path.isfile(histFileName10):
     
     basePred10 = pcModel10.predict([1, baseTx, baseTx**2, \
                                   baseQs, baseQs**2, \
-                                  baseTx*baseQs,
+                                  baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                   0])[0]
     basePred50 = pcModel50.predict([1, baseTx, baseTx**2, \
                                   baseQs, baseQs**2, \
-                                  baseTx*baseQs,
+                                  baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                   0])[0]
     basePred90 = pcModel90.predict([1, baseTx, baseTx**2, \
                                   baseQs, baseQs**2, \
-                                  baseTx*baseQs,
+                                  baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                   0])[0]
     
     print('computing historical systemwide PC...')
@@ -149,15 +149,15 @@ if not os.path.isfile(histFileName10):
                         # predict plant capacity for current historical day
                         pcPred10 = pcModel10.predict([1, tx, tx**2, \
                                                       qs, qs**2, \
-                                                      tx*qs,
+                                                      tx*qs, (tx**2)*(qs**2), \
                                                       0])[0]
                         pcPred50 = pcModel50.predict([1, tx, tx**2, \
                                                       qs, qs**2, \
-                                                      tx*qs,
+                                                      tx*qs, (tx**2)*(qs**2), \
                                                       0])[0]
                         pcPred90 = pcModel90.predict([1, tx, tx**2, \
                                                       qs, qs**2, \
-                                                      tx*qs,
+                                                      tx*qs, (tx**2)*(qs**2), \
                                                       0])[0]
                     else:
                         pcPred10 = basePred10
@@ -209,10 +209,10 @@ for w in range(1, 4+1):
         
     for m in range(len(models)):
         
-        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s.dat'%(runoffModel, plantData, qsdist, w, models[m])
-        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s.dat'%(runoffModel, plantData, qsdist, w, models[m])
-        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s.dat'%(runoffModel, plantData, qsdist, w, models[m])
-        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s.dat'%(runoffModel, plantData, qsdist, w, models[m])
+        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
         
         if os.path.isfile(fileName10) or os.path.isfile(fileName):
             continue
@@ -272,15 +272,15 @@ for w in range(1, 4+1):
         
         basePred10 = pcModel10.predict([1, baseTx, baseTx**2, \
                                       baseQs, baseQs**2, \
-                                      baseTx*baseQs,
+                                      baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                       0])[0]
         basePred50 = pcModel50.predict([1, baseTx, baseTx**2, \
                                       baseQs, baseQs**2, \
-                                      baseTx*baseQs,
+                                      baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                       0])[0]
         basePred90 = pcModel90.predict([1, baseTx, baseTx**2, \
                                       baseQs, baseQs**2, \
-                                      baseTx*baseQs,
+                                      baseTx*baseQs, (baseTx**2)*(baseQs**2), \
                                       0])[0]
         
         # loop over all plants
@@ -321,15 +321,15 @@ for w in range(1, 4+1):
                                 # predict plant capacity for current historical day
                                 pcPred10 = pcModel10.predict([1, curTx, curTx**2, \
                                                               curQs, curQs**2, \
-                                                              curTx*curQs,
+                                                              curTx*curQs, (curTx**2)*(curQs**2), \
                                                               0])[0]
                                 pcPred50 = pcModel50.predict([1, curTx, curTx**2, \
                                                               curQs, curQs**2, \
-                                                              curTx*curQs,
+                                                              curTx*curQs, (curTx**2)*(curQs**2), \
                                                               0])[0]
                                 pcPred90 = pcModel90.predict([1, curTx, curTx**2, \
                                                               curQs, curQs**2, \
-                                                              curTx*curQs,
+                                                              curTx*curQs, (curTx**2)*(curQs**2), \
                                                               0])[0]
                                 
                             else:

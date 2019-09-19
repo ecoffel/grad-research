@@ -13,9 +13,16 @@ import sys, os, re
 import geopy.distance
 import calendar 
 import csv
+import shapefile
+import shapely.geometry as geometry
+
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data'
+
+shp = shapefile.Reader('E:/data/ecoffel/data/projects/electricity/basins/c_analysb.shp')
+basins = shp.shapes()
+basinRecords = shp.records()
 
 nukeLatLon = np.genfromtxt('nuke-lat-lon.csv', delimiter=',', skip_header=0)
 entsoeLatLon = np.genfromtxt('entsoe-lat-lon.csv', delimiter=',', skip_header=0)
@@ -50,8 +57,17 @@ grdcDists = []
 
 for p in range(plantLatLon.shape[0]):
     
+    print('processing plant %d'%p)
+    
     pLat = plantLatLon[p,1]
     pLon = plantLatLon[p,2]
+    
+    # find basin for this plant
+    plantBasinId = -1
+    for i in range(len(basins)):
+        boundary = basins[i]
+        if geometry.Point(pLat, pLon).within(geometry.shape(boundary)):
+            plantBasinId = i
     
     minDist = -1
     minDistId = -1    
@@ -62,16 +78,31 @@ for p in range(plantLatLon.shape[0]):
         
         d = geopy.distance.vincenty((pLat,pLon), (gLat,gLon)).km
         
+        # check that plant and guage are both in the same basin
+        guageBasinId = -1
+        
+        # find basin for guage
+        for i in range(len(basins)):
+            boundary = basins[i]
+            if geometry.Point(gLat, gLon).within(geometry.shape(boundary)):
+                guageBasinId = i
+            
+        # skip gague if not in same basin as plant
+        if guageBasinId != plantBasinId:
+            continue
+        
         if minDist == -1 or d < minDist:
             minDist = d
             minDistId = grdcRefData[g,0]
     
     
-#    if minDist > 200:
+#    if minDist > 150:
 #        minDistId = -1
 #    else:
 #        grdcDists.append(minDist)
-    
+
+    print('min dist id = %d'%minDistId)
+    print()    
     grdcMatchIds.append((plantLatLon[p,0], minDistId))
 
 # these are the station ids that correspond to the plant lat/lons

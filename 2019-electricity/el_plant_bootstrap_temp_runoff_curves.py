@@ -33,6 +33,7 @@ plantMonthData = plantTxData[1,:].copy()
 plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
+
 fileName = 'entsoe-nuke-pp-runoff-anom-all.csv'
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 plantQsData = plantQsData[3:,:].copy()
@@ -67,8 +68,8 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
 # find fit percentiles for runoff
-t = 35
-q = -3
+t = np.nanmean(plantMeanTemps)
+q = -4
 
 pcEval = []
 for i in range(len(models)):
@@ -96,8 +97,8 @@ if dumpData:
         pickle.dump(pPolyData, f)
 
 
-xd = np.linspace(20, 50, 50)
-qd = np.array([0]*50)
+xd = np.linspace(20, 50, 100)
+qd = np.array([np.nanmean(plantMeanRunoff)]*100)
 
 ydAll = []
 for i in range(len(models)):
@@ -180,7 +181,7 @@ if plotFigs:
 
 
 
-xd = np.array([35]*100)
+xd = np.array([np.nanmean(plantMeanTemps)]*100)
 qd = np.linspace(-4, 4, 100)
 
 ydAll = []
@@ -247,8 +248,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
-leg.get_frame().set_linewidth(0.0)
+#leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'lower left')
+#leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()

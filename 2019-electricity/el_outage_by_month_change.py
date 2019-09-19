@@ -24,7 +24,7 @@ import sys, os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = False
+plotFigs = True
 
 runoffModel = 'grdc'
 
@@ -367,7 +367,14 @@ qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>3] = np.nan
 qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
 
 
+ppFutureData = {'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
+                'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT, \
+                'txMonthlyMax':txMonthlyMax, \
+                'qsAnomMonthlyMean':qsAnomMonthlyMean}
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'wb') as f:
+    pickle.dump(ppFutureData, f)
 
+sys.exit()
 
 
 plantMonthlyOutageChg = []
@@ -379,7 +386,7 @@ q0 = 0
 #                                     t0*q0,0])[0]
 pc0 = pcModel50.predict([1, t0, t0**2, \
                                      q0, q0**2, \
-                                     t0*q0,0])[0]
+                                     t0*q0, (t0**2)*(q0**2),0])[0]
 
 # loop over GMT warming levels
 for w in range(0, 4):
@@ -405,7 +412,7 @@ for w in range(0, 4):
 #                                             t1*q1, 0])[0]
                     pc1 = pcModel50.predict([1, t1, t1**2, \
                                              q1, q1**2, \
-                                             t1*q1, 0])[0]
+                                             t1*q1, (t1**2)*(q1**2), 0])[0]
         
                     if pc1 > 100: pc1 = 100
                     if pc1 < 0: pc1 = 0
