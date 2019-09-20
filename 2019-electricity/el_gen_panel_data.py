@@ -14,11 +14,13 @@ from sklearn import linear_model
 import seaborn as sns
 import el_entsoe_utils
 import el_nuke_utils
-import sys
+import sys, os
 import pickle
 
-#dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+#dataDir = '~/research/grad-research/2019-electricity'
+
+#dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
+dataDir = 'e:/data/ecoffel/data/projects/electricity'
 
 
 
@@ -26,10 +28,10 @@ dataDir = 'e:/data/'
 if not 'entsoeData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir, forced=False)
     
-    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='era', forced=False)
-    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='cpc', forced=False)
-    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='ncep', forced=False)
-    entsoePlantDataAll = el_entsoe_utils.matchEntsoeWxPlantSpecific(entsoeData, wxdata='all', forced=False)
+    entsoePlantDataEra = el_entsoe_utils.matchEntsoeWxPlantSpecific(dataDir, entsoeData, wxdata='era', forced=False)
+    entsoePlantDataCpc = el_entsoe_utils.matchEntsoeWxPlantSpecific(dataDir, entsoeData, wxdata='cpc', forced=False)
+    entsoePlantDataNcep = el_entsoe_utils.matchEntsoeWxPlantSpecific(dataDir, entsoeData, wxdata='ncep', forced=False)
+    entsoePlantDataAll = el_entsoe_utils.matchEntsoeWxPlantSpecific(dataDir, entsoeData, wxdata='all', forced=False)
     
 #    entsoePlantData = el_entsoe_utils.matchEntsoeWxCountry(entsoeData, useEra=useEra)
     entsoeAgDataEra = el_entsoe_utils.aggregateEntsoeData(entsoePlantDataEra)
@@ -45,15 +47,15 @@ if not 'nukeData' in locals():
     nukeMatchDataNcep = el_nuke_utils.loadWxData(nukeData, wxdata='ncep')
     nukeMatchDataAll = el_nuke_utils.loadWxData(nukeData, wxdata='all')
     
-    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(nukeData, nukeMatchDataEra)
-    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(nukeData, nukeMatchDataCpc)
-    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(nukeData, nukeMatchDataNcep)
-    nukeAgDataAll = el_nuke_utils.accumulateNukeWxData(nukeData, nukeMatchDataAll)
+    nukeAgDataEra = el_nuke_utils.accumulateNukeWxData(dataDir, nukeData, nukeMatchDataEra)
+    nukeAgDataCpc = el_nuke_utils.accumulateNukeWxData(dataDir, nukeData, nukeMatchDataCpc)
+    nukeAgDataNcep = el_nuke_utils.accumulateNukeWxData(dataDir, nukeData, nukeMatchDataNcep)
+    nukeAgDataAll = el_nuke_utils.accumulateNukeWxData(dataDir, nukeData, nukeMatchDataAll)
     
-    nukePlantDataEra = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeMatchDataEra)
-    nukePlantDataCpc = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeMatchDataCpc)
-    nukePlantDataNcep = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeMatchDataNcep)
-    nukePlantDataAll = el_nuke_utils.accumulateNukeWxDataPlantLevel(nukeData, nukeMatchDataAll)
+    nukePlantDataEra = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataEra)
+    nukePlantDataCpc = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataCpc)
+    nukePlantDataNcep = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataNcep)
+    nukePlantDataAll = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataAll)
 
 
 eData = {'entsoeData':entsoeData, \
@@ -80,7 +82,7 @@ eData = {'entsoeData':entsoeData, \
          'nukePlantDataNcep':nukePlantDataNcep, \
          'nukePlantDataAll':nukePlantDataAll}
 
-with open('e:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'wb') as f:
+with open('%s/eData.dat'%dataDir, 'wb') as f:
     pickle.dump(eData, f)
 
 sys.exit()

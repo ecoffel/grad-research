@@ -21,8 +21,8 @@ qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 
-plotFigs = False
-dumpData = False
+plotFigs = True
+dumpData = True
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -44,7 +44,7 @@ plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
 
 
 # find fit percentiles for temperature

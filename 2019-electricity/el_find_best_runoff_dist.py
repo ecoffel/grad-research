@@ -5,7 +5,10 @@ import scipy.stats as st
 import statsmodels as sm
 import matplotlib
 import matplotlib.pyplot as plt
+import sys, os
+import pickle
 
+"""
 matplotlib.rcParams['figure.figsize'] = (16.0, 12.0)
 matplotlib.style.use('ggplot')
 
@@ -20,7 +23,7 @@ runoffData = 'grdc'
 plantData = 'entsoe-nuke'
 
 qstr = '-qdistfit-gamma'
-
+"""
 
 # Create models from data
 def best_fit_distribution(data, bins=200, ax=None):
@@ -36,7 +39,7 @@ def best_fit_distribution(data, bins=200, ax=None):
         st.foldcauchy,st.foldnorm,st.frechet_r,st.frechet_l,st.genlogistic,st.genpareto,st.gennorm,st.genexpon,
         st.genextreme,st.gausshyper,st.gamma,st.gengamma,st.genhalflogistic,st.gilbrat,st.gompertz,st.gumbel_r,
         st.gumbel_l,st.halfcauchy,st.halflogistic,st.halfnorm,st.halfgennorm,st.hypsecant,st.invgamma,st.invgauss,
-        st.invweibull,st.johnsonsb,st.johnsonsu,st.ksone,st.kstwobign,st.laplace,st.levy,st.levy_l,st.levy_stable,
+        st.invweibull,st.johnsonsb,st.johnsonsu,st.ksone,st.kstwobign,st.laplace,st.levy,st.levy_l,#st.levy_stable,
         st.logistic,st.loggamma,st.loglaplace,st.lognorm,st.lomax,st.maxwell,st.mielke,st.nakagami,st.ncx2,st.ncf,
         st.nct,st.norm,st.pareto,st.pearson3,st.powerlaw,st.powerlognorm,st.powernorm,st.rdist,st.reciprocal,
         st.rayleigh,st.rice,st.recipinvgauss,st.semicircular,st.t,st.triang,st.truncexpon,st.truncnorm,st.tukeylambda,
@@ -50,7 +53,7 @@ def best_fit_distribution(data, bins=200, ax=None):
 
     # Estimate distribution parameters from data
     for distribution in DISTRIBUTIONS:
-
+        #print('testing distribution: %s'%distribution)
         # Try to fit the distribution
         try:
             # Ignore warnings from data that can't be fit
@@ -107,46 +110,71 @@ def make_pdf(dist, params, size=100):
 
     return pdf
 
-fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-qdistfit-gamma.csv'%plantData
+"""
+print('loading qs data...')
+fileNameRunoffDistFit = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-qdistfit-gamma.csv'%plantData
 plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
 
+nbins = 500
 
+dists = []
 
+for p in range(plantQsData.shape[0]):
+    
+    if os.path.isfile('dist-fits/best-fit-plant-%d.dat'%p):
+        continue
+    
+    print('processing plant %d'%p)
+    
+    # Load data from statsmodels datasets
+    data = pd.Series(plantQsData[p,:])
+    data[data < -10] = np.nan
+    data[data > 10] = np.nan
+    data=data.dropna()
+    #data = data.loc[data.shift(-1) != data]
 
-# Load data from statsmodels datasets
-data = pd.Series(plantQsData[0,:])
-data[data < -10] = np.nan
-data[data > 10] = np.nan
-data=data.dropna()
+    # Plot for comparison
+    plt.figure(figsize=(6,4))
+    ax = data.plot(kind='hist', bins=nbins, density=True, alpha=0.5)
+    # Save plot limits
+    dataYLim = ax.get_ylim()
 
-# Plot for comparison
-plt.figure(figsize=(6,4))
-ax = data.plot(kind='hist', bins=100, normed=True, alpha=0.5)
-# Save plot limits
-dataYLim = ax.get_ylim()
+    # Find best fit distribution
+    print('fitting best distribution...')
+    best_fit_name, best_fit_params = best_fit_distribution(data, nbins, ax)
+    best_dist = getattr(st, best_fit_name)
 
-# Find best fit distribution
-best_fit_name, best_fit_params = best_fit_distribution(data, 100, ax)
-best_dist = getattr(st, best_fit_name)
+    # Update plots
+    ax.set_ylim(dataYLim)
+    ax.set_title(u'Runoff\n All Fitted Distributions')
+    ax.set_xlabel(u'SD')
+    ax.set_ylabel('Frequency')
 
-# Update plots
-ax.set_ylim(dataYLim)
-ax.set_title(u'Runoff\n All Fitted Distributions')
-ax.set_xlabel(u'SD')
-ax.set_ylabel('Frequency')
+    # Make PDF with best params 
+    print('building pdf...')
+    pdf = make_pdf(best_dist, best_fit_params)
 
-# Make PDF with best params 
-pdf = make_pdf(best_dist, best_fit_params)
+    # Display
+    plt.figure(figsize=(6,4))
+    ax = pdf.plot(lw=2, label='PDF', legend=True)
+    data.plot(kind='hist', bins=nbins, density=True, alpha=0.5, label='Data', legend=True, ax=ax)
 
-# Display
-plt.figure(figsize=(6,4))
-ax = pdf.plot(lw=2, label='PDF', legend=True)
-data.plot(kind='hist', bins=100, normed=True, alpha=0.5, label='Data', legend=True, ax=ax)
+    param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
+    param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_params)])
+    dist_str = '{}({})'.format(best_fit_name, param_str)
 
-param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
-param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_params)])
-dist_str = '{}({})'.format(best_fit_name, param_str)
+    ax.set_title(u'Runoff with best fit distribution \n' + dist_str)
+    ax.set_xlabel(u'SD')
+    ax.set_ylabel('Frequency')
 
-ax.set_title(u'Runoff with best fit distribution \n' + dist_str)
-ax.set_xlabel(u'SD')
-ax.set_ylabel('Frequency')
+    plt.show()
+    
+    print('plant %d: dist: %s'%(p, best_fit_name))
+    curPlantBestFit = {'name':best_fit_name, \
+                       'params':best_fit_params}
+    with open('dist-fits/best-fit-plant-%d.dat'%p, 'wb') as f:
+        pickle.dump(curPlantBestFit, f)
+    #dists.append((best_fit_name, best_fit_params))
+    
+print('done')
+"""

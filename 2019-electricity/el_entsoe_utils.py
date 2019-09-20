@@ -7,6 +7,8 @@ Created on Sun Mar 31 18:49:31 2019
 
 import numpy as np
 import scipy.stats as st
+import os, pickle
+import el_find_best_runoff_dist
 
 def normalize(v):
     nn = np.where(~np.isnan(v))[0]
@@ -48,6 +50,7 @@ def getFuelType(s):
 def loadEntsoeWithLatLon(dataDir, forced):
     
     print('loading entsoe plant locations...')
+    print('datadir = %s'%dataDir)
     ppCommissionYear = []
     ppName = []
     ppLat = []
@@ -55,7 +58,7 @@ def loadEntsoeWithLatLon(dataDir, forced):
     ppProjId = []
     
     # first load database with entsoe power plant locations
-    with open('%s/ecoffel/data/projects/electricity/entsoe/entsoe-power-plant-locations.csv' % (dataDir), 'r', encoding='latin-1') as f:
+    with open('%s/entsoe/entsoe-power-plant-locations.csv'%dataDir, 'r', encoding='latin-1') as f:
         i = 0
         for line in f:
             if i == 0:
@@ -103,7 +106,7 @@ def loadEntsoeWithLatLon(dataDir, forced):
     for year in range(2015, 2019):
         print('loading entsoe year %d...'%year)
         for month in range(1, 13):
-            with open('%s/ecoffel/data/projects/electricity/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
+            with open('%s/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
                 n = 0
                 
                 countryInd = -1
@@ -198,7 +201,7 @@ def loadEntsoe(dataDir):
     for year in range(2015, 2019):
         print('loading entsoe year %d...'%year)
         for month in range(1, 13):
-            with open('%s/ecoffel/data/projects/electricity/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
+            with open('%s/entsoe/OutagesPU/%d_%d_OutagesPU.csv' % (dataDir, year, month), 'r', encoding='utf-16') as f:
                 n = 0
                 
                 countryInd = -1
@@ -273,7 +276,7 @@ def loadEntsoe(dataDir):
 
 
 
-def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
+def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     fileName = ''
     fileNameCDD = ''
     
@@ -506,8 +509,20 @@ def matchEntsoeWxPlantSpecific(entsoeData, wxdata, forced):
         finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / curQsStd)
         
         curQsGrdc = np.array(finalQsGrdcSummer[c])
-        dist = st.gamma
-        nn = np.where(~np.isnan(curQsGrdc))[0]
+        nn = np.where(~np.isnan(curQsGrdc))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                dist = getattr(st, distParams['name'])
+        else:
+            print('finding best distribution for plant %d'%c)
+            best_fit_name, best_fit_params = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'wb') as f:
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params}
+                dist = getattr(st, distParams['name'])
+                pickle.dump(distParams, f)
+        
         if len(nn) > 10:
             args = dist.fit(curQsGrdc[nn])
             curQsGrdcStd = dist.std(*args)

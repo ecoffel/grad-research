@@ -8,13 +8,13 @@ Created on Mon Apr  1 09:47:36 2019
 import json
 import numpy as np
 import scipy.stats as st
+import el_find_best_runoff_dist
 
-import sys
+import sys, os, pickle
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+#dataDir = 'e:/data/'
 
-useEra = True
 plotFigs = False
 
 def running_mean(x, N):
@@ -24,7 +24,7 @@ def running_mean(x, N):
 def loadNukeData(dataDir):
     print('loading nuke eba...')
     eba = []
-    for line in open('%s/ecoffel/data/projects/electricity/NUC_STATUS.txt' % dataDir, 'r'):
+    for line in open('%s/NUC_STATUS.txt' % dataDir, 'r'):
         if (len(eba)+1) % 100 == 0:
             print('loading line ', (len(eba)+1))
             
@@ -158,7 +158,7 @@ def loadWxData(eba, wxdata):
     
     return {'tx':np.array(tx), 'cdd':np.array(cdd), 'qs':matchedQs, 'qsGrdc':qsGrdc[:,1:], 'ids':np.array(ids)}
 
-def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
+def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     
     summerInds = np.where((eba[0]['month'] == 7) | (eba[0]['month'] == 8))[0]
     
@@ -315,16 +315,28 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
             dist = st.gamma
             nn = np.where(~np.isnan(curQs))[0]
             if len(nn) > 10:
-                args = dist.fit(curQs)
+                args = dist.fit(curQs[nn])
                 curQsStd = dist.std(*args)
                 tmpQsPercentileSummer = dist.cdf(curQs, *args)
             else:
                 curQsStd = np.nan
             
-            dist = st.gamma
             nn = np.where(~np.isnan(curQsGrdc))[0]
+            if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-grdc-summer-plant-level.dat'%(datadir, i)): 
+                with open('%s/dist-fits/best-fit-nuke-%d-grdc-summer-plant-level.dat'%(datadir, i), 'rb') as f:
+                    distParams = pickle.load(f)
+                    dist = getattr(st, distParams['name'])
+            else:
+                print('finding best distribution for plant %d'%i)
+                best_fit_name, best_fit_params = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
+                with open('%s/dist-fits/best-fit-nuke-%d-grdc-summer-plant-level.dat'%(datadir, i), 'wb') as f:
+                    distParams = {'name':best_fit_name,
+                                  'params':best_fit_params}
+                    dist = getattr(st, distParams['name'])
+                    pickle.dump(distParams, f)
+            
             if len(nn) > 10:
-                args = dist.fit(curQsGrdc)
+                args = dist.fit(curQsGrdc[nn])
                 curQsGrdcStd = dist.std(*args)
                 tmpQsGrdcPercentileSummer = dist.cdf(curQsGrdc, *args)
             else:
@@ -386,7 +398,7 @@ def accumulateNukeWxDataPlantLevel(eba, nukeMatchData):
 
 
 
-def accumulateNukeWxData(eba, nukeMatchData):
+def accumulateNukeWxData(datadir, eba, nukeMatchData):
     
     tx = nukeMatchData['tx']
     cdd = nukeMatchData['cdd']
@@ -527,8 +539,21 @@ def accumulateNukeWxData(eba, nukeMatchData):
             else:
                 curQsStd = np.nan
             
-            dist = st.gamma
+            
             nn = np.where(~np.isnan(curQsGrdc))[0]
+            if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-grdc-summer-agg-level.dat'%(datadir, i)): 
+                with open('%s/dist-fits/best-fit-nuke-%d-grdc-summer-agg-level.dat'%(datadir, i), 'rb') as f:
+                    distParams = pickle.load(f)
+                    dist = getattr(st, distParams['name'])
+            else:
+                print('finding best distribution for plant %d'%i)
+                best_fit_name, best_fit_params = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
+                with open('%s/dist-fits/best-fit-nuke-%d-grdc-summer-agg-level.dat'%(datadir, i), 'wb') as f:
+                    distParams = {'name':best_fit_name,
+                                  'params':best_fit_params}
+                    dist = getattr(st, distParams['name'])
+                    pickle.dump(distParams, f)
+            
             if len(nn) > 10:
                 args = dist.fit(curQsGrdc[nn])
                 curQsGrdcStd = dist.std(*args)

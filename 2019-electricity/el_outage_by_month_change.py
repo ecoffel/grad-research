@@ -24,11 +24,11 @@ import sys, os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = True
+plotFigs = False
 
 runoffModel = 'grdc'
 
-qstr = '-qdistfit-gamma'
+qstr = '-qdistfit-best'
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -229,8 +229,8 @@ for w in range(1, 4+1):
         plantTxData = plantTxData[3:,1:].copy()
         
         fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
-        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-cmip5-%s.csv'%(w, models[m])
-        fileNameRunoffDistPercentile = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-qsdistfit-gamma-percentile-cmip5-%s.csv'%(w, models[m])
+        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(w, qstr, models[m])
+        fileNameRunoffDistPercentile = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-percentile-cmip5-%s.csv'%(w, qstr, models[m])
         
         if os.path.isfile(fileNameRunoffDistFit):
             plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
@@ -241,8 +241,15 @@ for w in range(1, 4+1):
             print('calculating %s/+%dC qs distfit anomalies'%(models[m], w))
             plantQsAnomData = []
             plantQsPercentileData = []
-            dist = st.gamma
+            
             for p in range(plantQsData.shape[0]):
+                fileNameBestFit = 'E:/data/ecoffel/data/projects/electricity/dist-fits/best-fit-plant-%d.dat'%p
+                
+                with open(fileNameBestFit, 'rb') as f:
+                    distParams = pickle.load(f)
+                
+                dist = getattr(st, distParams['name'])
+
                 if p%500 == 0:
                     print('calculating qs anom for plant %d...'%p)
                 q = plantQsData[p,:]
@@ -252,16 +259,16 @@ for w in range(1, 4+1):
                 if len(nn) > 10:
                     args = dist.fit(q[nn])
                     curQsStd = dist.std(*args)
-                    qPercentile = dist.cdf(q, *args)
+#                    qPercentile = dist.cdf(q, *args)
                 else:
                     curQsStd = np.nan
                 plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-                plantQsPercentileData.append(qPercentile)
+#                plantQsPercentileData.append(qPercentile)
+                
             plantQsAnomData = np.array(plantQsAnomData)
-            plantQsPercentileData = np.array(plantQsPercentileData)
+#            plantQsPercentileData = np.array(plantQsPercentileData)
             np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-            np.savetxt(fileNameRunoffDistPercentile, plantQsPercentileData, delimiter=',')
-            
+#            np.savetxt(fileNameRunoffDistPercentile, plantQsPercentileData, delimiter=',')
             plantQsData = plantQsAnomData
             
         else:
@@ -367,14 +374,14 @@ qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>3] = np.nan
 qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
 
 
-ppFutureData = {'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
-                'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT, \
-                'txMonthlyMax':txMonthlyMax, \
-                'qsAnomMonthlyMean':qsAnomMonthlyMean}
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'wb') as f:
-    pickle.dump(ppFutureData, f)
+#ppFutureData = {'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
+#                'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT, \
+#                'txMonthlyMax':txMonthlyMax, \
+#                'qsAnomMonthlyMean':qsAnomMonthlyMean}
+#with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'wb') as f:
+#    pickle.dump(ppFutureData, f)
 
-sys.exit()
+
 
 
 plantMonthlyOutageChg = []
