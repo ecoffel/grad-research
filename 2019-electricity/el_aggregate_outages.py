@@ -36,6 +36,8 @@ plantData = 'useu'
 # '-distfit' or ''
 qsfit = '-qdistfit-gamma'
 
+modelPower = 'pow2'
+
 if plantData == 'useu':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
 elif plantData == 'world':
@@ -47,7 +49,7 @@ with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s.dat'%runoffData, 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-%s.dat'%(runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
@@ -58,48 +60,49 @@ yearRange = [1981, 2018]
 monthLen = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-txBase = 20
+txBase = 27
 qsBase = 0
-basePred10 = pcModel10.predict([1, txBase, txBase**2, txBase**3, \
-                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                              txBase*qsBase,
+basePred10 = pcModel10.predict([1, txBase, txBase**2, \
+                              qsBase, qsBase**2, \
+                              txBase*qsBase, (txBase**2)*(qsBase**2), \
                               0])[0]
-basePred50 = pcModel50.predict([1, txBase, txBase**2, txBase**3, \
-                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                              txBase*qsBase,
+basePred50 = pcModel50.predict([1, txBase, txBase**2, \
+                              qsBase, qsBase**2, \
+                              txBase*qsBase, (txBase**2)*(qsBase**2), \
                               0])[0]
-basePred90 = pcModel90.predict([1, txBase, txBase**2, txBase**3, \
-                              qsBase, qsBase**2, qsBase**3, qsBase**4, qsBase**5, \
-                              txBase*qsBase,
+basePred90 = pcModel90.predict([1, txBase, txBase**2, \
+                              qsBase, qsBase**2, \
+                              txBase*qsBase, (txBase**2)*(qsBase**2), \
                               0])[0]
 
-if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit)):
+if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower)):
 
+    extra=''
     if not 'globalPCHist50' in locals():
         try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-10.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-10%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist10 = globalPCHist['globalPCHist10']
         except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-10.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-10%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist10 = globalPCHist['globalPCHist10']
         
         try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-50.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-50%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist50 = globalPCHist['globalPCHist50']
         except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-50.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-50%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist50 = globalPCHist['globalPCHist50']
             
         try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-90.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-90%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist90 = globalPCHist['globalPCHist90']
         except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-90.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-90%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
                 globalPCHist = pickle.load(f)
                 globalPCHist90 = globalPCHist['globalPCHist90']
             
@@ -143,11 +146,11 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                 
                 monthlyOutages10 = (basePred10-np.array(globalPCHist10[p,year,month][:])) / 100.0
                 monthlyOutages10[monthlyOutages10 < 0] = 0
-                monthlyOutages10[monthlyOutages10 > 1] = 0
+                monthlyOutages10[monthlyOutages10 > 1] = np.nan
                 numDays10 = len(np.where(~np.isnan(monthlyOutages10))[0])
                 monthlyTotal10 = np.nansum(globalPlants['caps'][p] * monthlyOutages10 * 1e6)
                 
-                # divide by actual # of days in this month, then multiply by full summer (62 days)
+                # divide by actual # of days with non-nan data in this month, then multiply by full month length
                 # this accounts for model/years where there are nans
                 if numDays10 > 0:
                     monthlyTotal10 /= numDays10
@@ -158,7 +161,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                 
                 monthlyOutages50 = (basePred50-np.array(globalPCHist50[p,year,month][:])) / 100.0
                 monthlyOutages50[monthlyOutages50 < 0] = 0
-                monthlyOutages50[monthlyOutages50 > 1] = 0
+                monthlyOutages50[monthlyOutages50 > 1] = np.nan
                 numDays50 = len(np.where(~np.isnan(monthlyOutages50))[0])
                 monthlyTotal50 = np.nansum(globalPlants['caps'][p] * monthlyOutages50 * 1e6)
                 
@@ -172,7 +175,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
                     
                 monthlyOutages90 = (basePred90-np.array(globalPCHist90[p,year,month][:])) / 100.0
                 monthlyOutages90[monthlyOutages90 < 0] = 0
-                monthlyOutages90[monthlyOutages90 > 1] = 0
+                monthlyOutages90[monthlyOutages90 > 1] = np.nan
                 numDays90 = len(np.where(~np.isnan(monthlyOutages90))[0])
                 monthlyTotal90 = np.nansum(globalPlants['caps'][p] * monthlyOutages90 * 1e6)
                 
@@ -229,8 +232,10 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
             if plantHasData90: numPlants90 += 1
         
             yearlyOutagesHist90.append(yearlyOutagesHistCurPlant90)
+            
     
-    
+    # sum over all plants, divide by # plants with data, multiply by total number of plants regardless
+    # of whether they have data
     yearlyOutagesHist10 = np.array(yearlyOutagesHist10)
     yearlyOutagesHist10 = (np.nansum(yearlyOutagesHist10, axis=0)/numPlants10)*yearlyOutagesHist10.shape[0]
     
@@ -240,14 +245,17 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
     yearlyOutagesHist90 = np.array(yearlyOutagesHist90)
     yearlyOutagesHist90 = (np.nansum(yearlyOutagesHist90, axis=0)/numPlants90)*yearlyOutagesHist90.shape[0]
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist10, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-50.dat'%(runoffData, plantData, qsfit), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist50, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-90.dat'%(runoffData, plantData, qsfit), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
+
+
+
 
 
 for model in range(len(models)):
@@ -255,7 +263,7 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = []
     yearlyOutagesCurModel90 = []
 
-    if os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model])) or \
+    if os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model])) or \
        os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-10.dat'%(runoffData, plantData, qsfit)):
         print('skipping %s...'%models[model])
         continue
@@ -266,10 +274,10 @@ for model in range(len(models)):
         yearlyOutagesCurGMT50 = []
         yearlyOutagesCurGMT90 = []
         
-        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
-        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
-        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
-        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s.dat'%(runoffData, plantData, qsfit, w, models[model])
+        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
         
         if os.path.isfile(fileName):
             try:
@@ -344,15 +352,15 @@ for model in range(len(models)):
             
                     monthlyOutages10 = (basePred10-np.array(globalPCFut10[p,year,month][:])) / 100.0
                     monthlyOutages10[monthlyOutages10<0] = 0
-                    monthlyOutages10[monthlyOutages10>1] = 0
+                    monthlyOutages10[monthlyOutages10>1] = np.nan
                     
                     monthlyOutages50 = (basePred50-np.array(globalPCFut50[p,year,month][:])) / 100.0
                     monthlyOutages50[monthlyOutages50<0] = 0
-                    monthlyOutages50[monthlyOutages50>1] = 0
+                    monthlyOutages50[monthlyOutages50>1] = np.nan
                     
                     monthlyOutages90 = (basePred90-np.array(globalPCFut90[p,year,month][:])) / 100.0
                     monthlyOutages90[monthlyOutages90<0] = 0
-                    monthlyOutages90[monthlyOutages90>1] = 0
+                    monthlyOutages90[monthlyOutages90>1] = np.nan
 #                    
 #                    indBadData10 = np.where((monthlyOutages10 < 0) | (monthlyOutages10 > 1))[0]
 #                    monthlyOutages10[indBadData10] = np.nan
@@ -430,8 +438,7 @@ for model in range(len(models)):
                 yearlyOutagesCurGMT90.append(yearlyOutagesCurPlant90)
                 if plantHasData90: numPlants90 += 1
                 
-        
-        # correct for # of plants
+        # divide by number of plants
         yearlyOutagesCurGMT10 = np.array(yearlyOutagesCurGMT10)
         yearlyOutagesCurGMT10 = (np.nansum(yearlyOutagesCurGMT10, axis=0)/numPlants10)*yearlyOutagesCurGMT10.shape[0]
         yearlyOutagesCurModel10.append(yearlyOutagesCurGMT10)
@@ -449,24 +456,26 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
     yearlyOutagesCurModel90 = np.array(yearlyOutagesCurModel90)
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel10, f)
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-50.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel50, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-90.dat'%(runoffData, plantData, qsfit, models[model]), 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel90, f)
     
+    
+    
 
 
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-10.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist10 = pickle.load(f)
     
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-50.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist50 = pickle.load(f)
     
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-90.dat'%(runoffData, plantData, qsfit), 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist90 = pickle.load(f)
 
 yearlyOutagesFut10 = []
@@ -479,9 +488,9 @@ for model in range(len(models)):
     yearlyOutagesCurModel90 = []
 
 
-    fileName10 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-10.dat'%(runoffData, plantData, qsfit, models[model])
-    fileName50 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-50.dat'%(runoffData, plantData, qsfit, models[model])
-    fileName90 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-90.dat'%(runoffData, plantData, qsfit, models[model])
+    fileName10 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
+    fileName50 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
+    fileName90 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
     
     if os.path.isfile(fileName10):
         
@@ -531,7 +540,7 @@ yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 # PJ
 totalEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
 xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
-yticks = np.arange(0,180,50)
+yticks = np.arange(0,310,100)
 pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
 
 
@@ -605,7 +614,7 @@ if plotFigs:
     
     
 
-yticks = np.arange(0,51,10)
+yticks = np.arange(0,81,20)
 pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
 
 yearlyOutagesFut50GMT2Sorted = np.sort(yearlyOutagesFut50[1,:,:],axis=0)

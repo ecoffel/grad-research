@@ -14,6 +14,7 @@ from scipy import stats
 import statsmodels.api as sm
 import scipy.stats as st
 import el_load_global_plants
+import el_find_best_runoff_dist
 import gzip, pickle
 import sys,os
 
@@ -69,7 +70,6 @@ if not os.path.isfile(histFileName10):
     plantDayData = plantTxData[2,:]
     plantTxData = plantTxData[3:,:]
     
-    
     # load historical runoff data and make dist-fitted anomalies if necessary
     if os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff%s-anom.csv'%(plantData, qsdist)):
         plantQsData = np.genfromtxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff%s-anom.csv'%(plantData, qsdist), delimiter=',', skip_header=0)
@@ -79,21 +79,28 @@ if not os.path.isfile(histFileName10):
         
         print('calculating historical qs distfit anomalies')
         plantQsAnomData = []
-        dist = st.gamma
+        
         for p in range(plantQsData.shape[0]):
             if p%500 == 0:
                 print('calculating qs anom for plant %d...'%p)
             q = plantQsData[p,:]
             nn = np.where(~np.isnan(q))[0]
+            dist = st.gamma
+            
             if len(nn) > 10:
                 args = dist.fit(q[nn])
                 curQsStd = dist.std(*args)
             else:
                 curQsStd = np.nan
             plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
+        
         plantQsData = np.array(plantQsAnomData)
+        plantQsData[plantQsData < -4] = np.nan
+        plantQsData[plantQsData > 4] = np.nan
         np.savetxt('E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff%s-anom.csv'%(plantData, qsdist), plantQsData, delimiter=',')
 
+    plantQsData[plantQsData < -4] = np.nan
+    plantQsData[plantQsData > 4] = np.nan
     
     # generate historical global daily outage data    
     syswidePCHist10 = []
@@ -124,7 +131,7 @@ if not os.path.isfile(histFileName10):
         syswidePCHistCurPlant50 = []
         syswidePCHistCurPlant90 = []
         
-        for year in range(1981, 2018+1):
+        for year in range(1981, 2005+1):
             
             syswidePCHistCurYear10 = []
             syswidePCHistCurYear50 = []
@@ -202,6 +209,7 @@ if not os.path.isfile(histFileName10):
     with open(histFileName90, 'wb') as f:
         pickle.dump(globalPC90, f, protocol=4)
 
+sys.exit()
 
 # load future mean warming data and recompute PC
 print('computing future systemwide PC...')
@@ -267,6 +275,8 @@ for w in range(1, 4+1):
             plantQsData = np.array(plantQsAnomData)
             np.savetxt(fileNameRunoffDistfit, plantQsData, delimiter=',')
             
+        plantQsData[plantQsData < -5] = np.nan
+        plantQsData[plantQsData > 5] = np.nan
         
         print('calculating PC for %s/+%dC'%(models[m], w))
         

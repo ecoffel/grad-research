@@ -14,7 +14,7 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import gzip, pickle
 
-plotFigs = True
+plotFigs = False
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
