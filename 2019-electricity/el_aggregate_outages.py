@@ -7,13 +7,20 @@ Created on Mon May 20 14:57:18 2019
 
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import matplotlib.cm as cmx
 import seaborn as sns
 import statsmodels.api as sm
 import el_load_global_plants
 import pickle, gzip
 import sys, os
+
+
+matplotlib.rcParams['font.family'] = 'Helvetica'
+matplotlib.rcParams['font.weight'] = 'normal'
+
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
@@ -509,6 +516,7 @@ yearlyOutagesFut10 = np.array(yearlyOutagesFut10)
 yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
 yearlyOutagesFut90 = np.array(yearlyOutagesFut90)
 
+sys.exit()
     
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
@@ -538,11 +546,11 @@ yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 
                             
 # PJ
-totalEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
+totalMonthlyEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
+totalAnnualEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3*12
 xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
-yticks = np.arange(0,310,100)
-pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
-
+yticks = np.arange(0,270,50)
+pctEnergyGrid = np.round(yticks/totalAnnualEnergy*100,decimals=1)
 
 outageSumHist = []
 outageSum1 = []
@@ -562,7 +570,12 @@ outageSum2 = np.sort(np.array(outageSum2), axis=1)
 outageSum3 = np.sort(np.array(outageSum3), axis=1)
 outageSum4 = np.sort(np.array(outageSum4), axis=1)
 
+#plt.rc('font', family='helvetica', weight='normal')
+#plt.rc('axes', labelweight='normal')
+
 plt.figure(figsize=(5,2))
+#plt.ylim([0, 320])
+plt.ylim([0,290])
 plt.xlim([0,13])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
@@ -580,7 +593,7 @@ plt.fill_between(xpos, np.nanmean(outageSum4, axis=1), np.nanmean(outageSum2, ax
 plt.xticks(range(1,13))
 plt.gca().set_xticklabels(range(1,13))
 plt.yticks(yticks)
-#plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 #plt.ylabel('Cumulative US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -589,14 +602,22 @@ for tick in plt.gca().xaxis.get_major_ticks():
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
+#plt.tick_params(
+#    axis='x',          # changes apply to the x-axis
+#    which='both',      # both major and minor ticks are affected
+#    bottom=False,      # ticks along the bottom edge are off
+#    top=False,         # ticks along the top edge are off
+#    labelbottom=False) # labels along the bottom edge are off
 
-plt.tick_params(
-    axis='x',          # changes apply to the x-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
+ax2 = plt.gca().twinx()
+plt.xlim([0,13])
+plt.ylim([0,290])
+plt.yticks(yticks)
+plt.gca().set_yticklabels(pctEnergyGrid)
 
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label2.set_fontname('Helvetica')    
+    tick.label2.set_fontsize(14)
 
 if plotFigs:
     plt.savefig('accumulated-annual-outage-cdf-%s-%s.png'%(plantData,runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -615,7 +636,7 @@ if plotFigs:
     
 
 yticks = np.arange(0,81,20)
-pctEnergyGrid = np.round(yticks/totalEnergy*100,decimals=1)
+pctEnergyGrid = np.round(yticks/totalMonthlyEnergy*100,decimals=1)
 
 yearlyOutagesFut50GMT2Sorted = np.sort(yearlyOutagesFut50[1,:,:],axis=0)
 yearlyOutagesFut50GMT4Sorted = np.sort(yearlyOutagesFut50[3,:,:],axis=0)
@@ -623,7 +644,7 @@ yearlyOutagesFut50GMT4Sorted = np.sort(yearlyOutagesFut50[3,:,:],axis=0)
 plt.figure(figsize=(5,2))
 #plt.xlim([0, 7])
 plt.xlim([0,13])
-plt.ylim([-1, 50])
+plt.ylim([0, 90])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
@@ -658,7 +679,7 @@ plt.tick_params(
     labelbottom=False) # labels along the bottom edge are off
 
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica', 'weight':'normal'}, loc = 'upper left')
 leg.get_frame().set_linewidth(0.0)            
 
 #leg = plt.legend(prop = {'size':11, 'family':'Helvetica'})
@@ -666,7 +687,7 @@ leg.get_frame().set_linewidth(0.0)
     
 ax2 = plt.gca().twinx()
 plt.xlim([0,13])
-plt.ylim([-1, 50])
+plt.ylim([0, 90])
 plt.yticks(yticks)
 plt.gca().set_yticklabels(pctEnergyGrid)
 #plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)
@@ -682,7 +703,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 if plotFigs:
     plt.savefig('accumulated-monthly-outage-%s.png'%runoffData, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
+plt.show()
 sys.exit()
 
 xpos = np.array([1, 3, 4, 5, 6])

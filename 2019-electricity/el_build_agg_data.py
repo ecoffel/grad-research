@@ -14,7 +14,6 @@ from scipy import stats
 import statsmodels.api as sm
 import scipy.stats as st
 import el_load_global_plants
-import el_find_best_runoff_dist
 import gzip, pickle
 import sys,os
 
@@ -30,7 +29,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 #gldas or grdc
 runoffModel = 'grdc'
-plantData = 'useu'
+plantData = 'world'
 
 modelPower = 'pow2'
 
@@ -209,7 +208,6 @@ if not os.path.isfile(histFileName10):
     with open(histFileName90, 'wb') as f:
         pickle.dump(globalPC90, f, protocol=4)
 
-sys.exit()
 
 # load future mean warming data and recompute PC
 print('computing future systemwide PC...')

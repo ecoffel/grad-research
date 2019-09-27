@@ -447,7 +447,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-5, 0])
+plt.ylim([-4.5, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -474,14 +474,14 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 #plt.gca().spines['bottom'].set_visible(False)
-#plt.tick_params(
-#    axis='x',          # changes apply to the x-axis
-#    which='both',      # both major and minor ticks are affected
-#    bottom=False,      # ticks along the bottom edge are off
-#    top=False,         # ticks along the top edge are off
-#    labelbottom=False) # labels along the bottom edge are off
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
 
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+#plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 
 
 

@@ -22,11 +22,11 @@ qsVar = 'qsGrdcAnomSummer'
 modelPower = 'pow2'
 
 plotFigs = True
-dumpData = True
+dumpData = False
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
-fileName = 'entsoe-nuke-pp-tx-all.csv'
+fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-tx.csv'
 plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:].copy()
 plantMonthData = plantTxData[1,:].copy()
@@ -34,9 +34,8 @@ plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
 
-fileName = 'entsoe-nuke-pp-runoff-anom-all.csv'
+fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-plantQsData = plantQsData[3:,:].copy()
 
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
@@ -137,9 +136,12 @@ for k in range(len(xd)):
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
+baseY = 80
+plotYTicks = [80, 85, 90, 95, 100]
+
 plt.figure(figsize=(4,4))
 plt.xlim([19, 51])
-plt.ylim([75, 100])
+plt.ylim([baseY, 100])
 plt.grid(True, color=[.9, .9, .9])
 
 plt.plot(xd, ydAll.T, '-', linewidth = 1, color = [.65, .65, .65], alpha = .2)
@@ -151,9 +153,10 @@ p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 colors = plt.get_cmap('Reds')
 
 for m in plantMeanTemps:
-    plt.plot([m, m], [75,77], color=colors(m/max(plantMeanTemps)), linewidth=1)
+    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
 
 plt.gca().set_xticks(range(20, 51, 5))
+plt.gca().set_yticks(plotYTicks)
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -223,7 +226,7 @@ for k in range(len(xd)):
 
 plt.figure(figsize=(4,4))
 plt.xlim([-4.1, 4.1])
-plt.ylim([75, 100])
+plt.ylim([baseY, 100])
 plt.grid(True, color=[.9, .9, .9])
 
 plt.plot(qd, ydAll.T, '-', linewidth = 1, color = [.6, .6, .6], alpha = .2)
@@ -234,8 +237,9 @@ p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 colors = plt.get_cmap('BrBG')
 
 for m in plantMeanRunoff:
-    plt.plot([m, m], [75,77], color=colors(m/max(plantMeanRunoff)), linewidth=1)
+    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
+plt.gca().set_yticks(plotYTicks)
 plt.gca().set_xticks(np.arange(-4, 4.1, 1))
 
 for tick in plt.gca().xaxis.get_major_ticks():

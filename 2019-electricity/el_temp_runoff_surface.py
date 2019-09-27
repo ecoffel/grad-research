@@ -14,14 +14,14 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import gzip, pickle
 
-plotFigs = False
+plotFigs = True
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
-fileName = 'entsoe-nuke-pp-tx-all.csv'
+fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-tx.csv'
 plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:].copy()
 plantMonthData = plantTxData[1,:].copy()
@@ -29,9 +29,8 @@ plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
 
-fileName = 'entsoe-nuke-pp-runoff-anom-all.csv'
+fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-plantQsData = plantQsData[3:,:].copy()
 
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
@@ -49,8 +48,8 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTx
 
 histPDF = []
 
-qsrange = np.arange(-4, 4.1, .5)
-txrange = np.arange(20, 51, 1)
+qsrange = np.linspace(-4, 4.1, 25)
+txrange = np.linspace(20, 51, 25)
 
 for qs in qsrange:
     pdfrow = []
@@ -73,15 +72,17 @@ for m in range(len(models)):
     # current contour surface for this model
     curCont = []
     
-    for q in qsrange:
-        xd = np.linspace(20,50,40)
+    for q in range(len(qsrange)):
         
         yd = []    
-        for i in range(len(xd)):
-#            yd.append(models[m].predict([1, xd[i], xd[i]**2, xd[i]**3, \
-#                                        q, q**2, q**3, q**4, q**5, q*xd[i], 0])[0])
-            yd.append(models[m].predict([1, xd[i], xd[i]**2, \
-                                        q, q**2, q*xd[i], (q**2)*(xd[i]**2), 0])[0])
+        for t in range(len(txrange)):
+            
+            if histPDF[q,t] == 1:
+                yd.append(models[m].predict([1, txrange[t], txrange[t]**2, \
+                                            qsrange[q], qsrange[q]**2, \
+                                            qsrange[q]*txrange[t], (qsrange[q]**2)*(txrange[t]**2), 0])[0])
+            else:
+                yd.append(np.nan)
         curCont.append(yd)
         
     yds.append(curCont)
@@ -92,18 +93,19 @@ yds[yds<75] = 75
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
-plt.contourf(xd, qsrange, yds, levels=np.arange(75,100,1), cmap = 'Reds_r')
+plt.contourf(txrange, qsrange, yds, levels=np.arange(85,100,.5), cmap = 'Reds_r')
 cb = plt.colorbar()
+cb.set_ticks(range(85,100,2))
 
 plt.plot([20, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
 plt.plot([np.nanmean(plantMeanTemps), np.nanmean(plantMeanTemps)], [-4, 4], '-k', lw=2)
 
-for q in range(len(qsrange)):
-    for t in range(len(txrange)):
-        if histPDF[q, t] == 1:
-            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
+#for q in range(len(qsrange)):
+#    for t in range(len(txrange)):
+#        if histPDF[q, t] == 1:
+#            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
-plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2, color=snsColors[0])
+plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
 plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835')
 plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1])
 

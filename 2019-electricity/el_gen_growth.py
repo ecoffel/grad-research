@@ -16,8 +16,24 @@ import el_load_global_plants
 
 plotFigs = False
 
+# grdc or gldas
+runoffData = 'grdc'
 
-globalPlants = el_load_global_plants.loadGlobalPlants()
+# world, useu, entsoe-nuke
+plantData = 'world'
+
+qstr = '-qdistfit-gamma'
+
+
+# these plants are in the same order as the ones loaded from the lat/lon csv
+globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+
+with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'rb') as f:
+    livingPlantsInds40 = pickle.load(f)
+
+#fileNamePlantLatLon = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-lat-lon.csv'%plantData
+#plantLatLon = np.genfromtxt(fileNamePlantLatLon, delimiter=',', skip_header=0)
+
 
 # in twh over a year
 # coal, gas, oil, nuke, bioenergy
@@ -40,7 +56,15 @@ iea2030 *= 3600 * 1e12 / 1e18
 iea2035 *= 3600 * 1e12 / 1e18
 iea2040 *= 3600 * 1e12 / 1e18
 
-with gzip.open('demand-projections.dat', 'rb') as f:
+with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-hist-%s-%s-%s.dat'%(plantData, runoffData, qstr), 'rb') as f:
+    pcChgHist = pickle.load(f)
+
+    pcTxx10 = pcChgHist['pCapTxx10']
+    pcTxx50 = pcChgHist['pCapTxx50']
+    pcTxx90 = pcChgHist['pCapTxx90']
+    
+
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'rb') as f:
     demData = pickle.load(f)    
     demHist = demData['demHist']
     demProj = demData['demProj']
@@ -48,18 +72,138 @@ with gzip.open('demand-projections.dat', 'rb') as f:
     demByMonth = demData['demByMonthHist']
     demByMonthFut = demData['demByMonthFut']
 
+outagesHist10 = []
+outagesHist50 = []
+outagesHist90 = []
+for p in livingPlantsInds40[2018]:
+    plantCap = globalPlants['caps'][p]
+    outagesHist10.append(plantCap*np.nanmean(pcTxx10[p])/100.0)
+    outagesHist50.append(plantCap*np.nanmean(pcTxx50[p])/100.0)
+    outagesHist90.append(plantCap*np.nanmean(pcTxx90[p])/100.0)
+outagesHist10 = np.array(outagesHist10)
+outagesHist50 = np.array(outagesHist50)
+outagesHist90 = np.array(outagesHist90)
 
 
-with gzip.open('pc-change-gmt-change.dat', 'rb') as f:    
-    pcChg = pickle.load(f)
+outagesFut10 = []
+outagesFut50 = []
+outagesFut90 = []
+for w in range(1, 4+1):
     
-    pCapTxxFutMeanWarming10 = pcChg['pCapTxxFutMeanWarming10']
-    pCapTxxFutMeanWarming50 = pcChg['pCapTxxFutMeanWarming50']
-    pCapTxxFutMeanWarming90 = pcChg['pCapTxxFutMeanWarming90']
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-fut-%s-%s-%s-gmt%d.dat'%(plantData, runoffData, qstr, w), 'rb') as f:
+        pcChgFut = pickle.load(f)
+        pCapTxxFutMeanWarming10 = pcChgFut['pCapTxxFutMeanWarming10']
+        pCapTxxFutMeanWarming50 = pcChgFut['pCapTxxFutMeanWarming50']
+        pCapTxxFutMeanWarming90 = pcChgFut['pCapTxxFutMeanWarming90']
     
-    pcTxx10 = pcChg['pcTxx10']
-    pcTxx50 = pcChg['pcTxx50']
-    pcTxx90 = pcChg['pcTxx90']
+    outagesFutGMT10 = []
+    outagesFutGMT50 = []
+    outagesFutGMT90 = []
+    for m in range(0, pCapTxxFutMeanWarming50.shape[0]):
+        outagesFutModel10 = []
+        outagesFutModel50 = []
+        outagesFutModel90 = []
+        for p in livingPlantsInds40[2018]:#range(len(pCapTxxFutMeanWarming50[w,m])):
+            
+            if p >= len(pCapTxxFutMeanWarming10[m]):
+                continue
+            
+            plantCap = globalPlants['caps'][p]
+            outagesFutModel10.append(plantCap*np.nanmean(pCapTxxFutMeanWarming10[m][p])/100.0)
+            outagesFutModel50.append(plantCap*np.nanmean(pCapTxxFutMeanWarming50[m][p])/100.0)
+            outagesFutModel90.append(plantCap*np.nanmean(pCapTxxFutMeanWarming90[m][p])/100.0)
+        outagesFutGMT10.append(outagesFutModel10)
+        outagesFutGMT50.append(outagesFutModel50)
+        outagesFutGMT90.append(outagesFutModel90)
+    outagesFut10.append(outagesFutGMT10)
+    outagesFut50.append(outagesFutGMT50)
+    outagesFut90.append(outagesFutGMT90)
+    
+outagesFut10 = np.array(outagesFut10) 
+outagesFut50 = np.array(outagesFut50) 
+outagesFut90 = np.array(outagesFut90) 
+
+
+snsColors = sns.color_palette(["#3498db", "#e74c3c"])
+
+ytickRange = np.arange(-100000,1,20000)
+ytickLabels = np.arange(-100,1,20)
+plt.figure(figsize=(3,4))
+plt.xlim([-.5, 4.5])
+plt.ylim([-100000,0])
+plt.grid(True, color=[.9,.9,.9])
+
+plt.plot(-.15, \
+         np.nansum(outagesHist90), \
+          'o', markersize=5, color=cmx.tab20(0))
+plt.plot(0, \
+         np.nansum(outagesHist50), \
+          'o', markersize=5, color='k')
+plt.plot(.15, \
+         np.nansum(outagesHist10), \
+          'o', markersize=5, color=cmx.tab20(6))
+
+
+xpos = np.array([1,2,3,4])
+plt.plot(xpos-.15, \
+         np.nanmean(np.nansum(outagesFut90,axis=2),axis=1), \
+          'o', markersize=5, color=cmx.tab20(0), label='10th Percentile')
+plt.errorbar(xpos-.15, \
+             np.nanmean(np.nansum(outagesFut90,axis=2),axis=1), \
+             yerr = np.nanstd(np.nansum(outagesFut90,axis=2),axis=1), \
+             ecolor = cmx.tab20(0), elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos, \
+         np.nanmean(np.nansum(outagesFut50,axis=2),axis=1), \
+          'o', markersize=5, color='k', label='50th Percentile')
+
+plt.errorbar(xpos, \
+             np.nanmean(np.nansum(outagesFut50,axis=2),axis=1), \
+             yerr = np.nanstd(np.nansum(outagesFut50,axis=2),axis=1), \
+             ecolor = 'k', elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot(xpos+.15, \
+         np.nanmean(np.nansum(outagesFut10,axis=2),axis=1), \
+          'o', markersize=5, color=cmx.tab20(6), label='90th Percentile')
+plt.errorbar(xpos+.15, \
+             np.nanmean(np.nansum(outagesFut10,axis=2),axis=1), \
+             yerr = np.nanstd(np.nansum(outagesFut50,axis=2),axis=1), \
+             ecolor = cmx.tab20(6), elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.ylabel('Global curtailment (GW)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('GMT change', fontname = 'Helvetica', fontsize=16)
+plt.xticks([0,1,2,3,4])
+plt.gca().set_xticklabels(['Hist', '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
+plt.yticks(ytickRange)
+plt.gca().set_yticklabels(ytickLabels)
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, \
+                 loc='lower left')
+leg.get_frame().set_linewidth(0.0)
+
+
+ax2 = plt.twinx()
+plt.ylim([-100000,0])
+ytickLabels = [int(x/(np.nanmean(globalPlants['caps'][livingPlantsInds40[2018]])/1e3)) for x in ytickLabels]
+plt.ylabel('# Average power plants', fontname = 'Helvetica', fontsize=16)
+plt.yticks(ytickRange)
+plt.gca().set_yticklabels(ytickLabels)
+
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label2.set_fontname('Helvetica')    
+    tick.label2.set_fontsize(14)
+
+if plotFigs:
+    plt.savefig('global-curtailment.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+sys.exit()
 
 pcDiff10 = np.nanmean(pCapTxxFutMeanWarming10, axis=2) - np.nanmean(pcTxx10)
 pcDiff50 = np.nanmean(pCapTxxFutMeanWarming50, axis=2) - np.nanmean(pcTxx50)
@@ -81,8 +225,6 @@ additionalGenPctPt50 = additionalGen50-demDiffPct
 additionalGenPctPt90 = additionalGen90-demDiffPct
 
 additionalGenGrowth10[additionalGenGrowth10<0] = np.nan
-
-snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 xpos = np.arange(1,5)
 

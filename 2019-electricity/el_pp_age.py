@@ -16,7 +16,7 @@ import el_load_global_plants
 
 np.random.seed(19680801)
 
-plotFigs = False
+plotFigs = True
 
 plantData = 'world'
 
@@ -78,9 +78,10 @@ for i, y in enumerate(range(1910, 2100)):
     
     livingPlantsInds40[y] = np.array(curYearInds)
     
-#with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
-#    pickle.dump(livingPlantsInds40, f)
-    
+with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
+    pickle.dump(livingPlantsInds40, f)
+
+sys.exit()    
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
