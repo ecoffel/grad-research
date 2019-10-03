@@ -14,7 +14,7 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import gzip, pickle
 
-plotFigs = True
+plotFigs = False
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
@@ -49,7 +49,7 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTx
 histPDF = []
 
 qsrange = np.linspace(-4, 4.1, 25)
-txrange = np.linspace(20, 51, 25)
+txrange = np.linspace(27, 51, 25)
 
 for qs in qsrange:
     pdfrow = []
@@ -93,19 +93,21 @@ yds[yds<75] = 75
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
+                               
 plt.contourf(txrange, qsrange, yds, levels=np.arange(85,100,.5), cmap = 'Reds_r')
 cb = plt.colorbar()
 cb.set_ticks(range(85,100,2))
-
-plt.plot([20, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
-plt.plot([np.nanmean(plantMeanTemps), np.nanmean(plantMeanTemps)], [-4, 4], '-k', lw=2)
+plt.xlim([27,50])
+plt.ylim([-4,4])
+plt.plot([27, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
+plt.plot([txHist, txHist], [-4, 4], '-k', lw=2)
 
 #for q in range(len(qsrange)):
 #    for t in range(len(txrange)):
 #        if histPDF[q, t] == 1:
 #            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
-plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
+#plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
 plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835')
 plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1])
 

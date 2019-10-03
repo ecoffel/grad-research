@@ -516,8 +516,6 @@ yearlyOutagesFut10 = np.array(yearlyOutagesFut10)
 yearlyOutagesFut50 = np.array(yearlyOutagesFut50)
 yearlyOutagesFut90 = np.array(yearlyOutagesFut90)
 
-sys.exit()
-    
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
@@ -544,12 +542,19 @@ yearlyOutagesFut50 = np.moveaxis(yearlyOutagesFut50, 1, 0)
 yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 
 
+if plantData == 'world':
+    yLimSet = 650
+    yTickStep = 200
+else:
+    yLimSet = 270
+    yTickStep = 50
+
                             
 # PJ
 totalMonthlyEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
 totalAnnualEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3*12
 xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
-yticks = np.arange(0,270,50)
+yticks = np.arange(0,yLimSet,yTickStep)
 pctEnergyGrid = np.round(yticks/totalAnnualEnergy*100,decimals=1)
 
 outageSumHist = []
@@ -575,7 +580,7 @@ outageSum4 = np.sort(np.array(outageSum4), axis=1)
 
 plt.figure(figsize=(5,2))
 #plt.ylim([0, 320])
-plt.ylim([0,290])
+plt.ylim([0,yLimSet])
 plt.xlim([0,13])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
@@ -611,7 +616,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 
 ax2 = plt.gca().twinx()
 plt.xlim([0,13])
-plt.ylim([0,290])
+plt.ylim([0,yLimSet])
 plt.yticks(yticks)
 plt.gca().set_yticklabels(pctEnergyGrid)
 
@@ -633,9 +638,14 @@ if plotFigs:
     
     
     
-    
+if plantData == 'world':
+    yLimSet = 125
+    yTickStep = 25
+else:
+    yLimSet = 90
+    yTickStep = 20
 
-yticks = np.arange(0,81,20)
+yticks = np.arange(0,yLimSet,yTickStep)
 pctEnergyGrid = np.round(yticks/totalMonthlyEnergy*100,decimals=1)
 
 yearlyOutagesFut50GMT2Sorted = np.sort(yearlyOutagesFut50[1,:,:],axis=0)
@@ -644,7 +654,7 @@ yearlyOutagesFut50GMT4Sorted = np.sort(yearlyOutagesFut50[3,:,:],axis=0)
 plt.figure(figsize=(5,2))
 #plt.xlim([0, 7])
 plt.xlim([0,13])
-plt.ylim([0, 90])
+plt.ylim([0, yLimSet])
 plt.grid(True, alpha = 0.25)
 plt.gca().set_axisbelow(True)
 
@@ -687,7 +697,7 @@ leg.get_frame().set_linewidth(0.0)
     
 ax2 = plt.gca().twinx()
 plt.xlim([0,13])
-plt.ylim([0, 90])
+plt.ylim([0, yLimSet])
 plt.yticks(yticks)
 plt.gca().set_yticklabels(pctEnergyGrid)
 #plt.ylabel('% of US-EU electricity capacity', fontname = 'Helvetica', fontsize=16)

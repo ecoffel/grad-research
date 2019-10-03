@@ -8,13 +8,33 @@ Created on Thu May  2 16:56:07 2019
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
+import scipy.stats as st
 import pickle, gzip
 import sys, os
+
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
 plotFigs = False
+dumpData = True
+
+# grdc or gldas
+runoffData = 'grdc'
+
+# world, useu, entsoe-nuke
+plantData = 'world'
+
+qstr = '-qdistfit-gamma'
+
+yearRange = [1981, 2005]
+decades = np.array([[2020,2029],\
+                   [2030, 2039],\
+                   [2040,2049],\
+                   [2050,2059],\
+                   [2060,2069],\
+                   [2070,2079],\
+                   [2080,2089]])
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -23,269 +43,191 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
 
-yearRangeHist = [1981, 2018]
-yearRangeFut1 = [2020, 2050]
-yearRangeFut2 = [2050, 2080]
-
-# load historical temp data for all plants in US and EU
-fileNameTemp = 'entsoe-nuke-pp-tx-all.csv'
-plantList = []
-with open(fileNameTemp, 'r') as f:
-    i = 0
-    for line in f:
-        if i >= 3:
-            parts = line.split(',')
-            plantList.append(parts[0])
-        i += 1
-plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,1:].copy()
-plantMonthData = plantTxData[1,1:].copy()
-plantDayData = plantTxData[2,1:].copy()
-plantTxData = plantTxData[3:,1:].copy()
-
-summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-
-# load historical runoff data for all plants in US and EU
-fileNameRunoff = 'entsoe-nuke-pp-runoff-anom-all.csv'
-plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-plantQsAnomData = plantQsData[3:,1:].copy()
-
-
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('pPolyData.dat', 'rb') as f:
+with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-pow2.dat'%runoffData, 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
 
-pCapTxHist = [[], [], []]
-pCapTxxHist = [[], [], []]
+baseTx = 27
+baseQs = 0
 
-pCapTxFut1 = [[], [], []]
-pCapTxxFut1 = [[], [], []]
-pCapTxFut2 = [[], [], []]
-pCapTxxFut2 = [[], [], []]
+basePred10 = pcModel10.predict([1, baseTx, baseTx**2, \
+                                  baseQs, baseQs**2, \
+                                  baseTx*baseQs, (baseTx**2)*(baseQs**2), \
+                                  0])[0]
+basePred50 = pcModel50.predict([1, baseTx, baseTx**2, \
+                              baseQs, baseQs**2, \
+                              baseTx*baseQs, (baseTx**2)*(baseQs**2), \
+                              0])[0]
+basePred90 = pcModel90.predict([1, baseTx, baseTx**2, \
+                              baseQs, baseQs**2, \
+                              baseTx*baseQs, (baseTx**2)*(baseQs**2), \
+                              0])[0]
 
-for p in range(len(plantList)):
+
+
+#fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData
+#plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+#plantYearData = plantTxData[0,:].copy()
+#plantMonthData = plantTxData[1,:].copy()
+#plantDayData = plantTxData[2,:].copy()
+#plantTxData = plantTxData[3:,:].copy()
+
+#summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
+#plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
+
+# load historical runoff data for all plants in US and EU
+fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff.csv'%plantData
+fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff%s.csv'%(plantData, qstr)
+fileNameRunoffMeansDistFit = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-means%s.csv'%(plantData, qstr)
+fileNameRunoffStdsDistFit = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-runoff-stds%s.csv'%(plantData, qstr)
+
+if os.path.isfile(fileNameRunoffDistFit):
+#    plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
+    plantQsMeans = np.genfromtxt(fileNameRunoffMeansDistFit, delimiter=',', skip_header=0)
+    plantQsStds = np.genfromtxt(fileNameRunoffStdsDistFit, delimiter=',', skip_header=0)
     
-    plantPcTx10 = []
-    plantPcTx50 = []
-    plantPcTx90 = []
+else:
+    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    plantQsData = plantQsData[3:,:]
     
-    plantPcTxx10 = []
-    plantPcTxx50 = []
-    plantPcTxx90 = []
+    plantQsMeans = []
+    plantQsStds = []
     
-    indTxMean = np.where((plantMonthData >= 7) & (plantMonthData <= 8))[0]
-    txMean = np.nanmean(plantTxData[p, indTxMean])
+    print('calculating historical qs distfit anomalies')
+    plantQsAnomData = []
+    dist = st.gamma
+    for p in range(plantQsData.shape[0]):
+        if p%1000 == 0:
+            print('plant %d...'%p)
+        q = plantQsData[p,:]
+        nn = np.where(~np.isnan(q))[0]
+        if len(nn) > 10:
+            args = dist.fit(q[nn])
+            curQsStd = dist.std(*args)
+        else:
+            curQsStd = np.nan
+        plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
+        plantQsMeans.append(np.nanmean(q))
+        plantQsStds.append(curQsStd)
+    plantQsAnomData = np.array(plantQsAnomData)
+    plantQsMeans = np.array(plantQsMeans)
+    plantQsStds = np.array(plantQsStds)
     
-    tx = plantTxData[p, :]
-    qs = plantQsAnomData[p, :]
+    np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
+    np.savetxt(fileNameRunoffMeansDistFit, plantQsMeans, delimiter=',')
+    np.savetxt(fileNameRunoffStdsDistFit, plantQsStds, delimiter=',')
+    plantQsData = plantQsAnomData
     
-    for year in range(yearRangeHist[0], yearRangeHist[1]+1):
 
-        ind = np.where((plantYearData == year) & (plantMonthData >= 7) & (plantMonthData <= 8))[0]
-        
-        curTx = tx[ind]
-        curQs = qs[ind]
-        
-        nn = np.where(~np.isnan(curTx))[0]
-        
-        if len(nn) == 0:
-            plantPcTx10.append(np.nan)
-            plantPcTx50.append(np.nan)
-            plantPcTx90.append(np.nan)
-            
-            plantPcTxx10.append(np.nan)
-            plantPcTxx50.append(np.nan)
-            plantPcTxx90.append(np.nan)
-            continue
-        
-        curTx = curTx[nn]
-        curQs = curQs[nn]
-        
-        # ind of the txx day in this year
-        indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
-        
-        curTxx = curTx[indTxx]
-        curQsTxx = curQs[indTxx]
-        
-        curPcPred10 = []
-        curPcPred50 = []
-        curPcPred90 = []
-        
-        for i in range(len(curTx)):
-            
-            t = curTx[i]
-            q = curQs[i]
-            
-            curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
-            curDayPc50 = pcModel50.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
-            curDayPc90 = pcModel90.predict([1, t, t**2, t**3, \
-                                                 q, q**2, q**3, q**4, q**5, 0])[0]
-            if curDayPc10 > 100: curDayPc10 = 100
-            if curDayPc50 > 100: curDayPc50 = 100
-            if curDayPc90 > 100: curDayPc90 = 100
-            
-            curPcPred10.append(curDayPc10)
-            curPcPred50.append(curDayPc50)
-            curPcPred90.append(curDayPc90)
-        
-        curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-        curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-        curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                 curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-        if curPcPredTxx10 > 100: curPcPredTxx10 = 100
-        if curPcPredTxx50 > 100: curPcPredTxx50 = 100
-        if curPcPredTxx90 > 100: curPcPredTxx90 = 100
-                    
-        plantPcTx10.append(np.nanmean(curPcPred50))
-        plantPcTx50.append(np.nanmean(curPcPred50))
-        plantPcTx90.append(np.nanmean(curPcPred90))
-        
-        plantPcTxx10.append(curPcPredTxx10)
-        plantPcTxx50.append(curPcPredTxx50)
-        plantPcTxx90.append(curPcPredTxx90)
-    
-    pCapTxHist[0].append(np.array(plantPcTx10))
-    pCapTxHist[1].append(np.array(plantPcTx50))
-    pCapTxHist[2].append(np.array(plantPcTx90))
-    
-    pCapTxxHist[0].append(plantPcTxx10)
-    pCapTxxHist[1].append(plantPcTxx50)
-    pCapTxxHist[2].append(plantPcTxx90)
-            
-
-pCapTxHist = np.array(pCapTxHist)
-pCapTxxHist = np.array(pCapTxxHist)
+# load historical pc for txx days
+with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-hist-%s-%s-%s.dat'%(plantData, runoffData, qstr), 'rb') as f:
+    pcChg = pickle.load(f)
 
 
-
-
-
-
-
+plantPcTxx10 = []
+plantPcTxx50 = []
+plantPcTxx90 = []
 
 for m in range(len(models)):
     
-    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
+    plantPcTxx10CurModel = []
+    plantPcTxx50CurModel = []
+    plantPcTxx90CurModel = []
+    
+    for d in range(decades.shape[0]):
+    
+        print('processing %s/%d...'%(models[m], decades[d,0]))
+        
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-rcp85-txx-cmip5-%s-%d-%d.csv'%(plantData, models[m], decades[d,0], decades[d,1])    
+        plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+        
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-rcp85-runoff-at-txx-cmip5-%s-%d-%d.csv'%(plantData, models[m], decades[d,0], decades[d,1])        
+        plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
 
-    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-    plantTxYearData = plantTxData[0,1:].copy()
-    plantTxMonthData = plantTxData[1,1:].copy()
-    plantTxDayData = plantTxData[2,1:].copy()
-    plantTxData = plantTxData[3:,1:].copy()
-    
-    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
-    
-    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-    plantQsYearData = plantTxData[0,1:].copy()
-    plantQsMonthData = plantTxData[1,1:].copy()
-    plantQsDayData = plantTxData[2,1:].copy()
-    plantQsData = plantQsData[3:,1:].copy()
-    
-    for p in range(len(plantList)):
-        
-        plantPcTx10 = []
-        plantPcTx50 = []
-        plantPcTx90 = []
-        
-        plantPcTxx10 = []
-        plantPcTxx50 = []
-        plantPcTxx90 = []
-        
-        tx = plantTxData[p, :]
-        qs = plantQsData[p, :]
-        
-        for year in range(yearRangeFut1[0], yearRangeFut1[1]+1):
-    
-            indTx = np.where((plantTxYearData == year) & (plantTxMonthData >= 7) & (plantTxMonthData <= 8))[0]
-            
-            curTx = tx[indTx]
-            curQs = qs[indTx]
-            
-            nn = np.where(~np.isnan(curTx))[0]
-            
-            if len(nn) == 0:
-                
-                
-                plantPcTx10.append(np.nan)
-                plantPcTx50.append(np.nan)
-                plantPcTx90.append(np.nan)
-                
-                plantPcTxx10.append(np.nan)
-                plantPcTxx50.append(np.nan)
-                plantPcTxx90.append(np.nan)
-                continue
-            
-            curTx = curTx[nn]
-            curQs = curQs[nn]
-            
-            # ind of the txx day in this year
-            indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
-            
-            curTxx = curTx[indTxx]
-            curQsTxx = curQs[indTxx]
-            
-            curPcPred10 = []
-            curPcPred50 = []
-            curPcPred90 = []
-            
-            for i in range(len(curTx)):
-                
-                t = curTx[i]
-                q = curQs[i]
-                
-                curDayPc10 = pcModel10.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                curDayPc50 = pcModel50.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                curDayPc90 = pcModel90.predict([1, t, t**2, t**3, \
-                                                     q, q**2, q**3, q**4, q**5, 0])[0]
-                if curDayPc10 > 100: curDayPc10 = 100
-                if curDayPc50 > 100: curDayPc50 = 100
-                if curDayPc90 > 100: curDayPc90 = 100
-                
-                curPcPred10.append(curDayPc10)
-                curPcPred50.append(curDayPc50)
-                curPcPred90.append(curDayPc90)
-            
-            curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, curTxx**3, \
-                                                     curQsTxx, curQsTxx**2, curQsTxx**3, curQsTxx**4, curQsTxx**5, 0])[0]
-            if curPcPredTxx10 > 100: curPcPredTxx10 = 100
-            if curPcPredTxx50 > 100: curPcPredTxx50 = 100
-            if curPcPredTxx90 > 100: curPcPredTxx90 = 100
+        plantPcTxx10CurDecade = []
+        plantPcTxx50CurDecade = []
+        plantPcTxx90CurDecade = []
+
+        for p in range(plantTxData.shape[0]):
                         
-            plantPcTx10.append(np.nanmean(curPcPred50))
-            plantPcTx50.append(np.nanmean(curPcPred50))
-            plantPcTx90.append(np.nanmean(curPcPred90))
+            plantPcTxx10CurPlant = []
+            plantPcTxx50CurPlant = []
+            plantPcTxx90CurPlant = []    
             
-            plantPcTxx10.append(curPcPredTxx10)
-            plantPcTxx50.append(curPcPredTxx50)
-            plantPcTxx90.append(curPcPredTxx90)
+            tx = plantTxData[p, :]
+            # calc runoff anom for this plant based on previously loaded historical stats
+            qs = (plantQsData[p, :]-plantQsMeans[p])/plantQsStds[p]
+            
+            qs[qs < -5] = np.nan
+            qs[qs > 5] = np.nan
+            
+            for y in range(tx.shape[0]):
         
-        pCapTxFut1[0].append(np.array(plantPcTx10))
-        pCapTxFut1[1].append(np.array(plantPcTx50))
-        pCapTxFut1[2].append(np.array(plantPcTx90))
+                # txx value and corresponding qs for current year
+                curTxx = tx[y]
+                curQsTxx = qs[y]
+                
+                if np.isnan(curTxx) or np.isnan(curQsTxx):
+                    plantPcTxx10CurPlant.append(np.nan)
+                    plantPcTxx50CurPlant.append(np.nan)
+                    plantPcTxx90CurPlant.append(np.nan)
+                    continue
+                
+                if curTxx > baseTx:
+                    curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, \
+                                                             curQsTxx, curQsTxx**2, \
+                                                             curTxx*curQsTxx, (curTxx**2)*(curQsTxx**2), 0])[0] - basePred10
+                    curPcPredTxx50 = pcModel50.predict([1, curTxx, curTxx**2, \
+                                                             curQsTxx, curQsTxx**2, \
+                                                             curTxx*curQsTxx, (curTxx**2)*(curQsTxx**2), 0])[0] - basePred50
+                    curPcPredTxx90 = pcModel90.predict([1, curTxx, curTxx**2, \
+                                                             curQsTxx, curQsTxx**2, \
+                                                             curTxx*curQsTxx, (curTxx**2)*(curQsTxx**2), 0])[0] - basePred90
+                else:
+                    curPcPredTxx10 = 0
+                    curPcPredTxx50 = 0
+                    curPcPredTxx90 = 0
+                    
+                if curPcPredTxx10 > 100: curPcPredTxx10 = 0
+                if curPcPredTxx50 > 100: curPcPredTxx50 = 0
+                if curPcPredTxx90 > 100: curPcPredTxx90 = 0
+                
+                if curPcPredTxx10 < -100: curPcPredTxx10 = -100
+                if curPcPredTxx50 < -100: curPcPredTxx50 = -100
+                if curPcPredTxx90 < -100: curPcPredTxx90 = -100
+                
+                plantPcTxx10CurPlant.append(curPcPredTxx10)
+                plantPcTxx50CurPlant.append(curPcPredTxx50)
+                plantPcTxx90CurPlant.append(curPcPredTxx90)
+            
+            plantPcTxx10CurDecade.append(plantPcTxx10CurPlant)
+            plantPcTxx50CurDecade.append(plantPcTxx50CurPlant)
+            plantPcTxx90CurDecade.append(plantPcTxx90CurPlant)
         
-        pCapTxxFut1[0].append(plantPcTxx10)
-        pCapTxxFut1[1].append(plantPcTxx50)
-        pCapTxxFut1[2].append(plantPcTxx90)
-    sys.exit()            
+        plantPcTxx10CurModel.append(plantPcTxx10CurDecade)
+        plantPcTxx50CurModel.append(plantPcTxx50CurDecade)
+        plantPcTxx90CurModel.append(plantPcTxx90CurDecade)
+    
+    plantPcTxx10.append(plantPcTxx10CurModel)
+    plantPcTxx50.append(plantPcTxx50CurModel)
+    plantPcTxx90.append(plantPcTxx90CurModel)
 
-pCapTxFut1 = np.array(pCapTxFut1)
-pCapTxxFut1 = np.array(pCapTxxFut1)
+plantPcTxx10 = np.array(plantPcTxx10)
+plantPcTxx50 = np.array(plantPcTxx50)
+plantPcTxx90 = np.array(plantPcTxx90)
+
+if dumpData:
+    pcChg = {'pCapTxxFutRcp8510':plantPcTxx10, \
+             'pCapTxxFutRcp8550':plantPcTxx50, \
+             'pCapTxxFutRcp8590':plantPcTxx90}
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-fut-%s-%s-%s-rcp85.dat'%(plantData, runoffData, qstr), 'wb') as f:
+        pickle.dump(pcChg, f)
+
 
 
 

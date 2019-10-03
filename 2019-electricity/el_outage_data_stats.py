@@ -116,16 +116,19 @@ histTempsByMonth = []
 
 for m in range(1, 13):
     curMonth = []
-    ind = np.where(entsoePlants['months'] == m)[0]
-    curMonth.extend(np.nanmean(entsoePlants['tx'][:, ind], axis=1))
+    for y in np.unique(entsoePlants['years']):
+        ind = np.where(entsoePlants['months'] == m)[0]
+        curMonth.extend(np.nanmean(entsoePlants['tx'][:, ind], axis=1))
     
-    ind = np.where(nukeData['plantMonthsAll'][0,:] == m)[0]
-    curMonth.extend(np.nanmean(nukePlants['tx'][:, ind], axis=1))
+    for y in np.unique(nukeData['plantYearsAll']):
+        ind = np.where((nukeData['plantMonthsAll'][0,:] == m) & \
+                       (nukeData['plantYearsAll'][0,:] == y))[0]
+        curMonth.extend(np.nanmax(nukePlants['tx'][:, ind], axis=1))
     
-    histTempsByMonth.append(curMonth)
+    histTempsByMonth.append(np.nanmean(curMonth))
 
 histTempsByMonth = np.array(histTempsByMonth)
-histTempsByMonth = np.nanmean(histTempsByMonth, axis=1)
+#histTempsByMonth = np.nanmean(histTempsByMonth, axis=1)
 
 # load future temps and runoff values
 #qsAnomMonthlyMeanFut = []
@@ -354,23 +357,23 @@ txMonthlyMaxFutGMT = np.array(txMonthlyMaxFutGMT)
 qsMonthlyMeanFutGMT = np.array(qsMonthlyMeanFutGMT)
 
 
-txMonthlyMeanFutGMTSorted = np.sort(np.nanmean(txMonthlyMeanFutGMT, axis=2), axis=1)
+txMonthlyMaxFutGMTSorted = np.sort(np.nanmean(txMonthlyMaxFutGMT, axis=2), axis=1)
 
 
 fig = plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([4, 38])
+plt.ylim([8, 43])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=2, color='black')
 
-plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFutGMT[1,:,:,:],axis=1),axis=0), '-', lw=2, color='#ffb835')
-plt.plot(list(range(1,13)), txMonthlyMeanFutGMTSorted[1,-1,:], '--', lw=1, color='#ffb835')
-plt.plot(list(range(1,13)), np.nanmean(np.nanmean(txMonthlyMeanFutGMT[3,:,:,:],axis=1),axis=0), '-', lw=2, color=snsColors[1])
-plt.plot(list(range(1,13)), txMonthlyMeanFutGMTSorted[3,-2,:], '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(txMonthlyMaxFutGMTSorted[1,:,:],axis=0), '-', lw=2, color='#ffb835')
+plt.plot(list(range(1,13)), txMonthlyMaxFutGMTSorted[1,-1,:], '--', lw=1, color='#ffb835')
+plt.plot(list(range(1,13)), np.nanmean(txMonthlyMaxFutGMTSorted[3,:,:],axis=0), '-', lw=2, color=snsColors[1])
+plt.plot(list(range(1,13)), txMonthlyMaxFutGMTSorted[3,-2,:], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-
+plt.yticks(list(range(10,43,5)))
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
     tick.label.set_fontsize(10)
@@ -393,8 +396,6 @@ plt.tick_params(
 #x0,x1 = plt.gca().get_xlim()
 #y0,y1 = plt.gca().get_ylim()
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-
 
 if plotFigs:
     plt.savefig('temps-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -581,13 +582,15 @@ if plotFigs:
 
 
 mon = nukeData['plantMonthsAll']
-qsAnom = nukePlants['qsAnom']
+qsAnom = nukePlants['qsGrdcAnom']
+qsAnom[qsAnom>5] = np.nan
+qsAnom[qsAnom<-5] = np.nan
 histQsByMonth = []
 
 for m in range(1, 13):
     curMonth = []
     ind = np.where(entsoePlants['months'] == m)[0]
-    curMonth.extend(np.nanmean(entsoePlants['qsAnom'][:, ind], axis=1))
+    curMonth.extend(np.nanmean(entsoePlants['qsGrdcAnom'][:, ind], axis=1))
     
     ind = np.where(mon[0,:] == m)[0]
     curMonth.extend(np.nanmean(qsAnom[:, ind], axis=1))
@@ -600,7 +603,7 @@ qsMonthlyMeanFutGMTSorted = np.sort(np.nanmean(qsMonthlyMeanFutGMT, axis=2), axi
 
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([-1, 1.3])
+plt.ylim([-1, 1])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot([0,13], [0,0], '--k', lw=1)
@@ -617,7 +620,7 @@ plt.plot(list(range(1,13)), qsMonthlyMeanFutGMTSorted[3,0,:], '--', lw=1, color=
 #plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color='#8c4e23')
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-.5, 0, .7])
+plt.yticks([-.8, -.4, 0, .4, .8])
          
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

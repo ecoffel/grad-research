@@ -45,6 +45,51 @@ plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
 
+txrange = np.arange(20,51,1)
+qsrange = [1]
+tBase = 27
+qBase = 1
+nModelsTxRange = []
+for t in txrange:
+    nModels = 0
+    for m in range(len(models)):
+        basePred = models[m].get_prediction([1, tBase, tBase**2, qBase, qBase**2, qBase*tBase, (qBase**2)*(tBase**2), 0])
+        cBase = basePred.conf_int()[0]
+        pred = models[m].predict([1, t, t**2, qBase, qBase**2, qBase*t, (qBase**2)*(t**2), 0])
+        
+        if pred < cBase[0] or pred > cBase[1]:
+            nModels += 1
+    nModelsTxRange.append(nModels)
+nModelsTxRange = np.array(nModelsTxRange)/1000.0*100
+
+plt.figure(figsize=(4,4))
+plt.xlim([20,50])
+plt.ylim([0,101])
+plt.grid(True, color=[.9, .9, .9])
+
+plt.plot(txrange, nModelsTxRange, 'k-', linewidth = 2)
+
+plt.gca().set_xticks(range(20,51,5))
+plt.gca().set_yticks([0, 25, 50, 75, 100])
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('% bootstraps significant', fontname = 'Helvetica', fontsize=16)
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+if plotFigs:
+    plt.savefig('significant-bootstraps.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+sys.exit()
 
 # find fit percentiles for temperature
 t = 50
@@ -140,7 +185,7 @@ baseY = 80
 plotYTicks = [80, 85, 90, 95, 100]
 
 plt.figure(figsize=(4,4))
-plt.xlim([19, 51])
+plt.xlim([27, 50])
 plt.ylim([baseY, 100])
 plt.grid(True, color=[.9, .9, .9])
 
@@ -155,7 +200,7 @@ colors = plt.get_cmap('Reds')
 for m in plantMeanTemps:
     plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
 
-plt.gca().set_xticks(range(20, 51, 5))
+plt.gca().set_xticks(range(30, 51, 5))
 plt.gca().set_yticks(plotYTicks)
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -168,7 +213,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left')
+leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left', \
+                 bbox_to_anchor=(0.01, 0.3))
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
@@ -177,7 +223,6 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
     plt.savefig('hist-pc-%s-regression-%s.png'%(tempVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
 
 
 

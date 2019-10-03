@@ -150,7 +150,7 @@ if not os.path.isfile(histFileName10):
                     tx = plantTxData[p,ind[day]]
                     qs = plantQsData[p,ind[day]]
                     
-                    if tx >= 20:
+                    if tx >= baseTx:
                         
                         # predict plant capacity for current historical day
                         pcPred10 = pcModel10.predict([1, tx, tx**2, \
@@ -325,7 +325,7 @@ for w in range(1, 4+1):
                             curTx = plantTxData[p, ind[day]]
                             curQs = plantQsData[p, ind[day]]
                         
-                            if curTx >= 20:                                
+                            if curTx >= baseTx:                                
                                 # predict plant capacity for current historical day
                                 pcPred10 = pcModel10.predict([1, curTx, curTx**2, \
                                                               curQs, curQs**2, \

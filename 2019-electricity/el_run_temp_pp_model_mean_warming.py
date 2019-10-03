@@ -206,7 +206,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/pc-
     #            curPcPred50.append(curDayPc50)
     #            curPcPred90.append(curDayPc90)
             
-            if curTxx >= 20:
+            if curTxx >= baseTx:
                 # the outage at current temp - outage at mean temp: outages will be negative percents
                 curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, \
                                                          curQsTxx, curQsTxx**2, \
@@ -238,7 +238,7 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/pc-
             
             
             
-            if curTxMedian >= 20:
+            if curTxMedian >= baseTx:
                 curPcPredTxMedian10 = pcModel10.predict([1, curTxMedian, curTxMedian**2, \
                                                          curQsTxMedian, curQsTxMedian**2, \
                                                          curTxMedian*curQsTxMedian, (curTxMedian**2)*(curQsTxMedian**2), \
@@ -477,7 +477,7 @@ for w in range(1, 4+1):
 #                curPcPred50 = []
 #                curPcPred90 = []
                 
-                if curTxx >= 20:
+                if curTxx >= baseTx:
                     curPcPredTxx10 = pcModel10.predict([1, curTxx, curTxx**2, \
                                                              curQsTxx, curQsTxx**2, \
                                                              curTxx*curQsTxx, (curTxx**2)*(curQsTxx**2), \
@@ -508,7 +508,7 @@ for w in range(1, 4+1):
                 plantPcTxx90.append(curPcPredTxx90)
                 
                 
-                if curTxMedian >= 20:
+                if curTxMedian >= baseTx:
                     curPcPredTxMedian10 = pcModel10.predict([1, curTxMedian, curTxMedian**2, \
                                                              curQsTxMedian, curQsTxMedian**2, \
                                                              curTxMedian*curQsTxMedian, (curTxMedian**2)*(curQsTxMedian**2), \
