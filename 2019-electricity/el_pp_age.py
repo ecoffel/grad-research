@@ -17,6 +17,7 @@ import el_load_global_plants
 np.random.seed(19680801)
 
 plotFigs = True
+dumpData = False
 
 plantData = 'world'
 
@@ -34,6 +35,9 @@ ieaSust2025 = np.array([7193, 6810, 604, 3302, 1039]) / 24 / 365 * 1e3
 ieaSust2030 = np.array([4847, 6829, 413, 3887, 1324]) / 24 / 365 * 1e3
 ieaSust2035 = np.array([3050, 6254, 274, 4534, 1646]) / 24 / 365 * 1e3
 ieaSust2040 = np.array([1981, 5358, 197, 4960, 1967]) / 24 / 365 * 1e3
+
+ieaNPSlope = (sum(iea2040)-sum(iea2017))/(2040-2017)
+ieaSustSlope = (sum(ieaSust2040)-sum(ieaSust2017))/(2040-2017)
 
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])
@@ -60,34 +64,44 @@ yearsComFutY = yearsComHist[0]
 #plt.plot(yearsComFutX2[1:],yearsComFutY, 'magenta')
 
 yearsRange = range(1910,2100)
-livingPlants40 = np.zeros([len(range(1910,2100)), 1])
-livingPlantsInds40 = {}
-livingPlants60 = np.zeros([len(range(1910,2100)), 1])
 
-for i, y in enumerate(range(1910, 2100)):
+if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData):
     
-    curYearInds = []
+    livingPlants40 = np.zeros([len(range(1910,2100)), 1])
+    livingPlantsInds40 = {}
+    #livingPlants60 = np.zeros([len(range(1910,2100)), 1])
     
-    # every plants start date
-    for p in range(len(yearsCom)):
-        if y >= yearsCom[p] and y <= yearsCom[p] + 40:
-            livingPlants40[i] += plantCaps[p]
-            curYearInds.append(p)
-        if y >= yearsCom[p] and y <= yearsCom[p] + 60:
-            livingPlants60[i] += plantCaps[p]
+    for i, y in enumerate(range(1910, 2100)):
+        
+        curYearInds = []
+        
+        # every plants start date
+        for p in range(len(yearsCom)):
+            if y >= yearsCom[p] and y <= yearsCom[p] + 40:
+                livingPlants40[i] += plantCaps[p]
+                curYearInds.append(p)
+    #        if y >= yearsCom[p] and y <= yearsCom[p] + 60:
+    #            livingPlants60[i] += plantCaps[p]
+        
+        livingPlantsInds40[y] = np.array(curYearInds)
+        
+    if dumpData:
+        with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
+            pickle.dump(livingPlantsInds40, f)
+        with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-40-%s.dat'%plantData, 'wb') as f:
+            pickle.dump(livingPlants40, f)
+else:
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'rb') as f:
+        livingPlantsInds40 = pickle.load(f)
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-40-%s.dat'%plantData, 'rb') as f:
+        livingPlants40 = pickle.load(f)
     
-    livingPlantsInds40[y] = np.array(curYearInds)
-    
-with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'wb') as f:
-    pickle.dump(livingPlantsInds40, f)
-
-sys.exit()    
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
 plt.figure(figsize=(5,4))
 plt.xlim([1950,2100])
-plt.ylim([0, 3500])
+plt.ylim([0, 4500])
 plt.grid(True, color=[.9,.9,.9])
 
 plt.plot(yearsRange, livingPlants40, color=snsColors[1], lw=2, label='40 Year Lifespan')
@@ -107,23 +121,26 @@ p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersi
 plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot(np.arange(2042,2101,1), [sum(iea2040)+ieaNPSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[1], lw=2)
 
 #plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
 p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
 plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=msize)
+plt.plot(np.arange(2042,2101,1), [sum(ieaSust2040)+ieaSustSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[0], lw=2)
 
 p2 = plt.plot([2025], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize, label='Constant')
 plt.plot([2030], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 plt.plot([2035], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 plt.plot([2040], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2042, 2100], [sum(iea2017), sum(iea2017)], '--', color='gray', lw=2)
 
 plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
-plt.yticks(np.arange(0,3500,1000))
+plt.yticks(np.arange(0,4500,1000))
     
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -132,7 +149,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', framealpha=0)
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left')
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:

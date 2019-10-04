@@ -38,7 +38,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 runoffData = 'grdc'
 
 # world, useu, or entsoe-nuke
-plantData = 'useu'
+plantData = 'world'
 
 # '-distfit' or ''
 qsfit = '-qdistfit-gamma'
