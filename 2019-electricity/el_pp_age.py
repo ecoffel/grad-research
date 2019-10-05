@@ -16,7 +16,7 @@ import el_load_global_plants
 
 np.random.seed(19680801)
 
-plotFigs = True
+plotFigs = False
 dumpData = False
 
 plantData = 'world'
@@ -104,10 +104,10 @@ plt.xlim([1950,2100])
 plt.ylim([0, 4500])
 plt.grid(True, color=[.9,.9,.9])
 
-plt.plot(yearsRange, livingPlants40, color=snsColors[1], lw=2, label='40 Year Lifespan')
+plt.plot(yearsRange, livingPlants40, color='#56a619', lw=2, label='40 Year Lifespan')
 
 # fill curve up to 2020
-plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor=snsColors[1], alpha=.5, interpolate=True)
+plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor='#56a619', alpha=.5, interpolate=True)
 
 for g in range(GMTyears.shape[0]):
     yr = GMTyears[g]
@@ -149,7 +149,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left')
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', \
+                 bbox_to_anchor=(0.01, 0.85))
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:

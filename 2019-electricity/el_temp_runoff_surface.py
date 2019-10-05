@@ -14,7 +14,7 @@ import statsmodels.api as sm
 import el_build_temp_pp_model
 import gzip, pickle
 
-plotFigs = False
+plotFigs = True
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
@@ -108,8 +108,8 @@ plt.plot([txHist, txHist], [-4, 4], '-k', lw=2)
 #            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
 #plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
-plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835')
-plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1])
+plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835', label='+ 2$\degree$C')
+plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1], label='+ 4$\degree$C')
 
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
@@ -124,6 +124,10 @@ for tick in plt.gca().yaxis.get_major_ticks():
 for tick in cb.ax.yaxis.get_ticklabels():
     tick.set_fontname('Helvetica')    
     tick.set_fontsize(14)
+
+leg = plt.legend(prop = {'size':14, 'family':'Helvetica'}, loc = 'lower right')
+leg.get_frame().set_linewidth(0.0)
+
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()

@@ -25,7 +25,7 @@ matplotlib.rcParams['font.weight'] = 'normal'
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = False
+plotFigs = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -38,7 +38,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 runoffData = 'grdc'
 
 # world, useu, or entsoe-nuke
-plantData = 'world'
+plantData = 'useu'
 
 # '-distfit' or ''
 qsfit = '-qdistfit-gamma'
@@ -546,7 +546,7 @@ if plantData == 'world':
     yLimSet = 650
     yTickStep = 200
 else:
-    yLimSet = 270
+    yLimSet = 235
     yTickStep = 50
 
                             
@@ -642,8 +642,8 @@ if plantData == 'world':
     yLimSet = 125
     yTickStep = 25
 else:
-    yLimSet = 90
-    yTickStep = 20
+    yLimSet = 75
+    yTickStep = 15
 
 yticks = np.arange(0,yLimSet,yTickStep)
 pctEnergyGrid = np.round(yticks/totalMonthlyEnergy*100,decimals=1)

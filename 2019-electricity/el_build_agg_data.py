@@ -220,7 +220,7 @@ for w in range(1, 4+1):
         fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
         fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s-%s.dat'%(runoffModel, plantData, qsdist, w, modelPower, models[m])
         
-        if os.path.isfile(fileName10) or os.path.isfile(fileName):
+        if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
             continue
         
         print('processing %s/+%dC'%(models[m], w))
