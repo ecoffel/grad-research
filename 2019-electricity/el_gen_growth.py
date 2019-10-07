@@ -355,9 +355,9 @@ plt.grid(True, color=[.9,.9,.9])
 
 
 yPtHist = np.nanmean([np.nansum(outagesHist10), np.nansum(outagesHist90)])
-plt.plot(2018, \
+pHist = plt.plot(2018, \
          yPtHist, \
-          'o', markersize=5, color='k')
+          'o', markersize=6, color='k', label='Historical')
 yerrHist = np.zeros([2,1])
 yerrHist[0,0] = yPtHist-np.nansum(outagesHist90)
 yerrHist[1,0] = np.nansum(outagesHist10)-yPtHist
@@ -366,26 +366,6 @@ plt.errorbar(2018, \
              yerr = yerrHist, \
              ecolor = 'k', elinewidth = 1, capsize = 3, fmt = 'none')
 
-
-plt.fill_between(decadesToShow, np.nanmean(np.nansum(outageScenarios['const10'], axis=2), axis=0), \
-                                np.nanmean(np.nansum(outageScenarios['const90'], axis=2), axis=0), \
-                                           facecolor='gray', alpha=.5, interpolate=True)
-outageMeanConst = (outageScenarios['const10']+outageScenarios['const90'])/2.0
-plt.plot(decadesToShow, np.nanmean(np.nansum(outageMeanConst, axis=2), axis=0), '-k', color='gray', lw=2)
-plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0)), \
-                        np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))], \
-                        '--k', color='gray', lw=1)
-yPtConst2040 = np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))
-plt.plot(2089, \
-         yPtConst2040, \
-          'o', markersize=5, color='gray')
-yerrConst = np.zeros([2,1])
-yerrConst[0,0] = np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=1))
-yerrConst[1,0] = np.nanmax(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))
-plt.errorbar(2089, \
-             yPtConst2040, \
-             yerr = yerrConst, \
-             ecolor = 'gray', elinewidth = 1, capsize = 3, fmt = 'none')
 
 plt.fill_between(decadesToShow, np.nanmean(np.nansum(outageScenarios['40yr10'], axis=2), axis=0), \
                                 np.nanmean(np.nansum(outageScenarios['40yr90'], axis=2), axis=0), \
@@ -396,9 +376,9 @@ plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMean40yr[:,1:3,:],
                         np.nanmean(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=0))], \
                         '--k', color='#56a619', lw=1)
 yPt40yr2040 = np.nanmean(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=0))
-plt.plot(2093, \
+p40Yr = plt.plot(2093, \
          yPt40yr2040, \
-          'o', markersize=5, color='#56a619')
+          'ok', markersize=6, markerfacecolor='#56a619', label='40 Year Lifespan')
 yerr40yr = np.zeros([2,1])
 yerr40yr[0,0] = np.nanmean(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=1))
 yerr40yr[1,0] = np.nanmax(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMean40yr[:,1:3,:], axis=2), axis=0))
@@ -406,6 +386,7 @@ plt.errorbar(2093, \
              yPt40yr2040, \
              yerr = yerr40yr, \
              ecolor = '#56a619', elinewidth = 1, capsize = 3, fmt = 'none')
+
 
 
 plt.fill_between(decadesToShow, np.nanmean(np.nansum(outageScenarios['sust10'], axis=2), axis=0), \
@@ -417,9 +398,9 @@ plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:],
                         np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))], \
                         '--k', color=snsColors[0], lw=1)
 yPtSust2040 = np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))
-plt.plot(2091, \
+pSust = plt.plot(2091, \
          yPtSust2040, \
-          'o', markersize=5, color=snsColors[0])
+          'ok', markersize=6, markerfacecolor=snsColors[0], label='IEA Sustainable')
 yerrSust = np.zeros([2,1])
 yerrSust[0,0] = np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=1))
 yerrSust[1,0] = np.nanmax(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))
@@ -427,6 +408,29 @@ plt.errorbar(2091, \
              yPtSust2040, \
              yerr = yerrSust, \
              ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
+
+
+
+
+plt.fill_between(decadesToShow, np.nanmean(np.nansum(outageScenarios['const10'], axis=2), axis=0), \
+                                np.nanmean(np.nansum(outageScenarios['const90'], axis=2), axis=0), \
+                                           facecolor='gray', alpha=.5, interpolate=True)
+outageMeanConst = (outageScenarios['const10']+outageScenarios['const90'])/2.0
+plt.plot(decadesToShow, np.nanmean(np.nansum(outageMeanConst, axis=2), axis=0), '-k', color='gray', lw=2)
+plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0)), \
+                        np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))], \
+                        '--k', color='gray', lw=1)
+yPtConst2040 = np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))
+pConst = plt.plot(2089, \
+         yPtConst2040, \
+          'ok', markersize=6, markerfacecolor='gray', label='Constant')
+yerrConst = np.zeros([2,1])
+yerrConst[0,0] = np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=1))
+yerrConst[1,0] = np.nanmax(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMeanConst[:,1:3,:], axis=2), axis=0))
+plt.errorbar(2089, \
+             yPtConst2040, \
+             yerr = yerrConst, \
+             ecolor = 'gray', elinewidth = 1, capsize = 3, fmt = 'none')
 
 
 
@@ -440,9 +444,9 @@ plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], a
                         '--k', color=snsColors[1], lw=1)
 
 yPtNP2040 = np.nanmean(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], axis=2), axis=0))
-plt.plot(2087, \
+pNP = plt.plot(2087, \
          yPtNP2040, \
-          'o', markersize=5, color=snsColors[1])
+          'ok', markersize=6, markerfacecolor=snsColors[1], label='IEA New Policies')
 yerrNP = np.zeros([2,1])
 yerrNP[0,0] = np.nanmean(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], axis=2), axis=1))
 yerrNP[1,0] = np.nanmax(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMeanNP[:,1:3,:], axis=2), axis=0))
@@ -467,8 +471,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(13)
 
 
-leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, \
-                 loc='lower left')
+leg = plt.legend(prop = {'size':9, 'family':'Helvetica'}, \
+                 loc='lower left', bbox_to_anchor=(-.0145, 0.135))
 leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()

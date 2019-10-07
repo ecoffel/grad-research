@@ -27,6 +27,8 @@ plantData = 'world'
 
 qstr = '-qdistfit-gamma'
 
+rcp = 'rcp45'
+
 yearRange = [1981, 2005]
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
@@ -143,10 +145,10 @@ for m in range(len(models)):
     
         print('processing %s/%d...'%(models[m], decades[d,0]))
         
-        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-rcp85-txx-cmip5-%s-%d-%d.csv'%(plantData, models[m], decades[d,0], decades[d,1])    
+        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-%s-txx-cmip5-%s-%d-%d.csv'%(plantData, rcp, models[m], decades[d,0], decades[d,1])    
         plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
         
-        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-rcp85-runoff-at-txx-cmip5-%s-%d-%d.csv'%(plantData, models[m], decades[d,0], decades[d,1])        
+        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/future-temps/%s-pp-%s-runoff-at-txx-cmip5-%s-%d-%d.csv'%(plantData, rcp, models[m], decades[d,0], decades[d,1])        
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
 
         plantPcTxx10CurDecade = []
@@ -225,7 +227,7 @@ if dumpData:
     pcChg = {'pCapTxxFutRcp8510':plantPcTxx10, \
              'pCapTxxFutRcp8550':plantPcTxx50, \
              'pCapTxxFutRcp8590':plantPcTxx90}
-    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-fut-%s-%s-%s-rcp85.dat'%(plantData, runoffData, qstr), 'wb') as f:
+    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-fut-%s-%s-%s-%s.dat'%(plantData, runoffData, qstr, rcp), 'wb') as f:
         pickle.dump(pcChg, f)
 
 

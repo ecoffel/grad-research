@@ -433,8 +433,8 @@ nukeMonthlyTxMaxHist = np.nanmean(np.array(nukeMonthlyTxMaxHist), axis=0)
 monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist), axis=1)
 
 
-if os.path.isfile('demand-projections.dat'):
-    with gzip.open('demand-projections.dat', 'rb') as f:
+if os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat'):
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'rb') as f:
         demData = pickle.load(f)
     
     demHist = demData['demHist']
@@ -452,7 +452,7 @@ else:
             demHistMonth = []
             for d in range(len(demTempModels)):
                 tx = monthlyTxMaxHist[month, plant]
-                txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+                txProj = demTempModels[d].predict([1, tx, tx**2])
                 demHistMonth.append(txProj)
             
             demHistPlant.append(demHistMonth)
@@ -473,7 +473,7 @@ else:
                     tx = txMonthlyMaxFutGMT[w, model, plant, month]
                     
                     for d in range(len(demTempModels)):
-                        txProj = demTempModels[d].predict([1, tx, tx**2, tx**3])
+                        txProj = demTempModels[d].predict([1, tx, tx**2])
                         demProjCurMonth.append(txProj)
                     
                     demProjCurPlant.append(demProjCurMonth)
@@ -534,7 +534,7 @@ else:
         demByMonthFut.append(demByMonthFutCurGMT)
     demByMonthFut = np.array(demByMonthFut)
     
-    with gzip.open('demand-projections.dat', 'wb') as f:
+    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'wb') as f:
         demData = {'demHist':demHist, \
                    'demProj':demProj, \
                    'demMult':demMult, \
@@ -542,11 +542,13 @@ else:
                    'demByMonthFut':demByMonthFut}
         pickle.dump(demData, f)
 
+demByMonth = (demByMonth-1)*100
+demByMonthFut = (demByMonthFut-1)*100
 demByMonthFutSorted = np.sort(demByMonthFut, axis=1)
 
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([.5, 2.3])
+plt.ylim([-50, 130])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot([0,13], [1,1], '--k', lw=1)
@@ -557,7 +559,7 @@ plt.plot(list(range(1,13)), np.squeeze(demByMonthFutSorted[3,-2,:]), '--', lw=1,
 plt.plot(list(range(1,13)), demByMonth, '-k', lw=2)
 
 plt.xticks(list(range(1,13)))
-plt.yticks([.6, 1, 1.5, 2])
+plt.yticks([-40, 0, 50, 100])
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')
@@ -579,6 +581,9 @@ plt.tick_params(
 
 if plotFigs:
     plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+plt.show()
+sys.exit()
 
 
 mon = nukeData['plantMonthsAll']

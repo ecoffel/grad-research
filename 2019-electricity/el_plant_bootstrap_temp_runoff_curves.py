@@ -37,6 +37,47 @@ plantTxData = plantTxData[3:,:].copy()
 fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 
+qs1d = []
+for p in range(plantQsData.shape[0]):
+    qs1d.extend(plantQsData[p,:])
+qs1d = np.array(qs1d)
+qs1d[qs1d<-5] = np.nan
+qs1d[qs1d>5] = np.nan
+qs1d = qs1d[~np.isnan(qs1d)]
+
+plt.figure(figsize=(4,4))
+plt.xlim([-5, 5])
+plt.ylim([0, 1])
+plt.grid(True, color=[.9, .9, .9])
+n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
+                            
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Runof anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+if plotFigs:
+    plt.savefig('runoff-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+#bin_centers = 0.5 * (bins[:-1] + bins[1:])
+#
+#colors = plt.get_cmap('BrBG')
+## scale values to interval [0,1]
+#col = bin_centers - min(bin_centers)
+#col /= max(col)
+#for c, p in zip(col, patches):
+#    curC = colors(c)    
+#    plt.setp(p, 'facecolor', 'brown')
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
@@ -88,8 +129,6 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
     plt.savefig('significant-bootstraps.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
-sys.exit()
 
 # find fit percentiles for temperature
 t = 50
@@ -270,7 +309,7 @@ for k in range(len(xd)):
 
 
 plt.figure(figsize=(4,4))
-plt.xlim([-4.1, 4.1])
+plt.xlim([-4, 4])
 plt.ylim([baseY, 100])
 plt.grid(True, color=[.9, .9, .9])
 

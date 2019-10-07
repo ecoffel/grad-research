@@ -16,7 +16,7 @@ import el_load_global_plants
 
 np.random.seed(19680801)
 
-plotFigs = False
+plotFigs = True
 dumpData = False
 
 plantData = 'world'
@@ -104,24 +104,22 @@ plt.xlim([1950,2100])
 plt.ylim([0, 4500])
 plt.grid(True, color=[.9,.9,.9])
 
-plt.plot(yearsRange, livingPlants40, color='#56a619', lw=2, label='40 Year Lifespan')
-
-# fill curve up to 2020
-plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor='#56a619', alpha=.5, interpolate=True)
-
-for g in range(GMTyears.shape[0]):
-    yr = GMTyears[g]
-    plt.plot([yr,yr], [0, 5000], '--k')
 
 msize = 6
 
 # plot iea capacities
+plt.plot([2017], sum(iea2017), 'ok', markersize=msize, label='Historical')
+
+
+plt.plot(yearsRange, livingPlants40, color='#56a619', lw=2, label='40 Year Lifespan')
+# fill curve up to 2020
+plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor='#56a619', alpha=.5, interpolate=True)
+for g in range(GMTyears.shape[0]):
+    yr = GMTyears[g]
+    plt.plot([yr,yr], [0, 5000], '--k')
+
+# replot historical to get marker above the green line, but keep 1st plot of historical to get legend order right
 plt.plot([2017], sum(iea2017), 'ok', markersize=msize)
-p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=msize, label='IEA New Policies')
-plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=msize)
-plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=msize)
-plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
-plt.plot(np.arange(2042,2101,1), [sum(iea2040)+ieaNPSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[1], lw=2)
 
 #plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
 p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
@@ -135,6 +133,12 @@ plt.plot([2030], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 plt.plot([2035], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 plt.plot([2040], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
 plt.plot([2042, 2100], [sum(iea2017), sum(iea2017)], '--', color='gray', lw=2)
+
+p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=msize, label='IEA New Policies')
+plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
+plt.plot(np.arange(2042,2101,1), [sum(iea2040)+ieaNPSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[1], lw=2)
 
 plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
@@ -150,7 +154,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', \
-                 bbox_to_anchor=(0.01, 0.85))
+                 bbox_to_anchor=(0.01, 0.92))
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:

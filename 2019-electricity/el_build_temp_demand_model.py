@@ -64,7 +64,7 @@ def buildNonlinearDemandModel(nBootstrap):
         
         df = df.dropna()
         
-        X = sm.add_constant(df[['T', 'T2', 'T3']])
+        X = sm.add_constant(df[['T', 'T2']])
         mdl = sm.OLS(df['D'], X).fit()
         models.append(mdl)
     
