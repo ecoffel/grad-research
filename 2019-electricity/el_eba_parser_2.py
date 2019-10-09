@@ -107,23 +107,23 @@ if not 'eba' in locals():
             curLineNew['dataMeanSmooth'] = curLineNew['dataMean'].copy()
             
             # remove 15 day mean (360 hr)
-            tmpSmooth = pd.rolling_mean(curLineNew['dataMaxSmooth'], 15)
-            indNn = np.where(~np.isnan(tmpSmooth))[0]
-            indNan = np.where(np.isnan(tmpSmooth))[0]
-            curLineNew['dataMaxSmooth'][indNn] = curLineNew['dataMaxSmooth'][indNn] - tmpSmooth[indNn]
-            curLineNew['dataMaxSmooth'][indNan] = np.nan
-            
-            tmpSmooth = pd.rolling_mean(curLineNew['dataMinSmooth'], 15)
-            indNn = np.where(~np.isnan(tmpSmooth))[0]
-            indNan = np.where(np.isnan(tmpSmooth))[0]
-            curLineNew['dataMinSmooth'][indNn] = curLineNew['dataMinSmooth'][indNn] - tmpSmooth[indNn]
-            curLineNew['dataMinSmooth'][indNan] = np.nan
-            
-            tmpSmooth = pd.rolling_mean(curLineNew['dataMeanSmooth'], 15)
-            indNn = np.where(~np.isnan(tmpSmooth))[0]
-            indNan = np.where(np.isnan(tmpSmooth))[0]
-            curLineNew['dataMeanSmooth'][indNn] = curLineNew['dataMeanSmooth'][indNn] - tmpSmooth[indNn]
-            curLineNew['dataMeanSmooth'][indNan] = np.nan
+#            tmpSmooth = pd.rolling_mean(curLineNew['dataMaxSmooth'], 15)
+#            indNn = np.where(~np.isnan(tmpSmooth))[0]
+#            indNan = np.where(np.isnan(tmpSmooth))[0]
+#            curLineNew['dataMaxSmooth'][indNn] = curLineNew['dataMaxSmooth'][indNn] - tmpSmooth[indNn]
+#            curLineNew['dataMaxSmooth'][indNan] = np.nan
+#            
+#            tmpSmooth = pd.rolling_mean(curLineNew['dataMinSmooth'], 15)
+#            indNn = np.where(~np.isnan(tmpSmooth))[0]
+#            indNan = np.where(np.isnan(tmpSmooth))[0]
+#            curLineNew['dataMinSmooth'][indNn] = curLineNew['dataMinSmooth'][indNn] - tmpSmooth[indNn]
+#            curLineNew['dataMinSmooth'][indNan] = np.nan
+#            
+#            tmpSmooth = pd.rolling_mean(curLineNew['dataMeanSmooth'], 15)
+#            indNn = np.where(~np.isnan(tmpSmooth))[0]
+#            indNan = np.where(np.isnan(tmpSmooth))[0]
+#            curLineNew['dataMeanSmooth'][indNn] = curLineNew['dataMeanSmooth'][indNn] - tmpSmooth[indNn]
+#            curLineNew['dataMeanSmooth'][indNan] = np.nan
 
             eba.append(curLineNew)
 
@@ -131,16 +131,16 @@ if not 'dailySeries' in locals():
     
     
     stateList = []
-    with open('subgrid-tx-era-1981-2018.csv', 'r') as f:
+    with open('E:\data\ecoffel\data\projects\electricity\script-data\subgrid-tx-era-1981-2018.csv', 'r') as f:
         i = 0
         for line in f:
             if i > 2:
                 parts = line.split(',')
                 stateList.append(parts[0])
             i += 1
-    txEra = np.genfromtxt('subgrid-tx-era-1981-2018.csv', delimiter=',', skip_header=1)
-    txCpc = np.genfromtxt('subgrid-tx-cpc-1981-2018.csv', delimiter=',', skip_header=1)
-    txNcep = np.genfromtxt('subgrid-tx-ncep-1981-2018.csv', delimiter=',', skip_header=1)
+    txEra = np.genfromtxt('E:\data\ecoffel\data\projects\electricity\script-data\subgrid-tx-era-1981-2018.csv', delimiter=',', skip_header=1)
+    txCpc = np.genfromtxt('E:\data\ecoffel\data\projects\electricity\script-data\subgrid-tx-cpc-1981-2018.csv', delimiter=',', skip_header=1)
+    txNcep = np.genfromtxt('E:\data\ecoffel\data\projects\electricity\script-data\subgrid-tx-ncep-1981-2018.csv', delimiter=',', skip_header=1)
     year = txEra[0,1:]
     month = txEra[1,1:]
     day = txEra[2,1:]
@@ -168,10 +168,10 @@ if not 'dailySeries' in locals():
         dailySeries['intData'].append([])
         dailySeries['demFctData'].append([])
         
-        dailySeries['genDataSmooth'].append([])
-        dailySeries['demDataSmooth'].append([])
-        dailySeries['intDataSmooth'].append([])
-        dailySeries['demFctDataSmooth'].append([])
+#        dailySeries['genDataSmooth'].append([])
+#        dailySeries['demDataSmooth'].append([])
+#        dailySeries['intDataSmooth'].append([])
+#        dailySeries['demFctDataSmooth'].append([])
         
         dailySeries['tempData'].append([])
 
@@ -212,10 +212,10 @@ if not 'dailySeries' in locals():
             dailySeries['tempData'][-1].append(meanTx / len(subgrids[subgrid]['states']))
             
             if len(indGen) == 1 and len(indInt) == 1 and len(indDem) == 1 and len(indDemFct) == 1:
-                dailySeries['genDataSmooth'][-1].extend(eba[genId]['dataMaxSmooth'][indGen])
-                dailySeries['intDataSmooth'][-1].extend(eba[intId]['dataMinSmooth'][indInt])
-                dailySeries['demDataSmooth'][-1].extend(eba[demId]['dataMaxSmooth'][indDem])
-                dailySeries['demFctDataSmooth'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])    
+#                dailySeries['genDataSmooth'][-1].extend(eba[genId]['dataMaxSmooth'][indGen])
+#                dailySeries['intDataSmooth'][-1].extend(eba[intId]['dataMinSmooth'][indInt])
+#                dailySeries['demDataSmooth'][-1].extend(eba[demId]['dataMaxSmooth'][indDem])
+#                dailySeries['demFctDataSmooth'][-1].extend(eba[demFctId]['dataMaxSmooth'][indDemFct])    
                 
                 dailySeries['genData'][-1].extend(eba[genId]['dataMax'][indGen])
                 dailySeries['intData'][-1].extend(eba[intId]['dataMin'][indInt])
@@ -236,10 +236,10 @@ if not 'dailySeries' in locals():
     dailySeries['demData'] = np.array(dailySeries['demData'])
     dailySeries['demFctData'] = np.array(dailySeries['demFctData'])
     
-    dailySeries['genDataSmooth'] = np.array(dailySeries['genDataSmooth'])
-    dailySeries['intDataSmooth'] = np.array(dailySeries['intDataSmooth'])
-    dailySeries['demDataSmooth'] = np.array(dailySeries['demDataSmooth'])
-    dailySeries['demFctDataSmooth'] = np.array(dailySeries['demFctDataSmooth'])
+#    dailySeries['genDataSmooth'] = np.array(dailySeries['genDataSmooth'])
+#    dailySeries['intDataSmooth'] = np.array(dailySeries['intDataSmooth'])
+#    dailySeries['demDataSmooth'] = np.array(dailySeries['demDataSmooth'])
+#    dailySeries['demFctDataSmooth'] = np.array(dailySeries['demFctDataSmooth'])
     
     
     dailySeries['tempData'] = np.array(dailySeries['tempData'])
@@ -296,6 +296,8 @@ genTxScatter = np.array(genTxScatter)
 demTxScatter = np.array(demTxScatter)
 monthScatter = np.array(monthScatter)
 yearScatter = np.array(yearScatter)
+
+sys.exit()
 
 genData = {'txScatter':txScatter, 'genTxScatter':genTxScatter, 'demTxScatter':demTxScatter, \
            'yearScatter':yearScatter, 'monthScatter':monthScatter, \

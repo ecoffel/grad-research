@@ -25,7 +25,7 @@ matplotlib.rcParams['font.weight'] = 'normal'
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDir = 'e:/data/'
 
-plotFigs = True
+plotFigs = False
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -607,6 +607,7 @@ for tick in plt.gca().xaxis.get_major_ticks():
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
+
 #plt.tick_params(
 #    axis='x',          # changes apply to the x-axis
 #    which='both',      # both major and minor ticks are affected

@@ -490,7 +490,7 @@ if plotFigs:
     plt.savefig('outage-chg-by-month-%s%s.eps'%(runoffModel, qstr), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
-
+sys.exit()
 
 
                                
