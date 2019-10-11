@@ -15,6 +15,7 @@ addpath('C:\git-ecoffel\grad-research\2017-nile-climate');
 addpath('C:\git-ecoffel\grad-research\2018-seasonality');
 addpath('C:\git-ecoffel\grad-research\2019-electricity');
 addpath('C:\git-ecoffel\grad-research\2019-green-water');
+addpath('C:\git-ecoffel\grad-research\2020-ag-land-climate');
 userpath('C:\git-ecoffel\grad-research');
 
 plotlysetup('ecoffel', 'zo5qjdmelk')
