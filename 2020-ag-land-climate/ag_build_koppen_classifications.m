@@ -1,6 +1,6 @@
 
 startYear = 1981;
-endYear = 2018;
+endYear = 2016;
 
 load waterGrid;
 waterGrid = logical(waterGrid);
@@ -41,7 +41,6 @@ pr10 = prctile(pp, 10);
 % 1 = tropical, 2 = dry, 3 = temperate, 4 = continental, 5 = polar/alpine
 classifications = zeros(size(lat));
 for ylon = 1:size(lon, 2)
-
     
     fprintf(['processing ylon = ' num2str(ylon) '...\n']);
     
@@ -50,13 +49,27 @@ for ylon = 1:size(lon, 2)
     
     for xlat = 1:size(lat, 1)
         if waterGrid(xlat, ylon)
-            classifications(xlat, ylon) = NaN;
-%             continue
+            classifications(xlat, ylon) = 0;
+            continue;
         end
         
         tempTimeSeries = reshape(permute(squeeze(tempEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempEra{3}(xlat, ylon, :, :, :)), 1]);
         prTimeSeries = reshape(permute(squeeze(prEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(prEra{3}(xlat, ylon, :, :, :)), 1]);
        
+        dayNum = [];
+        for year = 1:size(tempEra{3}, 3)
+            i = 1;
+            for month = 1:size(tempEra{3}, 4)
+                for day = 1:size(tempEra{3}, 5)
+                    if ~isnan(tempEra{3}(xlat, ylon, year, month, day))
+                        dayNum(end+1) = i;
+                        i = i + 1;
+                    else
+                        dayNum(end+1) = NaN;
+                    end
+                end
+            end
+        end
         
         if nanmin(tempEraData(xlat, ylon, :), [], 3) >= 18
             classifications(xlat, ylon) = 1;
@@ -80,24 +93,20 @@ for ylon = 1:size(lon, 2)
         
         
         if length(ylonTSeries) == 0
-            ylonTSeries  = tempTimeSeries;
-            ylonPSeries = prTimeSeries;
+            ylonTSeries  = [dayNum', tempTimeSeries];
+            ylonPSeries = [dayNum', prTimeSeries];
         else
             ylonTSeries  = [ylonTSeries, tempTimeSeries];
             ylonPSeries = [ylonPSeries, prTimeSeries];
         end
-        
-        
-%         dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-' num2str(la) '-' num2str(lo) '.txt'], tempTimeSeries);
-%         dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-' num2str(la) '-' num2str(lo) '.txt'], prTimeSeries);
-        
+                
     end
     
     lo = 2*round(lonRot(xlat,ylon)/2);
     la = 2*round(lat(xlat,ylon)/2);
     
-    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-' num2str(lo) '.txt'], ylonTSeries);
-    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-' num2str(lo) '.txt'], ylonPSeries);
+%     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-' num2str(lo) '.txt'], ylonTSeries);
+%     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-' num2str(lo) '.txt'], ylonPSeries);
 end
 classifications(isnan(classifications)) = 0;
 dlmwrite('2020-ag-land-climate/koppen-classifications.txt', classifications);

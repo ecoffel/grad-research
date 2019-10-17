@@ -18,7 +18,7 @@ waterGrid = logical(waterGrid);
 % warm-season-anom: warm season Tx change minus surounding seasons
 chgMetric = 'txx-amp';
 
-var = 'wb-davies-jones-full';
+var = 'tasmax';
 
 datadir = 'E:\data\projects\bowen\';
 

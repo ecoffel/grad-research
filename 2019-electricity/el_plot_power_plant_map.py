@@ -53,7 +53,7 @@ nukeLatLon = nukeEntsoePlantData['nukeLatLon']
 fig = plt.figure(figsize=(6,6))
 ax = plt.axes([0,0,1,1]) 
 # A basic map
-m=Basemap(projection='cyl', llcrnrlon=-130, llcrnrlat=20,urcrnrlon=40,urcrnrlat=70,\
+m=Basemap(projection='cyl', llcrnrlon=-130, llcrnrlat=0,urcrnrlon=40,urcrnrlat=80,\
           resolution='h', area_thresh=1000)
 
 m.drawmapboundary(fill_color='white', linewidth=0)
@@ -114,6 +114,6 @@ m.scatter(ypt, xpt, s=mSize, color='black', edgecolors="black", label='Oil', lin
 #xpt, ypt = m(entsoeLat[np.array(cogenInds)], entsoeLon[np.array(cogenInds)])
 #m.scatter(ypt, xpt, s=mSize, color='pink', edgecolors="black", label='Cogen', zorder=10)
 
-plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False)
+plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False, bbox_to_anchor=(.42, .35))
 #plt.show()
 plt.savefig('pp-outage-map-entsoe-locations.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
