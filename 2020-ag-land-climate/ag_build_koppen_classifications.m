@@ -19,6 +19,15 @@ if ~exist('tempEra')
 end
 tempEraData = squeeze(nanmean(nanmean(tempEra{3}, 5), 3));
 
+if ~exist('tempCpc')
+    fprintf('loading cpc temps...\n');
+    tempCpc = loadDailyData('E:\data\cpc-temp\output\tmax\regrid\world', 'startYear', startYear, 'endYear', endYear);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(tempCpc{3}))))) > 100
+        tempCpc{3} = tempCpc{3} - 273.15;
+    end
+end
+tempCpcData = squeeze(nanmean(nanmean(tempCpc{3}, 5), 3));
+
 if ~exist('prEra')
     fprintf('loading era pr...\n');
     prEra = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', startYear, 'endYear', endYear);
@@ -33,6 +42,10 @@ for m = 1:12
     tmp = tempEraData(:, :, m);
     tmp(waterGrid) = NaN;
     tempEraData(:, :, m) = tmp;
+    
+    tmp = tempCpcData(:, :, m);
+    tmp(waterGrid) = NaN;
+    tempCpcData(:, :, m) = tmp;
 end
 
 pp = reshape(nansum(prEraData, 3), [numel(nansum(prEraData, 3)),1]);
@@ -44,86 +57,96 @@ for ylon = 1:size(lon, 2)
     
     fprintf(['processing ylon = ' num2str(ylon) '...\n']);
     
-    ylonTSeries = [];
+    ylonTSeriesEra = [];
+    ylonTSeriesCpc = [];
     ylonPSeries = [];
     
     for xlat = 1:size(lat, 1)
         if waterGrid(xlat, ylon)
             classifications(xlat, ylon) = 0;
-            continue;
+%             continue;
         end
         
-        tempTimeSeries = reshape(permute(squeeze(tempEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempEra{3}(xlat, ylon, :, :, :)), 1]);
+        tempTimeSeriesEra = reshape(permute(squeeze(tempEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempEra{3}(xlat, ylon, :, :, :)), 1]);
+        tempTimeSeriesCpc = reshape(permute(squeeze(tempCpc{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempCpc{3}(xlat, ylon, :, :, :)), 1]);
         prTimeSeries = reshape(permute(squeeze(prEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(prEra{3}(xlat, ylon, :, :, :)), 1]);
        
-        dayNum = [];
+        dayNumEra = [];
         for year = 1:size(tempEra{3}, 3)
             i = 1;
             for month = 1:size(tempEra{3}, 4)
                 for day = 1:size(tempEra{3}, 5)
                     if ~isnan(tempEra{3}(xlat, ylon, year, month, day))
-                        dayNum(end+1) = i;
+                        dayNumEra(end+1) = i;
                         i = i + 1;
                     else
-                        dayNum(end+1) = NaN;
+                        dayNumEra(end+1) = NaN;
+                    end
+                end
+            end
+        end
+               
+        dayNumCpc = [];
+        for year = 1:size(tempCpc{3}, 3)
+            i = 1;
+            for month = 1:size(tempCpc{3}, 4)
+                for day = 1:size(tempCpc{3}, 5)
+                    if ~isnan(tempCpc{3}(xlat, ylon, year, month, day))
+                        dayNumCpc(end+1) = i;
+                        i = i + 1;
+                    else
+                        dayNumCpc(end+1) = NaN;
                     end
                 end
             end
         end
         
-        if nanmin(tempEraData(xlat, ylon, :), [], 3) >= 18
-            classifications(xlat, ylon) = 1;
-        end
+%         if nanmin(tempEraData(xlat, ylon, :), [], 3) >= 18
+%             classifications(xlat, ylon) = 1;
+%         end
+%         
+%         if nansum(prEraData(xlat, ylon, :)) <= pr10
+%             classifications(xlat, ylon) = 2;
+%         end
+%         
+%         if nanmin(tempEraData(xlat, ylon, :), [], 3) < 18 && nanmin(tempEraData(xlat, ylon, :), [], 3) > -3
+%             classifications(xlat, ylon) = 3;
+%         end
+%         
+%         if nanmin(tempEraData(xlat, ylon, :), [], 3) < -3
+%             classifications(xlat, ylon) = 4;
+%         end
+%         
+%         if nanmax(tempEraData(xlat, ylon, :), [], 3) < 10
+%             classifications(xlat, ylon) = 5;
+%         end
         
-        if nansum(prEraData(xlat, ylon, :)) <= pr10
-            classifications(xlat, ylon) = 2;
-        end
         
-        if nanmin(tempEraData(xlat, ylon, :), [], 3) < 18 && nanmin(tempEraData(xlat, ylon, :), [], 3) > -3
-            classifications(xlat, ylon) = 3;
-        end
-        
-        if nanmin(tempEraData(xlat, ylon, :), [], 3) < -3
-            classifications(xlat, ylon) = 4;
-        end
-        
-        if nanmax(tempEraData(xlat, ylon, :), [], 3) < 10
-            classifications(xlat, ylon) = 5;
-        end
-        
-        
-        if length(ylonTSeries) == 0
-            ylonTSeries  = [dayNum', tempTimeSeries];
-            ylonPSeries = [dayNum', prTimeSeries];
+        if length(ylonTSeriesEra) == 0
+            ylonTSeriesEra  = [dayNumEra', tempTimeSeriesEra];
+            ylonPSeries = [dayNumEra', prTimeSeries];
         else
-            ylonTSeries  = [ylonTSeries, tempTimeSeries];
+            ylonTSeriesEra  = [ylonTSeriesEra, tempTimeSeriesEra];
             ylonPSeries = [ylonPSeries, prTimeSeries];
+        end
+        
+        if length(ylonTSeriesCpc) == 0
+            ylonTSeriesCpc  = [dayNumCpc', tempTimeSeriesCpc];
+        else
+            ylonTSeriesCpc  = [ylonTSeriesCpc, tempTimeSeriesCpc];
         end
                 
     end
     
+    ylonTSeriesMean = [ylonTSeriesEra(:,1), ((ylonTSeriesEra(:,2:end)+ylonTSeriesCpc(:,2:end))./2.0)];
+    
     lo = 2*round(lonRot(xlat,ylon)/2);
     la = 2*round(lat(xlat,ylon)/2);
     
-%     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-' num2str(lo) '.txt'], ylonTSeries);
+    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-era-' num2str(lo) '.txt'], ylonTSeriesEra);
+    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-' num2str(lo) '.txt'], ylonTSeriesCpc);
+    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-mean-' num2str(lo) '.txt'], ylonTSeriesMean);
 %     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-' num2str(lo) '.txt'], ylonPSeries);
 end
-classifications(isnan(classifications)) = 0;
-dlmwrite('2020-ag-land-climate/koppen-classifications.txt', classifications);
-% 
-% fprintf('loading cpc...\n');
-% tempCpc = loadDailyData('E:\data\cpc-temp\output\tmax\regrid\world', 'startYear', startYear, 'endYear', endYear);
-% if nanmean(nanmean(nanmean(nanmean(nanmean(tempCpc{3}))))) > 100
-%     tempCpc{3} = tempCpc{3} - 273.15;
-% end
-% 
-% fprintf('loading ncep...\n');
-% tempNcep = loadDailyData('E:\data\ncep-reanalysis\output\tmax\regrid\world', 'startYear', startYear, 'endYear', endYear);
-% if nanmean(nanmean(nanmean(nanmean(nanmean(tempNcep{3}))))) > 100
-%     tempNcep{3} = tempNcep{3} - 273.15;
-% end
-%     
-
-
-% csvwrite(['E:/data/ecoffel/data/projects/electricity/script-data/' plantData '-pp-tx.csv'], plantTxTimeSeries);
-
+% classifications(isnan(classifications)) = 0;
+% dlmwrite('2020-ag-land-climate/koppen-classifications.txt', classifications);

@@ -11,7 +11,7 @@ import numpy as np
 from scipy import interpolate
 import statsmodels.api as sm
 import scipy.stats as st
-import sys
+import sys, pickle
 import geopy.distance
 
 dataDir = 'E:/data/ecoffel/data/projects/ag-land-climate/CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
@@ -41,12 +41,15 @@ pastureRegrid[pastureRegrid < 0] = np.nan
 cropRegrid = cropInterp(lonNew, latNew)
 cropRegrid[cropRegrid < 0] = np.nan
 
-koppen = np.genfromtxt('koppen-classifications.txt', delimiter=',')
-koppen = np.flipud(koppen)
-koppen = np.roll(koppen, 90)
-koppen[koppen == 0] = np.nan
+with open('elevation-map.dat', 'rb') as f:
+    elevationMap = pickle.load(f)
 
-#koppen = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
+#koppen = np.genfromtxt('koppen-classifications.txt', delimiter=',')
+#koppen = np.flipud(koppen)
+#koppen = np.roll(koppen, 90)
+#koppen[koppen == 0] = np.nan
+
+koppen = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
 
 koppenGroupsPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
 koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
@@ -54,48 +57,140 @@ koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
 koppenGroupsCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
 koppenGroupsNoCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
 
-#koppenSimpleMap = np.zeros(pastureRegrid.shape)
-for x in range(pastureRegrid.shape[0]):
+koppenGroupsFullPCells = {}
+koppenGroupsFullNoPCells = {}
+
+koppenGroupsFullCCells = {}
+koppenGroupsFullNoCCells = {}
+
+
+koppenLat = np.linspace(90, -90, 90)
+koppenLon = np.linspace(-180, 180, 180)
+
+koppenMap = np.zeros([len(koppenLat), len(koppenLon)])
+
+for x in range(len(koppenLat)):
     
-    if latNew[x] < -70 or latNew[x] > 70:
-        continue
-    
-    for y in range(pastureRegrid.shape[1]):
-        if np.isnan(pastureRegrid[x,y]) or np.isnan(koppen[x,y]):
+    for y in range(len(koppenLon)):
+        
+        minDist = -1
+        minDistInd = -1
+        
+        latInd = np.where((abs(koppen['latitude']-koppenLat[x]) <= 1))[0]
+        
+        for i in latInd:
+            if abs(koppen['longitude'][i]-koppenLon[y]) > 1:
+                continue
+            
+            ptKoppen = (koppen['latitude'][i], koppen['longitude'][i])
+            ptAg = (koppenLat[x], koppenLon[y])
+            
+            dist = geopy.distance.great_circle(ptKoppen, ptAg).km
+            if minDist == -1 or dist < minDist:
+                minDist = dist
+                minDistInd = i
+        
+        if minDistInd != -1:
+            classification = koppen['p1901_2010'][minDistInd]
+            classificationInt = 0
+            if classification in ['As', 'Aw', 'Am', 'Af']: 
+                classificationInt = 1
+            elif classification in ['BSk', 'BWk', 'BSh']: 
+                classificationInt = 2
+            elif classification in ['Cfb', 'Csb', 'Cfa', 'Csa', 'Cwa']:
+                classificationInt = 3
+            elif classification in ['Dfb', 'Dfa', 'Dwc', 'Dwb']:
+                classificationInt = 4
+            koppenMap[x,y] = classificationInt
+        else:
+            koppenMap[x,y] = np.nan
+        
+        
+        if np.isnan(pastureRegrid[x,y]):
             continue
         
-#        minDist = -1
-#        minDistInd = -1
-#        
-#        latInd = np.where((abs(koppen['latitude']-latNew[x]) <= 4))[0]
-#        
-#        for i in latInd:
-#            
-#            ptKoppen = (koppen['latitude'][i], koppen['longitude'][i])
-#            ptAg = (latNew[x], lonNew[y])
-#            
-#            dist = geopy.distance.great_circle(ptKoppen, ptAg).km
-#            if minDist == -1 or dist < minDist:
-#                minDist = dist
-#                minDistInd = i
-#        
-#        classification = koppen['p1901_2010'][minDistInd][0]
         
-#        koppenSimpleMap[x,y] = ord(classification)-ord('A')+1
-        
-        classification = chr(ord('A')+(int(koppen[x,y])-1))
-        
-        if classification in koppenGroupsPCells.keys():
-            if pastureRegrid[x,y] > 0.01:
-                koppenGroupsPCells[classification].append((x,y))
+        if pastureRegrid[x,y] > 0:
+            if classification in koppenGroupsFullPCells.keys():
+                koppenGroupsFullPCells[classification].append((x,y))
             else:
-                koppenGroupsNoPCells[classification].append((x,y))
-            
-            if cropRegrid[x,y] > 0.01:
-                koppenGroupsCCells[classification].append((x,y))
+                koppenGroupsFullPCells[classification] = [(x,y)]
+        else:
+            if classification in koppenGroupsFullNoPCells.keys():
+                koppenGroupsFullNoPCells[classification].append((x,y))
             else:
-                koppenGroupsNoCCells[classification].append((x,y))
-            
+                koppenGroupsFullNoPCells[classification] = [(x,y)]
+        
+        if cropRegrid[x,y] > 0:
+            if classification in koppenGroupsFullCCells.keys():
+                koppenGroupsFullCCells[classification].append((x,y))
+            else:
+                koppenGroupsFullCCells[classification] = [(x,y)]
+        else:
+            if classification in koppenGroupsFullNoCCells.keys():
+                koppenGroupsFullNoCCells[classification].append((x,y))
+            else:
+                koppenGroupsFullNoCCells[classification] = [(x,y)]
+        
+        
+        if elevationMap[x,y] > 750:
+            continue
+        
+        if not np.isnan(koppenMap[x,y]) and koppenMap[x,y] != 0:
+            if classification[0] in koppenGroupsPCells.keys():
+                if pastureRegrid[x,y] > 0:
+                    koppenGroupsPCells[classification[0]].append((x,y))
+                else:
+                    koppenGroupsNoPCells[classification[0]].append((x,y))
+                
+                if cropRegrid[x,y] > 0:
+                    koppenGroupsCCells[classification[0]].append((x,y))
+                else:
+                    koppenGroupsNoCCells[classification[0]].append((x,y))
+
+
+totalC = 0
+for k in koppenGroupsFullCCells.keys():
+    totalC += len(koppenGroupsFullCCells[k])
+        
+for k in koppenGroupsCCells.keys():
+    if k in koppenGroupsNoCCells.keys():
+        filteredC = len(koppenGroupsCCells[k])+len(koppenGroupsNoCCells[k])
+        if filteredC > 0:
+            curPerc = len(koppenGroupsCCells[k])/filteredC
+        else:
+            curPerc = np.nan
+        print('%s: %.2f, %.2f'%(k, len(koppenGroupsCCells[k])/totalC, curPerc))
+
+
+#for x in range(pastureRegrid.shape[0]):
+#    
+#    if latNew[x] < -70 or latNew[x] > 70:
+#        continue
+#    
+#    for y in range(pastureRegrid.shape[1]):
+#        if np.isnan(pastureRegrid[x,y]):
+#            continue
+#        
+#        if np.isnan(koppen[x,y]):
+#            continue
+#        
+#        classification = chr(ord('A')+(int(koppen[x,y])-1))
+#        
+#        if classification in koppenGroupsPCells.keys():
+#            if pastureRegrid[x,y] > 0.01:
+#                koppenGroupsPCells[classification].append((x,y))
+#            else:
+#                koppenGroupsNoPCells[classification].append((x,y))
+#            
+#            if cropRegrid[x,y] > 0.01:
+#                koppenGroupsCCells[classification].append((x,y))
+#            else:
+#                koppenGroupsNoCCells[classification].append((x,y))
+
+
+
+
 # load sacks calendars
 sacksCal = {}
 sacksCal['start_maize'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-planting-end-Maize.txt', delimiter=',')
@@ -122,9 +217,10 @@ for k in koppenGroupsPCells.keys():
         curLon = int(roundTo2(lonNew[koppenGroupsPCells[k][c][1]]))
         
         if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-%d.txt'%(curLon), delimiter=',')
+            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-%d.txt'%(curLon), delimiter=',')
             ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-%d.txt'%(curLon), delimiter=',')    
-            tData[curLon] = ttmp[:,1:].copy()
+            if len(ttmp) > 0:
+                tData[curLon] = ttmp[:,1:].copy()
             pData[curLon] = ptmp[:,1:].copy()
             
             # store the day numbers on the first loop
@@ -136,9 +232,10 @@ for k in koppenGroupsPCells.keys():
         curLon = int(roundTo2(lonNew[koppenGroupsNoPCells[k][c][1]]))
         
         if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-%d.txt'%(curLon), delimiter=',')
+            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-%d.txt'%(curLon), delimiter=',')
             ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-%d.txt'%(curLon), delimiter=',')    
-            tData[curLon] = ttmp[:,1:].copy()
+            if len(ttmp) > 0:
+                tData[curLon] = ttmp[:,1:].copy()
             pData[curLon] = ptmp[:,1:].copy()
     
     for c in range(len(koppenGroupsCCells[k])):
@@ -146,9 +243,10 @@ for k in koppenGroupsPCells.keys():
         curLon = int(roundTo2(lonNew[koppenGroupsCCells[k][c][1]]))
         
         if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-%d.txt'%(curLon), delimiter=',')
+            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-%d.txt'%(curLon), delimiter=',')
             ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-%d.txt'%(curLon), delimiter=',')    
-            tData[curLon] = ttmp[:,1:].copy()
+            if len(ttmp) > 0:
+                tData[curLon] = ttmp[:,1:].copy()
             pData[curLon] = ptmp[:,1:].copy()
     
     for c in range(len(koppenGroupsNoCCells[k])):
@@ -156,11 +254,12 @@ for k in koppenGroupsPCells.keys():
         curLon = int(roundTo2(lonNew[koppenGroupsNoCCells[k][c][1]]))
         
         if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-%d.txt'%(curLon), delimiter=',')
+            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-%d.txt'%(curLon), delimiter=',')
             ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-%d.txt'%(curLon), delimiter=',')    
-            tData[curLon] = ttmp[:,1:].copy()
+            if len(ttmp) > 0:
+                tData[curLon] = ttmp[:,1:].copy()
             pData[curLon] = ptmp[:,1:].copy()
-
+sys.exit()
 tMeans = {}
 pMeans = {}
 
@@ -196,16 +295,21 @@ for k in koppenGroupsPCells.keys():
     pLatRange = []
     cLatRange = []
     
+    pTempRange = []
+    cTempRange = []
+    
     pCells = koppenGroupsPCells[k]
     for p in range(len(pCells)):
         curLon = int(2*round(lonNew[pCells[p][1]]/2))
         curLatCoord = pCells[p][0]
         curLonCoord = pCells[p][1]
         
-        pLatRange.append(curLatCoord)
-        
         curTMean = np.nanmean(tData[curLon][:,curLatCoord])
-        if curTMean < 5 or curTMean > 30: continue
+        
+        pLatRange.append(curLatCoord)
+        pTempRange.append(curTMean)
+        
+#        if curTMean < 5 or curTMean > 30: continue
     
         tMeans[k]['pCover'].append(pastureRegrid[pCells[p][0], pCells[p][1]])
         pMeans[k]['pCover'].append(pastureRegrid[pCells[p][0], pCells[p][1]])        
@@ -256,7 +360,10 @@ for k in koppenGroupsPCells.keys():
 #        if sacksInds.shape[0] == 0: continue
         
         curTMean = np.nanmean(tData[curLon][:,curLatCoord])
-        if curTMean < 5 or curTMean > 30: continue
+        
+        cTempRange.append(curTMean)
+        
+#        if curTMean < 5 or curTMean > 30: continue
     
         tMeans[k]['cCover'].append(cropRegrid[cCells[p][0], cCells[p][1]])
         pMeans[k]['cCover'].append(cropRegrid[cCells[p][0], cCells[p][1]])
@@ -275,8 +382,10 @@ for k in koppenGroupsPCells.keys():
         if len(pLatRange) > 0:
             if curLatCoord >= np.nanmin(pLatRange) and curLatCoord <= np.nanmax(pLatRange):
                 curTMean = np.nanmean(tData[curLon][:,curLatCoord])
-                if curTMean < 5 or curTMean > 30: continue
                 
+#                if curTMean >= np.nanmin(pTempRange) and curTMean <= np.nanmax(pTempRange):                
+    #                if curTMean < 5 or curTMean > 30: continue
+                    
                 tMeans[k]['noPLat'].append(latNew[curLatCoord])
                 tMeans[k]['noPLon'].append(lonNew[curLonCoord])
                 tMeans[k]['noP'].append(curTMean)
@@ -323,20 +432,20 @@ for k in koppenGroupsPCells.keys():
         if len(cLatRange) > 0:
             if curLatCoord >= np.nanmin(cLatRange) and curLatCoord <= np.nanmax(cLatRange):
                 curTMean = np.nanmean(tData[curLon][:,curLatCoord])
-                if curTMean < 5 or curTMean > 30: continue
-            
+#                if curTMean >= np.nanmin(cTempRange) and curTMean <= np.nanmax(cTempRange):     
+#                    if curTMean < 5 or curTMean > 30: continue
                 tMeans[k]['noCLat'].append(latNew[curLatCoord])
                 tMeans[k]['noCLon'].append(lonNew[curLonCoord])
                 tMeans[k]['noC'].append(curTMean)
                 pMeans[k]['noC'].append(np.nanmean(pData[curLon][:,curLatCoord])*365)
     #noPCells = koppenGroupsNoPCells[k]
     
-kModels = {'A':{}, 'B':{}, 'C':{}, 'D':{}, 'E':{}}
+kModels = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
     
 totalPCells = len(tMeans['A']['P']) + len(tMeans['B']['P']) + len(tMeans['C']['P']) + \
-              len(tMeans['D']['P']) + len(tMeans['E']['P'])
+              len(tMeans['D']['P'])
 totalCCells = len(tMeans['A']['C']) + len(tMeans['B']['C']) + len(tMeans['C']['C']) + \
-              len(tMeans['D']['C']) + len(tMeans['E']['C'])
+              len(tMeans['D']['C'])
 
 for k in koppenGroupsPCells.keys():
     print('%s: %.2f total P'%(k, len(tMeans[k]['P'])/totalPCells))
@@ -430,59 +539,59 @@ for i, k in enumerate(koppenGroupsPCells.keys()):
     plt.show()
     
     
-for i, k in enumerate(koppenGroupsPCells.keys()):
-    
-    paramsDistP = dist.fit(tMeans[k]['P'])
-    argDistP = paramsDistP[:-2]
-    locDistP = paramsDistP[-2]
-    scaleDistP = paramsDistP[-1]
-    
-    paramsDistNoP = dist.fit(tMeans[k]['noP'])
-    argDistNoP = paramsDistNoP[:-2]
-    locDistNoP = paramsDistNoP[-2]
-    scaleDistNoP = paramsDistNoP[-1]
-    
-    if len(tMeans[k]['noP']) == 0 or len(tMeans[k]['P']) == 0:
-        continue
-    
-    x = np.linspace(np.nanmin(np.concatenate((tMeans[k]['noP'], tMeans[k]['P']))), \
-                    np.nanmax(np.concatenate((tMeans[k]['noP'], tMeans[k]['P']))), 50)
-    
-    pdfDistNoP = dist.pdf(x, loc=locDistNoP, scale=scaleDistNoP, *argDistNoP)
-    pdfDistP = dist.pdf(x, loc=locDistP, scale=scaleDistP, *argDistP)
-    
-    
-    xMaxP = np.where((pdfDistP == np.nanmax(pdfDistP)))[0]
-    xMaxNoP = np.where((pdfDistNoP == np.nanmax(pdfDistNoP)))[0]
-    
-    nnP = np.where(~np.isnan(pdfDistP))[0]
-    nnNoP = np.where(~np.isnan(pdfDistNoP))[0]
-    
-    if len(nnP) > 5 and len(nnNoP) > 5:
-        plt.figure(figsize=(4, 4))
-        plt.grid(True, color=[.9, .9, .9])
-        
-        plt.plot(x, pdfDistP, 'g', lw=2, label='Pasture')
-        plt.plot(x, pdfDistNoP, 'm', lw=2, label='Not pasture')
-        
-        plt.plot([x[xMaxP], x[xMaxP]], [0, np.nanmax(pdfDistP)], '--g', lw=2)
-        plt.plot([x[xMaxNoP], x[xMaxNoP]], [0, np.nanmax(pdfDistNoP)], '--m', lw=2)
-        
-        plt.title('Classification: %s (%.1f%% total)'%(k, cPerc), fontname = 'Helvetica', fontsize=16)
-        plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False)
-        
-        plt.xlabel('Temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-        plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
-        
-        for tick in plt.gca().xaxis.get_major_ticks():
-            tick.label.set_fontname('Helvetica')
-            tick.label.set_fontsize(14)
-        for tick in plt.gca().yaxis.get_major_ticks():
-            tick.label.set_fontname('Helvetica')    
-            tick.label.set_fontsize(14)
-
-        
-        plt.savefig('koppen-t-pasture-%s.eps'%k, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+#for i, k in enumerate(koppenGroupsPCells.keys()):
+#    
+#    paramsDistP = dist.fit(tMeans[k]['P'])
+#    argDistP = paramsDistP[:-2]
+#    locDistP = paramsDistP[-2]
+#    scaleDistP = paramsDistP[-1]
+#    
+#    paramsDistNoP = dist.fit(tMeans[k]['noP'])
+#    argDistNoP = paramsDistNoP[:-2]
+#    locDistNoP = paramsDistNoP[-2]
+#    scaleDistNoP = paramsDistNoP[-1]
+#    
+#    if len(tMeans[k]['noP']) == 0 or len(tMeans[k]['P']) == 0:
+#        continue
+#    
+#    x = np.linspace(np.nanmin(np.concatenate((tMeans[k]['noP'], tMeans[k]['P']))), \
+#                    np.nanmax(np.concatenate((tMeans[k]['noP'], tMeans[k]['P']))), 50)
+#    
+#    pdfDistNoP = dist.pdf(x, loc=locDistNoP, scale=scaleDistNoP, *argDistNoP)
+#    pdfDistP = dist.pdf(x, loc=locDistP, scale=scaleDistP, *argDistP)
+#    
+#    
+#    xMaxP = np.where((pdfDistP == np.nanmax(pdfDistP)))[0]
+#    xMaxNoP = np.where((pdfDistNoP == np.nanmax(pdfDistNoP)))[0]
+#    
+#    nnP = np.where(~np.isnan(pdfDistP))[0]
+#    nnNoP = np.where(~np.isnan(pdfDistNoP))[0]
+#    
+#    if len(nnP) > 5 and len(nnNoP) > 5:
+#        plt.figure(figsize=(4, 4))
+#        plt.grid(True, color=[.9, .9, .9])
+#        
+#        plt.plot(x, pdfDistP, 'g', lw=2, label='Pasture')
+#        plt.plot(x, pdfDistNoP, 'm', lw=2, label='Not pasture')
+#        
+#        plt.plot([x[xMaxP], x[xMaxP]], [0, np.nanmax(pdfDistP)], '--g', lw=2)
+#        plt.plot([x[xMaxNoP], x[xMaxNoP]], [0, np.nanmax(pdfDistNoP)], '--m', lw=2)
+#        
+#        plt.title('Classification: %s (%.1f%% total)'%(k, cPerc), fontname = 'Helvetica', fontsize=16)
+#        plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False)
+#        
+#        plt.xlabel('Temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+#        plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
+#        
+#        for tick in plt.gca().xaxis.get_major_ticks():
+#            tick.label.set_fontname('Helvetica')
+#            tick.label.set_fontsize(14)
+#        for tick in plt.gca().yaxis.get_major_ticks():
+#            tick.label.set_fontname('Helvetica')    
+#            tick.label.set_fontsize(14)
+#
+#        
+#        plt.savefig('koppen-t-pasture-%s.eps'%k, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
     
@@ -492,12 +601,14 @@ plt.grid(True, color=[.9, .9, .9])
 
 xs = np.linspace(0,1,10)
 
-for i, k in enumerate(['A', 'C']):
+colors = ['r', 'm', 'g', 'b']
+xpos = [.95, .98, 1.01, 1.04]
+for i, k in enumerate(['A', 'B', 'C', 'D']):
     if i == 0:
-        plt.plot(1, np.nanmean(tMeans[k]['noC']), 'ok', ms=6, label='No crops')
+        plt.plot(xpos[i], np.nanmean(tMeans[k]['noC']), 'ok', ms=6, label='No crops', mfc=colors[i])
     else:
-        plt.plot(1, np.nanmean(tMeans[k]['noC']), 'ok', ms=6)
-    plt.errorbar(1, np.nanmean(tMeans[k]['noC']), yerr = np.nanstd(tMeans[k]['noC']), lw=2, color='k', \
+        plt.plot(xpos[i], np.nanmean(tMeans[k]['noC']), 'ok', ms=6, mfc=colors[i])
+    plt.errorbar(xpos[i], np.nanmean(tMeans[k]['noC']), yerr = np.nanstd(tMeans[k]['noC']), lw=2, color=colors[i], \
                  elinewidth = 1, capsize = 3, fmt = 'none')
     
     
@@ -506,10 +617,11 @@ for i, k in enumerate(['A', 'C']):
         for x in xs:
             ys.append(kModels[k]['tC'].predict([1, x]))
         
-        plt.plot(1+xs, ys, '--', label='Region %s'%k)
+        plt.plot(xpos[i]+xs, ys, '--', label='Region %s'%k, color=colors[i])
 
 plt.title('T vs. Cropland Fraction', fontname = 'Helvetica', fontsize=16)
-plt.legend(markerscale=2, prop = {'size':12, 'family':'Helvetica'}, frameon=False)
+plt.legend(markerscale=2, prop = {'size':12, 'family':'Helvetica'}, frameon=False, \
+           bbox_to_anchor=(1, .65))
 
 plt.xticks([1, 1.2, 1.4, 1.6, 1.8, 2])
 plt.gca().set_xticklabels([0, .2, .4, .6, .8, 1])
@@ -523,6 +635,56 @@ for tick in plt.gca().xaxis.get_major_ticks():
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
+
+
+
+
+
+
+
+plt.figure(figsize=(4, 4))
+plt.grid(True, color=[.9, .9, .9])
+
+xs = np.linspace(0,1,10)
+
+colors = ['r', 'm', 'g', 'b']
+xpos = [.95, .98, 1.01, 1.04]
+for i, k in enumerate(['A', 'B', 'C', 'D']):
+    if i == 0:
+        plt.plot(xpos[i], np.nanmean(tMeans[k]['noP']), 'ok', ms=6, label='No pasture', mfc=colors[i])
+    else:
+        plt.plot(xpos[i], np.nanmean(tMeans[k]['noP']), 'ok', ms=6, mfc=colors[i])
+    plt.errorbar(xpos[i], np.nanmean(tMeans[k]['noP']), yerr = np.nanstd(tMeans[k]['noP']), lw=2, color=colors[i], \
+                 elinewidth = 1, capsize = 3, fmt = 'none')
+    
+    
+    if len(tMeans[k]['P']) > 5:
+        ys = []
+        for x in xs:
+            ys.append(kModels[k]['tP'].predict([1, x]))
+        
+        plt.plot(xpos[i]+xs, ys, '--', label='Region %s'%k, color=colors[i])
+
+plt.title('T vs. Pasture Fraction', fontname = 'Helvetica', fontsize=16)
+plt.legend(markerscale=2, prop = {'size':12, 'family':'Helvetica'}, frameon=False, \
+           bbox_to_anchor=(1, .65))
+
+plt.xticks([1, 1.2, 1.4, 1.6, 1.8, 2])
+plt.gca().set_xticklabels([0, .2, .4, .6, .8, 1])
+
+plt.xlabel('Pasture fraction', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+
+
+sys.exit()
 
 plt.savefig('t-cropland-regression.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
