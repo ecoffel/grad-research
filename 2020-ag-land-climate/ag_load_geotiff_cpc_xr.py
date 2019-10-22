@@ -11,20 +11,15 @@ import numpy as np
 from scipy import interpolate
 import statsmodels.api as sm
 import scipy.stats as st
-import sys, pickle
+import os, sys, pickle, gzip
 import geopy.distance
+import xarray as xr
 
 dataDir = 'E:/data/ecoffel/data/projects/ag-land-climate/CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
 
-tDataset = 'era'
-tDatasetAnom = ''#'-anom-2'
-tVar = 'tmax'
-
-pDataset = 'era';
-pVar = 'pmax'
-
-def roundTo2(x):
-    return 2*round(x/2)
+#tDataset = 'era-interim'
+#tDatasetAnom = ''#'-anom-2'
+#tVar = 'wb-davies-jones-full'
 
 pasture = rio.open('%s/Pasture2000_5m.tif'%dataDir)
 pastureData = pasture.read(1)
@@ -38,8 +33,8 @@ lonOld = np.linspace(pasture.bounds.left, pasture.bounds.right, pasture.shape[1]
 pastureInterp = interpolate.interp2d(lonOld, latOld, pastureData, kind='linear')
 cropInterp = interpolate.interp2d(lonOld, latOld, cropData, kind='linear')
 
-latNew = np.linspace(90, -90, 90)
-lonNew = np.linspace(-180, 180, 180)
+latNew = np.linspace(90, -90, 360)
+lonNew = np.linspace(-180, 180, 720)
 
 pastureRegrid = pastureInterp(lonNew, latNew)
 pastureRegrid[pastureRegrid < 0] = np.nan
@@ -50,375 +45,287 @@ cropRegrid[cropRegrid < 0] = np.nan
 with open('elevation-map.dat', 'rb') as f:
     elevationMap = pickle.load(f)
 
-#koppen = np.genfromtxt('koppen-classifications.txt', delimiter=',')
-#koppen = np.flipud(koppen)
-#koppen = np.roll(koppen, 90)
-#koppen[koppen == 0] = np.nan
-
-koppen = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
-
-koppenGroupsPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
-koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
-
-koppenGroupsCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
-koppenGroupsNoCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
-
-koppenGroupsFullPCells = {}
-koppenGroupsFullNoPCells = {}
-
-koppenGroupsFullCCells = {}
-koppenGroupsFullNoCCells = {}
-
-koppenLat = np.linspace(90, -90, 90)
-koppenLon = np.linspace(-180, 180, 180)
-
-koppenMap = np.zeros([len(koppenLat), len(koppenLon)])
-
-for x in range(len(koppenLat)):
+if not os.path.isfile('koppen-data.dat'):
     
-    for y in range(len(koppenLon)):
+    koppen = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
+    
+    koppenGroupsPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
+    koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
+    
+    koppenGroupsCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
+    koppenGroupsNoCCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
+    
+    koppenGroupsFullPCells = {}
+    koppenGroupsFullNoPCells = {}
+    
+    koppenGroupsFullCCells = {}
+    koppenGroupsFullNoCCells = {}
+    
+    koppenLat = np.linspace(90, -90, 360)
+    koppenLon = np.linspace(-180, 180, 720)
+    
+    koppenMap = np.zeros([len(koppenLat), len(koppenLon)])
+    
+    print('building koppen map...')
+    for x in range(len(koppenLat)):
         
-        minDist = -1
-        minDistInd = -1
+        if x % 50 == 0:
+            print('%.0f%% complete'%((x/len(koppenLat)*100)))
         
-        latInd = np.where((abs(koppen['latitude']-koppenLat[x]) <= 1))[0]
-        
-        for i in latInd:
-            if abs(koppen['longitude'][i]-koppenLon[y]) > 1:
+        for y in range(len(koppenLon)):
+            
+            minDist = -1
+            minDistInd = -1
+            
+            latInd = np.where((abs(koppen['latitude']-koppenLat[x]) <= 1))[0]
+            
+            for i in latInd:
+                if abs(koppen['longitude'][i]-koppenLon[y]) > 1:
+                    continue
+                
+                ptKoppen = (koppen['latitude'][i], koppen['longitude'][i])
+                ptAg = (koppenLat[x], koppenLon[y])
+                
+                dist = geopy.distance.great_circle(ptKoppen, ptAg).km
+                if minDist == -1 or dist < minDist:
+                    minDist = dist
+                    minDistInd = i
+            
+            if minDistInd != -1:
+                classification = koppen['p1901_2010'][minDistInd]
+                classificationInt = 0
+                if classification in ['As', 'Aw', 'Am', 'Af']: 
+                    classificationInt = 1
+                elif classification in ['BSk', 'BWk', 'BSh']: 
+                    classificationInt = 2
+                elif classification in ['Cfb', 'Csb', 'Cfa', 'Csa', 'Cwa']:
+                    classificationInt = 3
+                elif classification in ['Dfb', 'Dfa', 'Dwc', 'Dwb']:
+                    classificationInt = 4
+                koppenMap[x,y] = classificationInt
+            else:
+                koppenMap[x,y] = np.nan
+            
+            if np.isnan(pastureRegrid[x,y]):
                 continue
             
-            ptKoppen = (koppen['latitude'][i], koppen['longitude'][i])
-            ptAg = (koppenLat[x], koppenLon[y])
+            if pastureRegrid[x,y] > 0.05:
+                if classification in koppenGroupsFullPCells.keys():
+                    koppenGroupsFullPCells[classification].append((x,y))
+                else:
+                    koppenGroupsFullPCells[classification] = [(x,y)]
+            else:
+                if classification in koppenGroupsFullNoPCells.keys():
+                    koppenGroupsFullNoPCells[classification].append((x,y))
+                else:
+                    koppenGroupsFullNoPCells[classification] = [(x,y)]
             
-            dist = geopy.distance.great_circle(ptKoppen, ptAg).km
-            if minDist == -1 or dist < minDist:
-                minDist = dist
-                minDistInd = i
-        
-        if minDistInd != -1:
-            classification = koppen['p1901_2010'][minDistInd]
-            classificationInt = 0
-            if classification in ['As', 'Aw', 'Am', 'Af']: 
-                classificationInt = 1
-            elif classification in ['BSk', 'BWk', 'BSh']: 
-                classificationInt = 2
-            elif classification in ['Cfb', 'Csb', 'Cfa', 'Csa', 'Cwa']:
-                classificationInt = 3
-            elif classification in ['Dfb', 'Dfa', 'Dwc', 'Dwb']:
-                classificationInt = 4
-            koppenMap[x,y] = classificationInt
-        else:
-            koppenMap[x,y] = np.nan
-        
-        if np.isnan(pastureRegrid[x,y]):
-            continue
-        
-        if pastureRegrid[x,y] > 0.05:
-            if classification in koppenGroupsFullPCells.keys():
-                koppenGroupsFullPCells[classification].append((x,y))
-            else:
-                koppenGroupsFullPCells[classification] = [(x,y)]
-        else:
-            if classification in koppenGroupsFullNoPCells.keys():
-                koppenGroupsFullNoPCells[classification].append((x,y))
-            else:
-                koppenGroupsFullNoPCells[classification] = [(x,y)]
-        
-        if cropRegrid[x,y] > 0.05:
-            if classification in koppenGroupsFullCCells.keys():
-                koppenGroupsFullCCells[classification].append((x,y))
-            else:
-                koppenGroupsFullCCells[classification] = [(x,y)]
-        else:
-            if classification in koppenGroupsFullNoCCells.keys():
-                koppenGroupsFullNoCCells[classification].append((x,y))
-            else:
-                koppenGroupsFullNoCCells[classification] = [(x,y)]
-        
-        
-        if elevationMap[x,y] > 500:
-            continue
-        
-        if not np.isnan(koppenMap[x,y]) and koppenMap[x,y] != 0:
-            if classification[0] in koppenGroupsPCells.keys():
-                if pastureRegrid[x,y] > 0.25:
-                    koppenGroupsPCells[classification[0]].append((x,y))
+            if cropRegrid[x,y] > 0.05:
+                if classification in koppenGroupsFullCCells.keys():
+                    koppenGroupsFullCCells[classification].append((x,y))
                 else:
-                    koppenGroupsNoPCells[classification[0]].append((x,y))
-                
-                if cropRegrid[x,y] > 0.25:
-                    koppenGroupsCCells[classification[0]].append((x,y))
+                    koppenGroupsFullCCells[classification] = [(x,y)]
+            else:
+                if classification in koppenGroupsFullNoCCells.keys():
+                    koppenGroupsFullNoCCells[classification].append((x,y))
                 else:
-                    koppenGroupsNoCCells[classification[0]].append((x,y))
-
-
-totalC = 0
-for k in koppenGroupsFullCCells.keys():
-    totalC += len(koppenGroupsFullCCells[k])
+                    koppenGroupsFullNoCCells[classification] = [(x,y)]
+            
+            
+            # skip if > 1000 m
+            if elevationMap[x,y] > 1000:
+                continue
+            
+            if not np.isnan(koppenMap[x,y]) and koppenMap[x,y] != 0:
+                if classification[0] in koppenGroupsPCells.keys():
+                    if pastureRegrid[x,y] > 0.1:
+                        koppenGroupsPCells[classification[0]].append((x,y))
+                    else:
+                        koppenGroupsNoPCells[classification[0]].append((x,y))
+                    
+                    if cropRegrid[x,y] > 0.1:
+                        koppenGroupsCCells[classification[0]].append((x,y))
+                    else:
+                        koppenGroupsNoCCells[classification[0]].append((x,y))
+    
+    koppenData = {'koppenMap':koppenMap,\
+                  'koppenGroupsPCells':koppenGroupsPCells, \
+                  'koppenGroupsNoPCells':koppenGroupsNoPCells, \
+                  'koppenGroupsCCells':koppenGroupsCCells, \
+                  'koppenGroupsNoCCells':koppenGroupsNoCCells}
+    with gzip.open('koppen-data.dat', 'wb') as f:
+        pickle.dump(koppenData, f)
+else:
+    with gzip.open('koppen-data.dat', 'rb') as f:
+        koppenData = pickle.load(f)
         
-for k in koppenGroupsCCells.keys():
-    if k in koppenGroupsNoCCells.keys():
-        filteredC = len(koppenGroupsCCells[k])+len(koppenGroupsNoCCells[k])
-        if filteredC > 0:
-            curPerc = len(koppenGroupsCCells[k])/filteredC
-        else:
-            curPerc = np.nan
-        print('%s: %.2f, %.2f'%(k, len(koppenGroupsCCells[k])/totalC, curPerc))
+        koppenMap = koppenData['koppenMap']
+        koppenGroupsPCells = koppenData['koppenGroupsPCells']
+        koppenGroupsNoPCells = koppenData['koppenGroupsNoPCells']
+        koppenGroupsCCells = koppenData['koppenGroupsCCells']
+        koppenGroupsNoCCells = koppenData['koppenGroupsNoCCells']
 
+#totalC = 0
+#for k in koppenGroupsFullCCells.keys():
+#    totalC += len(koppenGroupsFullCCells[k])
+#        
+#for k in koppenGroupsCCells.keys():
+#    if k in koppenGroupsNoCCells.keys():
+#        filteredC = len(koppenGroupsCCells[k])+len(koppenGroupsNoCCells[k])
+#        if filteredC > 0:
+#            curPerc = len(koppenGroupsCCells[k])/filteredC
+#        else:
+#            curPerc = np.nan
+#        print('%s: %.2f, %.2f'%(k, len(koppenGroupsCCells[k])/totalC, curPerc))
 
-
-# load sacks calendars
-sacksCal = {}
-sacksCal['start_maize'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-planting-end-Maize.txt', delimiter=',')
-sacksCal['start_rice'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-planting-end-Rice.txt', delimiter=',')
-sacksCal['start_soybeans'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-planting-end-Soybeans.txt', delimiter=',')
-sacksCal['start_wheat'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-planting-end-Wheat.txt', delimiter=',')
-
-sacksCal['end_maize'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-harvest-start-Maize.txt', delimiter=',')
-sacksCal['end_rice'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-harvest-start-Rice.txt', delimiter=',')
-sacksCal['end_soybeans'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-harvest-start-Soybeans.txt', delimiter=',')
-sacksCal['end_wheat'] = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/sacks/sacks-harvest-start-Wheat.txt', delimiter=',')
-
-
-# indexed by their lon
-tData = {}
-pData = {}
-
-dayNumbers = []
-tLats = []
+tMeans = {'A':{}, 'B':{}, 'C':{}, 'D':{}, 'E':{}}
 
 for k in koppenGroupsPCells.keys():
-    print('loading t/p time series for k = %s...'%k)
-    for c in range(len(koppenGroupsPCells[k])):
-        curLat = int(roundTo2(latNew[koppenGroupsPCells[k][c][0]]))
-        curLon = int(roundTo2(lonNew[koppenGroupsPCells[k][c][1]]))
-        
-        if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d%s.txt'%(tVar, tDataset, curLon, tDatasetAnom), delimiter=',')
-            ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d.txt'%(pVar, pDataset, curLon), delimiter=',')    
-            tData[curLon] = ttmp[1:,1:].copy()
-            pData[curLon] = ptmp[1:,1:].copy()
-            
-            # store the day numbers on the first loop
-            if len(dayNumbers) == 0:
-                dayNumbers = ttmp[1:,0].copy()
-                tLats = ttmp[0,1:].copy()
-    
-    for c in range(len(koppenGroupsNoPCells[k])):
-        curLat = int(roundTo2(latNew[koppenGroupsNoPCells[k][c][0]]))
-        curLon = int(roundTo2(lonNew[koppenGroupsNoPCells[k][c][1]]))
-        
-        if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d%s.txt'%(tVar, tDataset, curLon, tDatasetAnom), delimiter=',')
-            ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d.txt'%(pVar, pDataset, curLon), delimiter=',')    
-            tData[curLon] = ttmp[1:,1:].copy()
-            pData[curLon] = ptmp[1:,1:].copy()
-    
-    for c in range(len(koppenGroupsCCells[k])):
-        curLat = int(roundTo2(latNew[koppenGroupsCCells[k][c][0]]))
-        curLon = int(roundTo2(lonNew[koppenGroupsCCells[k][c][1]]))
-        
-        if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d%s.txt'%(tVar, tDataset, curLon, tDatasetAnom), delimiter=',')
-            ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d.txt'%(pVar, pDataset, curLon), delimiter=',')    
-            tData[curLon] = ttmp[1:,1:].copy()
-            pData[curLon] = ptmp[1:,1:].copy()
-    
-    for c in range(len(koppenGroupsNoCCells[k])):
-        curLat = int(roundTo2(latNew[koppenGroupsNoCCells[k][c][0]]))
-        curLon = int(roundTo2(lonNew[koppenGroupsNoCCells[k][c][1]]))
-        
-        if curLon not in tData.keys():
-            ttmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d%s.txt'%(tVar, tDataset, curLon, tDatasetAnom), delimiter=',')
-            ptmp = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/%s-%s-%d.txt'%(pVar, pDataset, curLon), delimiter=',')    
-            tData[curLon] = ttmp[1:,1:].copy()
-            pData[curLon] = ptmp[1:,1:].copy()
-
-tMeans = {}
-pMeans = {}
-
-for k in koppenGroupsPCells.keys():
-    
-    print('processing t & p for k = %s...'%k)
-    
-    tMeans[k] = {}
-    tMeans[k]['pLat'] = []
-    tMeans[k]['noPLat'] = []
-    tMeans[k]['pLon'] = []
-    tMeans[k]['noPLon'] = []
-    tMeans[k]['pCover'] = []
-    tMeans[k]['P'] = []
-    tMeans[k]['noP'] = []
-    tMeans[k]['cLat'] = []
-    tMeans[k]['noCLat'] = []
-    tMeans[k]['cLon'] = []
-    tMeans[k]['noCLon'] = []
-    tMeans[k]['cCover'] = []
-    tMeans[k]['C'] = []
-    tMeans[k]['noC'] = []
-    
-    pMeans[k] = {}
-    pMeans[k]['pCover'] = []
-    pMeans[k]['P'] = []
-    pMeans[k]['noP'] = []
-    pMeans[k]['cCover'] = []
-    pMeans[k]['C'] = []
-    pMeans[k]['noC'] = []
-    
-    # the range of lat values with crops in current koppen zone
-    pLatRange = []
-    cLatRange = []
-    
-    pTempRange = []
-    cTempRange = []
     
     pCells = koppenGroupsPCells[k]
-    for p in range(len(pCells)):
-        curLon = int(2*round(lonNew[pCells[p][1]]/2))
-        curLatCoord = pCells[p][0]
-        curLonCoord = pCells[p][1]
-        
-        tLatInd = np.where((abs(tLats - latNew[curLatCoord]) == np.nanmin(abs(tLats - latNew[curLatCoord]))))[0]
-        
-        curTSeries = tData[curLon][:,tLatInd]
-        nn = np.where(~np.isnan(curTSeries))[0]
-        if len(nn) > 5:
-            X = sm.add_constant(range(len(curTSeries[nn])))
-            mdlT = sm.OLS(np.array(curTSeries[nn]).reshape(-1,1), X).fit()
-        curTMean = np.nanmean(tData[curLon][:,tLatInd])
-        
-        curPSeries = pData[curLon][:,tLatInd]
-        nn = np.where(~np.isnan(curPSeries))[0]
-        if len(nn) > 5:
-            X = sm.add_constant(range(len(curPSeries[nn])))
-            mdlP = sm.OLS(np.array(curPSeries[nn]).reshape(-1,1), X).fit()
-        
-        pLatRange.append(latNew[curLatCoord])
-        pTempRange.append(curTMean)
-        
-        tMeans[k]['pCover'].append(pastureRegrid[curLatCoord, curLonCoord])
-        pMeans[k]['pCover'].append(pastureRegrid[curLatCoord, curLonCoord])        
-        tMeans[k]['pLat'].append(latNew[curLatCoord])
-        tMeans[k]['pLon'].append(lonNew[curLonCoord])
-        tMeans[k]['P'].append(mdlT.params[1])
-        pMeans[k]['P'].append(mdlP.params[1]*365)
-    
-    tMeans[k]['pCover'] = np.array(tMeans[k]['pCover'])
-    pMeans[k]['pCover'] = np.array(pMeans[k]['pCover'])
-    tMeans[k]['pLat'] = np.array(tMeans[k]['pLat'])
-    tMeans[k]['pLon'] = np.array(tMeans[k]['pLon'])
-    tMeans[k]['P'] = np.array(tMeans[k]['P'])
-    pMeans[k]['P'] = np.array(pMeans[k]['P'])    
-    
     cCells = koppenGroupsCCells[k]
-    for p in range(len(cCells)):
-        curLon = int(2*round(lonNew[cCells[p][1]]/2))
-        curLatCoord = cCells[p][0]
-        curLonCoord = cCells[p][1]
-        
-        cLatRange.append(latNew[curLatCoord])
-        
-        tLatInd = np.where((abs(tLats - latNew[curLatCoord]) == np.nanmin(abs(tLats - latNew[curLatCoord]))))[0][0]
-        
-        curTSeries = tData[curLon][:,tLatInd]
-        nn = np.where(~np.isnan(curTSeries))[0]
-        if len(nn) > 5:
-            X = sm.add_constant(range(len(curTSeries[nn])))
-            mdlT = sm.OLS(np.array(curTSeries[nn]).reshape(-1,1), X).fit()
-        curTMean = np.nanmean(tData[curLon][:,tLatInd])
-        
-        curPSeries = pData[curLon][:,tLatInd]
-        nn = np.where(~np.isnan(curPSeries))[0]
-        if len(nn) > 5:
-            X = sm.add_constant(range(len(curPSeries[nn])))
-            mdlP = sm.OLS(np.array(curPSeries[nn]).reshape(-1,1), X).fit()
-        
-        cTempRange.append(curTMean)
-        
-        tMeans[k]['cCover'].append(cropRegrid[cCells[p][0], cCells[p][1]])
-        pMeans[k]['cCover'].append(cropRegrid[cCells[p][0], cCells[p][1]])
-        tMeans[k]['cLat'].append(latNew[curLatCoord])
-        tMeans[k]['cLon'].append(lonNew[curLonCoord])
-        tMeans[k]['C'].append(mdlT.params[1])
-        pMeans[k]['C'].append(mdlP.params[1]*365)
-        
-    tMeans[k]['cCover'] = np.array(tMeans[k]['cCover'])
-    pMeans[k]['cCover'] = np.array(pMeans[k]['cCover'])
-    tMeans[k]['cLat'] = np.array(tMeans[k]['cLat'])
-    tMeans[k]['cLon'] = np.array(tMeans[k]['cLon'])
-    tMeans[k]['C'] = np.array(tMeans[k]['C'])
-    pMeans[k]['C'] = np.array(pMeans[k]['C'])
-    
     noPCells = koppenGroupsNoPCells[k]
-    for p in range(len(noPCells)):
-        curLon = int(2*round(lonNew[noPCells[p][1]]/2))
-        curLatCoord = noPCells[p][0]
-        curLonCoord = noPCells[p][1]
-
-        # only look at no-p cells in the same lat range where p cells occur
-        if len(pLatRange) > 0:
-            if curLatCoord >= np.nanmin(pLatRange) and curLatCoord <= np.nanmax(pLatRange):
-                
-                tLatInd = np.where((abs(tLats - latNew[curLatCoord]) == np.nanmin(abs(tLats - latNew[curLatCoord]))))[0][0]
-                
-                curTSeries = tData[curLon][:,tLatInd]
-                nn = np.where(~np.isnan(curTSeries))[0]
-                if len(nn) > 5:
-                    X = sm.add_constant(range(len(curTSeries[nn])))
-                    mdlT = sm.OLS(np.array(curTSeries[nn]).reshape(-1,1), X).fit()
-                curTMean = np.nanmean(tData[curLon][:,tLatInd])
-                
-                curPSeries = pData[curLon][:,tLatInd]
-                nn = np.where(~np.isnan(curPSeries))[0]
-                if len(nn) > 5:
-                    X = sm.add_constant(range(len(curPSeries[nn])))
-                    mdlP = sm.OLS(np.array(curPSeries[nn]).reshape(-1,1), X).fit()
-                                    
-                tMeans[k]['noPLat'].append(latNew[curLatCoord])
-                tMeans[k]['noPLon'].append(lonNew[curLonCoord])
-                tMeans[k]['noP'].append(mdlT.params[1])
-                pMeans[k]['noP'].append(mdlP.params[1]*365)
-    
-    tMeans[k]['noPLat'] = np.array(tMeans[k]['noPLat'])
-    tMeans[k]['noPLon'] = np.array(tMeans[k]['noPLon'])
-    tMeans[k]['noP'] = np.array(tMeans[k]['noP'])
-    pMeans[k]['noP'] = np.array(pMeans[k]['noP'])
-    
     noCCells = koppenGroupsNoCCells[k]
+    
+    selLatsPCells = []
+    selLonsPCells = []    
+    for p in range(len(pCells)):
+        selLonsPCells.append(lonNew[pCells[p][1]])
+        selLatsPCells.append(latNew[pCells[p][0]])
+    selLonsPCells = np.array(selLonsPCells)
+    selLatsPCells = np.array(selLatsPCells)
+    
+    selLatsCCells = []
+    selLonsCCells = []    
+    for p in range(len(cCells)):
+        selLonsCCells.append(lonNew[cCells[p][1]])
+        selLatsCCells.append(latNew[cCells[p][0]])
+    selLonsCCells = np.array(selLonsCCells)
+    selLonsCCells = np.array(selLonsCCells)
+    
+    selLatsNoPCells = []
+    selLonsNoPCells = []    
+    for p in range(len(noPCells)):
+        selLonsNoPCells.append(lonNew[noPCells[p][1]])
+        selLatsNoPCells.append(latNew[noPCells[p][0]])
+    selLonsNoPCells = np.array(selLonsNoPCells)
+    selLatsNoPCells = np.array(selLatsNoPCells)
+    
+    selLatsNoCCells = []
+    selLonsNoCCells = []    
     for p in range(len(noCCells)):
-        curLon = int(2*round(lonNew[noCCells[p][1]]/2))
-        curLatCoord = noCCells[p][0]
-        curLonCoord = noCCells[p][1]
+        selLonsNoCCells.append(lonNew[noCCells[p][1]])
+        selLatsNoCCells.append(latNew[noCCells[p][0]])
+    selLonsNoCCells = np.array(selLonsNoCCells)
+    selLonsNoCCells = np.array(selLonsNoCCells)
+    
+    tMeans[k]['pLat'] = selLatsPCells
+    tMeans[k]['noPLat'] = selLatsNoPCells
+    tMeans[k]['pLon'] = selLonsPCells
+    tMeans[k]['noPLon'] = selLonsNoPCells
+    tMeans[k]['pCover'] = np.zeros([len(selLonsPCells),1])
+    tMeans[k]['P'] = np.zeros([len(selLatsPCells), len(range(1979, 2018+1))])
+    tMeans[k]['noP'] = np.zeros([len(selLatsNoPCells), len(range(1979, 2018+1))])
+    
+    tMeans[k]['cLat'] = selLatsCCells
+    tMeans[k]['noCLat'] = selLatsNoCCells
+    tMeans[k]['cLon'] = selLonsCCells
+    tMeans[k]['noCLon'] = selLonsNoCCells
+    tMeans[k]['cCover'] = np.zeros([len(selLatsCCells),1])
+    tMeans[k]['C'] = np.zeros([len(selLatsCCells), len(range(1979, 2018+1))])
+    tMeans[k]['noC'] = np.zeros([len(selLatsNoCCells), len(range(1979, 2018+1))])
+
+for year in range(1979, 2018+1):
+    
+    print('loading %d...'%year)
+    ds = xr.open_dataset('E:/data/cpc-temp/raw/tmax.%d.nc'%year, decode_times=False, decode_cf=False)
+    ds.load()
+    
+    for k in koppenGroupsPCells.keys():
         
-        if len(cLatRange) > 0:
-            if curLatCoord >= np.nanmin(cLatRange) and curLatCoord <= np.nanmax(cLatRange):
+        print('processing t & p for k = %s...'%k)
+        
+        pCells = koppenGroupsPCells[k]
+        cCells = koppenGroupsCCells[k]
+        noPCells = koppenGroupsNoPCells[k]
+        noCCells = koppenGroupsNoCCells[k]
+        
+        # the range of lat values with crops in current koppen zone
+        pLatRange = []
+        cLatRange = []
+        
+        for p in range(len(tMeans[k]['pLat'])):
+            ttmp = ds.tmax.sel(lat=tMeans[k]['pLat'][p], lon=tMeans[k]['pLon'][p], method='nearest').dropna(dim='time')
+            ttmp = ttmp.max(dim='time', skipna=True)
+            tMeans[k]['P'][p, year-1979] = float(ttmp.values)
+            
+            if year == 1979:
+                tMeans[k]['pCover'][p] = pastureRegrid[pCells[p][0], pCells[p][1]]
+            
+        for p in range(len(tMeans[k]['cLat'])):
+            ttmp = ds.tmax.sel(lat=tMeans[k]['cLat'][p], lon=tMeans[k]['cLon'][p], method='nearest').dropna(dim='time')
+            ttmp = ttmp.max(dim='time', skipna=True)
+            tMeans[k]['C'][p, year-1979] = float(ttmp.values)
+            
+            if year == 1979:
+                tMeans[k]['cCover'][p] = cropRegrid[cCells[p][0], cCells[p][1]]
+        
+        for p in range(len(tMeans[k]['noCLat'])):
+            ttmp = ds.tmax.sel(lat=tMeans[k]['noCLat'][p], lon=tMeans[k]['noCLon'][p], method='nearest').dropna(dim='time')
+            ttmp = ttmp.max(dim='time', skipna=True)
+            tMeans[k]['noC'][p, year-1979] = float(ttmp.values)
                 
-                tLatInd = np.where((abs(tLats - latNew[curLatCoord]) == np.nanmin(abs(tLats - latNew[curLatCoord]))))[0][0]
-                
-                curTSeries = tData[curLon][:,tLatInd]
-                nn = np.where(~np.isnan(curTSeries))[0]
-                if len(nn) > 5:
-                    X = sm.add_constant(range(len(curTSeries[nn])))
-                    mdlT = sm.OLS(np.array(curTSeries[nn]).reshape(-1,1), X).fit()
-                curTMean = np.nanmean(tData[curLon][:,tLatInd])
-                
-                curPSeries = pData[curLon][:,tLatInd]
-                nn = np.where(~np.isnan(curPSeries))[0]
-                if len(nn) > 5:
-                    X = sm.add_constant(range(len(curPSeries[nn])))
-                    mdlP = sm.OLS(np.array(curPSeries[nn]).reshape(-1,1), X).fit()
-                
-                tMeans[k]['noCLat'].append(latNew[curLatCoord])
-                tMeans[k]['noCLon'].append(lonNew[curLonCoord])
-                tMeans[k]['noC'].append(mdlT.params[1])
-                pMeans[k]['noC'].append(mdlP.params[1]*365)
+        for p in range(len(tMeans[k]['noPLat'])):
+            ttmp = ds.tmax.sel(lat=tMeans[k]['noPLat'][p], lon=tMeans[k]['noPLon'][p], method='nearest').dropna(dim='time')
+            ttmp = ttmp.max(dim='time', skipna=True)
+            tMeans[k]['noP'][p, year-1979] = float(ttmp.values)
     
-    tMeans[k]['noCLat'] = np.array(tMeans[k]['noCLat'])
-    tMeans[k]['noCLon'] = np.array(tMeans[k]['noCLon'])
-    tMeans[k]['noC'] = np.array(tMeans[k]['noC'])
-    pMeans[k]['noC'] = np.array(pMeans[k]['noC'])
-    #noPCells = koppenGroupsNoPCells[k]
+    tMeans[k]['P'][tMeans[k]['P'] < -100] = np.nan
+    tMeans[k]['C'][tMeans[k]['C'] < -100] = np.nan
+    tMeans[k]['noP'][tMeans[k]['noP'] < -100] = np.nan
+    tMeans[k]['noC'][tMeans[k]['noC'] < -100] = np.nan    
+
+sys.exit()
+
+slopesP = []
+slopesPInd = []
+for p in range(txxSeriesPCells.shape[0]):
+    nn = np.where(~np.isnan(txxSeriesPCells[p,:]))[0]
+    if len(nn) > 5:
+        X = sm.add_constant(range(len(txxSeriesPCells[p,nn])))
+        mdlT = sm.OLS(np.array(txxSeriesPCells[p,nn]).reshape(-1,1), X).fit()
+        tSlope = mdlT.params[1]
+        slopesP.append(tSlope)
+        slopesPInd.append(p)
+slopesP = np.array(slopesP)
+slopesPInd = np.array(slopesPInd)
+
+tMeans[k]['pCover'] = pCellsCover[slopesPInd]
+tMeans[k]['pLat'] = np.array(tMeans[k]['pLat'])[slopesPInd]
+tMeans[k]['pLon'] = np.array(tMeans[k]['pLon'])[slopesPInd]
+tMeans[k]['P'].append(slopesP)
+
+slopesC = []
+slopesCInd = []
+for p in range(txxSeriesCCells.shape[0]):
+    nn = np.where(~np.isnan(txxSeriesCCells[p,:]))[0]
+    if len(nn) > 5:
+        X = sm.add_constant(range(len(txxSeriesCCells[p,nn])))
+        mdlT = sm.OLS(np.array(txxSeriesCCells[p,nn]).reshape(-1,1), X).fit()
+        tSlope = mdlT.params[1]
+        slopesC.append(tSlope)
+        slopesCInd.append(p)
+        
+slopesC = np.array(slopesC)
+slopesCInd = np.array(slopesCInd)
+
+tMeans[k]['cCover'] = cCellsCover[slopesCInd]
+tMeans[k]['cLat'] = tMeans[k]['cLat'][slopesCInd]
+tMeans[k]['cLon'] = tMeans[k]['cLon'][slopesCInd]
+tMeans[k]['C'].append(slopesC)
     
+
+sys.exit()
 kModels = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
     
 totalPCells = len(tMeans['A']['P']) + len(tMeans['B']['P']) + len(tMeans['C']['P']) + \
@@ -436,15 +343,15 @@ allC = np.concatenate((tMeans['A']['C'], tMeans['B']['C'], tMeans['C']['C'], \
                             tMeans['D']['C']))
     
 nn = np.where((~np.isnan(allP)) & (~np.isnan(allPCover)))[0]
-X = sm.add_constant(allPCover.reshape(-1,1))
-mdl = sm.OLS(allP.reshape(-1,1), X).fit()
+X = sm.add_constant(allPCover[nn].reshape(-1,1))
+mdl = sm.OLS(allP[nn].reshape(-1,1), X).fit()
 print('All: T/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
 
 nn = np.where((~np.isnan(allC)) & (~np.isnan(allCCover)))[0]
-X = sm.add_constant(allCCover.reshape(-1,1))
-mdl = sm.OLS(allC.reshape(-1,1), X).fit()
+X = sm.add_constant(allCCover[nn].reshape(-1,1))
+mdl = sm.OLS(allC[nn].reshape(-1,1), X).fit()
 print('All: T/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
-
+print()
 for k in koppenGroupsPCells.keys():
     print('%s: %.2f total P'%(k, len(tMeans[k]['P'])/totalPCells))
     print('%s: %.2f total C'%(k, len(tMeans[k]['C'])/totalCCells))

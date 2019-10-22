@@ -5,147 +5,156 @@ endYear = 2016;
 load waterGrid;
 waterGrid = logical(waterGrid);
 
+computeAnom = false;
+% how many grid cells around current cell to compute anomaly from
+anomRange = 2;
+
+% annual max temp and max daily precip
+exportTmax = true;
+
+anomStr = '';
+if computeAnom
+    anomStr = ['-anom-' num2str(anomRange)];
+end
+
+tDataset = 'era-interim';
+tVar = 'mn2t';
+
+
 load lat;
 load lon;
 lonRot = lon;
 lonRot(lonRot > 180) = lonRot(lonRot > 180) - 360;
 
-if ~exist('tempEra')
-    fprintf('loading era temps...\n');
-    tempEra = loadDailyData('E:\data\era-interim\output\mx2t\regrid\world', 'startYear', startYear, 'endYear', endYear);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(tempEra{3}))))) > 100
-        tempEra{3} = tempEra{3} - 273.15;
+if ~exist('temp')
+    fprintf(['loading ' tDataset ' ' tVar '...\n']);
+    temp = loadDailyData(['E:/data/' tDataset '/output/' tVar '/regrid/world'], 'startYear', startYear, 'endYear', endYear);
+    if nanmean(nanmean(nanmean(nanmean(nanmean(temp{3}))))) > 100
+        temp{3} = temp{3} - 273.15;
     end
 end
-tempEraData = squeeze(nanmean(nanmean(tempEra{3}, 5), 3));
+tempData = temp{3};
 
-if ~exist('tempCpc')
-    fprintf('loading cpc temps...\n');
-    tempCpc = loadDailyData('E:\data\cpc-temp\output\tmax\regrid\world', 'startYear', startYear, 'endYear', endYear);
-    if nanmean(nanmean(nanmean(nanmean(nanmean(tempCpc{3}))))) > 100
-        tempCpc{3} = tempCpc{3} - 273.15;
+% if ~exist('prEra')
+%     fprintf('loading era pr...\n');
+%     prEra = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', startYear, 'endYear', endYear);
+% end
+% prEraData = prEra{3};
+
+% for y = 1:size(prEra{3}, 3)
+%     for m = 1:size(prEra{3}, 4)
+%         for d = 1:size(prEra{3}, 5)
+%             tmp = prEraData(:, :, y, m, d);
+%             tmp(waterGrid) = NaN;
+%             prEraData(:, :, y, m, d) = tmp;
+%         end
+%     end
+% end
+
+for y = 1:size(temp{3}, 3)
+    for m = 1:size(temp{3}, 4)
+        for d = 1:size(temp{3}, 5)
+            tmp = tempData(:, :, y, m, d);
+            tmp(waterGrid) = NaN;
+            tempData(:, :, y, m, d) = tmp;
+        end
     end
 end
-tempCpcData = squeeze(nanmean(nanmean(tempCpc{3}, 5), 3));
 
-if ~exist('prEra')
-    fprintf('loading era pr...\n');
-    prEra = loadDailyData('E:\data\era-interim\output\tp\regrid\world', 'startYear', startYear, 'endYear', endYear);
-end
-prEraData = squeeze(nanmean(nansum(prEra{3}, 5), 3));
-
-for m = 1:12
-    tmp = prEraData(:, :, m);
-    tmp(waterGrid) = NaN;
-    prEraData(:, :, m) = tmp;
-    
-    tmp = tempEraData(:, :, m);
-    tmp(waterGrid) = NaN;
-    tempEraData(:, :, m) = tmp;
-    
-    tmp = tempCpcData(:, :, m);
-    tmp(waterGrid) = NaN;
-    tempCpcData(:, :, m) = tmp;
-end
-
-pp = reshape(nansum(prEraData, 3), [numel(nansum(prEraData, 3)),1]);
-pp(pp == 0) = NaN;
-pr10 = prctile(pp, 10);
-% 1 = tropical, 2 = dry, 3 = temperate, 4 = continental, 5 = polar/alpine
-classifications = zeros(size(lat));
+% classifications = zeros(size(lat));
 for ylon = 1:size(lon, 2)
     
     fprintf(['processing ylon = ' num2str(ylon) '...\n']);
     
-    ylonTSeriesEra = [];
-    ylonTSeriesCpc = [];
-    ylonPSeries = [];
+    ylonTSeries = [];
+%     ylonPSeries = [];
+    
+    dayNum = [NaN];
     
     for xlat = 1:size(lat, 1)
-        if waterGrid(xlat, ylon)
-            classifications(xlat, ylon) = 0;
-%             continue;
-        end
         
-        tempTimeSeriesEra = reshape(permute(squeeze(tempEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempEra{3}(xlat, ylon, :, :, :)), 1]);
-        tempTimeSeriesCpc = reshape(permute(squeeze(tempCpc{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempCpc{3}(xlat, ylon, :, :, :)), 1]);
-        prTimeSeries = reshape(permute(squeeze(prEra{3}(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(prEra{3}(xlat, ylon, :, :, :)), 1]);
-       
-        dayNumEra = [];
-        for year = 1:size(tempEra{3}, 3)
+        if exportTmax
+            tempTimeSeries = [];
+            prTimeSeriesEra = [];
+            
             i = 1;
-            for month = 1:size(tempEra{3}, 4)
-                for day = 1:size(tempEra{3}, 5)
-                    if ~isnan(tempEra{3}(xlat, ylon, year, month, day))
-                        dayNumEra(end+1) = i;
-                        i = i + 1;
-                    else
-                        dayNumEra(end+1) = NaN;
-                    end
+            
+            for y = 1:size(temp{3}, 3)
+                tempTimeSeries(end+1,1) = nanmin(nanmin(tempData(xlat, ylon, y, :, :)));
+%                 prTimeSeriesEra(end+1,1) = nanmax(nanmax(prEraData(xlat, ylon, y, :, :)));
+                
+                if xlat == 1
+                    dayNum(end+1) = i;
+                    i = i + 1;
                 end
             end
-        end
-               
-        dayNumCpc = [];
-        for year = 1:size(tempCpc{3}, 3)
-            i = 1;
-            for month = 1:size(tempCpc{3}, 4)
-                for day = 1:size(tempCpc{3}, 5)
-                    if ~isnan(tempCpc{3}(xlat, ylon, year, month, day))
-                        dayNumCpc(end+1) = i;
-                        i = i + 1;
-                    else
-                        dayNumCpc(end+1) = NaN;
+            
+            
+            if computeAnom
+                xMin = max(1, xlat-anomRange);
+                xMax = min(size(lat, 1), xlat+anomRange);
+                yMin = max(1, ylon-anomRange);
+                yMax = min(size(lat, 2), ylon+anomRange);
+
+                % compute anom
+                tempTimeSeries = tempTimeSeries - nanmean(nanmean(nanmean(nanmax(nanmax(tempData(xMin:xMax, yMin:yMax, :, :, :), [], 5), [], 4))));
+            end
+        else
+            tempTimeSeries = reshape(permute(squeeze(tempData(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(tempData(xlat, ylon, :, :, :)), 1]);
+
+            if computeAnom
+                xMin = max(1, xlat-anomRange);
+                xMax = min(size(lat, 1), xlat+anomRange);
+                yMin = max(1, ylon-anomRange);
+                yMax = min(size(lat, 2), ylon+anomRange);
+
+                % compute anom
+                tempTimeSeries = tempTimeSeries - nanmean(nanmean(nanmean(nanmean(nanmean(tempData(xMin:xMax, yMin:yMax, :, :, :))))));
+            end
+            
+            if length(dayNum) == 1
+                i = 2;
+                for year = 1:size(temp{3}, 3)
+                    dayCnt = 1;
+                    for month = 1:size(temp{3}, 4)
+                        for day = 1:size(temp{3}, 5)
+                            if length(find(~isnan(temp{3}(xlat, ylon, year, month, day)))) > 0
+                                dayNum(i) = dayCnt;
+                                dayCnt = dayCnt + 1;
+                            else
+                                dayNum(i) = NaN;
+                            end
+                            i = i + 1;
+                        end
                     end
                 end
-            end
+            end            
         end
         
-%         if nanmin(tempEraData(xlat, ylon, :), [], 3) >= 18
-%             classifications(xlat, ylon) = 1;
-%         end
-%         
-%         if nansum(prEraData(xlat, ylon, :)) <= pr10
-%             classifications(xlat, ylon) = 2;
-%         end
-%         
-%         if nanmin(tempEraData(xlat, ylon, :), [], 3) < 18 && nanmin(tempEraData(xlat, ylon, :), [], 3) > -3
-%             classifications(xlat, ylon) = 3;
-%         end
-%         
-%         if nanmin(tempEraData(xlat, ylon, :), [], 3) < -3
-%             classifications(xlat, ylon) = 4;
-%         end
-%         
-%         if nanmax(tempEraData(xlat, ylon, :), [], 3) < 10
-%             classifications(xlat, ylon) = 5;
-%         end
+%         prTimeSeries = reshape(permute(squeeze(prEraData(xlat, ylon, :, :, :)), [3, 2, 1]), [numel(prEraData(xlat, ylon, :, :, :)), 1]);
         
+        tempTimeSeries = [lat(xlat, ylon); tempTimeSeries];
+%         prTimeSeriesEra = [lat(xlat, ylon); prTimeSeriesEra];
         
-        if length(ylonTSeriesEra) == 0
-            ylonTSeriesEra  = [dayNumEra', tempTimeSeriesEra];
-            ylonPSeries = [dayNumEra', prTimeSeries];
-        else
-            ylonTSeriesEra  = [ylonTSeriesEra, tempTimeSeriesEra];
-            ylonPSeries = [ylonPSeries, prTimeSeries];
-        end
-        
-        if length(ylonTSeriesCpc) == 0
-            ylonTSeriesCpc  = [dayNumCpc', tempTimeSeriesCpc];
-        else
-            ylonTSeriesCpc  = [ylonTSeriesCpc, tempTimeSeriesCpc];
-        end
+        ylonTSeries  = [ylonTSeries, tempTimeSeries];
+%         ylonPSeries  = [ylonPSeries, prTimeSeries];
                 
     end
     
-    ylonTSeriesMean = [ylonTSeriesEra(:,1), ((ylonTSeriesEra(:,2:end)+ylonTSeriesCpc(:,2:end))./2.0)];
-    
+    ylonTSeries  = [dayNum', ylonTSeries];
+%     ylonPSeries  = [dayNum', ylonPSeries];
+
     lo = 2*round(lonRot(xlat,ylon)/2);
     la = 2*round(lat(xlat,ylon)/2);
     
-    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-era-' num2str(lo) '.txt'], ylonTSeriesEra);
-    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-' num2str(lo) '.txt'], ylonTSeriesCpc);
-    dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-mean-' num2str(lo) '.txt'], ylonTSeriesMean);
+    if exportTmax
+        dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/' tVar '-' tDataset '-' num2str(lo) anomStr '.txt'], ylonTSeries);
+%         dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/pmax-era-' num2str(lo) anomStr '.txt'], ylonPSeries);
+    else
+        dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/' tVar '-' tDataset '-' num2str(lo) anomStr '.txt'], ylonTSeries);
+%         dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-cpc-' num2str(lo) anomStr '.txt'], ylonTSeriesCpc);
+    end
+%     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/t-mean-' num2str(lo) '.txt'], ylonTSeriesMean);
 %     dlmwrite(['E:/data/ecoffel/data/projects/ag-land-climate/t-p-dist/p-' num2str(lo) '.txt'], ylonPSeries);
 end
 % classifications(isnan(classifications)) = 0;

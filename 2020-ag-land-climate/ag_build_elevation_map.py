@@ -11,15 +11,13 @@ import glob
 import sys
 import pickle
 
-coords = ((147.363,-36.419), (147.361,-36.430))
-
 elevationDir = 'e:/data/elevation'
 files = glob.glob('%s/*.tif'%elevationDir)
 
-lat = np.linspace(89, -90, 90)
-lon = np.linspace(-180, 180, 180)
-lonStep = 2
-latStep = -2
+lat = np.linspace(90, -90, 360)
+lon = np.linspace(-180, 180, 720)
+lonStep = lon[1]-lon[0]
+latStep = lat[1]-lat[0]
 
 elevationMap = np.zeros([len(lat), len(lon)])
 
