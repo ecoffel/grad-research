@@ -8,138 +8,155 @@ Created on Thu May  2 16:56:07 2019
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
+import pandas as pd
 import seaborn as sns
 import el_build_temp_pp_model
 import pickle, gzip
+import random
 import sys, os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+dataDir = 'script-data/'
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 
-plotFigs = True
+plotFigs = False
 dumpData = False
 
-# load historical weather data for plants to compute mean temps 
-# to display on bootstrap temp curve
-fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-tx.csv'
-plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,:].copy()
-plantMonthData = plantTxData[1,:].copy()
-plantDayData = plantTxData[2,:].copy()
-plantTxData = plantTxData[3:,:].copy()
+if False:
+    # load historical weather data for plants to compute mean temps 
+    # to display on bootstrap temp curve
+    fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-tx.csv'
+    plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+    plantYearData = plantTxData[0,:].copy()
+    plantMonthData = plantTxData[1,:].copy()
+    plantDayData = plantTxData[2,:].copy()
+    plantTxData = plantTxData[3:,:].copy()
 
 
-fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
-plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+    fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
+    plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 
-qs1d = []
-for p in range(plantQsData.shape[0]):
-    qs1d.extend(plantQsData[p,:])
-qs1d = np.array(qs1d)
-qs1d[qs1d<-5] = np.nan
-qs1d[qs1d>5] = np.nan
-qs1d = qs1d[~np.isnan(qs1d)]
+    qs1d = []
+    for p in range(plantQsData.shape[0]):
+        qs1d.extend(plantQsData[p,:])
+    qs1d = np.array(qs1d)
+    qs1d[qs1d<-5] = np.nan
+    qs1d[qs1d>5] = np.nan
+    qs1d = qs1d[~np.isnan(qs1d)]
 
-plt.figure(figsize=(4,4))
-plt.xlim([-5, 5])
-plt.ylim([0, 1])
-plt.grid(True, color=[.9, .9, .9])
-n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
-                            
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
+    plt.figure(figsize=(4,4))
+    plt.xlim([-5, 5])
+    plt.ylim([0, 1])
+    plt.grid(True, color=[.9, .9, .9])
+    n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
 
-plt.xlabel('Runof anomaly (SD)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
+    for tick in plt.gca().xaxis.get_major_ticks():
+        tick.label.set_fontname('Helvetica')
+        tick.label.set_fontsize(14)
+    for tick in plt.gca().yaxis.get_major_ticks():
+        tick.label.set_fontname('Helvetica')    
+        tick.label.set_fontsize(14)
 
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+    plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+    plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
 
-if plotFigs:
-    plt.savefig('runoff-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    x0,x1 = plt.gca().get_xlim()
+    y0,y1 = plt.gca().get_ylim()
+    plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+    if plotFigs:
+        plt.savefig('runoff-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
-#bin_centers = 0.5 * (bins[:-1] + bins[1:])
+    #bin_centers = 0.5 * (bins[:-1] + bins[1:])
+    #
+    #colors = plt.get_cmap('BrBG')
+    ## scale values to interval [0,1]
+    #col = bin_centers - min(bin_centers)
+    #col /= max(col)
+    #for c, p in zip(col, patches):
+    #    curC = colors(c)    
+    #    plt.setp(p, 'facecolor', 'brown')
+
+    summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
+    plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
+    plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
+
+plantMeanTemps = [27]
+plantMeanRunoff = [-0.2]
+    
+    
+if not 'models' in locals():
+    print('building models...')
+    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 10)
+
+    plantIdsTmp = np.unique(plantIds)
+    plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
+    tmp = []
+    for p in np.unique(plantYears):
+        tmp.extend([p]*len(plantIdsTmp))
+    plantYears = np.array(tmp)
+
+#txrange = np.arange(20,51,1)
+#qsrange = [1]
+#tBase = 27
+#qBase = 1
+#nModelsTxRange = []
+#for t in txrange:
+#    nModels = 0
+#    for m in range(len(models)):
+#        basePred = models[m].get_prediction([1, tBase, tBase**2, qBase, qBase**2, qBase*tBase, (qBase**2)*(tBase**2), 0])
+#        cBase = basePred.conf_int()[0]
+#        pred = models[m].predict([1, t, t**2, qBase, qBase**2, qBase*t, (qBase**2)*(t**2), 0])
+#        
+#        if pred < cBase[0] or pred > cBase[1]:
+#            nModels += 1
+#    nModelsTxRange.append(nModels)
+#nModelsTxRange = np.array(nModelsTxRange)/1000.0*100
 #
-#colors = plt.get_cmap('BrBG')
-## scale values to interval [0,1]
-#col = bin_centers - min(bin_centers)
-#col /= max(col)
-#for c, p in zip(col, patches):
-#    curC = colors(c)    
-#    plt.setp(p, 'facecolor', 'brown')
-
-summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
-
-
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
-
-txrange = np.arange(20,51,1)
-qsrange = [1]
-tBase = 27
-qBase = 1
-nModelsTxRange = []
-for t in txrange:
-    nModels = 0
-    for m in range(len(models)):
-        basePred = models[m].get_prediction([1, tBase, tBase**2, qBase, qBase**2, qBase*tBase, (qBase**2)*(tBase**2), 0])
-        cBase = basePred.conf_int()[0]
-        pred = models[m].predict([1, t, t**2, qBase, qBase**2, qBase*t, (qBase**2)*(t**2), 0])
-        
-        if pred < cBase[0] or pred > cBase[1]:
-            nModels += 1
-    nModelsTxRange.append(nModels)
-nModelsTxRange = np.array(nModelsTxRange)/1000.0*100
-
-plt.figure(figsize=(4,4))
-plt.xlim([20,50])
-plt.ylim([0,101])
-plt.grid(True, color=[.9, .9, .9])
-
-plt.plot(txrange, nModelsTxRange, 'k-', linewidth = 2)
-
-plt.gca().set_xticks(range(20,51,5))
-plt.gca().set_yticks([0, 25, 50, 75, 100])
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-plt.xlabel('Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('% bootstraps significant', fontname = 'Helvetica', fontsize=16)
-
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-if plotFigs:
-    plt.savefig('significant-bootstraps.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+#plt.figure(figsize=(4,4))
+#plt.xlim([20,50])
+#plt.ylim([0,101])
+#plt.grid(True, color=[.9, .9, .9])
+#
+#plt.plot(txrange, nModelsTxRange, 'k-', linewidth = 2)
+#
+#plt.gca().set_xticks(range(20,51,5))
+#plt.gca().set_yticks([0, 25, 50, 75, 100])
+#
+#for tick in plt.gca().xaxis.get_major_ticks():
+#    tick.label.set_fontname('Helvetica')
+#    tick.label.set_fontsize(14)
+#for tick in plt.gca().yaxis.get_major_ticks():
+#    tick.label.set_fontname('Helvetica')    
+#    tick.label.set_fontsize(14)
+#
+#plt.xlabel('Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+#plt.ylabel('% bootstraps significant', fontname = 'Helvetica', fontsize=16)
+#
+#x0,x1 = plt.gca().get_xlim()
+#y0,y1 = plt.gca().get_ylim()
+#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+#
+#if plotFigs:
+#    plt.savefig('significant-bootstraps.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 # find fit percentiles for temperature
 t = 50
 q = 0
 
+print('finding regression percentiles for temperature')
 pcEval = []
+dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
+                         'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
+                         'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), 'PlantIds':plantIds, \
+                         'PlantYears':plantYears})
 for i in range(len(models)):
-#    pcEval.append(models[i].predict([1, t, t**2, t**3, \
-#                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
-    pcEval.append(models[i].predict([1, t, t**2, \
-                                     q, q**2, q*t, (q**2)*(t**2), 0])[0])
+    pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -154,12 +171,14 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 t = np.nanmean(plantMeanTemps)
 q = -4
 
+print('finding regression percentiles for runoff')
 pcEval = []
+dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
+                         'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
+                         'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), 'PlantIds':plantIds, \
+                         'PlantYears':plantYears})
 for i in range(len(models)):
-#    pcEval.append(models[i].predict([1, t, t**2, t**3, \
-#                                     q, q**2, q**3, q**4, q**5, q*t, 0])[0])
-    pcEval.append(models[i].predict([1, t, t**2, \
-                                     q, q**2, q*t, (q**2)*(t**2), 0])[0])
+    pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
 pc10 = np.percentile(pcEval, 10)
 pc50 = np.percentile(pcEval, 50)
@@ -180,43 +199,38 @@ if dumpData:
         pickle.dump(pPolyData, f)
 
 
-xd = np.linspace(20, 50, 100)
-qd = np.array([np.nanmean(plantMeanRunoff)]*100)
+xd = np.linspace(20, 50, 25)
+qd = np.array([np.nanmean(plantMeanRunoff)]*25)
 
-ydAll = []
-for i in range(len(models)):
-    ydAll.append([])
-    for k in range(len(xd)):
-#        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, \
-                                                qd[k], qd[k]**2, \
-                                                qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
+print('calculating regression across T distribution')
+ydAll = np.zeros([len(models), len(xd)])
+ydAll[ydAll == 0] = np.nan
+
+for k in range(len(xd)):
+    print('k = %d'%(k))    
+    dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
+                     'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                     'PlantIds':plantIds, 'PlantYears':plantYears})
+    for i in range(len(models)):
+        ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
+        
 ydAll = np.array(ydAll)
 
 yd10 = []
 yd50 = []
 yd90 = []
 
+
 for k in range(len(xd)):
-#    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd10.append(models[indPc10[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
     
-#    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd50.append(models[indPc50[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
-    
-#    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd90.append(models[indPc90[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
-    
+    dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
+                         'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                         'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+    yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
+    yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
+    yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
@@ -236,8 +250,8 @@ p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('Reds')
 
-for m in plantMeanTemps:
-    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
+#for m in plantMeanTemps:
+#    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
 
 plt.gca().set_xticks(range(30, 51, 5))
 plt.gca().set_yticks(plotYTicks)
@@ -260,26 +274,26 @@ x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
+plt.show()
+
 if plotFigs:
     plt.savefig('hist-pc-%s-regression-%s.png'%(tempVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+xd = np.array([np.nanmean(plantMeanTemps)]*25)
+qd = np.linspace(-4, 4, 25)
 
+ydAll = np.zeros([len(models), len(xd)])
+ydAll[ydAll == 0] = np.nan
 
-
-
-
-xd = np.array([np.nanmean(plantMeanTemps)]*100)
-qd = np.linspace(-4, 4, 100)
-
-ydAll = []
-for i in range(len(models)):
-    ydAll.append([])
-    for k in range(len(xd)):
-#        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                                qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-        ydAll[i].append(models[i].predict([1, xd[k], xd[k]**2, \
-                                                    qd[k], qd[k]**2, \
-                                                    qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
+for k in range(len(xd)):
+    print('k = %d'%(k))    
+    dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
+                     'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                     'PlantIds':plantIds, 'PlantYears':plantYears})
+    for i in range(len(models)):
+        ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
+        
 ydAll = np.array(ydAll)
 
 yd10 = []
@@ -287,26 +301,18 @@ yd50 = []
 yd90 = []
 
 for k in range(len(xd)):
-#    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd10.append(models[indPcQs10[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
-    
-#    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd50.append(models[indPcQs50[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
-    
-#    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, xd[k]**3, \
-#                                        qd[k], qd[k]**2, qd[k]**3, qd[k]**4, qd[k]**5, qd[k]*xd[k], 0])[0])
-    yd90.append(models[indPcQs90[0]].predict([1, xd[k], xd[k]**2, \
-                                        qd[k], qd[k]**2, \
-                                        qd[k]*xd[k], (qd[k]**2)*(xd[k]**2), 0])[0])
+    dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
+                         'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                         'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+    yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
+    yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
+    yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
     
 
-
+yd10 = np.array(yd10)
+yd50 = np.array(yd50)
+yd90 = np.array(yd90)
 
 plt.figure(figsize=(4,4))
 plt.xlim([-4, 4])
@@ -320,8 +326,8 @@ p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('BrBG')
 
-for m in plantMeanRunoff:
-    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
+#for m in plantMeanRunoff:
+#    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
 plt.gca().set_yticks(plotYTicks)
 plt.gca().set_xticks(np.arange(-4, 4.1, 1))

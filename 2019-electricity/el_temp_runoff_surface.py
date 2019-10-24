@@ -46,47 +46,46 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTx
     qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
     qs4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][3,:,:,[6,7]])))
 
-histPDF = []
+histPDF = np.ones([len(qsrange), len(txrange)])
 
 qsrange = np.linspace(-4, 4.1, 25)
 txrange = np.linspace(27, 51, 25)
 
-for qs in qsrange:
-    pdfrow = []
-    for t in txrange:
+for q, qs in enumerate(qsrange):
+    for t, tx in enumerate(txrange):
         ind = np.where((plantTxData >= t-.5) & (plantTxData <= t+.5) & \
                        (plantQsData >= qs-.25) & (plantQsData <= qs+.25))[0]
         if len(ind) > 0:
-            pdfrow.append(1)
+            histPDF[q,t] = 1
         else:
-            pdfrow.append(0)
-    histPDF.append(pdfrow)
-histPDF = np.array(histPDF)
-
-
-models = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
-
-yds = []
-
-for m in range(len(models)):
-    # current contour surface for this model
-    curCont = []
+            histPDF[q,t] = 0
     
+models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+plantIdsTmp = np.unique(plantIds)
+    plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
+    tmp = []
+    for p in np.unique(plantYears):
+        tmp.extend([p]*len(plantIdsTmp))
+    plantYears = np.array(tmp)
+    
+    
+yds = np.zeros([len(models), len(qsrange), len(txrange)])
+yds[yds == 0] = np.nan
+
+for m in range(len(models)):    
     for q in range(len(qsrange)):
-        
-        yd = []    
         for t in range(len(txrange)):
             
             if histPDF[q,t] == 1:
-                yd.append(models[m].predict([1, txrange[t], txrange[t]**2, \
-                                            qsrange[q], qsrange[q]**2, \
-                                            qsrange[q]*txrange[t], (qsrange[q]**2)*(txrange[t]**2), 0])[0])
+                dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
+                         'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
+                         'QST':[txrange[t]*qsrange[q]]*len(plantIds), 'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                
+                yds[m,q,t] = np.nanmean(models[m].predict(dfpred))
             else:
-                yd.append(np.nan)
-        curCont.append(yd)
+                yds[m,q,t] = np.nan
         
-    yds.append(curCont)
-
 yds = np.array(yds)
 yds = np.squeeze(np.nanmedian(yds, axis=0))
 yds[yds<75] = 75

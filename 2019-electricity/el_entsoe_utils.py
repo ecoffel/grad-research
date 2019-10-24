@@ -709,6 +709,7 @@ def aggregateEntsoeData(entsoeMatchData):
     outageBoolAll = []
     outageCountAll = []
     
+    plantYears = []
     plantMonths = []
     plantDays = []
     plantIds = []
@@ -745,6 +746,7 @@ def aggregateEntsoeData(entsoeMatchData):
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
             plantIds.extend([entsoeMatchData['plantIds'][c]] * len(curTx))
+            plantYears.extend(entsoeMatchData['years'][inds])
             plantMonths.extend(entsoeMatchData['months'][inds])
             plantDays.extend(entsoeMatchData['days'][inds])
     
@@ -760,13 +762,14 @@ def aggregateEntsoeData(entsoeMatchData):
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
     plantIds = np.array(plantIds)
+    plantYears = np.array(plantYears)
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     
     d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, \
          'qsGrdcSummer':qsGrdcAll, 'qsGrdcAnomSummer':qsGrdcAnomAll, \
          'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
-         'outagesCount':outageCountAll, 'plantMonths':plantMonths, \
+         'outagesCount':outageCountAll, 'plantYears':plantYears, 'plantMonths':plantMonths, \
          'plantDays':plantDays, 'plantIds':plantIds, 'plantMeanTemps':plantMeanTemps}
     return d
 

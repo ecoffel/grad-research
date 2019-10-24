@@ -15,11 +15,7 @@ import os, sys, pickle, gzip
 import geopy.distance
 import xarray as xr
 
-dataDir = 'E:/data/ecoffel/data/projects/ag-land-climate/CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
-
-#tDataset = 'era-interim'
-#tDatasetAnom = ''#'-anom-2'
-#tVar = 'wb-davies-jones-full'
+dataDir = 'data/CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
 
 pasture = rio.open('%s/Pasture2000_5m.tif'%dataDir)
 pastureData = pasture.read(1)
@@ -47,7 +43,7 @@ with open('elevation-map.dat', 'rb') as f:
 
 if not os.path.isfile('koppen-data.dat'):
     
-    koppen = np.genfromtxt('E:/data/ecoffel/data/projects/ag-land-climate/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
+    koppen = np.genfromtxt('data/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
     
     koppenGroupsPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
     koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
@@ -133,7 +129,7 @@ if not os.path.isfile('koppen-data.dat'):
             
             
             # skip if > 1000 m
-            if elevationMap[x,y] > 1000:
+            if elevationMap[x,y] > 500:
                 continue
             
             if not np.isnan(koppenMap[x,y]) and koppenMap[x,y] != 0:
@@ -178,236 +174,362 @@ else:
 #            curPerc = np.nan
 #        print('%s: %.2f, %.2f'%(k, len(koppenGroupsCCells[k])/totalC, curPerc))
 
-tMeans = {'A':{}, 'B':{}, 'C':{}, 'D':{}, 'E':{}}
+if not os.path.isfile('t-means-max-min.dat'):
 
-for k in koppenGroupsPCells.keys():
-    
-    pCells = koppenGroupsPCells[k]
-    cCells = koppenGroupsCCells[k]
-    noPCells = koppenGroupsNoPCells[k]
-    noCCells = koppenGroupsNoCCells[k]
-    
-    selLatsPCells = []
-    selLonsPCells = []    
-    for p in range(len(pCells)):
-        selLonsPCells.append(lonNew[pCells[p][1]])
-        selLatsPCells.append(latNew[pCells[p][0]])
-    selLonsPCells = np.array(selLonsPCells)
-    selLatsPCells = np.array(selLatsPCells)
-    
-    selLatsCCells = []
-    selLonsCCells = []    
-    for p in range(len(cCells)):
-        selLonsCCells.append(lonNew[cCells[p][1]])
-        selLatsCCells.append(latNew[cCells[p][0]])
-    selLonsCCells = np.array(selLonsCCells)
-    selLonsCCells = np.array(selLonsCCells)
-    
-    selLatsNoPCells = []
-    selLonsNoPCells = []    
-    for p in range(len(noPCells)):
-        selLonsNoPCells.append(lonNew[noPCells[p][1]])
-        selLatsNoPCells.append(latNew[noPCells[p][0]])
-    selLonsNoPCells = np.array(selLonsNoPCells)
-    selLatsNoPCells = np.array(selLatsNoPCells)
-    
-    selLatsNoCCells = []
-    selLonsNoCCells = []    
-    for p in range(len(noCCells)):
-        selLonsNoCCells.append(lonNew[noCCells[p][1]])
-        selLatsNoCCells.append(latNew[noCCells[p][0]])
-    selLonsNoCCells = np.array(selLonsNoCCells)
-    selLonsNoCCells = np.array(selLonsNoCCells)
-    
-    tMeans[k]['pLat'] = selLatsPCells
-    tMeans[k]['noPLat'] = selLatsNoPCells
-    tMeans[k]['pLon'] = selLonsPCells
-    tMeans[k]['noPLon'] = selLonsNoPCells
-    tMeans[k]['pCover'] = np.zeros([len(selLonsPCells),1])
-    tMeans[k]['P'] = np.zeros([len(selLatsPCells), len(range(1979, 2018+1))])
-    tMeans[k]['noP'] = np.zeros([len(selLatsNoPCells), len(range(1979, 2018+1))])
-    
-    tMeans[k]['cLat'] = selLatsCCells
-    tMeans[k]['noCLat'] = selLatsNoCCells
-    tMeans[k]['cLon'] = selLonsCCells
-    tMeans[k]['noCLon'] = selLonsNoCCells
-    tMeans[k]['cCover'] = np.zeros([len(selLatsCCells),1])
-    tMeans[k]['C'] = np.zeros([len(selLatsCCells), len(range(1979, 2018+1))])
-    tMeans[k]['noC'] = np.zeros([len(selLatsNoCCells), len(range(1979, 2018+1))])
-
-for year in range(1979, 2018+1):
-    
-    print('loading %d...'%year)
-    ds = xr.open_dataset('E:/data/cpc-temp/raw/tmax.%d.nc'%year, decode_times=False, decode_cf=False)
-    ds.load()
+    tMeans = {'A':{}, 'B':{}, 'C':{}, 'D':{}, 'E':{}}
     
     for k in koppenGroupsPCells.keys():
-        
-        print('processing t & p for k = %s...'%k)
         
         pCells = koppenGroupsPCells[k]
         cCells = koppenGroupsCCells[k]
         noPCells = koppenGroupsNoPCells[k]
         noCCells = koppenGroupsNoCCells[k]
         
-        # the range of lat values with crops in current koppen zone
-        pLatRange = []
-        cLatRange = []
+        selLatsPCells = []
+        selLonsPCells = []    
+        for p in range(len(pCells)):
+            selLonsPCells.append(lonNew[pCells[p][1]])
+            selLatsPCells.append(latNew[pCells[p][0]])
+        selLonsPCells = np.array(selLonsPCells)
+        selLatsPCells = np.array(selLatsPCells)
         
-        for p in range(len(tMeans[k]['pLat'])):
-            ttmp = ds.tmax.sel(lat=tMeans[k]['pLat'][p], lon=tMeans[k]['pLon'][p], method='nearest').dropna(dim='time')
-            ttmp = ttmp.max(dim='time', skipna=True)
-            tMeans[k]['P'][p, year-1979] = float(ttmp.values)
-            
-            if year == 1979:
-                tMeans[k]['pCover'][p] = pastureRegrid[pCells[p][0], pCells[p][1]]
-            
-        for p in range(len(tMeans[k]['cLat'])):
-            ttmp = ds.tmax.sel(lat=tMeans[k]['cLat'][p], lon=tMeans[k]['cLon'][p], method='nearest').dropna(dim='time')
-            ttmp = ttmp.max(dim='time', skipna=True)
-            tMeans[k]['C'][p, year-1979] = float(ttmp.values)
-            
-            if year == 1979:
-                tMeans[k]['cCover'][p] = cropRegrid[cCells[p][0], cCells[p][1]]
+        selLatsCCells = []
+        selLonsCCells = []    
+        for p in range(len(cCells)):
+            selLonsCCells.append(lonNew[cCells[p][1]])
+            selLatsCCells.append(latNew[cCells[p][0]])
+        selLatsCCells = np.array(selLatsCCells)
+        selLonsCCells = np.array(selLonsCCells)
         
-        for p in range(len(tMeans[k]['noCLat'])):
-            ttmp = ds.tmax.sel(lat=tMeans[k]['noCLat'][p], lon=tMeans[k]['noCLon'][p], method='nearest').dropna(dim='time')
-            ttmp = ttmp.max(dim='time', skipna=True)
-            tMeans[k]['noC'][p, year-1979] = float(ttmp.values)
+        selLatsNoPCells = []
+        selLonsNoPCells = []    
+        for p in range(len(noPCells)):
+            selLonsNoPCells.append(lonNew[noPCells[p][1]])
+            selLatsNoPCells.append(latNew[noPCells[p][0]])
+        selLonsNoPCells = np.array(selLonsNoPCells)
+        selLatsNoPCells = np.array(selLatsNoPCells)
+        
+        selLatsNoCCells = []
+        selLonsNoCCells = []    
+        for p in range(len(noCCells)):
+            selLonsNoCCells.append(lonNew[noCCells[p][1]])
+            selLatsNoCCells.append(latNew[noCCells[p][0]])
+        selLatsNoCCells = np.array(selLatsNoCCells)
+        selLonsNoCCells = np.array(selLonsNoCCells)
+        
+        tMeans[k]['pLat'] = selLatsPCells
+        tMeans[k]['noPLat'] = selLatsNoPCells
+        tMeans[k]['pLon'] = selLonsPCells
+        tMeans[k]['noPLon'] = selLonsNoPCells
+        tMeans[k]['pCover'] = np.zeros([len(selLonsPCells),1])
+        tMeans[k]['PMax'] = np.zeros([len(selLatsPCells), len(range(1979, 2018+1))])
+        tMeans[k]['PMin'] = np.zeros([len(selLatsPCells), len(range(1979, 2018+1))])
+        tMeans[k]['noPMax'] = np.zeros([len(selLatsNoPCells), len(range(1979, 2018+1))])
+        tMeans[k]['noPMin'] = np.zeros([len(selLatsNoPCells), len(range(1979, 2018+1))])
+        
+        tMeans[k]['cLat'] = selLatsCCells
+        tMeans[k]['noCLat'] = selLatsNoCCells
+        tMeans[k]['cLon'] = selLonsCCells
+        tMeans[k]['noCLon'] = selLonsNoCCells
+        tMeans[k]['cCover'] = np.zeros([len(selLatsCCells),1])
+        tMeans[k]['CMax'] = np.zeros([len(selLatsCCells), len(range(1979, 2018+1))])
+        tMeans[k]['CMin'] = np.zeros([len(selLatsCCells), len(range(1979, 2018+1))])
+        tMeans[k]['noCMax'] = np.zeros([len(selLatsNoCCells), len(range(1979, 2018+1))])
+        tMeans[k]['noCMin'] = np.zeros([len(selLatsNoCCells), len(range(1979, 2018+1))])
+    
+    for year in range(1979, 2018+1):
+        
+        print('loading %d...'%year)
+        dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmax/tmax.%d.nc'%year, decode_times=False, decode_cf=False)
+        dsMax.load()
+        
+        dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmin/tmin.%d.nc'%year, decode_times=False, decode_cf=False)
+        dsMin.load()
+        
+        for k in koppenGroupsPCells.keys():
+            
+            print('processing t & p for k = %s...'%k)
+            
+            pCells = koppenGroupsPCells[k]
+            cCells = koppenGroupsCCells[k]
+            noPCells = koppenGroupsNoPCells[k]
+            noCCells = koppenGroupsNoCCells[k]
+            
+            # the range of lat values with crops in current koppen zone
+            pLatRange = []
+            cLatRange = []
+            
+            for p in range(len(tMeans[k]['pLat'])):
+                ttmp = dsMax.tmax.sel(lat=tMeans[k]['pLat'][p], lon=tMeans[k]['pLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.max(dim='time', skipna=True)
+                tMeans[k]['PMax'][p, year-1979] = float(ttmp.values)
                 
-        for p in range(len(tMeans[k]['noPLat'])):
-            ttmp = ds.tmax.sel(lat=tMeans[k]['noPLat'][p], lon=tMeans[k]['noPLon'][p], method='nearest').dropna(dim='time')
-            ttmp = ttmp.max(dim='time', skipna=True)
-            tMeans[k]['noP'][p, year-1979] = float(ttmp.values)
-    
-    tMeans[k]['P'][tMeans[k]['P'] < -100] = np.nan
-    tMeans[k]['C'][tMeans[k]['C'] < -100] = np.nan
-    tMeans[k]['noP'][tMeans[k]['noP'] < -100] = np.nan
-    tMeans[k]['noC'][tMeans[k]['noC'] < -100] = np.nan    
-
-sys.exit()
-
-slopesP = []
-slopesPInd = []
-for p in range(txxSeriesPCells.shape[0]):
-    nn = np.where(~np.isnan(txxSeriesPCells[p,:]))[0]
-    if len(nn) > 5:
-        X = sm.add_constant(range(len(txxSeriesPCells[p,nn])))
-        mdlT = sm.OLS(np.array(txxSeriesPCells[p,nn]).reshape(-1,1), X).fit()
-        tSlope = mdlT.params[1]
-        slopesP.append(tSlope)
-        slopesPInd.append(p)
-slopesP = np.array(slopesP)
-slopesPInd = np.array(slopesPInd)
-
-tMeans[k]['pCover'] = pCellsCover[slopesPInd]
-tMeans[k]['pLat'] = np.array(tMeans[k]['pLat'])[slopesPInd]
-tMeans[k]['pLon'] = np.array(tMeans[k]['pLon'])[slopesPInd]
-tMeans[k]['P'].append(slopesP)
-
-slopesC = []
-slopesCInd = []
-for p in range(txxSeriesCCells.shape[0]):
-    nn = np.where(~np.isnan(txxSeriesCCells[p,:]))[0]
-    if len(nn) > 5:
-        X = sm.add_constant(range(len(txxSeriesCCells[p,nn])))
-        mdlT = sm.OLS(np.array(txxSeriesCCells[p,nn]).reshape(-1,1), X).fit()
-        tSlope = mdlT.params[1]
-        slopesC.append(tSlope)
-        slopesCInd.append(p)
+                ttmp = dsMin.tmin.sel(lat=tMeans[k]['pLat'][p], lon=tMeans[k]['pLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.min(dim='time', skipna=True)
+                tMeans[k]['PMin'][p, year-1979] = float(ttmp.values)
+                
+                if year == 1979:
+                    tMeans[k]['pCover'][p] = pastureRegrid[pCells[p][0], pCells[p][1]]
+                
+            for p in range(len(tMeans[k]['cLat'])):
+                ttmp = dsMax.tmax.sel(lat=tMeans[k]['cLat'][p], lon=tMeans[k]['cLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.max(dim='time', skipna=True)
+                tMeans[k]['CMax'][p, year-1979] = float(ttmp.values)
+                
+                ttmp = dsMin.tmin.sel(lat=tMeans[k]['cLat'][p], lon=tMeans[k]['cLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.min(dim='time', skipna=True)
+                tMeans[k]['CMin'][p, year-1979] = float(ttmp.values)
+                
+                if year == 1979:
+                    tMeans[k]['cCover'][p] = cropRegrid[cCells[p][0], cCells[p][1]]
+            
+            for p in range(len(tMeans[k]['noCLat'])):
+                ttmp = dsMax.tmax.sel(lat=tMeans[k]['noCLat'][p], lon=tMeans[k]['noCLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.max(dim='time', skipna=True)
+                tMeans[k]['noCMax'][p, year-1979] = float(ttmp.values)
+                
+                ttmp = dsMin.tmin.sel(lat=tMeans[k]['noCLat'][p], lon=tMeans[k]['noCLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.min(dim='time', skipna=True)
+                tMeans[k]['noCMin'][p, year-1979] = float(ttmp.values)
+                    
+            for p in range(len(tMeans[k]['noPLat'])):
+                ttmp = dsMax.tmax.sel(lat=tMeans[k]['noPLat'][p], lon=tMeans[k]['noPLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.max(dim='time', skipna=True)
+                tMeans[k]['noPMax'][p, year-1979] = float(ttmp.values)
+                
+                ttmp = dsMin.tmin.sel(lat=tMeans[k]['noPLat'][p], lon=tMeans[k]['noPLon'][p], method='nearest').dropna(dim='time')
+                ttmp = ttmp.min(dim='time', skipna=True)
+                tMeans[k]['noPMin'][p, year-1979] = float(ttmp.values)
         
-slopesC = np.array(slopesC)
-slopesCInd = np.array(slopesCInd)
-
-tMeans[k]['cCover'] = cCellsCover[slopesCInd]
-tMeans[k]['cLat'] = tMeans[k]['cLat'][slopesCInd]
-tMeans[k]['cLon'] = tMeans[k]['cLon'][slopesCInd]
-tMeans[k]['C'].append(slopesC)
+            tMeans[k]['PMax'][tMeans[k]['PMax'] < -100] = np.nan
+            tMeans[k]['CMax'][tMeans[k]['CMax'] < -100] = np.nan
+            tMeans[k]['noPMax'][tMeans[k]['noPMax'] < -100] = np.nan
+            tMeans[k]['noCMax'][tMeans[k]['noCMax'] < -100] = np.nan
+            
+            tMeans[k]['PMin'][tMeans[k]['PMin'] < -100] = np.nan
+            tMeans[k]['CMin'][tMeans[k]['CMin'] < -100] = np.nan
+            tMeans[k]['noPMin'][tMeans[k]['noPMin'] < -100] = np.nan
+            tMeans[k]['noCMin'][tMeans[k]['noCMin'] < -100] = np.nan
     
+    with gzip.open('t-means-max-min.dat', 'wb') as f:
+        pickle.dump(tMeans, f)
+else:    
+    print('loading t means')
+    with gzip.open('t-means-max-min.dat', 'rb') as f:
+        tMeans = pickle.load(f)
 
-sys.exit()
+        
+tTrends = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
+
+for k in ['A', 'B', 'C', 'D']:
+    
+    tTrends[k]['slopesPMax'] = []
+    tTrends[k]['slopesPMaxInd'] = []
+    tTrends[k]['slopesPMin'] = []
+    tTrends[k]['slopesPMinInd'] = []
+    tTrends[k]['pCoverMax'] = []
+    tTrends[k]['pCoverMin'] = []
+    for p in range(tMeans[k]['pLat'].shape[0]):
+        nn = np.where(~np.isnan(tMeans[k]['PMax'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['PMax'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['PMax'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesPMax'].append(tSlope*10)
+            tTrends[k]['slopesPMaxInd'].append(p)
+            tTrends[k]['pCoverMax'].append(tMeans[k]['pCover'][p])
+        
+        nn = np.where(~np.isnan(tMeans[k]['PMin'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['PMin'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['PMin'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesPMin'].append(tSlope*10)
+            tTrends[k]['slopesPMinInd'].append(p)
+            tTrends[k]['pCoverMin'].append(tMeans[k]['pCover'][p])
+    tTrends[k]['slopesPMax'] = np.array(tTrends[k]['slopesPMax'])
+    tTrends[k]['slopesPMaxInd'] = np.array(tTrends[k]['slopesPMaxInd'])
+    tTrends[k]['pCoverMax'] = np.array(tTrends[k]['pCoverMax'])
+    tTrends[k]['slopesPMin'] = np.array(tTrends[k]['slopesPMin'])
+    tTrends[k]['slopesPMinInd'] = np.array(tTrends[k]['slopesPMinInd'])
+    tTrends[k]['pCoverMin'] = np.array(tTrends[k]['pCoverMin'])
+    
+    tTrends[k]['slopesCMax'] = []
+    tTrends[k]['slopesCMaxInd'] = []
+    tTrends[k]['cCoverMax'] = []
+    tTrends[k]['slopesCMin'] = []
+    tTrends[k]['slopesCMinInd'] = []
+    tTrends[k]['cCoverMin'] = []
+    for p in range(tMeans[k]['cLat'].shape[0]):
+        nn = np.where(~np.isnan(tMeans[k]['CMax'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['CMax'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['CMax'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesCMax'].append(tSlope*10)
+            tTrends[k]['slopesCMaxInd'].append(p)
+            tTrends[k]['cCoverMax'].append(tMeans[k]['cCover'][p])
+            
+        nn = np.where(~np.isnan(tMeans[k]['CMin'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['CMin'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['CMin'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesCMin'].append(tSlope*10)
+            tTrends[k]['slopesCMinInd'].append(p)
+            tTrends[k]['cCoverMin'].append(tMeans[k]['cCover'][p])
+    tTrends[k]['slopesCMax'] = np.array(tTrends[k]['slopesCMax'])
+    tTrends[k]['slopesCMaxInd'] = np.array(tTrends[k]['slopesCMaxInd'])
+    tTrends[k]['cCoverMax'] = np.array(tTrends[k]['cCoverMax'])
+    tTrends[k]['slopesCMin'] = np.array(tTrends[k]['slopesCMin'])
+    tTrends[k]['slopesCMinInd'] = np.array(tTrends[k]['slopesCMinInd'])
+    tTrends[k]['cCoverMin'] = np.array(tTrends[k]['cCoverMin'])
+    
+    
+    tTrends[k]['slopesNoCMax'] = []
+    tTrends[k]['slopesNoCMaxInd'] = []
+    tTrends[k]['slopesNoCMin'] = []
+    tTrends[k]['slopesNoCMinInd'] = []
+    for p in range(len(tMeans[k]['noCLat'])):
+        nn = np.where(~np.isnan(tMeans[k]['noCMax'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['noCMax'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['noCMax'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesNoCMax'].append(tSlope*10)
+            tTrends[k]['slopesNoCMaxInd'].append(p)
+        nn = np.where(~np.isnan(tMeans[k]['noCMin'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['noCMin'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['noCMin'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesNoCMin'].append(tSlope*10)
+            tTrends[k]['slopesNoCMinInd'].append(p)
+    tTrends[k]['slopesNoCMax'] = np.array(tTrends[k]['slopesNoCMax'])
+    tTrends[k]['slopesNoCMaxInd'] = np.array(tTrends[k]['slopesNoCMaxInd'])
+    tTrends[k]['slopesNoCMin'] = np.array(tTrends[k]['slopesNoCMin'])
+    tTrends[k]['slopesNoCMinInd'] = np.array(tTrends[k]['slopesNoCMinInd'])
+    
+    tTrends[k]['slopesNoPMax'] = []
+    tTrends[k]['slopesNoPMaxInd'] = []
+    tTrends[k]['slopesNoPMin'] = []
+    tTrends[k]['slopesNoPMinInd'] = []
+    for p in range(tMeans[k]['noPLat'].shape[0]):
+        nn = np.where(~np.isnan(tMeans[k]['noPMax'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['noPMax'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['noPMax'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesNoPMax'].append(tSlope*10)
+            tTrends[k]['slopesNoPMaxInd'].append(p)
+        nn = np.where(~np.isnan(tMeans[k]['noPMin'][p,:]))[0]
+        if len(nn) > 5:
+            X = sm.add_constant(range(len(tMeans[k]['noPMin'][p,nn])))
+            mdlT = sm.OLS(tMeans[k]['noPMin'][p,nn].reshape(-1,1), X).fit()
+            tSlope = mdlT.params[1]
+            tTrends[k]['slopesNoPMin'].append(tSlope*10)
+            tTrends[k]['slopesNoPMinInd'].append(p)
+    tTrends[k]['slopesNoPMax'] = np.array(tTrends[k]['slopesNoPMax'])
+    tTrends[k]['slopesNoPMaxInd'] = np.array(tTrends[k]['slopesNoPMaxInd'])
+    tTrends[k]['slopesNoPMin'] = np.array(tTrends[k]['slopesNoPMin'])
+    tTrends[k]['slopesNoPMinInd'] = np.array(tTrends[k]['slopesNoPMinInd'])
+
 kModels = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
     
-totalPCells = len(tMeans['A']['P']) + len(tMeans['B']['P']) + len(tMeans['C']['P']) + \
-              len(tMeans['D']['P'])
-totalCCells = len(tMeans['A']['C']) + len(tMeans['B']['C']) + len(tMeans['C']['C']) + \
-              len(tMeans['D']['C'])
+totalPCells = len(tTrends['A']['slopesPMax']) + len(tTrends['B']['slopesPMax']) + len(tTrends['C']['slopesPMax']) + \
+              len(tTrends['D']['slopesPMax'])
+totalCCells = len(tTrends['A']['slopesCMax']) + len(tTrends['B']['slopesCMax']) + len(tTrends['C']['slopesCMax']) + \
+              len(tTrends['D']['slopesCMax'])
+#
+#allPCover = np.concatenate((tMeans['A']['pCover'], tMeans['B']['pCover'], tMeans['C']['pCover'], \
+#                            tMeans['D']['pCover']))
+#allCCover = np.concatenate((tMeans['A']['cCover'], tMeans['B']['cCover'], tMeans['C']['cCover'], \
+#                            tMeans['D']['cCover']))
+#allP = np.concatenate((tMeans['A']['P'], tMeans['B']['P'], tMeans['C']['P'], \
+#                            tMeans['D']['P']))
+#allC = np.concatenate((tMeans['A']['C'], tMeans['B']['C'], tMeans['C']['C'], \
+#                            tMeans['D']['C']))
+#    
+#nn = np.where((~np.isnan(allP)) & (~np.isnan(allPCover)))[0]
+#X = sm.add_constant(allPCover[nn].reshape(-1,1))
+#mdl = sm.OLS(allP[nn].reshape(-1,1), X).fit()
+#print('All: T/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+#
+#nn = np.where((~np.isnan(allC)) & (~np.isnan(allCCover)))[0]
+#X = sm.add_constant(allCCover[nn].reshape(-1,1))
+#mdl = sm.OLS(allC[nn].reshape(-1,1), X).fit()
+#print('All: T/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+#print()
 
-allPCover = np.concatenate((tMeans['A']['pCover'], tMeans['B']['pCover'], tMeans['C']['pCover'], \
-                            tMeans['D']['pCover']))
-allCCover = np.concatenate((tMeans['A']['cCover'], tMeans['B']['cCover'], tMeans['C']['cCover'], \
-                            tMeans['D']['cCover']))
-allP = np.concatenate((tMeans['A']['P'], tMeans['B']['P'], tMeans['C']['P'], \
-                            tMeans['D']['P']))
-allC = np.concatenate((tMeans['A']['C'], tMeans['B']['C'], tMeans['C']['C'], \
-                            tMeans['D']['C']))
-    
-nn = np.where((~np.isnan(allP)) & (~np.isnan(allPCover)))[0]
-X = sm.add_constant(allPCover[nn].reshape(-1,1))
-mdl = sm.OLS(allP[nn].reshape(-1,1), X).fit()
-print('All: T/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+cCutoff = 0.25
 
-nn = np.where((~np.isnan(allC)) & (~np.isnan(allCCover)))[0]
-X = sm.add_constant(allCCover[nn].reshape(-1,1))
-mdl = sm.OLS(allC[nn].reshape(-1,1), X).fit()
-print('All: T/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(mdl.params[0], mdl.params[1], mdl.pvalues[1]))
-print()
-for k in koppenGroupsPCells.keys():
-    print('%s: %.2f total P'%(k, len(tMeans[k]['P'])/totalPCells))
-    print('%s: %.2f total C'%(k, len(tMeans[k]['C'])/totalCCells))
+for k in ['A', 'B', 'C', 'D']:
+    print('%s: %.2f total P'%(k, len(tTrends[k]['slopesPMax'])/totalPCells))
+    print('%s: %.2f total C'%(k, len(tTrends[k]['slopesCMax'])/totalCCells))
     
-    nn = np.where((~np.isnan(tMeans[k]['P'])) & (~np.isnan(tMeans[k]['pCover'])))[0]
-    if len(tMeans[k]['P'][nn]) > 5:
-        X = sm.add_constant(np.array(tMeans[k]['pCover'][nn]).reshape(-1,1))
-        mdl = sm.OLS(np.array(tMeans[k]['P'][nn]).reshape(-1,1), X).fit()
-        kModels[k]['tP'] = mdl
-        print('%s: T/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(k, mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+    if not 'tPMax' in kModels[k].keys():
+        nn = np.where((~np.isnan(tTrends[k]['slopesPMax'])) & (~np.isnan(tTrends[k]['pCoverMax'])) & (tTrends[k]['pCoverMax'] > cCutoff))[0]
+        if len(tTrends[k]['slopesPMax'][nn]) > 5:
+            X = sm.add_constant(np.array(tTrends[k]['pCoverMax'][nn]).reshape(-1,1))
+            mdl = sm.RLM(np.array(tTrends[k]['slopesPMax'][nn]).reshape(-1,1), X).fit()
+            kModels[k]['tPMax'] = mdl
+    print('%s: TMax/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(k, kModels[k]['tPMax'].params[0], kModels[k]['tPMax'].params[1], kModels[k]['tPMax'].pvalues[1]))
     
-    nn = np.where((~np.isnan(pMeans[k]['P'])) & (~np.isnan(pMeans[k]['pCover'])))[0]
-    if len(pMeans[k]['P'][nn]) > 5:
-        X = sm.add_constant(np.array(pMeans[k]['pCover'][nn]).reshape(-1,1))
-        mdl = sm.OLS(np.array(pMeans[k]['P'][nn]).reshape(-1,1), X).fit()
-        kModels[k]['pP'] = mdl
-        print('%s: P/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(k, mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+    if not 'tPMin' in kModels[k].keys():
+        nn = np.where((~np.isnan(tTrends[k]['slopesPMin'])) & (~np.isnan(tTrends[k]['pCoverMin'])) & (tTrends[k]['pCoverMin'] > cCutoff))[0]
+        if len(tTrends[k]['slopesPMin'][nn]) > 5:
+            X = sm.add_constant(np.array(tTrends[k]['pCoverMin'][nn]).reshape(-1,1))
+            mdl = sm.RLM(np.array(tTrends[k]['slopesPMin'][nn]).reshape(-1,1), X).fit()
+            kModels[k]['tPMin'] = mdl
+    print('%s: TMin/Pasture: interc = %.2f, coef = %.2f, p = %.2f'%(k, kModels[k]['tPMin'].params[0], kModels[k]['tPMin'].params[1], kModels[k]['tPMin'].pvalues[1]))
     
-    nn = np.where((~np.isnan(tMeans[k]['C'])) & (~np.isnan(tMeans[k]['cCover'])))[0]
-    if len(tMeans[k]['C'][nn]) > 5:
-        X = sm.add_constant(np.array(tMeans[k]['cCover'][nn]).reshape(-1,1))
-        mdl = sm.OLS(np.array(tMeans[k]['C'][nn]).reshape(-1,1), X).fit()
-        kModels[k]['tC'] = mdl
-        print('%s: T/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(k, mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+    if not 'tCMax' in kModels[k].keys():
+        nn = np.where((~np.isnan(tTrends[k]['slopesCMax'])) & (~np.isnan(tTrends[k]['cCoverMax'])) & (tTrends[k]['cCoverMax'] > cCutoff))[0]
+        if len(tTrends[k]['slopesCMax'][nn]) > 5:
+            X = sm.add_constant(np.array(tTrends[k]['cCoverMax'][nn]).reshape(-1,1))
+            mdl = sm.RLM(np.array(tTrends[k]['slopesCMax'][nn]).reshape(-1,1), X).fit()
+            kModels[k]['tCMax'] = mdl
+    print('%s: TMax/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(k, kModels[k]['tCMax'].params[0], kModels[k]['tCMax'].params[1], kModels[k]['tCMax'].pvalues[1]))
     
-    nn = np.where((~np.isnan(pMeans[k]['C'])) & (~np.isnan(pMeans[k]['cCover'])))[0]
-    if len(pMeans[k]['C'][nn]) > 5:
-        X = sm.add_constant(np.array(pMeans[k]['cCover'][nn]).reshape(-1,1))
-        mdl = sm.OLS(np.array(pMeans[k]['C'][nn]).reshape(-1,1), X).fit()
-        kModels[k]['pC'] = mdl
-        print('%s: P/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(k, mdl.params[0], mdl.params[1], mdl.pvalues[1]))
+    if not 'tCMin' in kModels[k].keys():
+        nn = np.where((~np.isnan(tTrends[k]['slopesCMin'])) & (~np.isnan(tTrends[k]['cCoverMin'])) & (tTrends[k]['cCoverMin'] > cCutoff))[0]
+        if len(tTrends[k]['slopesCMin'][nn]) > 5:
+            X = sm.add_constant(np.array(tTrends[k]['cCoverMin'][nn]).reshape(-1,1))
+            mdl = sm.RLM(np.array(tTrends[k]['slopesCMin'][nn]).reshape(-1,1), X).fit()
+            kModels[k]['tCMin'] = mdl
+    print('%s: TMin/Crop: interc = %.2f, coef = %.2f, p = %.2f'%(k, kModels[k]['tCMin'].params[0], kModels[k]['tCMin'].params[1], kModels[k]['tCMin'].pvalues[1]))
+    
     print()
 
-sys.exit()
-
+with open('k-models-rlm.dat', 'wb') as f:
+    pickle.dump(kModels, f)
+    
+    
 dist = st.norm
-for i, k in enumerate(koppenGroupsPCells.keys()):
+for i, k in enumerate(['A', 'B', 'C', 'D']):
     
-    pPerc = len(tMeans[k]['P'])/totalPCells*100
-    cPerc = len(tMeans[k]['C'])/totalCCells*100
+    pPerc = tMeans[k]['PMax'].shape[0]/totalPCells*100
+    cPerc = tMeans[k]['CMax'].shape[0]/totalCCells*100
     
-    paramsDistC = dist.fit(tMeans[k]['C'])
+    t = np.nanmean(tMeans[k]['CMax'], axis=1)
+    nn = np.where(~np.isnan(t))[0]
+    paramsDistC = dist.fit(t[nn])
     argDistC = paramsDistC[:-2]
     locDistC = paramsDistC[-2]
     scaleDistC = paramsDistC[-1]
     
-    paramsDistNoC = dist.fit(tMeans[k]['noC'])
+    t = np.nanmean(tMeans[k]['noCMax'], axis=1)
+    nn = np.where(~np.isnan(t))[0]
+    paramsDistNoC = dist.fit(t[nn])
     argDistNoC = paramsDistNoC[:-2]
     locDistNoC = paramsDistNoC[-2]
     scaleDistNoC = paramsDistNoC[-1]
     
-    if len(tMeans[k]['noC']) == 0 or len(tMeans[k]['C']) == 0:
+    if len(tMeans[k]['noCMax']) == 0 or len(tMeans[k]['CMax']) == 0:
         continue
     
-    x = np.linspace(np.nanmin(np.concatenate((tMeans[k]['noC'], tMeans[k]['C']))), \
-                    np.nanmax(np.concatenate((tMeans[k]['noC'], tMeans[k]['C']))), 50)
+    x = np.linspace(np.nanmin(np.concatenate((np.nanmean(tMeans[k]['noCMax'], axis=1), np.nanmean(tMeans[k]['CMax'], axis=1)))), \
+                    np.nanmax(np.concatenate((np.nanmean(tMeans[k]['noCMax'], axis=1), np.nanmean(tMeans[k]['CMax'], axis=1)))), 50)
     
     pdfDistNoC = dist.pdf(x, loc=locDistNoC, scale=scaleDistNoC, *argDistNoC)
     pdfDistC = dist.pdf(x, loc=locDistC, scale=scaleDistC, *argDistC)
@@ -445,6 +567,75 @@ for i, k in enumerate(koppenGroupsPCells.keys()):
         
 #        plt.savefig('koppen-t-crop-%s.eps'%k, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
     plt.show()
+
+    
+    
+
+dist = st.norm
+for i, k in enumerate(['A', 'B', 'C', 'D']):
+    
+    pPerc = tMeans[k]['PMax'].shape[0]/totalPCells*100
+    cPerc = tMeans[k]['CMax'].shape[0]/totalCCells*100
+    
+    t = tTrends[k]['slopesCMax']
+    nn = np.where(~np.isnan(t))[0]
+    paramsDistC = dist.fit(t[nn])
+    argDistC = paramsDistC[:-2]
+    locDistC = paramsDistC[-2]
+    scaleDistC = paramsDistC[-1]
+    
+    t = tTrends[k]['slopesNoCMax']
+    nn = np.where(~np.isnan(t))[0]
+    paramsDistNoC = dist.fit(t[nn])
+    argDistNoC = paramsDistNoC[:-2]
+    locDistNoC = paramsDistNoC[-2]
+    scaleDistNoC = paramsDistNoC[-1]
+    
+    if len(tTrends[k]['slopesNoCMax']) == 0 or len(tTrends[k]['slopesCMax']) == 0:
+        continue
+    
+    x = np.linspace(np.nanmin(np.concatenate((tTrends[k]['slopesNoCMax'], tTrends[k]['slopesCMax']))), \
+                    np.nanmax(np.concatenate((tTrends[k]['slopesNoCMax'], tTrends[k]['slopesCMax']))), 50)
+    
+    pdfDistNoC = dist.pdf(x, loc=locDistNoC, scale=scaleDistNoC, *argDistNoC)
+    pdfDistC = dist.pdf(x, loc=locDistC, scale=scaleDistC, *argDistC)
+    
+    
+    xMaxC = np.where((pdfDistC == np.nanmax(pdfDistC)))[0]
+    xMaxNoC = np.where((pdfDistNoC == np.nanmax(pdfDistNoC)))[0]
+    
+    nnC = np.where(~np.isnan(pdfDistC))[0]
+    nnNoC = np.where(~np.isnan(pdfDistNoC))[0]
+    
+    if len(nnC) > 5 and len(nnNoC) > 5:
+        plt.figure(figsize=(4, 4))
+        plt.grid(True, color=[.9, .9, .9])
+        
+        plt.plot(x, pdfDistC, 'g', lw=2, label='Cropland')
+        plt.plot(x, pdfDistNoC, 'm', lw=2, label='No crop')
+        
+        plt.plot([x[xMaxC], x[xMaxC]], [0, np.nanmax(pdfDistC)], '--g', lw=2)
+        plt.plot([x[xMaxNoC], x[xMaxNoC]], [0, np.nanmax(pdfDistNoC)], '--m', lw=2)
+        
+        plt.title('Classification: %s (%.1f%% total)'%(k, cPerc), fontname = 'Helvetica', fontsize=16)
+        plt.legend(markerscale=2, prop = {'size':10, 'family':'Helvetica'}, frameon=False)
+        
+        plt.xlabel('Temperature trend ($\degree$C/decade)', fontname = 'Helvetica', fontsize=16)
+        plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
+        
+        for tick in plt.gca().xaxis.get_major_ticks():
+            tick.label.set_fontname('Helvetica')
+            tick.label.set_fontsize(14)
+        for tick in plt.gca().yaxis.get_major_ticks():
+            tick.label.set_fontname('Helvetica')    
+            tick.label.set_fontsize(14)
+
+        
+#        plt.savefig('koppen-t-crop-%s.eps'%k, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.show()
+    
+
+    
     
 sys.exit()
     

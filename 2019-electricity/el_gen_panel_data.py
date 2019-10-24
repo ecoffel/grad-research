@@ -20,7 +20,7 @@ import pickle
 #dataDir = '~/research/grad-research/2019-electricity'
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
-dataDir = 'e:/data/ecoffel/data/projects/electricity'
+dataDir = 'e:/data/ecoffel/data/projects/electricity/script-data'
 
 
 
