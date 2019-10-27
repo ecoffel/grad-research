@@ -8,7 +8,8 @@ Created on Wed May  1 17:41:46 2019
 import numpy as np
 import csv
 
-dataDir = 'e:/data'
+#dataDir = 'e:/data'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 
 def countryCheck(s):
@@ -42,7 +43,7 @@ def capacityCheck(c):
 def loadGlobalPlants(world = True):
     globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[], 'yearCom':[]}
         
-    with open('%s/ecoffel/data/projects/electricity/global_power_plant_database.csv'%dataDir, 'r', encoding='latin-1') as f:
+    with open('%s/global_power_plant_database.csv'%dataDirDiscovery, 'r', encoding='latin-1') as f:
         i = 0
         for line in f:
             if i == 0:

@@ -14,6 +14,8 @@ import pickle, gzip
 import sys, os
 import el_load_global_plants
 
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
+
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
               'gfdl-esm2g', 'gfdl-esm2m', \
@@ -41,7 +43,7 @@ decades = np.array([[2020,2029],\
 # these plants are in the same order as the ones loaded from the lat/lon csv
 globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
-with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'rb') as f:
+with open('%s/script-data/active-pp-inds-40-%s.dat'%(dataDirDiscovery, plantData), 'rb') as f:
     livingPlantsInds40 = pickle.load(f)
 
 avgPlantSize = np.nanmean(globalPlants['caps'][livingPlantsInds40[2018]])/1e3
@@ -130,7 +132,7 @@ for y in range(2018, 2090):
         globalPlantsCapsNP = np.concatenate((globalPlantsCapsNP, np.array(gpNPNew)), axis=1) 
 
 
-with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-hist-%s-%s-%s.dat'%(plantData, runoffData, qstr), 'rb') as f:
+with open('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:
     pcChgHist = pickle.load(f)
 
     pcTxx10 = pcChgHist['pCapTxx10']
@@ -138,7 +140,7 @@ with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-hist-
     pcTxx90 = pcChgHist['pCapTxx90']
     
 
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'rb') as f:
+with gzip.open('%s/script-data/demand-projections.dat'%dataDirDiscovery, 'rb') as f:
     demData = pickle.load(f)    
     demHist = demData['demHist']
     demProj = demData['demProj']
@@ -159,15 +161,15 @@ outagesHist50 = np.array(outagesHist50)/1e3
 outagesHist90 = np.array(outagesHist90)/1e3
 
 
-with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-fut-%s-%s-%s-rcp85.dat'%(plantData, runoffData, qstr), 'rb') as f:
+with open('%s/script-data/pc-change-fut-%s-%s-%s-rcp85.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:
     pcChgFut = pickle.load(f)
     pCapTxxFutRcp85_10 = pcChgFut['pCapTxxFutRcp8510']
     pCapTxxFutRcp85_50 = pcChgFut['pCapTxxFutRcp8550']
     pCapTxxFutRcp85_90 = pcChgFut['pCapTxxFutRcp8590']
 
 
-if os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(plantData, runoffData, qstr)):
-    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(plantData, runoffData, qstr), 'rb') as f:
+if os.path.isfile('%s/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr)):
+    with open('%s/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:
         outageScenarios = pickle.load(f)
 else:
     outagesFutRcp85_const_10 = []
@@ -334,7 +336,7 @@ else:
                        'np50':outagesFutRcp85_np_50/1e3,\
                        'np90':outagesFutRcp85_np_90/1e3}
     
-    with open('E:/data/ecoffel/data/projects/electricity/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(plantData, runoffData, qstr), 'wb') as f:
+    with open('%s/script-data/pc-change-scenarios-rcp85-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'wb') as f:
         pickle.dump(outageScenarios, f)
 
 
@@ -349,7 +351,7 @@ yaxis1Ticks = np.arange(-175,1,25)
 yaxis2Ticks = [int(-x) for x in yaxis1Ticks/avgPlantSize]
 
 plt.figure(figsize=(6,4))
-plt.ylim([-175, 0])
+plt.ylim([-190, 0])
 plt.xlim([2016,2087])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -471,8 +473,8 @@ plt.errorbar(2037, \
              yerr = yerrNP, \
              ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
 
-plt.plot([2035, 2035], [-175, 0], '-k', lw=2)
-plt.plot([2045, 2045], [-175, 0], '-k', lw=2)
+plt.plot([2035, 2035], [-190, 0], '-k', lw=2)
+plt.plot([2045, 2045], [-190, 0], '-k', lw=2)
 
 plt.ylabel('Global curtailment (GW)', fontname = 'Helvetica', fontsize=16)
 #plt.xlabel('GMT change', fontname = 'Helvetica', fontsize=16)
@@ -493,7 +495,7 @@ leg = plt.legend(prop = {'size':9, 'family':'Helvetica'}, \
 leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()
-plt.ylim([-175, 0])
+plt.ylim([-190, 0])
 plt.ylabel('# Average power plants', fontname = 'Helvetica', fontsize=16)
 plt.yticks(yaxis1Ticks)
 plt.gca().set_yticklabels(yaxis2Ticks)

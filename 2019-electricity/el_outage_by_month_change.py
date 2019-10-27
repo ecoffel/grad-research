@@ -14,6 +14,7 @@ Created on Mon Apr  8 17:49:10 2019
 
 
 import matplotlib.pyplot as plt 
+import pandas as pd
 import seaborn as sns
 import numpy as np
 import statsmodels.api as sm
@@ -22,7 +23,8 @@ import pickle, gzip
 import sys, os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+#dataDir = 'e:/data/'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
 
@@ -39,7 +41,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 if not 'eData' in locals():
     eData = {}
-    with open('E:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'rb') as f:
+    with open('%s/script-data/eData.dat'%dataDirDiscovery, 'rb') as f:
         eData = pickle.load(f)
 
 nukePlants = eData['nukePlantDataAll']
@@ -50,19 +52,24 @@ entsoePlants = eData['entsoePlantDataAll']
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-pow2.dat'%runoffModel, 'rb') as f:
+plantIds = []
+plantYears = []
+with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffModel), 'rb') as f:
     pPolyData = pickle.load(f)
     # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
-
+    plantIds = pPolyData['plantIds']
+    plantYears = pPolyData['plantYears']
 
 # find historical monthly mean qs and tx for plants
 qsAnomMonthlyMean = []
 txMonthlyMean = []
 txMonthlyMax = []
 
+
+print('loading historical temp/runoff data')
 # first for entsoe plants....
 for p in range(entsoePlants['tx'].shape[0]):
     plantMonthlyTxMean = []
@@ -173,7 +180,7 @@ txMonthlyMax = np.array(txMonthlyMax)
 
 
 
-
+print('loading future gmt temp/runoff data')
 # load future mean warming data for GMT levels
 
 # load future mean warming data and recompute PC
@@ -193,7 +200,7 @@ for w in range(1, 4+1):
         curModelQsMonthlyMeanGMT = []
         
         # load data for current model and warming level
-        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
+        fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
     
         if not os.path.isfile(fileNameTemp):
             # add a nan for each plant in current model
@@ -228,9 +235,9 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,1:].copy()
         plantTxData = plantTxData[3:,1:].copy()
         
-        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
-        fileNameRunoffDistFit = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(w, qstr, models[m])
-        fileNameRunoffDistPercentile = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-percentile-cmip5-%s.csv'%(w, qstr, models[m])
+        fileNameRunoff = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
+        fileNameRunoffDistFit = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
+        fileNameRunoffDistPercentile = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-percentile-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
         
         if os.path.isfile(fileNameRunoffDistFit):
             plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
@@ -243,7 +250,7 @@ for w in range(1, 4+1):
             plantQsPercentileData = []
             
             for p in range(plantQsData.shape[0]):
-                fileNameBestFit = 'E:/data/ecoffel/data/projects/electricity/dist-fits/best-fit-plant-%d.dat'%p
+                fileNameBestFit = '%s/dist-fits/best-fit-plant-%d.dat'%(dataDirDiscovery, p)
                 
                 with open(fileNameBestFit, 'rb') as f:
                     distParams = pickle.load(f)
@@ -383,7 +390,7 @@ qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
 
 
 
-
+print('calculating curtailment change')
 plantMonthlyOutageChg = []
 
 t0 = 27#txMonthlyMax[p,month]
@@ -391,12 +398,17 @@ q0 = 0
 #pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
 #                                     q0, q0**2, q0**3, q0**4, q0**5, \
 #                                     t0*q0,0])[0]
-pc0 = pcModel50.predict([1, t0, t0**2, \
-                                     q0, q0**2, \
-                                     t0*q0, (t0**2)*(q0**2),0])[0]
+dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
+                         'QS1':[q0]*len(plantIds), 'QS2':[q0**2]*len(plantIds), \
+                         'QST':[t0*q0]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+pc0 = np.nanmean(pcModel50.predict(dfpred))
 
 # loop over GMT warming levels
 for w in range(0, 4):
+    
+    print('processing GMT %d'%(w+1))
+    
     plantMonthlyOutageChgGMT = []
     # loop over all plants
     for p in range(nukePlants['qsAnom'].shape[0] + entsoePlants['tx'].shape[0]):
@@ -415,12 +427,11 @@ for w in range(0, 4):
                 # if > 27 C 
                 if t1 >= t0:
             
-#                    pc1 = pcModel50.predict([1, t1, t1**2, t1**3, \
-#                                             q1, q1**2, q1**3, q1**4, q1**5, \
-#                                             t1*q1, 0])[0]
-                    pc1 = pcModel50.predict([1, t1, t1**2, \
-                                             q1, q1**2, \
-                                             t1*q1, (t1**2)*(q1**2), 0])[0]
+                    dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
+                         'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
+                         'QST':[t1*q1]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                    pc1 = np.nanmean(pcModel50.predict(dfpred))
         
                     if pc1 > 100: pc1 = 100
                     if pc1 < 0: pc1 = 0
@@ -448,7 +459,7 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-4.5, 0])
+plt.ylim([-5.5, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -463,7 +474,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-4, -3, -2, -1, 0])
+plt.yticks([-5, -4, -3, -2, -1, 0])
 
 plt.xticks(list(range(1,13)))
 

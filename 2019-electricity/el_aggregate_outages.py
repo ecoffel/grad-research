@@ -12,20 +12,22 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.cm as cmx
 import seaborn as sns
+import pandas as pd
 import statsmodels.api as sm
 import el_load_global_plants
 import pickle, gzip
 import sys, os
 
 
-matplotlib.rcParams['font.family'] = 'Helvetica'
-matplotlib.rcParams['font.weight'] = 'normal'
+#matplotlib.rcParams['font.family'] = 'Helvetica'
+#matplotlib.rcParams['font.weight'] = 'normal'
 
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+#dataDir = 'e:/data/'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -38,7 +40,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 runoffData = 'grdc'
 
 # world, useu, or entsoe-nuke
-plantData = 'useu'
+plantData = 'world'
 
 # '-distfit' or ''
 qsfit = '-qdistfit-gamma'
@@ -50,69 +52,54 @@ if plantData == 'useu':
 elif plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
-with open('E:/data/ecoffel/data/projects/electricity/script-data/active-pp-inds-40-%s.dat'%plantData, 'rb') as f:
+with open('%s/script-data/active-pp-inds-40-%s.dat'%(dataDirDiscovery, plantData), 'rb') as f:
     livingPlantsInds40 = pickle.load(f)
 
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/pPolyData-%s-%s.dat'%(runoffData, modelPower), 'rb') as f:
+with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
+    plantIds = pPolyData['plantIds']
+    plantYears = pPolyData['plantYears']
 
 yearRange = [1981, 2018]
 
 monthLen = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-txBase = 27
-qsBase = 0
-basePred10 = pcModel10.predict([1, txBase, txBase**2, \
-                              qsBase, qsBase**2, \
-                              txBase*qsBase, (txBase**2)*(qsBase**2), \
-                              0])[0]
-basePred50 = pcModel50.predict([1, txBase, txBase**2, \
-                              qsBase, qsBase**2, \
-                              txBase*qsBase, (txBase**2)*(qsBase**2), \
-                              0])[0]
-basePred90 = pcModel90.predict([1, txBase, txBase**2, \
-                              qsBase, qsBase**2, \
-                              txBase*qsBase, (txBase**2)*(qsBase**2), \
-                              0])[0]
+baseTx = 27
+baseQs = 0
 
-if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower)):
+dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
+                         'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
+                         'QST':[baseTx*baseQs]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
+
+basePred10 = np.nanmean(pcModel10.predict(dfpred))
+basePred50 = np.nanmean(pcModel50.predict(dfpred))
+basePred90 = np.nanmean(pcModel90.predict(dfpred))
+
+if not os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower)):
 
     extra=''
     if not 'globalPCHist50' in locals():
-        try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-10%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist10 = globalPCHist['globalPCHist10']
-        except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-10%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist10 = globalPCHist['globalPCHist10']
         
-        try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-50%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist50 = globalPCHist['globalPCHist50']
-        except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-50%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist50 = globalPCHist['globalPCHist50']
+        with open('%s/pc-future-%s/%s-pc-hist%s-%s-10%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
+            globalPCHist = pickle.load(f)
+            globalPCHist10 = globalPCHist['globalPCHist10']
+        
+        with open('%s/pc-future-%s/%s-pc-hist%s-%s-50%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
+            globalPCHist = pickle.load(f)
+            globalPCHist50 = globalPCHist['globalPCHist50']
             
-        try:
-            with gzip.open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-90%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist90 = globalPCHist['globalPCHist90']
-        except:
-            with open('E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-hist%s-%s-90%s.dat'%(runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
-                globalPCHist = pickle.load(f)
-                globalPCHist90 = globalPCHist['globalPCHist90']
-            
+        with open('%s/pc-future-%s/%s-pc-hist%s-%s-90%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, extra), 'rb') as f:
+            globalPCHist = pickle.load(f)
+            globalPCHist90 = globalPCHist['globalPCHist90']
+        
     yearlyOutagesHist10 = []
     yearlyOutagesHist50 = []
     yearlyOutagesHist90 = []
@@ -252,13 +239,13 @@ if not os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/
     yearlyOutagesHist90 = np.array(yearlyOutagesHist90)
     yearlyOutagesHist90 = (np.nansum(yearlyOutagesHist90, axis=0)/numPlants90)*yearlyOutagesHist90.shape[0]
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist10, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist50, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'wb') as f:
         pickle.dump(yearlyOutagesHist90, f)
 
 
@@ -270,8 +257,8 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = []
     yearlyOutagesCurModel90 = []
 
-    if os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model])) or \
-       os.path.isfile('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-10.dat'%(runoffData, plantData, qsfit)):
+    if os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model])) or \
+       os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit)):
         print('skipping %s...'%models[model])
         continue
 
@@ -281,53 +268,29 @@ for model in range(len(models)):
         yearlyOutagesCurGMT50 = []
         yearlyOutagesCurGMT90 = []
         
-        fileName = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
-        fileName10 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-10-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
-        fileName50 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-50-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
-        fileName90 = 'E:\data\ecoffel\data\projects\electricity\pc-future-%s\%s-pc-future%s-90-%ddeg-%s-%s.dat'%(runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, w, modelPower, models[model])
+        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, w, modelPower, models[model])
         
         if os.path.isfile(fileName):
-            try:
-                with gzip.open(fileName, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    
-                    globalPCFut10 = globalPC['globalPCFut10']
-                    globalPCFut50 = globalPC['globalPCFut50']
-                    globalPCFut90 = globalPC['globalPCFut90']
-            except:
-                with open(fileName, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    
-                    globalPCFut10 = globalPC['globalPCFut10']
-                    globalPCFut50 = globalPC['globalPCFut50']
-                    globalPCFut90 = globalPC['globalPCFut90']
+            with open(fileName, 'rb') as f:
+                globalPC = pickle.load(f)
+
+                globalPCFut10 = globalPC['globalPCFut10']
+                globalPCFut50 = globalPC['globalPCFut50']
+                globalPCFut90 = globalPC['globalPCFut90']
+
         elif os.path.isfile(fileName10):
-            try:
-                with gzip.open(fileName10, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut10 = globalPC['globalPCFut10']
-            except:
-                with open(fileName10, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut10 = globalPC['globalPCFut10']
-            
-            try:
-                with gzip.open(fileName50, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut50 = globalPC['globalPCFut50']
-            except:
-                with open(fileName50, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut50 = globalPC['globalPCFut50']
-            
-            try:
-                with gzip.open(fileName90, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut90 = globalPC['globalPCFut90']
-            except:
-                with open(fileName90, 'rb') as f:
-                    globalPC = pickle.load(f)
-                    globalPCFut90 = globalPC['globalPCFut90']
+            with open(fileName10, 'rb') as f:
+                globalPC = pickle.load(f)
+                globalPCFut10 = globalPC['globalPCFut10']
+            with open(fileName50, 'rb') as f:
+                globalPC = pickle.load(f)
+                globalPCFut50 = globalPC['globalPCFut50']
+            with open(fileName90, 'rb') as f:
+                globalPC = pickle.load(f)
+                globalPCFut90 = globalPC['globalPCFut90']
                 
         print('calculating total capacity outage for %s/+%dC'%(models[model],w))
         
@@ -463,26 +426,23 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = np.array(yearlyOutagesCurModel50)
     yearlyOutagesCurModel90 = np.array(yearlyOutagesCurModel90)
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel10, f)
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel50, f)
         
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel90, f)
     
-    
-    
 
-
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
+with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist10 = pickle.load(f)
     
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
+with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist50 = pickle.load(f)
     
-with gzip.open('E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower), 'rb') as f:
+with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-hist%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower), 'rb') as f:
     yearlyOutagesHist90 = pickle.load(f)
 
 yearlyOutagesFut10 = []
@@ -495,9 +455,9 @@ for model in range(len(models)):
     yearlyOutagesCurModel90 = []
 
 
-    fileName10 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
-    fileName50 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
-    fileName90 = 'E:/data/ecoffel/data/projects/electricity/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(runoffData, plantData, qsfit, modelPower, models[model])
+    fileName10 = '%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model])
+    fileName50 = '%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model])
+    fileName90 = '%s/agg-outages-%s/aggregated-%s-outages-fut%s-%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, qsfit, modelPower, models[model])
     
     if os.path.isfile(fileName10):
         
@@ -543,11 +503,11 @@ yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 
 
 if plantData == 'world':
-    yLimSet = 650
+    yLimSet = 850
     yTickStep = 200
 else:
-    yLimSet = 235
-    yTickStep = 50
+    yLimSet = 420
+    yTickStep = 100
 
                             
 # PJ
@@ -640,11 +600,11 @@ if plotFigs:
     
     
 if plantData == 'world':
-    yLimSet = 125
-    yTickStep = 25
+    yLimSet = 160
+    yTickStep = 50
 else:
-    yLimSet = 75
-    yTickStep = 15
+    yLimSet = 110
+    yTickStep = 20
 
 yticks = np.arange(0,yLimSet,yTickStep)
 pctEnergyGrid = np.round(yticks/totalMonthlyEnergy*100,decimals=1)

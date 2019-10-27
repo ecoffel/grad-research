@@ -13,15 +13,18 @@ from sklearn import linear_model
 import statsmodels.api as sm
 import el_build_temp_pp_model
 import gzip, pickle
+import sys
 
-plotFigs = True
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
+
+plotFigs = False
 
 tempVar = 'txSummer'
 qsVar = 'qsGrdcAnomSummer'
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
-fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-tx.csv'
+fileName = '%s/script-data/entsoe-nuke-pp-tx.csv'%dataDirDiscovery
 plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:].copy()
 plantMonthData = plantTxData[1,:].copy()
@@ -29,7 +32,7 @@ plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
 
-fileName = 'E:/data/ecoffel/data/projects/electricity/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'
+fileName = '%s/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'%dataDirDiscovery
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 
 
@@ -37,7 +40,7 @@ summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
-with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'rb') as f:
+with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
     ppFutureData = pickle.load(f)
     txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
     qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
@@ -46,40 +49,46 @@ with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTx
     qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
     qs4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][3,:,:,[6,7]])))
 
-histPDF = np.ones([len(qsrange), len(txrange)])
 
 qsrange = np.linspace(-4, 4.1, 25)
 txrange = np.linspace(27, 51, 25)
 
+histPDF = np.zeros([len(qsrange), len(txrange)])
+
 for q, qs in enumerate(qsrange):
     for t, tx in enumerate(txrange):
-        ind = np.where((plantTxData >= t-.5) & (plantTxData <= t+.5) & \
+        ind = np.where((plantTxData >= tx-.5) & (plantTxData <= tx+.5) & \
                        (plantQsData >= qs-.25) & (plantQsData <= qs+.25))[0]
         if len(ind) > 0:
             histPDF[q,t] = 1
         else:
             histPDF[q,t] = 0
-    
-models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+
+print('building models')
+models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 5)
 plantIdsTmp = np.unique(plantIds)
-    plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
-    tmp = []
-    for p in np.unique(plantYears):
-        tmp.extend([p]*len(plantIdsTmp))
-    plantYears = np.array(tmp)
-    
+plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
+tmp = []
+for p in np.unique(plantYears):
+    tmp.extend([p]*len(plantIdsTmp))
+plantYears = np.array(tmp)
+
     
 yds = np.zeros([len(models), len(qsrange), len(txrange)])
 yds[yds == 0] = np.nan
 
+
+print('calculating surface')
 for m in range(len(models)):    
+    print('%.0f%% complete'%(m/len(models)*100.0))
     for q in range(len(qsrange)):
         for t in range(len(txrange)):
             
             if histPDF[q,t] == 1:
                 dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
                          'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
-                         'QST':[txrange[t]*qsrange[q]]*len(plantIds), 'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
+                         'QST':[txrange[t]*qsrange[q]]*len(plantIds), \
+                                       #'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
                 
                 yds[m,q,t] = np.nanmean(models[m].predict(dfpred))

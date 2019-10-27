@@ -15,13 +15,14 @@ import pickle, gzip
 import os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+#dataDir = 'e:/data/'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 
 def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     eData = {}
-    with open('script-data/eData.dat', 'rb') as f:
+    with open('%s/script-data/eData.dat'%dataDirDiscovery, 'rb') as f:
         eData = pickle.load(f)
 
     entsoeAgDataAll = eData['entsoeAgDataAll']
@@ -85,7 +86,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
 #        X = sm.add_constant(df[['T1', 'T2', 'T3', \
 #                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'QST', 'PlantIds']])
         
-        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears)', data=df).fit()
+        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST +  C(PlantIds) + C(PlantYears)', data=df).fit()
 #        X = sm.add_constant(df[['T1', 'T2', \
 #                                'QS1', 'QS2', 'QST', 'QS2T2', 'PlantIds']])
 #        mdl = sm.OLS(df['PC'], X).fit()
