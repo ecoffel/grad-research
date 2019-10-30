@@ -84,16 +84,16 @@ for m in range(len(models)):
     for q in range(len(qsrange)):
         for t in range(len(txrange)):
             
-            if histPDF[q,t] == 1:
-                dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
-                         'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
-                         'QST':[txrange[t]*qsrange[q]]*len(plantIds), \
-                                       #'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
-                
-                yds[m,q,t] = np.nanmean(models[m].predict(dfpred))
-            else:
-                yds[m,q,t] = np.nan
+#             if histPDF[q,t] == 1:
+            dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
+                     'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
+                     'QST':[txrange[t]*qsrange[q]]*len(plantIds), \
+                                   #'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
+                     'PlantIds':plantIds, 'PlantYears':plantYears})
+
+            yds[m,q,t] = np.nanmean(models[m].predict(dfpred))
+#             else:
+#                 yds[m,q,t] = np.nan
         
 yds = np.array(yds)
 yds = np.squeeze(np.nanmedian(yds, axis=0))
@@ -101,19 +101,19 @@ yds[yds<75] = 75
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
-                               
-plt.contourf(txrange, qsrange, yds, levels=np.arange(85,100,.5), cmap = 'Reds_r')
+    
+plt.contourf(txrange, qsrange, yds, levels=np.arange(75,100,.5), cmap = 'Reds_r')
 cb = plt.colorbar()
-cb.set_ticks(range(85,100,2))
+cb.set_ticks(range(75,100,3))
 plt.xlim([27,50])
 plt.ylim([-4,4])
 plt.plot([27, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
 plt.plot([txHist, txHist], [-4, 4], '-k', lw=2)
 
-#for q in range(len(qsrange)):
-#    for t in range(len(txrange)):
-#        if histPDF[q, t] == 1:
-#            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
+for q in range(len(qsrange)):
+   for t in range(len(txrange)):
+       if histPDF[q, t] == 1:
+           plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
 #plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
 plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835', label='+ 2$\degree$C')
@@ -133,16 +133,15 @@ for tick in cb.ax.yaxis.get_ticklabels():
     tick.set_fontname('Helvetica')    
     tick.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':14, 'family':'Helvetica'}, loc = 'lower right')
+leg = plt.legend(prop = {'size':14, 'family':'Helvetica'}, loc = 'upper right')
 leg.get_frame().set_linewidth(0.0)
-
 
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-%s-%s-regression-contour.eps'%(tempVar,qsVar), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-%s-%s-regression-contour.png'%(tempVar,qsVar), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 

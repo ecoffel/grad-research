@@ -22,7 +22,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = False
+plotFigs = True
 
 # grdc or gldas
 runoffData = 'grdc'

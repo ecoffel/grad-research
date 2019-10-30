@@ -119,67 +119,6 @@ txMonthlyMean = np.array(txMonthlyMean)
 txMonthlyMax = np.array(txMonthlyMax)
 
 
-# find future monthly mean qs and tx for plants using RCP 85
-#qsAnomMonthlyMeanFut = []
-#txMonthlyMeanFut = []
-#txMonthlyMaxFut = []
-#    
-## loop over all models
-#for m in range(len(models)):
-#    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
-#    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-#    plantTxYearData = plantTxData[0,1:].copy()
-#    plantTxMonthData = plantTxData[1,1:].copy()
-#    plantTxDayData = plantTxData[2,1:].copy()
-#    plantTxData = plantTxData[3:,1:].copy()
-#    
-#    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
-#    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-#    plantQsYearData = plantTxData[0,1:].copy()
-#    plantQsMonthData = plantTxData[1,1:].copy()
-#    plantQsDayData = plantTxData[2,1:].copy()
-#    plantQsData = plantQsData[3:,1:].copy()
-#
-#    qsAnomMonthlyMeanFutCurModel = []
-#    txMonthlyMeanFutCurModel = []
-#    txMonthlyMaxFutCurModel = []
-#
-#    for p in range(plantTxData.shape[0]):
-#        plantMonthlyTxMeanFut = []
-#        plantMonthlyTxMaxFut = []
-#        plantMonthlyQsAnomMeanFut = []
-#        
-#        for month in range(1,13):
-#            ind = np.where((plantTxMonthData==month))[0]
-#            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
-#            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
-#        
-#        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
-#        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
-#        
-#        for month in range(0,12):
-#            plantMonthlyTxMaxFut.append([])
-#            for y in np.unique(plantTxYearData):
-#                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
-#                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
-#    
-#        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
-#    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
-#    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
-#    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
-#    
-#    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
-#    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
-#    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
-#
-#qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
-#txMonthlyMeanFut = np.array(txMonthlyMeanFut)
-#txMonthlyMaxFut = np.array(txMonthlyMaxFut)
-
-
-
-
-
 print('loading future gmt temp/runoff data')
 # load future mean warming data for GMT levels
 

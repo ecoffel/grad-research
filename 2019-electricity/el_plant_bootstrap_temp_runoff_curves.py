@@ -24,7 +24,7 @@ qsVar = 'qsGrdcAnomSummer'
 modelPower = 'pow2'
 
 plotFigs = True
-dumpData = True
+dumpData = False
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -39,9 +39,13 @@ plantTxData = plantTxData[3:,:].copy()
 fileName = '%s/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'%dataDirDiscovery
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 
+snsColors = sns.color_palette(["#3498db", "#e74c3c"])
+
+summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
+
 qs1d = []
 for p in range(plantQsData.shape[0]):
-    qs1d.extend(plantQsData[p,:])
+    qs1d.extend(plantQsData[p,summerInd])
 qs1d = np.array(qs1d)
 qs1d[qs1d<-5] = np.nan
 qs1d[qs1d>5] = np.nan
@@ -49,7 +53,6 @@ qs1d = qs1d[~np.isnan(qs1d)]
 
 plt.figure(figsize=(4,4))
 plt.xlim([-5, 5])
-plt.ylim([0, 1])
 plt.grid(True, color=[.9, .9, .9])
 n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
 
@@ -70,6 +73,38 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
     plt.savefig('runoff-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+    
+    
+    
+    
+    
+tx1d = []
+for p in range(plantTxData.shape[0]):
+    tx1d.extend(plantTxData[p,summerInd])
+tx1d = np.array(tx1d)
+tx1d = tx1d[~np.isnan(tx1d)]
+
+plt.figure(figsize=(4,4))
+plt.xlim([0, 50])
+plt.grid(True, color=[.9, .9, .9])
+n, bins, patches = plt.hist(tx1d, bins=100, density=True, color=snsColors[1]);
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+plt.xlabel('Temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
+
+x0,x1 = plt.gca().get_xlim()
+y0,y1 = plt.gca().get_ylim()
+plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+
+if plotFigs:
+    plt.savefig('temp-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 #bin_centers = 0.5 * (bins[:-1] + bins[1:])
 #
@@ -229,7 +264,7 @@ for k in range(len(xd)):
     yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
     yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
 
-snsColors = sns.color_palette(["#3498db", "#e74c3c"])
+
 
 baseY = 80
 plotYTicks = [80, 85, 90, 95, 100]
@@ -247,8 +282,8 @@ p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('Reds')
 
-#for m in plantMeanTemps:
-#    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
+for m in plantMeanTemps:
+   plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
 
 plt.gca().set_xticks(range(30, 51, 5))
 plt.gca().set_yticks(plotYTicks)
@@ -263,15 +298,13 @@ for tick in plt.gca().yaxis.get_major_ticks():
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'center left', \
-                 bbox_to_anchor=(0.01, 0.3))
+#                 bbox_to_anchor=(0.01, 0.3)
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper right')
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
 y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-plt.show()
 
 if plotFigs:
     plt.savefig('hist-pc-%s-regression-%s.png'%(tempVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
@@ -323,8 +356,8 @@ p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('BrBG')
 
-#for m in plantMeanRunoff:
-#    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
+for m in plantMeanRunoff:
+   plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
 plt.gca().set_yticks(plotYTicks)
 plt.gca().set_xticks(np.arange(-4, 4.1, 1))

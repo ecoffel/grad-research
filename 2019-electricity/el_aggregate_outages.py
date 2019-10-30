@@ -40,7 +40,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 runoffData = 'grdc'
 
 # world, useu, or entsoe-nuke
-plantData = 'world'
+plantData = 'useu'
 
 # '-distfit' or ''
 qsfit = '-qdistfit-gamma'
@@ -505,16 +505,19 @@ yearlyOutagesFut90 = np.moveaxis(yearlyOutagesFut90, 1, 0)
 if plantData == 'world':
     yLimSet = 850
     yTickStep = 200
+    yticks = np.arange(0,yLimSet,yTickStep)
 else:
     yLimSet = 420
     yTickStep = 100
+    yTicks = [0, 100, 200, 300]
+    yticks = np.arange(0,310,yTickStep)
 
                             
 # PJ
 totalMonthlyEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3
 totalAnnualEnergy = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])*30*24*3600*1e6/1e18*1e3*12
 xpos = [1,2,3,4,5,6,7,8,9,10,11,12]
-yticks = np.arange(0,yLimSet,yTickStep)
+
 pctEnergyGrid = np.round(yticks/totalAnnualEnergy*100,decimals=1)
 
 outageSumHist = []
@@ -672,7 +675,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('accumulated-monthly-outage-%s.png'%runoffData, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('accumulated-monthly-outage-%s-%s.png'%(plantData, runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()
