@@ -15,12 +15,14 @@ import os, sys, pickle, gzip
 import geopy.distance
 import xarray as xr
 
-dataDir = 'data/CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
+cropAreaDataDir = 'CroplandPastureArea2000_Geotiff/CroplandPastureArea2000_Geotiff'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
-pasture = rio.open('%s/Pasture2000_5m.tif'%dataDir)
+
+pasture = rio.open('%s/%s/Pasture2000_5m.tif'%(dataDirDiscovery, cropAreaDataDir))
 pastureData = pasture.read(1)
 
-crop = rio.open('%s/Cropland2000_5m.tif'%dataDir)
+crop = rio.open('%s/%s/Cropland2000_5m.tif'%(dataDirDiscovery, cropAreaDataDir))
 cropData = crop.read(1)
 
 latOld = np.linspace(pasture.bounds.bottom, pasture.bounds.top, pasture.shape[0])
@@ -38,12 +40,12 @@ pastureRegrid[pastureRegrid < 0] = np.nan
 cropRegrid = cropInterp(lonNew, latNew)
 cropRegrid[cropRegrid < 0] = np.nan
 
-with open('elevation-map.dat', 'rb') as f:
+with open('%s/script-data/elevation-map.dat'%dataDirDiscovery, 'rb') as f:
     elevationMap = pickle.load(f)
 
-if not os.path.isfile('koppen-data.dat'):
+if not os.path.isfile('%s/script-data/koppen-data.dat'%dataDirDiscovery):
     
-    koppen = np.genfromtxt('data/koppen-classification/koppen_1901-2010.tsv', dtype=None, names=True, encoding='UTF-8')
+    koppen = np.genfromtxt('%s/koppen-classification/koppen_1901-2010.tsv'%dataDirDiscovery, dtype=None, names=True, encoding='UTF-8')
     
     koppenGroupsPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
     koppenGroupsNoPCells = {'A':[], 'B':[], 'C':[], 'D':[], 'E':[]}
@@ -149,10 +151,10 @@ if not os.path.isfile('koppen-data.dat'):
                   'koppenGroupsNoPCells':koppenGroupsNoPCells, \
                   'koppenGroupsCCells':koppenGroupsCCells, \
                   'koppenGroupsNoCCells':koppenGroupsNoCCells}
-    with gzip.open('koppen-data.dat', 'wb') as f:
+    with gzip.open('%s/script-data/koppen-data.dat'%dataDirDiscovery, 'wb') as f:
         pickle.dump(koppenData, f)
 else:
-    with gzip.open('koppen-data.dat', 'rb') as f:
+    with gzip.open('%s/script-data/koppen-data.dat'%dataDirDiscovery, 'rb') as f:
         koppenData = pickle.load(f)
         
         koppenMap = koppenData['koppenMap']
@@ -174,7 +176,7 @@ else:
 #            curPerc = np.nan
 #        print('%s: %.2f, %.2f'%(k, len(koppenGroupsCCells[k])/totalC, curPerc))
 
-if not os.path.isfile('t-means-max-min.dat'):
+if not os.path.isfile('%s/script-data/t-means-max-min.dat'%dataDirDiscovery):
 
     tMeans = {'A':{}, 'B':{}, 'C':{}, 'D':{}, 'E':{}}
     
@@ -311,14 +313,14 @@ if not os.path.isfile('t-means-max-min.dat'):
             tMeans[k]['noPMin'][tMeans[k]['noPMin'] < -100] = np.nan
             tMeans[k]['noCMin'][tMeans[k]['noCMin'] < -100] = np.nan
     
-    with gzip.open('t-means-max-min.dat', 'wb') as f:
+    with gzip.open('%s/script-data/t-means-max-min.dat'%dataDirDiscovery, 'wb') as f:
         pickle.dump(tMeans, f)
 else:    
     print('loading t means')
-    with gzip.open('t-means-max-min.dat', 'rb') as f:
+    with gzip.open('%s/script-data/t-means-max-min.dat'%dataDirDiscovery, 'rb') as f:
         tMeans = pickle.load(f)
 
-        
+
 tTrends = {'A':{}, 'B':{}, 'C':{}, 'D':{}}
 
 for k in ['A', 'B', 'C', 'D']:
@@ -569,7 +571,7 @@ for i, k in enumerate(['A', 'B', 'C', 'D']):
     plt.show()
 
     
-    
+sys.exit()
 
 dist = st.norm
 for i, k in enumerate(['A', 'B', 'C', 'D']):

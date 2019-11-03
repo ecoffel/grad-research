@@ -14,6 +14,7 @@ import sys, os, pickle
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 #dataDir = 'e:/data/'
+dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
 
@@ -68,17 +69,17 @@ def loadWxData(eba, wxdata):
     fileNameCDD = ''
     
     if wxdata == 'cpc':
-        fileName = 'nuke-tx-cpc.csv'
-        fileNameCDD = 'nuke-cdd-cpc.csv'
+        fileName = '%s/script-data/nuke-tx-cpc.csv'%dataDir
+        fileNameCDD = '%s/script-data/nuke-cdd-cpc.csv'%dataDir
     elif wxdata == 'era':
-        fileName = 'nuke-tx-era.csv'
-        fileNameCDD = 'nuke-cdd-era.csv'
+        fileName = '%s/script-data/nuke-tx-era.csv'%dataDir
+        fileNameCDD = '%s/script-data/nuke-cdd-era.csv'%dataDir
     elif wxdata == 'ncep':
-        fileName = 'nuke-tx-ncep.csv'
-        fileNameCDD = 'nuke-cdd-ncep.csv'
+        fileName = '%s/script-data/nuke-tx-ncep.csv'%dataDir
+        fileNameCDD = '%s/script-data/nuke-cdd-ncep.csv'%dataDir
     elif wxdata == 'all':
-        fileName = ['nuke-tx-cpc.csv', 'nuke-tx-era.csv', 'nuke-tx-ncep.csv']
-        fileNameCDD = ['nuke-cdd-cpc.csv', 'nuke-cdd-era.csv', 'nuke-cdd-ncep.csv']
+        fileName = ['%s/script-data/nuke-tx-cpc.csv'%dataDir, '%s/script-data/nuke-tx-era.csv'%dataDir, '%s/script-data/nuke-tx-ncep.csv'%dataDir]
+        fileNameCDD = ['%s/script-data/nuke-cdd-cpc.csv'%dataDir, '%s/script-data/nuke-cdd-era.csv'%dataDir, '%s/script-data/nuke-cdd-ncep.csv'%dataDir]
         
         
     tx = []
@@ -109,10 +110,10 @@ def loadWxData(eba, wxdata):
         cdd = np.genfromtxt(fileNameCDD, delimiter=',')
     
     
-    fileNameGldas = 'nuke-qs-gldas-all.csv'
+    fileNameGldas = '%s/script-data/nuke-qs-gldas-all.csv'%dataDir
     qs = np.genfromtxt(fileNameGldas, delimiter=',')
     
-    fileNameGrdc = 'nuke-qs-grdc.csv'
+    fileNameGrdc = '%s/script-data/nuke-qs-grdc.csv'%dataDir
     qsGrdcRaw = np.genfromtxt(fileNameGrdc, delimiter=',')
     
     qsGrdc = []

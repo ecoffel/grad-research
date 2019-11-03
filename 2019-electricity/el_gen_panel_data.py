@@ -20,11 +20,9 @@ import pickle
 #dataDir = '~/research/grad-research/2019-electricity'
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
-dataDir = 'e:/data/ecoffel/data/projects/electricity/script-data'
+dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 
-
-    
 if not 'entsoeData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir, forced=False)
     
@@ -82,7 +80,7 @@ eData = {'entsoeData':entsoeData, \
          'nukePlantDataNcep':nukePlantDataNcep, \
          'nukePlantDataAll':nukePlantDataAll}
 
-with open('%s/eData.dat'%dataDir, 'wb') as f:
+with open('%s/script-data/eData.dat'%dataDir, 'wb') as f:
     pickle.dump(eData, f)
 
 sys.exit()
@@ -100,7 +98,7 @@ pc = []
 pc.extend(nukeAgDataAll['capacitySummer'])
 df['PCAll'] = pc
 
-df.to_csv('nuke-panel-data.csv', header = False, index = False, index_label = False)
+df.to_csv('%s/nuke-panel-data.csv'%dataDir, header = False, index = False, index_label = False)
 
 
 

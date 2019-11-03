@@ -18,14 +18,16 @@ import shapely.geometry as geometry
 
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data'
+#dataDir = 'e:/data'
+dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-shp = shapefile.Reader('E:/data/ecoffel/data/projects/electricity/basins/c_analysb.shp')
+shp = shapefile.Reader('%s/basins/c_analysb.shp'%dataDirDiscovery)
 basins = shp.shapes()
 basinRecords = shp.records()
 
-nukeLatLon = np.genfromtxt('nuke-lat-lon.csv', delimiter=',', skip_header=0)
-entsoeLatLon = np.genfromtxt('entsoe-lat-lon.csv', delimiter=',', skip_header=0)
+nukeLatLon = np.genfromtxt('%s/script-data/nuke-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
+entsoeLatLon = np.genfromtxt('%s/script-data/entsoe-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
 plantLatLon = np.concatenate((nukeLatLon,entsoeLatLon),axis=0)
 
 grdcRefData = []
@@ -61,12 +63,13 @@ for p in range(plantLatLon.shape[0]):
     
     pLat = plantLatLon[p,1]
     pLon = plantLatLon[p,2]
+    ptPlant = geometry.Point(pLon, pLat)
     
     # find basin for this plant
     plantBasinId = -1
     for i in range(len(basins)):
         boundary = basins[i]
-        if geometry.Point(pLat, pLon).within(geometry.shape(boundary)):
+        if ptPlant.within(geometry.shape(boundary)):
             plantBasinId = i
     
     minDist = -1
@@ -75,8 +78,9 @@ for p in range(plantLatLon.shape[0]):
         
         gLat = grdcRefData[g,1]
         gLon = grdcRefData[g,2]
+        ptGuage = geometry.Point(gLon, gLat)
         
-        d = geopy.distance.vincenty((pLat,pLon), (gLat,gLon)).km
+        d = geopy.distance.great_circle((pLat,pLon), (gLat,gLon)).km
         
         # check that plant and guage are both in the same basin
         guageBasinId = -1
@@ -84,8 +88,13 @@ for p in range(plantLatLon.shape[0]):
         # find basin for guage
         for i in range(len(basins)):
             boundary = basins[i]
-            if geometry.Point(gLat, gLon).within(geometry.shape(boundary)):
-                guageBasinId = i
+            
+            minLon, minLat, maxLon, maxLat = boundary.bbox
+            bounding_box = geometry.box(minLon, minLat, maxLon, maxLat)
+            
+            if bounding_box.contains(ptGuage):
+                if ptGuage.within(geometry.shape(boundary)):
+                    guageBasinId = i
             
         # skip gague if not in same basin as plant
         if guageBasinId != plantBasinId:
@@ -95,23 +104,25 @@ for p in range(plantLatLon.shape[0]):
             minDist = d
             minDistId = grdcRefData[g,0]
     
+    if minDistId == -1:
+        minDist = np.nan
+    elif minDist > 250:
+        minDist = np.nan
+        minDistId = -1
     
-#    if minDist > 150:
-#        minDistId = -1
-#    else:
-#        grdcDists.append(minDist)
-
+    grdcDists.append(minDist)
     print('min dist id = %d'%minDistId)
-    print()    
     grdcMatchIds.append((plantLatLon[p,0], minDistId))
 
 # these are the station ids that correspond to the plant lat/lons
 grdcMatchIds = np.array(grdcMatchIds)
+grdcDists = np.array(grdcDists)
+
+# with open('grdc-data-lon-lat.dat', 'wb') as f:
+#     pickle.dump({'ids':grdcMatchIds, 'dists':grdcDists}, f)
 
 grdcDataNuke = []
 grdcDataEntsoe = []
-
-
 
 for g in range(len(grdcMatchIds)):
     
@@ -154,7 +165,7 @@ for g in range(len(grdcMatchIds)):
         
             i = 0
             
-            with open('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId), 'r') as f:
+            with open('%s/grdc/grdc_data/%d_Q_Day.Cmd.txt'%(dataDir, minDistId), 'r', encoding='latin') as f:
                 for line in f:
                     if line[0] == '#':
                         continue
@@ -189,7 +200,7 @@ for g in range(len(grdcMatchIds)):
             
             i = 0
             
-            with open('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId), 'r') as f:
+            with open('%s/grdc/grdc_data/%d_Q_Month.txt'%(dataDir, minDistId), 'r', encoding='latin') as f:
                 for line in f:
                     if line[0] == '#':
                         continue
@@ -232,7 +243,7 @@ grdcDataNuke = np.array(grdcDataNuke)
 grdcDataEntsoe = np.array(grdcDataEntsoe)
 
 # write runoff data to file
-np.savetxt("nuke-qs-grdc.csv", grdcDataNuke, delimiter=",", fmt='%f')
+np.savetxt('%s/nuke-qs-grdc.csv'%dataDirDiscovery, grdcDataNuke, delimiter=",", fmt='%f')
 
 yearHeader = []
 monthHeader = []
@@ -253,7 +264,7 @@ dayHeader = np.array(dayHeader)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, dayHeader, axis=0)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, monthHeader, axis=0)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, yearHeader, axis=0)
-np.savetxt("entsoe-qs-grdc.csv", grdcDataEntsoe, delimiter=",", fmt='%f')
+np.savetxt('%s/entsoe-qs-grdc.csv'%dataDirDiscovery, grdcDataEntsoe, delimiter=",", fmt='%f')
 
 
 

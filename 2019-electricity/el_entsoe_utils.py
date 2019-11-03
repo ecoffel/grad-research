@@ -10,6 +10,8 @@ import scipy.stats as st
 import os, pickle
 import el_find_best_runoff_dist
 
+dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
+
 def normalize(v):
     nn = np.where(~np.isnan(v))[0]
     norm = np.linalg.norm(v[nn])
@@ -281,31 +283,31 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     fileNameCDD = ''
     
     if forced:
-        fileNameQs = 'entsoe-qs-gldas-all.csv'
+        fileNameQs = '%s/script-data/entsoe-qs-gldas-all.csv'%dataDir
     else:
-        fileNameQs = 'entsoe-qs-gldas-all-nonforced.csv'
+        fileNameQs = '%s/script-data/entsoe-qs-gldas-all-nonforced.csv'%dataDir
     
-    fileNameQsGrdc = 'entsoe-qs-grdc.csv'
+    fileNameQsGrdc = '%s/script-data/entsoe-qs-grdc.csv'%dataDir
     
     #for averaging cdd, tx
 #    smoothingLen = 4
     
     if wxdata == 'cpc':
-        fileName = 'entsoe-tx-cpc.csv'
-        fileNameCDD = 'entsoe-cdd-cpc.csv'
+        fileName = '%s/script-data/entsoe-tx-cpc.csv'%dataDir
+        fileNameCDD = '%s/script-data/entsoe-cdd-cpc.csv'%dataDir
     elif wxdata == 'era':
-        fileName = 'entsoe-tx-era.csv'
-        fileNameCDD = 'entsoe-cdd-era.csv'
+        fileName = '%s/script-data/entsoe-tx-era.csv'%dataDir
+        fileNameCDD = '%s/script-data/entsoe-cdd-era.csv'%dataDir
     elif wxdata == 'ncep':
-        fileName = 'entsoe-tx-ncep.csv'
-        fileNameCDD = 'entsoe-cdd-ncep.csv'
+        fileName = '%s/script-data/entsoe-tx-ncep.csv'%dataDir
+        fileNameCDD = '%s/script-data/entsoe-cdd-ncep.csv'%dataDir
     elif wxdata == 'all':
         if forced:
-            fileName = ['entsoe-tx-cpc.csv', 'entsoe-tx-era.csv', 'entsoe-tx-ncep.csv']
+            fileName = ['%s/script-data/entsoe-tx-cpc.csv'%dataDir, '%s/script-data/entsoe-tx-era.csv'%dataDir, '%s/script-data/entsoe-tx-ncep.csv'%dataDir]
         else:
-            fileName = ['entsoe-tx-cpc-nonforced.csv', 'entsoe-tx-era-nonforced.csv', 'entsoe-tx-ncep-nonforced.csv']
+            fileName = ['%s/script-data/entsoe-tx-cpc-nonforced.csv'%dataDir, '%s/script-data/entsoe-tx-era-nonforced.csv'%dataDir, '%s/script-data/entsoe-tx-ncep-nonforced.csv'%dataDir]
             
-        fileNameCDD = ['entsoe-cdd-cpc.csv', 'entsoe-cdd-era.csv', 'entsoe-cdd-ncep.csv']
+        fileNameCDD = ['%s/script-data/entsoe-cdd-cpc.csv'%dataDir, '%s/script-data/entsoe-cdd-era.csv'%dataDir, '%s/script-data/entsoe-cdd-ncep.csv'%dataDir]
     
     
     tx = []
@@ -597,9 +599,9 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
 
 
 def matchEntsoeWxCountry(entsoeData, useEra):
-    fileName = 'country-tx-cpc-2015-2018.csv'
+    fileName = '%s/script-data/country-tx-cpc-2015-2018.csv'%dataDir
     if useEra:
-        fileName = 'country-tx-era-2015-2018.csv'
+        fileName = '%s/script-data/country-tx-era-2015-2018.csv'%dataDir
     
     countryList = []
     with open(fileName, 'r') as f:
@@ -782,7 +784,7 @@ def exportLatLon(entsoeData):
     entsoeLon = np.array(entsoeData['lons'][uniqueLatInds])
     
     i = 0
-    with open('entsoe-lat-lon-nonforced.csv', 'w') as f:
+    with open('%s/script-data/entsoe-lat-lon-nonforced.csv'%dataDir, 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(entsoeLat)):
             csvWriter.writerow([i, entsoeLat[i], entsoeLon[i]])

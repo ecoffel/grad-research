@@ -23,7 +23,7 @@ qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 
-plotFigs = True
+plotFigs = False
 dumpData = False
 
 # load historical weather data for plants to compute mean temps 
