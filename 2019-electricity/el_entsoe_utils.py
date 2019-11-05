@@ -289,8 +289,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     
     fileNameQsGrdc = '%s/script-data/entsoe-qs-grdc.csv'%dataDir
     
-    #for averaging cdd, tx
-#    smoothingLen = 4
+    fileNameQsGldasBasinWide = '%s/script-data/entsoe-qs-gldas-basin-avg.csv'%dataDir
     
     if wxdata == 'cpc':
         fileName = '%s/script-data/entsoe-tx-cpc.csv'%dataDir
@@ -303,11 +302,17 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
         fileNameCDD = '%s/script-data/entsoe-cdd-ncep.csv'%dataDir
     elif wxdata == 'all':
         if forced:
-            fileName = ['%s/script-data/entsoe-tx-cpc.csv'%dataDir, '%s/script-data/entsoe-tx-era.csv'%dataDir, '%s/script-data/entsoe-tx-ncep.csv'%dataDir]
+            fileName = ['%s/script-data/entsoe-tx-cpc.csv'%dataDir, \
+                        '%s/script-data/entsoe-tx-era.csv'%dataDir, \
+                        '%s/script-data/entsoe-tx-ncep.csv'%dataDir]
         else:
-            fileName = ['%s/script-data/entsoe-tx-cpc-nonforced.csv'%dataDir, '%s/script-data/entsoe-tx-era-nonforced.csv'%dataDir, '%s/script-data/entsoe-tx-ncep-nonforced.csv'%dataDir]
+            fileName = ['%s/script-data/entsoe-tx-cpc-nonforced.csv'%dataDir, \
+                        '%s/script-data/entsoe-tx-era-nonforced.csv'%dataDir, \
+                        '%s/script-data/entsoe-tx-ncep-nonforced.csv'%dataDir]
             
-        fileNameCDD = ['%s/script-data/entsoe-cdd-cpc.csv'%dataDir, '%s/script-data/entsoe-cdd-era.csv'%dataDir, '%s/script-data/entsoe-cdd-ncep.csv'%dataDir]
+        fileNameCDD = ['%s/script-data/entsoe-cdd-cpc.csv'%dataDir, \
+                       '%s/script-data/entsoe-cdd-era.csv'%dataDir, \
+                       '%s/script-data/entsoe-cdd-ncep.csv'%dataDir]
     
     
     tx = []

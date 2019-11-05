@@ -122,7 +122,7 @@ plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 if not 'models' in locals():
     print('building models...')
-    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
 
     plantIdsTmp = np.unique(plantIds)
     plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
