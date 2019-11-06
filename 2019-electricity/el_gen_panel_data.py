@@ -37,8 +37,6 @@ if not 'nukeData' in locals():
 #     nukePlantDataNcep = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataNcep)
     nukePlantDataAll = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataAll)
 
-sys.exit()
-
 if not 'entsoeData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir, forced=False)
     

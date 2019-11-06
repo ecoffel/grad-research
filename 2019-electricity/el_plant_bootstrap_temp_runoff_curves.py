@@ -19,7 +19,7 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsAnomSummer'
 
 modelPower = 'pow2'
 
@@ -106,16 +106,6 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
     plt.savefig('temp-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-#bin_centers = 0.5 * (bins[:-1] + bins[1:])
-#
-#colors = plt.get_cmap('BrBG')
-## scale values to interval [0,1]
-#col = bin_centers - min(bin_centers)
-#col /= max(col)
-#for c, p in zip(col, patches):
-#    curC = colors(c)    
-#    plt.setp(p, 'facecolor', 'brown')
-
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
@@ -177,14 +167,17 @@ if not 'models' in locals():
 
 # find fit percentiles for temperature
 t = 50
-q = 0
+if 'percentile' in qsVar.lower():
+    q = 0.5
+else:
+    q = 0
 
 print('finding regression percentiles for temperature')
 pcEval = []
 dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
                          'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
-                         'QST':[t*q]*len(plantIds), 'PlantIds':plantIds, \
-                         'PlantYears':plantYears})
+                         'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
 for i in range(len(models)):
     pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
@@ -199,14 +192,17 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 # find fit percentiles for runoff
 t = np.nanmean(plantMeanTemps)
-q = -4
+if 'percentile' in qsVar.lower():
+    q = 0
+else:
+    q = -4
 
 print('finding regression percentiles for runoff')
 pcEval = []
 dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
                          'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
-                         'QST':[t*q]*len(plantIds), 'PlantIds':plantIds, \
-                         'PlantYears':plantYears})
+                         'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), \
+                         'PlantIds':plantIds, 'PlantYears':plantYears})
 for i in range(len(models)):
     pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
@@ -230,9 +226,11 @@ if dumpData:
     with gzip.open('%s/script-data/%s.dat'%(dataDirDiscovery, polyDataTitle), 'wb') as f:
         pickle.dump(pPolyData, f)
 
-
 xd = np.linspace(20, 50, 25)
-qd = np.array([np.nanmean(plantMeanRunoff)]*25)
+if 'percentile' in qsVar.lower():
+    qd = np.array([.5]*25)
+else:
+    qd = np.array([np.nanmean(plantMeanRunoff)]*25)
 
 print('calculating regression across T distribution')
 ydAll = np.zeros([len(models), len(xd)])
@@ -242,7 +240,7 @@ for k in range(len(xd)):
     print('k = %d'%(k))    
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
-                     'QST':[xd[k]*qd[k]]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
                      'PlantIds':plantIds, 'PlantYears':plantYears})
     for i in range(len(models)):
         ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
@@ -257,9 +255,9 @@ yd90 = []
 for k in range(len(xd)):
     
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
-                         'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
-                         'QST':[xd[k]*qd[k]]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                     'PlantIds':plantIds, 'PlantYears':plantYears})
     yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
     yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
     yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
@@ -319,7 +317,7 @@ for k in range(len(xd)):
     print('k = %d'%(k))    
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
-                     'QST':[xd[k]*qd[k]]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
                      'PlantIds':plantIds, 'PlantYears':plantYears})
     for i in range(len(models)):
         ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
@@ -332,9 +330,9 @@ yd90 = []
 
 for k in range(len(xd)):
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
-                         'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
-                         'QST':[xd[k]*qd[k]]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
+                     'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
+                     'PlantIds':plantIds, 'PlantYears':plantYears})
     yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
     yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
     yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
@@ -345,7 +343,10 @@ yd50 = np.array(yd50)
 yd90 = np.array(yd90)
 
 plt.figure(figsize=(4,4))
-plt.xlim([-4, 4])
+if 'percentile' in qsVar.lower():
+    plt.xlim([0,1])
+else:
+    plt.xlim([-4, 4])
 plt.ylim([baseY, 100])
 plt.grid(True, color=[.9, .9, .9])
 
@@ -360,7 +361,10 @@ for m in plantMeanRunoff:
    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
 plt.gca().set_yticks(plotYTicks)
-plt.gca().set_xticks(np.arange(-4, 4.1, 1))
+if 'percentile' in qsVar.lower():
+    plt.gca().set_xticks(np.arange(0, 1, .1))
+else:
+    plt.gca().set_xticks(np.arange(-4, 4.1, 1))
 
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

@@ -71,25 +71,20 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
         if i%50 == 0: print('%.0f%% complete'%(i/nBootstrap*100.0))
         ind = np.random.choice(len(txtotal), int(len(txtotal)))
     
-        data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, 'T3':txtotal[ind]**3, \
-                'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, 'QS3':qstotal[ind]**3, 'QS4':qstotal[ind]**4, 'QS5':qstotal[ind]**5, \
+        data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, \
+                'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, \
                 'QST':txtotal[ind]*qstotal[ind], 'QS2T2':(txtotal[ind]**2)*(qstotal[ind]**2), \
                 'PlantIds':plantIds[ind], 'PlantYears':plantYears[ind], 'PC':pctotal[ind]}
         
         df = pd.DataFrame(data, \
-                          columns=['T1', 'T2', 'T3', \
-                                   'QS1', 'QS2', 'QS3', 'QS4', 'QS5', \
-                                   'QST', 'QS2T2', 'PlantIds', 'PlantYears', 'PC'])
-        
+                          columns=['T1', 'T2', \
+                                   'QS1', 'QS2', \
+                                   'QST', 'QS2T2', \
+                                   'PlantIds', 'PlantYears', \
+                                   'PC'])
         df = df.dropna()
         
-#        X = sm.add_constant(df[['T1', 'T2', 'T3', \
-#                                'QS1', 'QS2', 'QS3', 'QS4', 'QS5', 'QST', 'PlantIds']])
-        
-        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST +  C(PlantIds) + C(PlantYears)', data=df).fit()
-#        X = sm.add_constant(df[['T1', 'T2', \
-#                                'QS1', 'QS2', 'QST', 'QS2T2', 'PlantIds']])
-#        mdl = sm.OLS(df['PC'], X).fit()
+        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears)', data=df).fit()
         models.append(mdl)
     
     models = np.array(models)
@@ -136,17 +131,3 @@ def exportNukeEntsoePlantLocations():
         for i in range(len(nukeLat)):
             csvWriter.writerow([nukeIds[i], nukeLat[i], nukeLon[i]])
             n += 1
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    

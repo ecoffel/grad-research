@@ -11,6 +11,7 @@ import matplotlib.cm as cmx
 import scipy.stats as st
 import pandas as pd
 import pickle, gzip
+import el_load_global_plants
 import sys, os
 
 
@@ -19,7 +20,7 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
-dumpData = True
+dumpData = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -64,18 +65,12 @@ basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
+if plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+elif plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
 
-
-#fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData
-#plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-#plantYearData = plantTxData[0,:].copy()
-#plantMonthData = plantTxData[1,:].copy()
-#plantDayData = plantTxData[2,:].copy()
-#plantTxData = plantTxData[3:,:].copy()
-
-#summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-#plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-
+    
 # load historical runoff data for all plants
 fileNameRunoff = '%s/script-data/%s-pp-runoff.csv'%(dataDirDiscovery, plantData)
 fileNameRunoffDistFit = '%s/script-data/%s-pp-runoff%s.csv'%(dataDirDiscovery, plantData, qstr)
@@ -83,145 +78,137 @@ fileNameRunoffMeansDistFit = '%s/script-data/%s-pp-runoff-means%s.csv'%(dataDirD
 fileNameRunoffStdsDistFit = '%s/script-data/%s-pp-runoff-stds%s.csv'%(dataDirDiscovery, plantData, qstr)
 
 if os.path.isfile(fileNameRunoffDistFit):
+    print('loading historical runoff means & stds')
 #    plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
-    plantQsMeans = np.genfromtxt(fileNameRunoffMeansDistFit, delimiter=',', skip_header=0)
-    plantQsStds = np.genfromtxt(fileNameRunoffStdsDistFit, delimiter=',', skip_header=0)
-    
+    plantQsHistMeans = np.genfromtxt(fileNameRunoffMeansDistFit, delimiter=',', skip_header=0)
+    plantQsHistStds = np.genfromtxt(fileNameRunoffStdsDistFit, delimiter=',', skip_header=0)
 else:
-    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-    plantQsData = plantQsData[3:,:]
+    print('loading historical runoff data')
+    plantQsHistData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    plantQsHistData = plantQsHistData[3:,:]
     
-    plantQsMeans = []
-    plantQsStds = []
+    plantQsHistMeans = []
+    plantQsHistStds = []
     
-    print('calculating historical qs distfit anomalies')
-    plantQsAnomData = []
+    print('calculating historical runoff means & stds')
+    plantQsHistAnomData = []
     dist = st.gamma
-    for p in range(plantQsData.shape[0]):
+    for p in range(plantQsHistData.shape[0]):
         if p%1000 == 0:
             print('plant %d...'%p)
-        q = plantQsData[p,:]
+        q = plantQsHistData[p,:]
         nn = np.where(~np.isnan(q))[0]
         if len(nn) > 10:
             args = dist.fit(q[nn])
             curQsStd = dist.std(*args)
         else:
             curQsStd = np.nan
-        plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-        plantQsMeans.append(np.nanmean(q))
-        plantQsStds.append(curQsStd)
-    plantQsAnomData = np.array(plantQsAnomData)
-    plantQsMeans = np.array(plantQsMeans)
-    plantQsStds = np.array(plantQsStds)
+        plantQsHistAnomData.append((q-np.nanmean(q))/curQsStd)
+        plantQsHistMeans.append(np.nanmean(q))
+        plantQsHistStds.append(curQsStd)
+    plantQsHistAnomData = np.array(plantQsHistAnomData)
+    plantQsHistMeans = np.array(plantQsHistMeans)
+    plantQsHistStds = np.array(plantQsHistStds)
     
-    np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-    np.savetxt(fileNameRunoffMeansDistFit, plantQsMeans, delimiter=',')
-    np.savetxt(fileNameRunoffStdsDistFit, plantQsStds, delimiter=',')
-    plantQsData = plantQsAnomData
+    np.savetxt(fileNameRunoffDistFit, plantQsHistAnomData, delimiter=',')
+    np.savetxt(fileNameRunoffMeansDistFit, plantQsHistMeans, delimiter=',')
+    np.savetxt(fileNameRunoffStdsDistFit, plantQsHistStds, delimiter=',')
     
-
-
-plantPcTx10 = []
-plantPcTx50 = []
-plantPcTx90 = []
-
 for m in range(len(models)):
     
-    plantPcTx10CurModel = []
-    plantPcTx50CurModel = []
-    plantPcTx90CurModel = []
+    # monthly aggregated outages relative to base period
+    plantPcTx10 = np.full([len(globalPlants['caps']), 10, 12], np.nan)
+    plantPcTx50 = np.full([len(globalPlants['caps']), 10, 12], np.nan)
+    plantPcTx90 = np.full([len(globalPlants['caps']), 10, 12], np.nan)
     
     for d in range(decades.shape[0]):
     
         print('processing %s/%d...'%(models[m], decades[d,0]))
         
+        print('loading future tx data')
         fileNameTemp = '%s/future-temps/%s-pp-%s-tx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[d,0], decades[d,1])    
         plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+        plantTxData = plantTxData[3:,:]
         
         fileNameRunoffDistFit = '%s/future-temps/%s-pp-%s-runoff%s-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, qstr, models[m], decades[d,0], decades[d,1]) 
-        
         if os.path.isfile(fileNameRunoffDistFit):
-            continue
-            plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+            print('loading future runoff anomalies')
+            plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
+            plantQsYears = plantQsData[0,:]
+            plantQsMonths = plantQsData[1,:]
+            plantQsDays = plantQsData[2,:]
+            plantQsData = plantQsData[3:,:]
         else:
+            print('loading future runoff data')
             fileNameRunoff = '%s/future-temps/%s-pp-%s-runoff-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[d,0], decades[d,1])
             plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-            plantQsData = plantQsData[3:,:]
-            
-            fileNameRunoffHist = '%s/future-temps/%s-pp-hist-runoff-cmip5-%s-1981-2005.csv'%(dataDirDiscovery, plantData, models[m])
-            plantHistQsData = np.genfromtxt(fileNameRunoffHist, delimiter=',', skip_header=0)
+            plantQsYears = plantQsData[0,:]
+            plantQsMonths = plantQsData[1,:]
+            plantQsDays = plantQsData[2,:]
             
             plantQsAnomData = np.zeros(plantQsData.shape)
-            print('calculating historical qs distfit anomalies')
-            dist = st.gamma
-            for p in range(plantQsData.shape[0]):
-                if p%1000 == 0:
-                    print('plant %d...'%p)
-                qHist = plantHistQsData[p,:]
-                nn = np.where(~np.isnan(qHist))[0]
-                if len(nn) > 10:
-                    args = dist.fit(qHist[nn])
-                    curQsHistStd = dist.std(*args)
-                else:
-                    curQsHistStd = np.nan
-                plantQsAnomData[p,:] = (plantQsData[p,:]-np.nanmean(qHist))/curQsHistStd
+            print('calculating future runoff anomalies')
+            plantQsAnomData[0,:] = plantQsYears
+            plantQsAnomData[1,:] = plantQsMonths
+            plantQsAnomData[2,:] = plantQsDays
+            for p in range(3, plantQsData.shape[0]):
+                plantQsAnomData[p,:] = (plantQsData[p,:]-np.nanmean(plantQsHistMeans[p-3]))/plantQsHistStds[p-3]
             np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-            plantQsData = plantQsAnomData
+            plantQsData = plantQsAnomData[3:,:]
         
-#         plantPcTxx10CurDecade = np.zeros([plantTxData.shape[0], plantTxData.shape[1]])
-#         plantPcTxx50CurDecade = np.zeros([plantTxData.shape[0], plantTxData.shape[1]])
-#         plantPcTxx90CurDecade = np.zeros([plantTxData.shape[0], plantTxData.shape[1]])
-
-#         for y in range(plantTxData.shape[1]):
+        print('calculating pc')
+        # compute pc for every plant
+        for p in range(plantTxData.shape[0]):
             
-#             tx = plantTxData[:, y]
-#             # calc runoff anom for this plant based on previously loaded historical stats
-#             qs = (plantQsData[:, y]-plantQsMeans)/plantQsStds
-
-#             qs[qs < -5] = np.nan
-#             qs[qs > 5] = np.nan
-            
-#             indCompute = np.where((~np.isnan(tx)) & (~np.isnan(qs)) & (tx > baseTx))[0]
-#             indPlantIdsCompute = np.random.choice(len(plantIds), len(indCompute))
-            
-#             dfpred = pd.DataFrame({'T1':tx[indCompute], 'T2':tx[indCompute]**2, \
-#                                      'QS1':qs[indCompute], 'QS2':qs[indCompute]**2, \
-#                                      'QST':tx[indCompute]*qs[indCompute], \
-#                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
-
-#             plantPcTxx10CurDecade[indCompute, y] = pcModel10.predict(dfpred) - basePred10
-#             plantPcTxx50CurDecade[indCompute, y] = pcModel50.predict(dfpred) - basePred50
-#             plantPcTxx90CurDecade[indCompute, y] = pcModel90.predict(dfpred) - basePred90
-            
-#             plantPcTxx10CurDecade[plantPcTxx10CurDecade > 100] = 0
-#             plantPcTxx50CurDecade[plantPcTxx50CurDecade > 100] = 0
-#             plantPcTxx90CurDecade[plantPcTxx90CurDecade > 100] = 0
-            
-#             plantPcTxx10CurDecade[plantPcTxx10CurDecade < -100] = -100
-#             plantPcTxx50CurDecade[plantPcTxx50CurDecade < -100] = -100
-#             plantPcTxx90CurDecade[plantPcTxx90CurDecade < -100] = -100
+            if p % 1000 == 0:
+                print('plant %d of %d'%(p, plantTxData.shape[0]))
         
-#         plantPcTxx10CurModel.append(plantPcTxx10CurDecade)
-#         plantPcTxx50CurModel.append(plantPcTxx50CurDecade)
-#         plantPcTxx90CurModel.append(plantPcTxx90CurDecade)
+            # all tx and qs data for this plant for the decade
+            tx = plantTxData[p,:]
+            qs = plantQsData[p,:]
+            
+            qs[qs < -5] = np.nan
+            qs[qs > 5] = np.nan
+        
+            # heat related outages for every day in decade for current plant
+            plantPcTx10CurDecade = np.full([len(tx)], 0)
+            plantPcTx50CurDecade = np.full([len(tx)], 0)
+            plantPcTx90CurDecade = np.full([len(tx)], 0)
+        
+            indCompute = np.where((~np.isnan(tx)) & (~np.isnan(qs)) & (tx > baseTx))[0]
+            indPlantIdsCompute = np.random.choice(len(plantIds), len(indCompute))
+            
+            dfpred = pd.DataFrame({'T1':tx[indCompute], 'T2':tx[indCompute]**2, \
+                                     'QS1':qs[indCompute], 'QS2':qs[indCompute]**2, \
+                                     'QST':tx[indCompute]*qs[indCompute], \
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
+
+            plantPcTx10CurDecade[indCompute] = pcModel10.predict(dfpred) - basePred10
+            plantPcTx50CurDecade[indCompute] = pcModel50.predict(dfpred) - basePred50
+            plantPcTx90CurDecade[indCompute] = pcModel90.predict(dfpred) - basePred90
+            
+            plantPcTx10CurDecade[plantPcTx10CurDecade > 0] = 0
+            plantPcTx50CurDecade[plantPcTx50CurDecade > 0] = 0
+            plantPcTx90CurDecade[plantPcTx90CurDecade > 0] = 0
+            
+            plantPcTx10CurDecade[plantPcTx10CurDecade < -100] = -100
+            plantPcTx50CurDecade[plantPcTx50CurDecade < -100] = -100
+            plantPcTx90CurDecade[plantPcTx90CurDecade < -100] = -100
+            
+            # now disaggregate by year/month
+            for yInd, year in enumerate(range(decades[0,0], decades[0, 1]+1)):
+                for mInd, month in enumerate(range(1, 12+1)):
+                    ind = np.where((plantQsYears == year) & (plantQsMonths == month))[0]
+                    plantPcTx10[p, yInd, mInd] = np.nansum(plantPcTx10CurDecade[ind]/100.0 * globalPlants['caps'][p])
+                    plantPcTx50[p, yInd, mInd] = np.nansum(plantPcTx50CurDecade[ind]/100.0 * globalPlants['caps'][p])
+                    plantPcTx90[p, yInd, mInd] = np.nansum(plantPcTx90CurDecade[ind]/100.0 * globalPlants['caps'][p])
+            
     
-#     plantPcTxx10.append(plantPcTxx10CurModel)
-#     plantPcTxx50.append(plantPcTxx50CurModel)
-#     plantPcTxx90.append(plantPcTxx90CurModel)
-
-# plantPcTxx10 = np.array(plantPcTxx10)
-# plantPcTxx50 = np.array(plantPcTxx50)
-# plantPcTxx90 = np.array(plantPcTxx90)
-
-# sys.exit()
-
-# if dumpData:
-#     pcChg = {'pCapTxxFutRcp8510':plantPcTxx10, \
-#              'pCapTxxFutRcp8550':plantPcTxx50, \
-#              'pCapTxxFutRcp8590':plantPcTxx90}
-#     with open('%s/script-data/pc-change-fut-%s-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr, rcp), 'wb') as f:
-#         pickle.dump(pcChg, f)
-
+    pcChg = {'plantPcAggTx10':plantPcTx10, \
+             'plantPcAggTx50':plantPcTx50, \
+             'plantPcAggTx90':plantPcTx90}
+    with open('%s/script-data/pc-change-fut-%s-%s%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[d,0], decades[d,1]), 'wb') as f:
+        pickle.dump(pcChg, f)
 
 
 
