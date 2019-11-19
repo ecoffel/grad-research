@@ -146,9 +146,8 @@ def loadEntsoeWithLatLon(dataDir, forced):
                     if len(lineParts) < 20:
                         continue
                     
-                    if not forced:
-                        if lineParts[8] != 'Forced':
-                            continue
+                    if forced and lineParts[8] != 'Forced':
+                        continue
                     
                     if 'Hydro' in lineParts[15] or \
                         'hydro' in lineParts[15] or \
@@ -194,7 +193,7 @@ def loadEntsoeWithLatLon(dataDir, forced):
     return d
 
 
-def loadEntsoe(dataDir):
+def loadEntsoe(dataDir, forced):
     yearsEntsoe = []
     monthsEntsoe = []
     daysEntsoe = []
@@ -241,7 +240,7 @@ def loadEntsoe(dataDir):
                     if len(lineParts) < 20:
                         continue
                     
-                    if lineParts[8] != 'Forced':
+                    if forced and lineParts[8] != 'Forced':
                         continue
                     
                     if 'Hydro' in lineParts[15] or \
@@ -291,8 +290,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     else:
         fileNameQs = '%s/script-data/entsoe-qs-gldas-all-nonforced.csv'%dataDir
     
-    fileNameQsGrdc = '%s/script-data/entsoe-qs-grdc.csv'%dataDir
-    fileNameQsGldasBasinWide = '%s/script-data/entsoe-qs-gldas-basin-avg.csv'%dataDir
+    fileNameQsGrdc = '%s/script-data/entsoe-qs-grdc-nonforced.csv'%dataDir
+    fileNameQsGldasBasinWide = '%s/script-data/entsoe-qs-gldas-basin-avg-nonforced.csv'%dataDir
     
     if wxdata == 'cpc':
         fileName = '%s/script-data/entsoe-tx-cpc.csv'%dataDir
@@ -350,11 +349,16 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     qsRaw = np.genfromtxt(fileNameQs, delimiter=',')
     qsRaw = qsRaw[3:,:]
     
-    qs = np.full(qsRaw.shape, np.nan)
-    for p in range(qsRaw.shape[0]):
-        curq = running_mean(qsRaw[p,:], smoothingLen)
-        buf = qsRaw.shape[1]-len(curq)
-        qs[p, buf:] = curq
+    qs = qsRaw
+    
+    qsGldasBasin = np.genfromtxt(fileNameQsGldasBasinWide, delimiter=',')
+    qsGldasBasin = qsGldasBasin[3:,:]
+    qsGldasBasinSmooth = np.full(qsGldasBasin.shape, np.nan)
+    for p in range(qsGldasBasin.shape[0]):
+        curq = running_mean(qsGldasBasin[p,:], smoothingLen)
+        buf = qsGldasBasin.shape[1]-len(curq)
+        qsGldasBasinSmooth[p, buf:] = curq
+    qsGldasBasin = qsGldasBasinSmooth
     
     qsGrdcRaw = np.genfromtxt(fileNameQsGrdc, delimiter=',')  
     qsGrdcRaw = qsGrdcRaw[3:,:]
@@ -373,6 +377,11 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     finalQsAnom = []
     finalQsSummer = []
     finalQsAnomSummer = []
+    
+    finalQsGldasBasin = []
+    finalQsGldasBasinAnom = []
+    finalQsGldasBasinSummer = []
+    finalQsGldasBasinAnomSummer = []
     
     finalQsGrdc = []
     finalQsGrdcAnom = []
@@ -397,11 +406,12 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
         
         plantIds.append(c + baseId)
         
-        
         finalTx.append([])
-        
         finalQs.append([])
         finalQsSummer.append([])
+        
+        finalQsGldasBasin.append([])
+        finalQsGldasBasinSummer.append([])
         
         finalQsGrdc.append([])
         finalQsGrdcSummer.append([])
@@ -462,72 +472,149 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             finalOutagesCount[c].append(len(curDayIndEntsoe))
             finalTx[c].append(tx[c,i])
             finalQs[c].append(qs[c,i])
+            finalQsGldasBasin[c].append(qsGldasBasin[c,i])
             finalQsGrdc[c].append(qsGrdc[c,i])
             
             # record temps for only summer days
             if curMonth == 7 or curMonth == 8:
                 finalTxSummer[c].append(tx[c,i])
                 finalQsSummer[c].append(qs[c,i])
+                finalQsGldasBasinSummer[c].append(qsGldasBasin[c,i])
                 finalQsGrdcSummer[c].append(qsGrdc[c,i])
         
         outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
         finalOutageInds[c].extend(outageInd)
+
         
+        # calculate dist anomalies for SUMMER
         curQs = np.array(finalQsSummer[c])
-        # find std of qs distribution
-        dist = st.gamma
-        nn = np.where(~np.isnan(curQs))[0]
-        if len(nn) > 10:
-            args = dist.fit(curQs[nn])
-            curQsStd = dist.std(*args)
+        nn = np.where(~np.isnan(curQs))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-gldas-summer.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-summer.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                curQsStd = distParams['std']
+                tmpQsPercentile = distParams['cdf']
         else:
-            curQsStd = np.nan
+            best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curQs[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-summer.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsPercentileSummer = dist.cdf(curQs, *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsStd,
+                              'cdf':tmpQsPercentileSummer}
+                pickle.dump(distParams, f)
+                print('gldas summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsStd))
         finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / curQsStd)
+        
+        
+        
+        curQsGldasBasin = np.array(finalQsGldasBasinSummer[c])
+        nn = np.where(~np.isnan(curQsGldasBasin))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg-summer.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg-summer.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                curQsGldasBasinStd = distParams['std']
+                tmpQsGldasBasinPercentile = distParams['cdf']
+        else:
+            best_fit_name, best_fit_params, curQsGldasBasinStd = el_find_best_runoff_dist.best_fit_distribution(curQsGldasBasin[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg-summer.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsGldasBasinPercentileSummer = dist.cdf(curQsGldasBasin, *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsGldasBasinStd,
+                              'cdf':tmpQsGldasBasinPercentileSummer}
+                pickle.dump(distParams, f)
+                print('gldas basin summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGldasBasinStd))
+        finalQsGldasBasinAnomSummer.append((curQsGldasBasin - np.nanmean(curQsGldasBasin)) / curQsGldasBasinStd)
+        
         
         curQsGrdc = np.array(finalQsGrdcSummer[c])
         nn = np.where(~np.isnan(curQsGrdc))[0]          
         if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c)): 
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
-                dist = getattr(st, distParams['name'])
+                curQsGrdcStd = distParams['std']
+                tmpQsGrdcPercentileSummer = distParams['cdf']
         else:
-            print('finding best distribution for plant %d'%c)
-            best_fit_name, best_fit_params = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
+            best_fit_name, best_fit_params, curQsGrdcStd = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsGrdcPercentileSummer = dist.cdf(curQsGrdc, *best_fit_params)
                 distParams = {'name':best_fit_name,
-                              'params':best_fit_params}
-                dist = getattr(st, distParams['name'])
+                              'params':best_fit_params, 
+                              'std':curQsGrdcStd,
+                              'cdf':tmpQsGrdcPercentileSummer}
                 pickle.dump(distParams, f)
-        
-        if len(nn) > 10:
-            args = dist.fit(curQsGrdc[nn])
-            curQsGrdcStd = dist.std(*args)
-#                curQsGrdcStd = np.nanstd(curQsGrdc)
-        else:
-            curQsGrdcStd = np.nan
+                print('grdc summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGrdcStd))
+
         finalQsGrdcAnomSummer.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
         
+        
+        
+        # calculate dist anomalies for ALL YEAR
         curQs = np.array(finalQs[c])
-        # find std of qs distribution
-        dist = st.gamma
-        nn = np.where(~np.isnan(curQs))[0]
-        if len(nn) > 10:
-            args = dist.fit(curQs[nn])
-            curQsStd = dist.std(*args)
-#                curQsStd = np.nanstd(curQs)
+        nn = np.where(~np.isnan(curQs))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-gldas.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                curQsStd = distParams['std']
+                tmpQsPercentile = distParams['cdf']
         else:
-            curQsStd = np.nan
+            best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curQs[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsPercentile = dist.cdf(curQs, *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsStd,
+                              'cdf':tmpQsPercentile}
+                pickle.dump(distParams, f)
+                print('gldas all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsStd))
         finalQsAnom.append((curQs - np.nanmean(curQs)) / curQsStd)
         
-        curQsGrdc = np.array(finalQsGrdc[c])
-        dist = st.gamma
-        nn = np.where(~np.isnan(curQsGrdc))[0]
-        if len(nn) > 10:
-            args = dist.fit(curQsGrdc[nn])
-            curQsGrdcStd = dist.std(*args)
-#                curQsGrdcStd = np.nanstd(curQsGrdc)
+        
+        curQsGldasBasin = np.array(finalQsGldasBasin[c])
+        nn = np.where(~np.isnan(curQsGldasBasin))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                curQsGldasBasinStd = distParams['std']
+                tmpQsGldasBasinPercentile = distParams['cdf']
         else:
-            curQsGrdcStd = np.nan
+            best_fit_name, best_fit_params, curQsGldasBasinStd = el_find_best_runoff_dist.best_fit_distribution(curQsGldasBasin[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsGldasBasinPercentile = dist.cdf(curQsGldasBasin, *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsGldasBasinStd,
+                              'cdf':tmpQsGldasBasinPercentile}
+                pickle.dump(distParams, f)
+                print('gldas basin all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGldasBasinStd))
+        finalQsGldasBasinAnom.append((curQsGldasBasin - np.nanmean(curQsGldasBasin)) / curQsGldasBasinStd)
+        
+        
+        curQsGrdc = np.array(finalQsGrdc[c])
+        nn = np.where(~np.isnan(curQsGrdc))[0]          
+        if os.path.isfile('%s/dist-fits/best-fit-entsoe-%d-grdc.dat'%(datadir, c)): 
+            with open('%s/dist-fits/best-fit-entsoe-%d-grdc.dat'%(datadir, c), 'rb') as f:
+                distParams = pickle.load(f)
+                curQsGrdcStd = distParams['std']
+                tmpQsGrdcPercentile = distParams['cdf']
+        else:
+            best_fit_name, best_fit_params, curQsGrdcStd = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
+            with open('%s/dist-fits/best-fit-entsoe-%d-grdc.dat'%(datadir, c), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+                tmpQsGrdcPercentile = dist.cdf(curQsGrdc, *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsGrdcStd,
+                              'cdf':tmpQsGrdcPercentile}
+                pickle.dump(distParams, f)
+                print('grdc all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGrdcStd))
+
         finalQsGrdcAnom.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
         
     
@@ -535,6 +622,11 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     finalQsAnom = np.array(finalQsAnom)
     finalQsSummer = np.array(finalQsSummer)
     finalQsAnomSummer = np.array(finalQsAnomSummer)
+    
+    finalQsGldasBasin = np.array(finalQsGldasBasin)
+    finalQsGldasBasinAnom = np.array(finalQsGldasBasinAnom)
+    finalQsGldasBasinSummer = np.array(finalQsGldasBasinSummer)
+    finalQsGldasBasinAnomSummer = np.array(finalQsGldasBasinAnomSummer)
     
     finalQsGrdc = np.array(finalQsGrdc)
     finalQsGrdcAnom = np.array(finalQsGrdcAnom)
@@ -555,7 +647,9 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     
     d = {'tx':finalTx, 'txSummer':finalTxSummer, \
          'qs':finalQs, 'qsAnom':finalQsAnom, \
+         'qsGldasBasin':finalQsGldasBasin, 'qsGldasBasinAnom':finalQsGldasBasinAnom, \
          'qsSummer':finalQsSummer, 'qsAnomSummer':finalQsAnomSummer, \
+         'qsGldasBasinSummer':finalQsGldasBasinSummer, 'qsGldasBasinAnomSummer':finalQsGldasBasinAnomSummer, \
          'qsGrdc':finalQsGrdc, 'qsGrdcAnom':finalQsGrdcAnom, \
          'qsGrdcSummer':finalQsGrdcSummer, 'qsGrdcAnomSummer':finalQsGrdcAnomSummer, \
          'years':txYears, 'months':txMonths, 'days':txDays, \
@@ -566,111 +660,13 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     return d
 
 
-def matchEntsoeWxCountry(entsoeData, useEra):
-    fileName = '%s/script-data/country-tx-cpc-2015-2018.csv'%dataDir
-    if useEra:
-        fileName = '%s/script-data/country-tx-era-2015-2018.csv'%dataDir
-    
-    countryList = []
-    with open(fileName, 'r') as f:
-        i = 0
-        for line in f:
-            if i > 3:
-                parts = line.split(',')
-                countryList.append(parts[0])
-            i += 1
-    countryTxData = np.genfromtxt(fileName, delimiter=',', skip_header=1)
-    countryYearData = countryTxData[0,1:]
-    countryMonthData = countryTxData[1,1:]
-    countryDayData = countryTxData[2,1:]
-    countryTxData = countryTxData[3:,1:]
-    
-    finalTx = []
-    finalTxSummer = []
-    finalCapacity = []
-    finalCapacitySummer = []
-    finalOutagesBool = []
-    finalOutagesBoolSummer = []
-    finalOutagesCount = []
-    finalOutageInds = []
-    
-    print('matching entsoe outages with wx...')
-    
-    for c in range(len(countryList)):
-        get_inds = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-        indCountryEntsoe = get_inds(countryList[c], entsoeData['countries'])
-    
-        finalTx.append([])
-        finalTxSummer.append([])
-        finalCapacity.append([])
-        finalCapacitySummer.append([])
-        finalOutageInds.append([])
-        finalOutagesBool.append([])
-        finalOutagesBoolSummer.append([])
-        finalOutagesCount.append([])
-        for i in range(len(countryTxData[c])):
-            curYear = countryYearData[i]
-            curMonth = countryMonthData[i]
-            curDay = countryDayData[i]
-            
-            curDayIndEntsoe = np.where((entsoeData['years'] == curYear) & (entsoeData['months'] == curMonth) & \
-                                 (entsoeData['days'] == curDay))[0]
-            
-            curDayIndEntsoe = np.intersect1d(curDayIndEntsoe, indCountryEntsoe)
-            
-            if len(curDayIndEntsoe) > 0:
-                perc = []
-                for p in curDayIndEntsoe:    
-                    perc.append(entsoeData['actualCapacity'][p] / entsoeData['normalCapacity'][p])
-                
-                finalCapacity[c].append(np.nanmean(perc))
-                finalOutagesBool[c].append(1)
-                
-                if curMonth == 7 or curMonth == 8:
-                    finalOutagesBoolSummer[c].append(1)
-                    finalCapacitySummer[c].append(np.nanmean(perc))    
-            else:
-                # 1 here because plant at 100% capacity
-                finalCapacity[c].append(1)
-                
-                # 0 here because no outage
-                finalOutagesBool[c].append(0)
-                
-                if curMonth == 7 or curMonth == 8:
-                    finalOutagesBoolSummer[c].append(0)
-                    finalCapacitySummer[c].append(1)    
-            
-            finalOutagesCount[c].append(len(curDayIndEntsoe))
-            finalTx[c].append(countryTxData[c,i])
-            
-            if curMonth == 7 or curMonth == 8:
-                finalTxSummer[c].append(countryTxData[c,i])    
-
-        outageInd = np.where(np.array(finalCapacity[c]) < 1)[0]
-        finalOutageInds[c].extend(outageInd)
-    
-    finalTx = np.array(finalTx)
-    finalTxSummer = np.array(finalTxSummer)
-    finalCapacity = np.array(finalCapacity)
-    finalCapacitySummer = np.array(finalCapacitySummer)
-    finalOutagesBool = np.array(finalOutagesBool)
-    finalOutagesBoolSummer = np.array(finalOutagesBoolSummer)
-    finalOutagesCount = np.array(finalOutagesCount)
-    finalOutageInds = np.array(finalOutageInds)
-    
-    d = {'tx':finalTx, 'txSummer':finalTxSummer, \
-         'years':countryYearData, 'months':countryMonthData, 'days':countryDayData, \
-         'countries':countryList, 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
-         'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount}
-    return d
-
-
-
 def aggregateEntsoeData(entsoeMatchData):
     # aggregate country entsoe outdata data into single 1d array
     txAll = []
     qsAll = []
     qsAnomAll = []
+    qsGldasBasinAll = []
+    qsGldasBasinAnomAll = []
     qsGrdcAll = []
     qsGrdcAnomAll = []
     capacityAll = []
@@ -688,6 +684,10 @@ def aggregateEntsoeData(entsoeMatchData):
     
         curQsAnom = entsoeMatchData['qsAnom'][c,inds]
         curQs = entsoeMatchData['qs'][c,inds]
+        
+        curQsGldasBasinAnom = entsoeMatchData['qsGldasBasinAnom'][c,inds]
+        curQsGldasBasin = entsoeMatchData['qsGldasBasin'][c,inds]
+        
         curQsGrdcAnom = entsoeMatchData['qsGrdcAnom'][c,inds]
         curQsGrdc = entsoeMatchData['qsGrdc'][c,inds]
         curTx = entsoeMatchData['tx'][c,inds]
@@ -695,12 +695,15 @@ def aggregateEntsoeData(entsoeMatchData):
         curOutageBool = entsoeMatchData['outagesBool'][c,inds]
         curOutageCount = entsoeMatchData['outagesCount'][c,inds]
     
-        # at least one outage reported for this country/plant
+        # at least one outage reported for this plant
         if np.nansum(curOutageCount) > 0:
             txAll.extend(curTx)
             
             qsAll.extend(curQs)
             qsAnomAll.extend(curQsAnom)
+            
+            qsGldasBasinAll.extend(curQsGldasBasin)
+            qsGldasBasinAnomAll.extend(curQsGldasBasinAnom)
             
             qsGrdcAll.extend(curQsGrdc)
             qsGrdcAnomAll.extend(curQsGrdcAnom)
@@ -718,6 +721,9 @@ def aggregateEntsoeData(entsoeMatchData):
     qsAll = np.array(qsAll)
     qsAnomAll = np.array(qsAnomAll)
     
+    qsGldasBasinAll = np.array(qsGldasBasinAll)
+    qsGldasBasinAnomAll = np.array(qsGldasBasinAnomAll)
+    
     qsGrdcAll = np.array(qsGrdcAll)
     qsGrdcAnomAll = np.array(qsGrdcAnomAll)
     capacityAll = np.array(capacityAll)
@@ -729,6 +735,7 @@ def aggregateEntsoeData(entsoeMatchData):
     plantDays = np.array(plantDays)
     
     d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, \
+         'qsGldasBasinSummer':qsGldasBasinAll, 'qsGldasBasinAnomSummer':qsGldasBasinAnomAll, \
          'qsGrdcSummer':qsGrdcAll, 'qsGrdcAnomSummer':qsGrdcAnomAll, \
          'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
          'outagesCount':outageCountAll, 'plantYears':plantYears, 'plantMonths':plantMonths, \

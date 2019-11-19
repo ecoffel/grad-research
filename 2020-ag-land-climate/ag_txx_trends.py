@@ -98,6 +98,7 @@ txxMean1d = np.reshape(np.nanmean(txx, axis=2), [txx.shape[0]*txx.shape[1]])
 maizeTrend1d = np.reshape(maizeTrends, [maizeTrends.size])
 maizeMean1d = np.reshape(np.nanmean(maize, axis=2), [maize.shape[0]*maize.shape[1]])
 maizeInd50p = np.where((maizeMean1d > np.nanpercentile(maizeMean1d, 50)))[0]
+maizeInd25p = np.where((maizeMean1d > np.nanpercentile(maizeMean1d, 25)))[0]
 
 x = maizeTrend1d[maizeInd50p]
 y = txxTrend1d[maizeInd50p]

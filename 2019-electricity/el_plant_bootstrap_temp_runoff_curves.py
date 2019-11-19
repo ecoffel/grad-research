@@ -19,11 +19,11 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 tempVar = 'txSummer'
-qsVar = 'qsAnomSummer'
+qsVar = 'qsGrunAnomSummer'
 
 modelPower = 'pow2'
 
-plotFigs = False
+plotFigs = True
 dumpData = False
 
 # load historical weather data for plants to compute mean temps 
@@ -51,32 +51,18 @@ qs1d[qs1d<-5] = np.nan
 qs1d[qs1d>5] = np.nan
 qs1d = qs1d[~np.isnan(qs1d)]
 
-plt.figure(figsize=(4,4))
-plt.xlim([-5, 5])
+plt.figure(figsize=(8,1))
+plt.xlim([-4, 4])
 plt.grid(True, color=[.9, .9, .9])
 n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
 
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
-
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+plt.gca().get_xaxis().set_visible(False)
+plt.gca().get_yaxis().set_visible(False)
+plt.gca().axis('off')
 
 if plotFigs:
-    plt.savefig('runoff-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('runoff-dist.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
 
-    
-    
-    
-    
     
 tx1d = []
 for p in range(plantTxData.shape[0]):
@@ -84,27 +70,19 @@ for p in range(plantTxData.shape[0]):
 tx1d = np.array(tx1d)
 tx1d = tx1d[~np.isnan(tx1d)]
 
-plt.figure(figsize=(4,4))
-plt.xlim([0, 50])
+plt.figure(figsize=(8,1))
+plt.xlim([27, 50])
 plt.grid(True, color=[.9, .9, .9])
 n, bins, patches = plt.hist(tx1d, bins=100, density=True, color=snsColors[1]);
 
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-plt.xlabel('Temperature ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Density', fontname = 'Helvetica', fontsize=16)
-
-x0,x1 = plt.gca().get_xlim()
-y0,y1 = plt.gca().get_ylim()
-plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
+plt.gca().get_xaxis().set_visible(False)
+plt.gca().get_yaxis().set_visible(False)
+plt.gca().axis('off')
 
 if plotFigs:
-    plt.savefig('temp-dist.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('temp-dist.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
+
+    
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
@@ -112,7 +90,7 @@ plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 if not 'models' in locals():
     print('building models...')
-    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
 
     plantIdsTmp = np.unique(plantIds)
     plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
@@ -280,8 +258,9 @@ p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('Reds')
 
-for m in plantMeanTemps:
-   plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
+
+# for m in plantMeanTemps:
+#    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
 
 plt.gca().set_xticks(range(30, 51, 5))
 plt.gca().set_yticks(plotYTicks)
@@ -305,7 +284,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-%s-regression-%s.png'%(tempVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-tx-%s-%s-regression.png'%(tempVar, qsVar), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 xd = np.array([np.nanmean(plantMeanTemps)]*25)
 qd = np.linspace(-4, 4, 25)
@@ -357,8 +336,8 @@ p3 = plt.plot(qd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('BrBG')
 
-for m in plantMeanRunoff:
-   plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
+# for m in plantMeanRunoff:
+#    plt.plot([m, m], [baseY, baseY+2], color=colors(m/max(plantMeanRunoff)), linewidth=1)
 
 plt.gca().set_yticks(plotYTicks)
 if 'percentile' in qsVar.lower():
@@ -384,7 +363,7 @@ y0,y1 = plt.gca().get_ylim()
 plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('hist-pc-%s-regression-%s.png'%(qsVar, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('hist-pc-runoff-%s-%s-regression.png'%(tempVar, qsVar), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()

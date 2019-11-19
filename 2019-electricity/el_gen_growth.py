@@ -22,7 +22,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = True
+plotFigs = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -131,6 +131,12 @@ for y in range(2018, 2090):
         globalPlantsCapsSust = np.concatenate((globalPlantsCapsSust, np.array(gpSustNew)), axis=1) 
         globalPlantsCapsNP = np.concatenate((globalPlantsCapsNP, np.array(gpNPNew)), axis=1) 
 
+with open('%s/script-data/world-plant-caps-iea-scenarios.dat'%dataDirDiscovery, 'wb') as f:
+    scenarios = {'globalPlantsCapsSust':globalPlantsCapsSust, \
+                 'globalPlantsCapsNP':globalPlantsCapsNP}
+    pickle.dump(scenarios, f)
+
+sys.exit()
 
 with open('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:
     pcChgHist = pickle.load(f)

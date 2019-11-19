@@ -121,7 +121,6 @@ for g in range(GMTyears.shape[0]):
 # replot historical to get marker above the green line, but keep 1st plot of historical to get legend order right
 plt.plot([2017], sum(iea2017), 'ok', markersize=msize)
 
-#plt.plot([2017], sum(ieaSust2017), 'ok', markerfacecolor=snsColors[0], markersize=5)
 p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
 plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=msize)

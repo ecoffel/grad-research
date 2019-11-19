@@ -27,7 +27,7 @@ basins = shp.shapes()
 basinRecords = shp.records()
 
 nukeLatLon = np.genfromtxt('%s/script-data/nuke-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
-entsoeLatLon = np.genfromtxt('%s/script-data/entsoe-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
+entsoeLatLon = np.genfromtxt('%s/script-data/entsoe-lat-lon-nonforced.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
 plantLatLon = np.concatenate((nukeLatLon,entsoeLatLon),axis=0)
 
 grdcRefData = []
@@ -132,7 +132,7 @@ for g in range(len(grdcMatchIds)):
     
     # all the years, months, days that we need qs values for (2007-2018 for nuke, 2015-2018 for entsoe)
     #entsoe
-    if plantId < 50:
+    if plantId < 60:
         plantYearRange = [2015,2018]    
     else:
         plantYearRange = [2007,2018]
@@ -231,7 +231,7 @@ for g in range(len(grdcMatchIds)):
                     
                     i += 1
         
-    if plantId < 50:
+    if plantId < 60:
         # don't insert the plant id for entsoe
         grdcDataEntsoe.append(curGrdcData)
     else:
@@ -243,7 +243,7 @@ grdcDataNuke = np.array(grdcDataNuke)
 grdcDataEntsoe = np.array(grdcDataEntsoe)
 
 # write runoff data to file
-np.savetxt('%s/nuke-qs-grdc.csv'%dataDirDiscovery, grdcDataNuke, delimiter=",", fmt='%f')
+np.savetxt('%s/script-data/nuke-qs-grdc.csv'%dataDirDiscovery, grdcDataNuke, delimiter=",", fmt='%f')
 
 yearHeader = []
 monthHeader = []
@@ -264,7 +264,7 @@ dayHeader = np.array(dayHeader)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, dayHeader, axis=0)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, monthHeader, axis=0)
 grdcDataEntsoe = np.insert(grdcDataEntsoe, 0, yearHeader, axis=0)
-np.savetxt('%s/entsoe-qs-grdc.csv'%dataDirDiscovery, grdcDataEntsoe, delimiter=",", fmt='%f')
+np.savetxt('%s/script-data/entsoe-qs-grdc-nonforced.csv'%dataDirDiscovery, grdcDataEntsoe, delimiter=",", fmt='%f')
 
 
 

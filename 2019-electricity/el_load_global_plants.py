@@ -23,6 +23,18 @@ def countryCheck(s):
         return True
     else:
         return False
+
+def countryCheckNoUS(s):
+    
+    countries = ['AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', \
+                 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', \
+                 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', \
+                 'SVK', 'SVN', 'ESP', 'SWE', 'GBR']
+    
+    if s.upper() in countries:
+        return True
+    else:
+        return False
     
 
 def fuelCheck(s):
@@ -40,9 +52,9 @@ def capacityCheck(c):
     else:
         return False
 
-def loadGlobalPlants(world = True):
+def loadGlobalPlants(world = True, us = True):
     globalPlants = {'countries':[], 'caps':[], 'lats':[], 'lons':[], 'fuels':[], 'yearCom':[]}
-        
+    
     with open('%s/global_power_plant_database.csv'%dataDirDiscovery, 'r', encoding='latin-1') as f:
         i = 0
         for line in f:
@@ -62,13 +74,37 @@ def loadGlobalPlants(world = True):
             else:
                 year = np.nan
             
-            if (world or countryCheck(country)) and fuelCheck(fuel) and capacityCheck(cap):
-                globalPlants['countries'].append(country)
-                globalPlants['caps'].append(cap)
-                globalPlants['lats'].append(float(parts[5].strip()))
-                globalPlants['lons'].append(float(parts[6].strip()))
-                globalPlants['fuels'].append(fuel)
-                globalPlants['yearCom'].append(year)
+            if not world:
+                # if us-eu
+                
+                # if using US, check against US + EU
+                if us:
+                    if countryCheck(country) and fuelCheck(fuel) and capacityCheck(cap):
+                        globalPlants['countries'].append(country)
+                        globalPlants['caps'].append(cap)
+                        globalPlants['lats'].append(float(parts[5].strip()))
+                        globalPlants['lons'].append(float(parts[6].strip()))
+                        globalPlants['fuels'].append(fuel)
+                        globalPlants['yearCom'].append(year)
+                # if no US, check against only EU
+                else:
+                    if countryCheckNoUS(country) and fuelCheck(fuel) and capacityCheck(cap):
+                        globalPlants['countries'].append(country)
+                        globalPlants['caps'].append(cap)
+                        globalPlants['lats'].append(float(parts[5].strip()))
+                        globalPlants['lons'].append(float(parts[6].strip()))
+                        globalPlants['fuels'].append(fuel)
+                        globalPlants['yearCom'].append(year)
+                    
+            else:
+                # world, so no country check
+                if fuelCheck(fuel) and capacityCheck(cap):
+                    globalPlants['countries'].append(country)
+                    globalPlants['caps'].append(cap)
+                    globalPlants['lats'].append(float(parts[5].strip()))
+                    globalPlants['lons'].append(float(parts[6].strip()))
+                    globalPlants['fuels'].append(fuel)
+                    globalPlants['yearCom'].append(year)
     
     globalPlants['countries'] = np.array(globalPlants['countries'])
     globalPlants['caps'] = np.array(globalPlants['caps'])

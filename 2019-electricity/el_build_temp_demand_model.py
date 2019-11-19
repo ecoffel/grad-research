@@ -23,12 +23,12 @@ import pickle, gzip
 import os
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 def buildNonlinearDemandModel(nBootstrap):
     
     genData = {}
-    with open('genData.dat', 'rb') as f:
+    with open('%s/script-data/genData.dat'%dataDirDiscovery, 'rb') as f:
         genData = pickle.load(f)
         
     tx = genData['txScatter']

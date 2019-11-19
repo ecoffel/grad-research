@@ -30,27 +30,27 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     txtotal = []
     txtotal.extend(nukeAgDataAll[tempVar])
-    txtotal.extend(entsoeAgDataAll[tempVar])
+#     txtotal.extend(entsoeAgDataAll[tempVar])
     txtotal = np.array(txtotal)
     
     qstotal = []
     qstotal.extend(nukeAgDataAll[qsVar])
-    qstotal.extend(entsoeAgDataAll[qsVar])
+#     qstotal.extend(entsoeAgDataAll[qsVar])
     qstotal = np.array(qstotal)
     
     plantIds = []
     plantIds.extend(nukeAgDataAll['plantIds'])
-    plantIds.extend(entsoeAgDataAll['plantIds'])
+#     plantIds.extend(entsoeAgDataAll['plantIds'])
     plantIds = np.array(plantIds)
     
     plantYears = []
     plantYears.extend(nukeAgDataAll['plantYearsSummer'])
-    plantYears.extend(entsoeAgDataAll['plantYears'])
+#     plantYears.extend(entsoeAgDataAll['plantYears'])
     plantYears = np.array(plantYears)
     
     pctotal = []
     pctotal.extend(nukeAgDataAll['capacitySummer'])
-    pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
+#     pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
     pctotal = np.array(pctotal)
       
     ind = np.where((pctotal <= 100.1) & (txtotal > 20) & \
@@ -67,14 +67,24 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     models = []
     
+    # we find indices for one of each plant id
+    uniquePlantIds = []
+    for p in np.unique(plantIds):
+        uniquePlantIds.append(np.where(plantIds==p)[0][0])
+    
     for i in range(nBootstrap):
         if i%50 == 0: print('%.0f%% complete'%(i/nBootstrap*100.0))
-        ind = np.random.choice(len(txtotal), int(len(txtotal)))
-    
-        data = {'T1':txtotal[ind], 'T2':txtotal[ind]**2, \
-                'QS1':qstotal[ind], 'QS2':qstotal[ind]**2, \
-                'QST':txtotal[ind]*qstotal[ind], 'QS2T2':(txtotal[ind]**2)*(qstotal[ind]**2), \
-                'PlantIds':plantIds[ind], 'PlantYears':plantYears[ind], 'PC':pctotal[ind]}
+        
+        # we generate random indices for bootstrapping, leaving spaces for 1 instance of every plant id
+        curInd = np.random.choice(len(txtotal), int(len(txtotal))-len(list(np.unique(plantIds))))
+        # insert each instance of plant id found before - this is to ensure that all plant ids are present in every model at least once,
+        # as otherwise model predictions may fail
+        curInd = np.concatenate((curInd, uniquePlantIds))
+        
+        data = {'T1':txtotal[curInd], 'T2':txtotal[curInd]**2, \
+                'QS1':qstotal[curInd], 'QS2':qstotal[curInd]**2, \
+                'QST':txtotal[curInd]*qstotal[curInd], 'QS2T2':(txtotal[curInd]**2)*(qstotal[curInd]**2), \
+                'PlantIds':plantIds[curInd], 'PlantYears':plantYears[curInd], 'PC':pctotal[curInd]}
         
         df = pd.DataFrame(data, \
                           columns=['T1', 'T2', \
@@ -91,10 +101,10 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
 
     return models, plantIds, plantYears
 
-def exportNukeEntsoePlantLocations():
+def exportNukeEntsoePlantLocations(dataDir):
     
     eData = {}
-    with open('eData.dat', 'rb') as f:
+    with open('%s/script-data/eData.dat'%dataDir, 'rb') as f:
         eData = pickle.load(f) 
     
     entsoeData = eData['entsoePlantDataAll']
@@ -123,7 +133,7 @@ def exportNukeEntsoePlantLocations():
 
     import csv
     n = 0
-    with open('entsoe-nuke-lat-lon.csv', 'w') as f:
+    with open('%s/script-data/entsoe-nuke-lat-lon.csv'%dataDir, 'w') as f:
         csvWriter = csv.writer(f)    
         for i in range(len(entsoeLat)):
             csvWriter.writerow([entsoeIds[i], entsoeLat[i], entsoeLon[i]])

@@ -27,9 +27,9 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-qstr = '-qdistfit-gamma'
+qstr = '-qdistfit-bestfit'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 yearRange = [1981, 2005]
 decades = np.array([[2020,2029],\
@@ -63,68 +63,15 @@ baseQs = 0
 
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
-                         'QST':[baseTx*baseQs]*len(plantIds), \
+                         'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-
-
-#fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/script-data/%s-pp-tx.csv'%plantData
-#plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-#plantYearData = plantTxData[0,:].copy()
-#plantMonthData = plantTxData[1,:].copy()
-#plantDayData = plantTxData[2,:].copy()
-#plantTxData = plantTxData[3:,:].copy()
-
-#summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-#plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-
 # load historical runoff data for all plants in US and EU
-fileNameRunoff = '%s/script-data/%s-pp-runoff.csv'%(dataDirDiscovery, plantData)
-fileNameRunoffDistFit = '%s/script-data/%s-pp-runoff%s.csv'%(dataDirDiscovery, plantData, qstr)
-fileNameRunoffMeansDistFit = '%s/script-data/%s-pp-runoff-means%s.csv'%(dataDirDiscovery, plantData, qstr)
-fileNameRunoffStdsDistFit = '%s/script-data/%s-pp-runoff-stds%s.csv'%(dataDirDiscovery, plantData, qstr)
-
-if os.path.isfile(fileNameRunoffDistFit):
-#    plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
-    plantQsMeans = np.genfromtxt(fileNameRunoffMeansDistFit, delimiter=',', skip_header=0)
-    plantQsStds = np.genfromtxt(fileNameRunoffStdsDistFit, delimiter=',', skip_header=0)
-    
-else:
-    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-    plantQsData = plantQsData[3:,:]
-    
-    plantQsMeans = []
-    plantQsStds = []
-    
-    print('calculating historical qs distfit anomalies')
-    plantQsAnomData = []
-    dist = st.gamma
-    for p in range(plantQsData.shape[0]):
-        if p%1000 == 0:
-            print('plant %d...'%p)
-        q = plantQsData[p,:]
-        nn = np.where(~np.isnan(q))[0]
-        if len(nn) > 10:
-            args = dist.fit(q[nn])
-            curQsStd = dist.std(*args)
-        else:
-            curQsStd = np.nan
-        plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-        plantQsMeans.append(np.nanmean(q))
-        plantQsStds.append(curQsStd)
-    plantQsAnomData = np.array(plantQsAnomData)
-    plantQsMeans = np.array(plantQsMeans)
-    plantQsStds = np.array(plantQsStds)
-    
-    np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-    np.savetxt(fileNameRunoffMeansDistFit, plantQsMeans, delimiter=',')
-    np.savetxt(fileNameRunoffStdsDistFit, plantQsStds, delimiter=',')
-    plantQsData = plantQsAnomData
-    
+fileNameRunoff = '%s/script-data/%s-pp-runoff-anom.csv'%(dataDirDiscovery, plantData)
 
 # load historical pc for txx days
 with open('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:

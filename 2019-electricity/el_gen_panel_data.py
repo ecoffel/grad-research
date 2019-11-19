@@ -17,6 +17,9 @@ import el_nuke_utils
 import sys, os
 import pickle
 
+import warnings
+warnings.filterwarnings('ignore')
+
 dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 if not 'nukeData' in locals():

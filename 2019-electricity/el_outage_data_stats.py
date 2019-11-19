@@ -16,14 +16,15 @@ import sys,os
 import el_build_temp_demand_model
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
-dataDir = 'e:/data/'
+# dataDir = 'e:/data/'
+dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
 
 
 if not 'eData' in locals():
     eData = {}
-    with open('E:/data/ecoffel/data/projects/electricity/script-data/eData.dat', 'rb') as f:
+    with open('%s/script-data/eData.dat'%dataDirDiscovery, 'rb') as f:
         eData = pickle.load(f)
 
 nukePlants = eData['nukePlantDataAll']
@@ -43,9 +44,6 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 
 yearRangeHist = [1981, 2018]
-yearRangeFut1 = [2020, 2050]
-yearRangeFut2 = [2050, 2080]
-
 
 meanOutage = []
 
@@ -130,119 +128,27 @@ for m in range(1, 13):
 histTempsByMonth = np.array(histTempsByMonth)
 #histTempsByMonth = np.nanmean(histTempsByMonth, axis=1)
 
-# load future temps and runoff values
-#qsAnomMonthlyMeanFut = []
-#txMonthlyMeanFut = []
-#txMonthlyMaxFut = []
-#    
-## loop over all models
-#for m in range(len(models)):
-#    fileNameTemp = 'future-temps/us-eu-pp-rcp85-tx-cmip5-%s-2050-2080.csv'%(models[m])
-#    plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-#    plantTxYearData = plantTxData[0,1:].copy()
-#    plantTxMonthData = plantTxData[1,1:].copy()
-#    plantTxDayData = plantTxData[2,1:].copy()
-#    plantTxData = plantTxData[3:,1:].copy()
-#    
-#    fileNameRunoff = 'future-temps/us-eu-pp-rcp85-runoff-cmip5-%s-2050-2080.csv'%(models[m])
-#    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-#    plantQsYearData = plantTxData[0,1:].copy()
-#    plantQsMonthData = plantTxData[1,1:].copy()
-#    plantQsDayData = plantTxData[2,1:].copy()
-#    plantQsData = plantQsData[3:,1:].copy()
-#
-#    qsAnomMonthlyMeanFutCurModel = []
-#    txMonthlyMeanFutCurModel = []
-#    txMonthlyMaxFutCurModel = []
-#
-#    for p in range(plantTxData.shape[0]):
-#        plantMonthlyTxMeanFut = []
-#        plantMonthlyTxMaxFut = []
-#        plantMonthlyQsAnomMeanFut = []
-#        
-#        for month in range(1,13):
-#            ind = np.where((plantTxMonthData==month))[0]
-#            plantMonthlyTxMeanFut.append(np.nanmean(plantTxData[p,ind]))
-#            plantMonthlyQsAnomMeanFut.append(np.nanmean(plantQsData[p,ind]))
-#        
-#        qsAnomMonthlyMeanFutCurModel.append(plantMonthlyQsAnomMeanFut)
-#        txMonthlyMeanFutCurModel.append(plantMonthlyTxMeanFut)
-#        
-#        for month in range(0,12):
-#            plantMonthlyTxMaxFut.append([])
-#            for y in np.unique(plantTxYearData):
-#                ind = np.where((plantTxYearData==y) & (plantTxMonthData==(month+1)))[0]
-#                plantMonthlyTxMaxFut[month].append(np.nanmax(plantTxData[p,ind]))
-#    
-#        txMonthlyMaxFutCurModel.append(plantMonthlyTxMaxFut)
-#    
-#    qsAnomMonthlyMeanFutCurModel = np.array(qsAnomMonthlyMeanFutCurModel)
-#    txMonthlyMeanFutCurModel = np.array(txMonthlyMeanFutCurModel)
-#    txMonthlyMaxFutCurModel = np.nanmean(np.array(txMonthlyMaxFutCurModel), axis=2)
-#    
-#    qsAnomMonthlyMeanFut.append(qsAnomMonthlyMeanFutCurModel)
-#    txMonthlyMeanFut.append(txMonthlyMeanFutCurModel)
-#    txMonthlyMaxFut.append(txMonthlyMaxFutCurModel)
-#
-#qsAnomMonthlyMeanFut = np.array(qsAnomMonthlyMeanFut)
-#txMonthlyMeanFut = np.array(txMonthlyMeanFut)
-#txMonthlyMaxFut = np.array(txMonthlyMaxFut)
-#
-#
-
-
-
-
-
-
-
 
 # load future mean warming data and recompute PC
-txMonthlyMeanFutGMT = []
-txMonthlyMaxFutGMT = []
-qsMonthlyMeanFutGMT = []
+txMonthlyMeanFutGMT = np.full([4, len(models), 113, 12], np.nan)
+txMonthlyMaxFutGMT = np.full([4, len(models), 113, 12], np.nan)
+qsMonthlyMeanFutGMT = np.full([4, len(models), 113, 12], np.nan)
 
 for w in range(1, 4+1):
-    curTxMonthlyMeanGMT = []
-    curTxMonthlyMaxGMT = []
-    curQsMonthlyMeanGMT = []
     
     for m in range(len(models)):
-        
-        curModelTxMonthlyMeanGMT = []
-        curModelTxMonthlyMaxGMT = []
-        curModelQsMonthlyMeanGMT = []
+    
+        print('finding max/mean for %s/%d'%(models[m], w))
         
         # load data for current model and warming level
-        fileNameTemp = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(w, models[m])
-    
+        fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
         if not os.path.isfile(fileNameTemp):
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
             print('skipping %s'%fileNameTemp)
             continue
-    
-        plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+        
+        plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)        
         
         if len(plantTxData) == 0:
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
             continue
         
         plantTxYearData = plantTxData[0,:].copy()
@@ -250,35 +156,15 @@ for w in range(1, 4+1):
         plantTxDayData = plantTxData[2,:].copy()
         plantTxData = plantTxData[3:,:].copy()
         
-        fileNameRunoff = 'E:/data/ecoffel/data/projects/electricity/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(w, models[m])
-        
+        fileNameRunoff = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
+
         if not os.path.isfile(fileNameRunoff):
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
             print('skipping %s'%fileNameRunoff)
             continue
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
         
         if len(plantQsData) == 0:
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
             continue
         
         plantQsYearData = plantTxData[0,:].copy()
@@ -286,26 +172,20 @@ for w in range(1, 4+1):
         plantQsDayData = plantTxData[2,:].copy()
         plantQsData = plantQsData[3:,:].copy()
         
-        
-        
         # loop over all plants
         for p in range(plantTxData.shape[0]):
             
-            plantTxMonthlyMeanGMT = []
-            plantTxMonthlyMaxGMT = []
-            plantQsMonthlyMeanGMT = []
+            plantTxMonthlyMeanGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
+            plantTxMonthlyMaxGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
+            plantQsMonthlyMeanGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
             
             # tx,qs for current plant
             tx = plantTxData[p, :]
             qs = plantQsData[p, :]
             
             # loop over all years for current model/GMT anomaly
-            for year in range(int(min(plantTxYearData)), int(max(plantTxYearData))+1):
+            for yearInd, year in enumerate(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)):
         
-                plantCurYearTxMonthlyMeanGMT = []
-                plantCurYearTxMonthlyMaxGMT = []
-                plantCurYearQsMonthlyMeanGMT = []
-            
                 # and over all months
                 for month in range(1, 13):
                 
@@ -318,11 +198,8 @@ for w in range(1, 4+1):
                     nn = np.where((~np.isnan(curTx)) & (~np.isnan(curQs)))[0]
                     
                     if len(nn) == 0:
-                        plantCurYearTxMonthlyMeanGMT.append(np.nan)
-                        plantCurYearTxMonthlyMaxGMT.append(np.nan)
-                        plantCurYearQsMonthlyMeanGMT.append(np.nan)
                         continue
-                
+                    
                     curTx = curTx[nn]
                     curQs = curQs[nn]
                     
@@ -331,34 +208,17 @@ for w in range(1, 4+1):
                     
                     curTxx = curTx[indTxx]
                     curQsTxx = curQs[indTxx]
-                         
-                    plantCurYearTxMonthlyMeanGMT.append(np.nanmean(curTx))
-                    plantCurYearTxMonthlyMaxGMT.append(curTxx)
-                    plantCurYearQsMonthlyMeanGMT.append(np.nanmean(curQs))
-                
-                plantTxMonthlyMeanGMT.append(plantCurYearTxMonthlyMeanGMT)
-                plantTxMonthlyMaxGMT.append(plantCurYearTxMonthlyMaxGMT)
-                plantQsMonthlyMeanGMT.append(plantCurYearQsMonthlyMeanGMT)
+                    
+                    plantTxMonthlyMeanGMT[yearInd, month-1] = np.nanmean(curTx)
+                    plantTxMonthlyMaxGMT[yearInd, month-1] = curTxx
+                    plantQsMonthlyMeanGMT[yearInd, month-1] = np.nanmean(curQs)
             
-            curModelTxMonthlyMeanGMT.append(np.nanmean(np.array(plantTxMonthlyMeanGMT), axis=0))
-            curModelTxMonthlyMaxGMT.append(np.nanmean(np.array(plantTxMonthlyMaxGMT), axis=0))
-            curModelQsMonthlyMeanGMT.append(np.nanmean(np.array(plantQsMonthlyMeanGMT), axis=0))
-        
-        curTxMonthlyMeanGMT.append(curModelTxMonthlyMeanGMT)
-        curTxMonthlyMaxGMT.append(curModelTxMonthlyMaxGMT)
-        curQsMonthlyMeanGMT.append(curModelQsMonthlyMeanGMT)
-    
-    txMonthlyMeanFutGMT.append(curTxMonthlyMeanGMT)
-    txMonthlyMaxFutGMT.append(curTxMonthlyMaxGMT)
-    qsMonthlyMeanFutGMT.append(curQsMonthlyMeanGMT)
-
-txMonthlyMeanFutGMT = np.array(txMonthlyMeanFutGMT)
-txMonthlyMaxFutGMT = np.array(txMonthlyMaxFutGMT)
-qsMonthlyMeanFutGMT = np.array(qsMonthlyMeanFutGMT)
-
-
+            # average over years
+            txMonthlyMeanFutGMT[w-1, m, p, :] = np.nanmean(plantTxMonthlyMeanGMT, axis=0)
+            txMonthlyMaxFutGMT[w-1, m, p, :] = np.nanmean(plantTxMonthlyMaxGMT, axis=0)
+            qsMonthlyMeanFutGMT[w-1, m, p, :] = np.nanmean(plantQsMonthlyMeanGMT, axis=0)
+            
 txMonthlyMaxFutGMTSorted = np.sort(np.nanmean(txMonthlyMaxFutGMT, axis=2), axis=1)
-
 
 fig = plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
@@ -403,7 +263,7 @@ if plotFigs:
 
 # load data on demand, generation, and temperature across US subgrids
 demData = {}
-with open('genData.dat', 'rb') as f:
+with open('%s/script-data/genData.dat'%dataDirDiscovery, 'rb') as f:
     demData = pickle.load(f)
 
 demTempModels = el_build_temp_demand_model.buildNonlinearDemandModel(10)
@@ -433,8 +293,8 @@ nukeMonthlyTxMaxHist = np.nanmean(np.array(nukeMonthlyTxMaxHist), axis=0)
 monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist), axis=1)
 
 
-if os.path.isfile('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat'):
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'rb') as f:
+if os.path.isfile('%s/script-data/demand-projections.dat'%dataDirDiscovery):
+    with gzip.open('%s/script-data/demand-projections.dat'%dataDirDiscovery, 'rb') as f:
         demData = pickle.load(f)
     
     demHist = demData['demHist']
@@ -534,7 +394,7 @@ else:
         demByMonthFut.append(demByMonthFutCurGMT)
     demByMonthFut = np.array(demByMonthFut)
     
-    with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/demand-projections.dat', 'wb') as f:
+    with gzip.open('%s/script-data/demand-projections.dat'%dataDirDiscovery, 'wb') as f:
         demData = {'demHist':demHist, \
                    'demProj':demProj, \
                    'demMult':demMult, \
@@ -583,7 +443,6 @@ if plotFigs:
     plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
-sys.exit()
 
 
 mon = nukeData['plantMonthsAll']
@@ -608,7 +467,7 @@ qsMonthlyMeanFutGMTSorted = np.sort(np.nanmean(qsMonthlyMeanFutGMT, axis=2), axi
 
 plt.figure(figsize=(4,2))
 plt.xlim([0, 13])
-plt.ylim([-1, 1])
+plt.ylim([-2, 1])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot([0,13], [0,0], '--k', lw=1)
@@ -625,7 +484,7 @@ plt.plot(list(range(1,13)), qsMonthlyMeanFutGMTSorted[3,0,:], '--', lw=1, color=
 #plt.plot(list(range(1,13)), np.nanmean(qsAnomMonthlyMeanFut[ind90[0],:,:], axis=0), '--', lw=1, color='#8c4e23')
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-.8, -.4, 0, .4, .8])
+plt.yticks([-1.5, -1, -.5, 0, .5])
          
 for tick in plt.gca().xaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')

@@ -17,10 +17,10 @@ import sys
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsAnomSummer'
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -65,7 +65,7 @@ for q, qs in enumerate(qsrange):
             histPDF[q,t] = 0
 
 print('building models')
-models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1)
+models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 50)
 plantIdsTmp = np.unique(plantIds)
 plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
 tmp = []

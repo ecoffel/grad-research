@@ -29,7 +29,7 @@ basins = shp.shapes()
 basinRecords = shp.records()
 
 nukeLatLon = np.genfromtxt('%s/script-data/nuke-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
-entsoeLatLon = np.genfromtxt('%s/script-data/entsoe-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
+entsoeLatLon = np.genfromtxt('%s/script-data/entsoe-lat-lon-nonforced.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
 plantLatLon = np.concatenate((nukeLatLon,entsoeLatLon),axis=0)
 
 gldasQs = []
@@ -52,21 +52,20 @@ for year in range(1979, 2018+1):
         
         tmpMeanQs = (tmpVic[['Qs']] + tmpNoah[['Qs']] + tmpMosaic[['Qs']]) / 3.0
         tmpMeanQsb = (tmpVic[['Qsb']] + tmpNoah[['Qsb']] + tmpMosaic[['Qsb']]) / 3.0
-        tmpMeanQsm = (tmpVic[['Qsm']] + tmpNoah[['Qsm']] + tmpMosaic[['Qsm']]) / 3.0
+        
+        tmpMeanQs *= 3600 * 24
+        tmpMeanQsb *= 3600 * 24
         
         if len(gldasQs) == 0:
             gldasQs = tmpMeanQs[['Qs']]
             gldasQsb = tmpMeanQsb[['Qsb']]
-            gldasQsm = tmpMeanQsm[['Qsm']]
         else:
             gldasQs = xr.concat([gldasQs, tmpMeanQs[['Qs']]], dim='time')
             gldasQsb = xr.concat([gldasQsb, tmpMeanQsb[['Qsb']]], dim='time')
-            gldasQsm = xr.concat([gldasQsm, tmpMeanQsm[['Qsm']]], dim='time')
         
 
 gldas_qsAcc = gldasQs.Qs.where(gldasQs['Qs'] != -9999.)
 gldas_qsbAcc = gldasQsb.Qsb.where(gldasQsb['Qsb'] != -9999.)
-gldas_qsmAcc = gldasQsm.Qsm.where(gldasQsm['Qsm'] != -9999.)
 
 # def is_ja(month):
 #     return (month == 7) | (month == 8)
@@ -75,7 +74,7 @@ gldas_qsmAcc = gldasQsm.Qsm.where(gldasQsm['Qsm'] != -9999.)
 # qsbAcc_ja = gldasNoaa_qsbAcc.sel(time=is_ja(gldasNoaa_qsbAcc['time.month']))
 # qsmAcc_ja = gldasNoaa_qsmAcc.sel(time=is_ja(gldasNoaa_qsmAcc['time.month']))
 
-qs_ja = gldas_qsAcc + gldas_qsbAcc + gldas_qsmAcc
+qs_ja = gldas_qsAcc + gldas_qsbAcc
 
 # long-term summertime mean runoff
 qsMean_ja = qs_ja.mean(dim='time')
@@ -137,15 +136,12 @@ for y in range(plantYearRangeEntsoe[0],plantYearRangeEntsoe[1]+1):
         for d in range(0, curMonthRange[1]):
             numDaysEntsoe += 1
 
-numDaysNuke = 0
+numMonthsNuke = 0
 for y in range(plantYearRangeNuke[0],plantYearRangeNuke[1]+1):
     for m in range(1, 12+1):
-        curMonthRange = calendar.monthrange(y,m) 
-        for d in range(0, curMonthRange[1]):
-            numDaysNuke += 1
-
-qsAnomTimeSeriesEntsoe = np.full([29, numDaysEntsoe], np.nan)
-qsAnomTimeSeriesNuke = np.full([66, numDaysNuke+1], np.nan)
+        numMonthsNuke += 1
+qsAnomTimeSeriesEntsoe = np.full([entsoeLatLon.shape[0], numDaysEntsoe], np.nan)
+qsAnomTimeSeriesNuke = np.full([nukeLatLon.shape[0], numMonthsNuke+1], np.nan)
 
 nukePlantId = 0
 entsoePlantId = 0
@@ -164,7 +160,7 @@ for b in range(basinMasks.shape[2]):
     # all the years, months, days that we need qs values for (2007-2018 for nuke, 2015-2018 for entsoe)
     entsoePlant = False
     nukePlant = False
-    if plantLatLon[b, 0] < 50:
+    if plantLatLon[b, 0] < 60:
         plantYearRange = plantYearRangeEntsoe
         entsoePlant = True
     else:
@@ -175,7 +171,8 @@ for b in range(basinMasks.shape[2]):
     monthRange = []
     dayRange = []
 
-    dayInd = 0
+    dayIndEntsoe = 0
+    monthIndNuke = 1
     for y in range(plantYearRange[0],plantYearRange[1]+1):
         for m in range(1, 12+1):
             curMonthRange = calendar.monthrange(y,m) 
@@ -183,24 +180,24 @@ for b in range(basinMasks.shape[2]):
             
             if tmp.size == 0:
                 tmp = np.nan
-            
-            for d in range(0, curMonthRange[1]):
-                yearRange.append(y)
-                monthRange.append(m)
-                dayRange.append(d+1)
-                    
-                if entsoePlant:
-                    qsAnomTimeSeriesEntsoe[entsoePlantId, dayInd] = tmp
-                elif nukePlant:
-                    qsAnomTimeSeriesNuke[nukePlantId, dayInd] = tmp
                 
-                dayInd += 1
-    
+            if entsoePlant:
+                for d in range(0, curMonthRange[1]):
+                    yearRange.append(y)
+                    monthRange.append(m)
+                    dayRange.append(d+1)
+                    qsAnomTimeSeriesEntsoe[entsoePlantId, dayIndEntsoe] = tmp
+                    dayIndEntsoe += 1
+            elif nukePlant:
+                qsAnomTimeSeriesNuke[nukePlantId, monthIndNuke] = tmp
+                monthIndNuke += 1
+            
     yearRange = np.array(yearRange)
     monthRange = np.array(monthRange)
     dayRange = np.array(dayRange)
     
-    if entsoePlant: entsoePlantId += 1
+    if entsoePlant: 
+        entsoePlantId += 1
     if nukePlant: 
         qsAnomTimeSeriesNuke[nukePlantId, 0] = pId
         nukePlantId += 1
@@ -228,7 +225,7 @@ dayHeader = np.array(dayHeader)
 qsAnomTimeSeriesEntsoe = np.insert(qsAnomTimeSeriesEntsoe, 0, dayHeader, axis=0)
 qsAnomTimeSeriesEntsoe = np.insert(qsAnomTimeSeriesEntsoe, 0, monthHeader, axis=0)
 qsAnomTimeSeriesEntsoe = np.insert(qsAnomTimeSeriesEntsoe, 0, yearHeader, axis=0)
-np.savetxt("%s/script-data/entsoe-qs-gldas-basin-avg.csv"%dataDirDiscovery, qsAnomTimeSeriesEntsoe, delimiter=",", fmt='%f')
+np.savetxt("%s/script-data/entsoe-qs-gldas-basin-avg-nonforced.csv"%dataDirDiscovery, qsAnomTimeSeriesEntsoe, delimiter=",", fmt='%f')
 
 
 

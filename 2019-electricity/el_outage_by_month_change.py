@@ -18,9 +18,14 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import statsmodels.api as sm
+import el_find_best_runoff_dist
 import scipy.stats as st
 import pickle, gzip
 import sys, os
+
+import warnings
+warnings.filterwarnings('ignore')
+
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 #dataDir = 'e:/data/'
@@ -63,6 +68,8 @@ with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffM
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
 
+uniquePlants = np.unique(plantIds)
+    
 # find historical monthly mean qs and tx for plants
 qsAnomMonthlyMean = []
 txMonthlyMean = []
@@ -118,278 +125,282 @@ qsAnomMonthlyMean = np.array(qsAnomMonthlyMean)
 txMonthlyMean = np.array(txMonthlyMean)
 txMonthlyMax = np.array(txMonthlyMax)
 
-
-print('loading future gmt temp/runoff data')
-# load future mean warming data for GMT levels
-
-# load future mean warming data and recompute PC
-txMonthlyMeanFutGMT = []
-txMonthlyMaxFutGMT = []
-qsMonthlyMeanFutGMT = []
-
-for w in range(1, 4+1):
-    curTxMonthlyMeanGMT = []
-    curTxMonthlyMaxGMT = []
-    curQsMonthlyMeanGMT = []
-    
-    for m in range(len(models)):
-        
-        curModelTxMonthlyMeanGMT = []
-        curModelTxMonthlyMaxGMT = []
-        curModelQsMonthlyMeanGMT = []
-        
-        # load data for current model and warming level
-        fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
-    
-        if not os.path.isfile(fileNameTemp):
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
-            continue
-    
-        plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
-        
-        if len(plantTxData) == 0:
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
-            continue
-        
-        plantTxYearData = plantTxData[0,1:].copy()
-        plantTxMonthData = plantTxData[1,1:].copy()
-        plantTxDayData = plantTxData[2,1:].copy()
-        plantTxData = plantTxData[3:,1:].copy()
-        
-        fileNameRunoff = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
-        fileNameRunoffDistFit = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
-        fileNameRunoffDistPercentile = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-percentile-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
-        
-        if os.path.isfile(fileNameRunoffDistFit):
-            plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
-        elif os.path.isfile(fileNameRunoff):
-            plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-            plantQsData = plantQsData[3:,:]
-            
-            print('calculating %s/+%dC qs distfit anomalies'%(models[m], w))
-            plantQsAnomData = []
-            plantQsPercentileData = []
-            
-            for p in range(plantQsData.shape[0]):
-                fileNameBestFit = '%s/dist-fits/best-fit-plant-%d.dat'%(dataDirDiscovery, p)
-                
-                with open(fileNameBestFit, 'rb') as f:
-                    distParams = pickle.load(f)
-                
-                dist = getattr(st, distParams['name'])
-
-                if p%500 == 0:
-                    print('calculating qs anom for plant %d...'%p)
-                q = plantQsData[p,:]
-                qPercentile = np.zeros(q.shape)
-                qPercentile[qPercentile == 0] = np.nan
-                nn = np.where(~np.isnan(q))[0]
-                if len(nn) > 10:
-                    args = dist.fit(q[nn])
-                    curQsStd = dist.std(*args)
-#                    qPercentile = dist.cdf(q, *args)
-                else:
-                    curQsStd = np.nan
-                plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-#                plantQsPercentileData.append(qPercentile)
-                
-            plantQsAnomData = np.array(plantQsAnomData)
-#            plantQsPercentileData = np.array(plantQsPercentileData)
-            np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-#            np.savetxt(fileNameRunoffDistPercentile, plantQsPercentileData, delimiter=',')
-            plantQsData = plantQsAnomData
-            
-        else:
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
-            continue
-        
-        
-        
-        if len(plantQsData) == 0:
-            # add a nan for each plant in current model
-            filler = []
-            for p in range(90):
-                f1 = []
-                for mon in range(1, 13):
-                    f1.append(np.nan)
-                filler.append(f1)
-            curTxMonthlyMeanGMT.append(filler)
-            curTxMonthlyMaxGMT.append(filler)
-            curQsMonthlyMeanGMT.append(filler)
-            continue
-        
-        plantQsYearData = plantTxData[0,1:].copy()
-        plantQsMonthData = plantTxData[1,1:].copy()
-        plantQsDayData = plantTxData[2,1:].copy()
-        
-        # loop over all plants
-        for p in range(plantTxData.shape[0]):
-            
-            plantTxMonthlyMeanGMT = []
-            plantTxMonthlyMaxGMT = []
-            plantQsMonthlyMeanGMT = []
-            
-            # tx,qs for current plant
-            tx = plantTxData[p, :]
-            qs = plantQsData[p, :]
-            
-            # loop over all years for current model/GMT anomaly
-            for year in range(int(min(plantTxYearData)), int(max(plantTxYearData))+1):
-        
-                plantCurYearTxMonthlyMeanGMT = []
-                plantCurYearTxMonthlyMaxGMT = []
-                plantCurYearQsMonthlyMeanGMT = []
-            
-                # and over all months
-                for month in range(1, 13):
-                
-                    # tx for current year's current month
-                    ind = np.where((plantTxYearData == year) & (plantTxMonthData == month))[0]
-                    
-                    curTx = tx[ind]
-                    curQs = qs[ind]
-                    
-                    nn = np.where((~np.isnan(curTx)) & (~np.isnan(curQs)))[0]
-                    
-                    if len(nn) == 0:
-                        plantCurYearTxMonthlyMeanGMT.append(np.nan)
-                        plantCurYearTxMonthlyMaxGMT.append(np.nan)
-                        plantCurYearQsMonthlyMeanGMT.append(np.nan)
-                        continue
-                
-                    curTx = curTx[nn]
-                    curQs = curQs[nn]
-                    
-                    # ind of the txx day in this year/month
-                    indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
-                    
-                    curTxx = curTx[indTxx]
-                    curQsTxx = curQs[indTxx]
-                         
-                    plantCurYearTxMonthlyMeanGMT.append(np.nanmean(curTx))
-                    plantCurYearTxMonthlyMaxGMT.append(curTxx)
-                    plantCurYearQsMonthlyMeanGMT.append(np.nanmean(curQs))
-                
-                plantTxMonthlyMeanGMT.append(plantCurYearTxMonthlyMeanGMT)
-                plantTxMonthlyMaxGMT.append(plantCurYearTxMonthlyMaxGMT)
-                plantQsMonthlyMeanGMT.append(plantCurYearQsMonthlyMeanGMT)
-            
-            curModelTxMonthlyMeanGMT.append(np.nanmean(np.array(plantTxMonthlyMeanGMT), axis=0))
-            curModelTxMonthlyMaxGMT.append(np.nanmean(np.array(plantTxMonthlyMaxGMT), axis=0))
-            curModelQsMonthlyMeanGMT.append(np.nanmean(np.array(plantQsMonthlyMeanGMT), axis=0))
-        
-        curTxMonthlyMeanGMT.append(curModelTxMonthlyMeanGMT)
-        curTxMonthlyMaxGMT.append(curModelTxMonthlyMaxGMT)
-        curQsMonthlyMeanGMT.append(curModelQsMonthlyMeanGMT)
-    
-    txMonthlyMeanFutGMT.append(curTxMonthlyMeanGMT)
-    txMonthlyMaxFutGMT.append(curTxMonthlyMaxGMT)
-    qsMonthlyMeanFutGMT.append(curQsMonthlyMeanGMT)
-
-txMonthlyMeanFutGMT = np.array(txMonthlyMeanFutGMT)
-txMonthlyMaxFutGMT = np.array(txMonthlyMaxFutGMT)
-qsMonthlyMeanFutGMT = np.array(qsMonthlyMeanFutGMT)
-qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>3] = np.nan
-qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
-
-
-#ppFutureData = {'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
-#                'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT, \
-#                'txMonthlyMax':txMonthlyMax, \
-#                'qsAnomMonthlyMean':qsAnomMonthlyMean}
-#with gzip.open('E:/data/ecoffel/data/projects/electricity/script-data/ppFutureTxQsData.dat', 'wb') as f:
-#    pickle.dump(ppFutureData, f)
-
-
-
-print('calculating curtailment change')
-plantMonthlyOutageChg = []
-
-t0 = 27#txMonthlyMax[p,month]
+t0 = 27
 q0 = 0
-#pc0 = pcModel50.predict([1, t0, t0**2, t0**3, \
-#                                     q0, q0**2, q0**3, q0**4, q0**5, \
-#                                     t0*q0,0])[0]
+
 dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
                          'QS1':[q0]*len(plantIds), 'QS2':[q0**2]*len(plantIds), \
-                         'QST':[t0*q0]*len(plantIds), \
+                         'QST':[t0*q0]*len(plantIds), 'QS2T2':[(t0**2)*(q0**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
 pc0 = np.nanmean(pcModel50.predict(dfpred))
 
-# loop over GMT warming levels
-for w in range(0, 4):
+print('calculating historical pc')
+pcHist = np.full([txMonthlyMax.shape[0], 12], np.nan)
+for p in range(txMonthlyMax.shape[0]):
     
-    print('processing GMT %d'%(w+1))
-    
-    plantMonthlyOutageChgGMT = []
-    # loop over all plants
-    for p in range(nukePlants['qsAnom'].shape[0] + entsoePlants['tx'].shape[0]):
-        curPlantMonthlyOutageChg = []
+    if p%10 == 0:
+        print('plant %d of %d'%(p, txMonthlyMax.shape[0]))
         
-        for month in range(0,12):
-            
-            curPlantMonthlyOutageChg.append([])
-            
-            for model in range(len(models)):
-#                    q0 = 0#qsAnomMonthlyMean[p,month]
-                
-                t1 = txMonthlyMaxFutGMT[w,model,p,month]
-                q1 = qsMonthlyMeanFutGMT[w,model,p,month]
-                
-                # if > 27 C 
-                if t1 >= t0:
-            
-                    dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
-                         'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
-                         'QST':[t1*q1]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
-                    pc1 = np.nanmean(pcModel50.predict(dfpred))
-        
-                    if pc1 > 100: pc1 = 100
-                    if pc1 < 0: pc1 = 0
-                    
-                    outage = pc1-pc0
-                    if outage > 0: outage = 0
-                    # if projected PC < 0... limit to 0
-#                    if pc1 < 0:
-#                        curPlantMonthlyOutageChg[month].append(-pc0)
-#                    else:
-                    curPlantMonthlyOutageChg[month].append(outage)
-                else:
-                    curPlantMonthlyOutageChg[month].append(0)
+    for month in range(0,12):
 
-        plantMonthlyOutageChgGMT.append(curPlantMonthlyOutageChg)
+        t1 = txMonthlyMax[p,month]
+        q1 = qsAnomMonthlyMean[p,month]
+
+        # if > 27 C 
+        if t1 >= t0 and ~np.isnan(q1):
+
+            dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
+                 'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
+                 'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
+                 'PlantIds':plantIds, 'PlantYears':plantYears})
+            pc1 = np.nanmean(pcModel50.predict(dfpred))
+
+            if pc1 > 100: pc1 = 100
+            if pc1 < 0: pc1 = 0
+
+            outage = pc1-pc0
+            if outage > 0: outage = 0
+            pcHist[p,month] = outage
+            
+        elif t1 < t0 and ~np.isnan(q1):
+            pcHist[p,month] = 0
+
+
+
+if os.path.isfile('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery):
     
-    plantMonthlyOutageChg.append(plantMonthlyOutageChgGMT)
+    with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
+        ppFutureData = pickle.load(f)
+        txMonthlyMeanFutGMT = ppFutureData['txMonthlyMeanFutGMT']
+        txMonthlyMaxFutGMT = ppFutureData['txMonthlyMaxFutGMT']
+        qsMonthlyMeanFutGMT = ppFutureData['qsMonthlyMeanFutGMT']
+else:
+    print('loading future gmt temp/runoff data')
+    # load future mean warming data for GMT levels
 
-plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
+    # load future mean warming data and recompute PC
+    txMonthlyMeanFutGMT = np.full([4, len(models), txMonthlyMax.shape[0], 12], np.nan)
+    txMonthlyMaxFutGMT = np.full([4, len(models), txMonthlyMax.shape[0], 12], np.nan)
+    qsMonthlyMeanFutGMT = np.full([4, len(models), txMonthlyMax.shape[0], 12], np.nan)
+
+    for w in range(1, 4+1):
+
+        for m in range(len(models)):
+
+            print('processing %s/%d'%(models[m],w))
+
+
+            # load data for current model and warming level
+            fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
+
+            if not os.path.isfile(fileNameTemp):
+                continue
+
+            plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
+
+            if len(plantTxData) == 0:
+                continue
+
+            plantTxYearData = plantTxData[0,1:].copy()
+            plantTxMonthData = plantTxData[1,1:].copy()
+            plantTxDayData = plantTxData[2,1:].copy()
+            plantTxData = plantTxData[3:,1:].copy()
+
+            fileNameRunoffRaw = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-raw-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
+            fileNameRunoffDistFit = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
+
+            plantQsAnomData = []
+
+            # if the anomalies exist, load them
+            if os.path.isfile(fileNameRunoffDistFit):
+
+                plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
+
+            elif os.path.isfile(fileNameRunoffRaw):
+                # if the anomalies don't exist, first we need to find the best fit dist for this model/plant if it hasn't already been done,
+                # then use that best fit to calculate the anomalies and save them
+
+                fileNameRunoffHist = '%s/future-temps/entsoe-nuke-pp-hist-runoff-raw-cmip5-%s-1981-2005.csv'%(dataDirDiscovery, models[m])
+                plantQsDataHistCmip5 = np.genfromtxt(fileNameRunoffHist, delimiter=',', skip_header=0)
+
+                for p in range(plantQsDataHistCmip5.shape[0]):
+                    # first 52 plants are entsoe
+                    if p <= 51:
+                        entsoePlantId = p
+                        if not os.path.isfile('%s/dist-fits/best-fit-entsoe-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], entsoePlantId)):
+                            nn = np.where(~np.isnan(plantQsDataHistCmip5[p,:]))[0]
+                            best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(plantQsDataHistCmip5[p,nn])
+                            with open('%s/dist-fits/best-fit-entsoe-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], entsoePlantId), 'wb') as f:
+                                dist = getattr(st, best_fit_name)
+                                tmpQsPercentile = dist.cdf(plantQsDataHistCmip5[p,nn], *best_fit_params)
+                                distParams = {'name':best_fit_name,
+                                              'params':best_fit_params, 
+                                              'std':curQsStd,
+                                              'cdf':tmpQsPercentile}
+                                pickle.dump(distParams, f)
+                                print('cmip5 hist entsoe %d/%s: dist = %s, std = %.4f'%(entsoePlantId, models[m], str(dist), curQsStd))
+                        else:
+                            with open('%s/dist-fits/best-fit-entsoe-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], entsoePlantId), 'rb') as f:
+                                distParams = pickle.load(f)
+                                curQsStd = distParams['std']
+
+
+                    # plant 53 and on are nuke
+                    elif p >= 52:
+                        nukePlantId = p
+                        if not os.path.isfile('%s/dist-fits/best-fit-nuke-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], nukePlantId)):
+                            nn = np.where(~np.isnan(plantQsDataHistCmip5[p,:]))[0]
+                            best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(plantQsDataHistCmip5[p,nn])
+                            with open('%s/dist-fits/best-fit-nuke-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], nukePlantId), 'wb') as f:
+                                dist = getattr(st, best_fit_name)
+                                tmpQsPercentile = dist.cdf(plantQsDataHistCmip5[p,nn], *best_fit_params)
+                                distParams = {'name':best_fit_name,
+                                              'params':best_fit_params, 
+                                              'std':curQsStd,
+                                              'cdf':tmpQsPercentile}
+                                pickle.dump(distParams, f)
+                                print('cmip5 hist nuke %d/%s: std = %.4f'%(nukePlantId, models[m], curQsStd))
+                        else:
+                            with open('%s/dist-fits/best-fit-nuke-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, models[m], nukePlantId), 'rb') as f:
+                                distParams = pickle.load(f)
+                                curQsStd = distParams['std']
+
+
+                    # now load the raw cmip5 gmt change data and find its anom using the best-fit dist from above
+                    plantQsData = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
+
+                    # add year/month/day rows first
+                    if p == 0:
+                        plantQsAnomData.append(plantQsData[0,:])
+                        plantQsAnomData.append(plantQsData[1,:])
+                        plantQsAnomData.append(plantQsData[2,:])
+
+                    qAnom = (plantQsData[p+3,:] - np.nanmean(plantQsData[p+3,:])) / curQsStd
+                    plantQsAnomData.append(qAnom)
+
+                # now we have computed anoms for all plants, save the anom file for this model
+                plantQsAnomData = np.array(plantQsAnomData)
+                np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
+                plantQsData = plantQsAnomData[3:,:]
+
+            else:
+                # neither raw nor anom runoff file exists
+                continue
+
+            if len(plantQsData) == 0:
+                continue
+
+            plantQsYearData = plantTxData[0,1:].copy()
+            plantQsMonthData = plantTxData[1,1:].copy()
+            plantQsDayData = plantTxData[2,1:].copy()
+
+            # loop over all plants
+            for p in range(plantTxData.shape[0]):
+
+                plantTxMonthlyMeanGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
+                plantTxMonthlyMaxGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
+                plantQsMonthlyMeanGMT = np.full([len(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)), 12], np.nan)
+
+                # tx,qs for current plant
+                tx = plantTxData[p, :]
+                qs = plantQsData[p, :]
+
+                # loop over all years for current model/GMT anomaly
+                for yearInd, year in enumerate(range(int(min(plantTxYearData)), int(max(plantTxYearData))+1)):
+
+                    # and over all months
+                    for month in range(1, 13):
+
+                        # tx for current year's current month
+                        ind = np.where((plantTxYearData == year) & (plantTxMonthData == month))[0]
+
+                        curTx = tx[ind]
+                        curQs = qs[ind]
+
+                        nn = np.where((~np.isnan(curTx)) & (~np.isnan(curQs)))[0]
+
+                        if len(nn) == 0:
+                            continue
+
+                        curTx = curTx[nn]
+                        curQs = curQs[nn]
+
+                        # ind of the txx day in this year/month
+                        indTxx = np.where(curTx == np.nanmax(curTx))[0][0]
+
+                        curTxx = curTx[indTxx]
+                        curQsTxx = curQs[indTxx]
+
+                        plantTxMonthlyMeanGMT[yearInd, month-1] = np.nanmean(curTx)
+                        plantTxMonthlyMaxGMT[yearInd, month-1] = curTxx
+                        plantQsMonthlyMeanGMT[yearInd, month-1] = np.nanmean(curQs)
+
+                txMonthlyMeanFutGMT[w-1, m, p, :] = np.nanmean(np.array(plantTxMonthlyMeanGMT), axis=0)
+                txMonthlyMaxFutGMT[w-1, m, p, :] = np.nanmean(np.array(plantTxMonthlyMaxGMT), axis=0)
+                qsMonthlyMeanFutGMT[w-1, m, p, :] = np.nanmean(np.array(plantQsMonthlyMeanGMT), axis=0)
+
+        qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT>3] = np.nan
+        qsMonthlyMeanFutGMT[qsMonthlyMeanFutGMT<-3] = np.nan
+
+
+    ppFutureData = {'txMonthlyMeanFutGMT':txMonthlyMeanFutGMT, \
+                   'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
+                   'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT}
+    with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'wb') as f:
+       pickle.dump(ppFutureData, f)
+
+if os.path.isfile('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery):
+    with open('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery, '4b') as f:
+        plantMonthlyOutageChg = pickle.load(f)
+else:
+    print('calculating curtailment change')
+    plantMonthlyOutageChg = []
+
+    # loop over GMT warming levels
+    for w in range(0, 4):
+
+        print('processing GMT %d'%(w+1))
+
+        plantMonthlyOutageChgGMT = []
+        # loop over all plants
+        for p in range(nukePlants['qsAnom'].shape[0] + entsoePlants['tx'].shape[0]):
+            curPlantMonthlyOutageChg = []
+
+            for month in range(0,12):
+
+                curPlantMonthlyOutageChg.append([])
+
+                for model in range(len(models)):
+
+                    t1 = txMonthlyMaxFutGMT[w,model,p,month]
+                    q1 = qsMonthlyMeanFutGMT[w,model,p,month]
+
+                    # if > 27 C 
+                    if t1 >= t0:
+
+                        dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
+                             'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
+                             'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
+                             'PlantIds':plantIds, 'PlantYears':plantYears})
+                        pc1 = np.nanmean(pcModel50.predict(dfpred))
+
+                        if pc1 > 100: pc1 = 100
+                        if pc1 < 0: pc1 = 0
+
+                        outage = pc1-pc0
+                        if outage > 0: outage = 0
+                        curPlantMonthlyOutageChg[month].append(outage)
+                    else:
+                        curPlantMonthlyOutageChg[month].append(0)
+
+            plantMonthlyOutageChgGMT.append(curPlantMonthlyOutageChg)
+
+        plantMonthlyOutageChg.append(plantMonthlyOutageChgGMT)
+
+    plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
+
+    with open('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery, 'wb') as f:
+        pickle.dump(plantMonthlyOutageChg, f)
 
 plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=1),axis=2)
 
@@ -398,10 +409,12 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-5.5, 0])
+plt.ylim([-8.5, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
+
+plt.plot(list(range(1,13)), np.nanmean(pcHist,axis=0), '-', lw=2, color='black')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[1,:,:,:],axis=2),axis=0), '-', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[1,:,0], '--', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[3,:,:,:],axis=2),axis=0), '-', lw=2, color=snsColors[1])
@@ -413,7 +426,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks([-5, -4, -3, -2, -1, 0])
+plt.yticks(np.arange(-8,1,2))
 
 plt.xticks(list(range(1,13)))
 
