@@ -21,6 +21,8 @@ import sys,os
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
+# if we are running as job on discovery, send print output to a file
+outputToFile = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -30,12 +32,12 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 #gldas or grdc
 runoffModel = 'grdc'
-plantData = 'world'
+plantData = 'useu'
 
 modelPower = 'pow2'
 
-# '-qdistfit' or ''
-qsdist = '-qdistfit-gamma'
+# '-anom-best-dist' or ''
+qsdist = '-anom-best-dist'
 
 if plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
@@ -59,97 +61,99 @@ with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffMod
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
 
-histFileName10 = '%s/pc-future-%s/%s-pc-hist%s-%s-10.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, modelPower)
-histFileName50 = '%s/pc-future-%s/%s-pc-hist%s-%s-50.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, modelPower)
-histFileName90 = '%s/pc-future-%s/%s-pc-hist%s-%s-90.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, modelPower)
-
+histFileName10 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-10.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
+histFileName50 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-50.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
+histFileName90 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-90.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
 
 if not os.path.isfile(histFileName10):
     
     # load historical temp data
-    print('loading historical temp data')
+    if outputToFile:
+        print('loading historical tx data', file=open('el_build_agg_data_output.txt', 'a'))
+    
     plantTxData = np.genfromtxt('%s/script-data/%s-pp-tx.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
     plantYearData = plantTxData[0,:]
     plantMonthData = plantTxData[1,:]
     plantDayData = plantTxData[2,:]
     plantTxData = plantTxData[3:,:]
     
+    plantTnData = np.genfromtxt('%s/script-data/%s-pp-tn.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
+    plantTnData = plantTnData[3:,:]
+    
     # load historical runoff data and make dist-fitted anomalies if necessary
-    print('loading historical runoff data')
-    if os.path.isfile('%s/script-data/%s-pp-runoff%s-anom.csv'%(dataDirDiscovery, plantData, qsdist)):
-        plantQsData = np.genfromtxt('%s/script-data/%s-pp-runoff%s-anom.csv'%(dataDirDiscovery, plantData, qsdist), delimiter=',', skip_header=0)
-    else:
-        plantQsData = np.genfromtxt('%s/script-data/%s-pp-runoff.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
-        plantQsData = plantQsData[3:,:]
+    if outputToFile:
+        print('loading historical runoff data', file=open('el_build_agg_data_output.txt', 'a'))
+    
+    plantQsData = np.genfromtxt('%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
+    plantQsData = plantQsData[3:,:]
         
-        print('calculating historical qs distfit anomalies')
-        plantQsAnomData = []
-        
-        for p in range(plantQsData.shape[0]):
-            if p%500 == 0:
-                print('calculating qs anom for plant %d...'%p)
-            q = plantQsData[p,:]
-            nn = np.where(~np.isnan(q))[0]
-            dist = st.gamma
-            
-            if len(nn) > 10:
-                args = dist.fit(q[nn])
-                curQsStd = dist.std(*args)
-            else:
-                curQsStd = np.nan
-            plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-        
-        plantQsData = np.array(plantQsAnomData)
-        plantQsData[plantQsData < -4] = np.nan
-        plantQsData[plantQsData > 4] = np.nan
-        np.savetxt('%s/%s-pp-runoff%s-anom.csv'%(dataDirDiscovery, plantData, qsdist), plantQsData, delimiter=',')
-
-    plantQsData[plantQsData < -4] = np.nan
-    plantQsData[plantQsData > 4] = np.nan
+    plantQsData[plantQsData < -5] = np.nan
+    plantQsData[plantQsData > 5] = np.nan
     
     # generate historical global daily outage data    
-    syswidePCHist10 = np.zeros([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31])
-    syswidePCHist50 = np.zeros([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31])
-    syswidePCHist90 = np.zeros([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31])
-    
-    syswidePCHist10[syswidePCHist10 == 0] = np.nan
-    syswidePCHist50[syswidePCHist50 == 0] = np.nan
-    syswidePCHist90[syswidePCHist90 == 0] = np.nan
+    syswidePCHist10 = np.full([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31, 24], np.nan)
+    syswidePCHist50 = np.full([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31, 24], np.nan)
+    syswidePCHist90 = np.full([plantTxData.shape[0], len(range(1981, 2005+1)), len(range(1,13)), 31, 24], np.nan)
     
     dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
-                         'QST':[baseTx*baseQs]*len(plantIds), \
+                         'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
     
     basePred10 = np.nanmean(pcModel10.predict(dfpred))
     basePred50 = np.nanmean(pcModel50.predict(dfpred))
     basePred90 = np.nanmean(pcModel90.predict(dfpred))
     
-    print('computing historical systemwide PC...')
+    if outputToFile:
+        print('computing historical systemwide PC...', file=open('el_build_agg_data_output.txt', 'a'))
+    
     # loop over all global plants
     for p in range(0, plantTxData.shape[0]):
         
-        if p%50==0:
-            print('processing historical plant %d of %d...'%(p, plantTxData.shape[0]))
+        if p%100==0:
+            if outputToFile:
+                print('processing historical plant %d of %d...'%(p, plantTxData.shape[0]), file=open('el_build_agg_data_output.txt', 'a'))
         
         selPlantIds = np.random.choice(len(plantIds), 1)
         
         tx = plantTxData[p,:]
+        tn = plantTnData[p,:]
         qs = plantQsData[p,:]
 
-        indTxAboveBase = np.where((tx > baseTx))[0]
+        txHourly = np.full([tx.shape[0], 24], np.nan)
+        qsHourly = np.full([qs.shape[0], 24], np.nan)
+
+        for d in range(1, tx.shape[0]):
+            qsHourly[d, :] = [qs[d]]*24
+            # set daily min
+            txHourly[d, 0] = tn[d]
+
+            # set daily max
+            txHourly[d, 12] = tx[d]
+
+            # interpolate 1st half of day
+            txHourly[d, 1:12] = np.linspace(txHourly[d, 0], txHourly[d, 12], 11)
+
+            if d < txHourly.shape[0]-1:
+                # interpolate down to next day's min
+                txHourly[d, 13:24] = np.linspace(txHourly[d, 12], tn[d+1], 11)
+            else:
+                # if today is the final day, go back down to today's min
+                txHourly[d, 13:24] = np.linspace(txHourly[d, 12], tn[d], 11)
+
+        txHourly = np.reshape(txHourly, [txHourly.size])
+        qsHourly = np.reshape(qsHourly, [qsHourly.size])
+        
+        indTxAboveBase = np.where((txHourly > baseTx))[0]
         indPlantIds = np.random.choice(len(plantIds), len(indTxAboveBase))
 
-        pcPred10 = np.zeros([len(tx)])
-        pcPred10[pcPred10 == 0] = basePred10
-        pcPred50 = np.zeros([len(tx)])
-        pcPred50[pcPred50 == 0] = basePred50
-        pcPred90 = np.zeros([len(tx)])
-        pcPred90[pcPred90 == 0] = basePred90
+        pcPred10 = np.full([len(txHourly)], basePred10)
+        pcPred50 = np.full([len(txHourly)], basePred50)
+        pcPred90 = np.full([len(txHourly)], basePred90)
 
-        dfpred = pd.DataFrame({'T1':tx[indTxAboveBase], 'T2':tx[indTxAboveBase]**2, \
-                                         'QS1':qs[indTxAboveBase], 'QS2':qs[indTxAboveBase]**2, \
-                                         'QST':tx[indTxAboveBase]*qs[indTxAboveBase], \
+        dfpred = pd.DataFrame({'T1':txHourly[indTxAboveBase], 'T2':txHourly[indTxAboveBase]**2, \
+                                         'QS1':qsHourly[indTxAboveBase], 'QS2':qsHourly[indTxAboveBase]**2, \
+                                         'QST':txHourly[indTxAboveBase]*qsHourly[indTxAboveBase], 'QS2T2':(txHourly[indTxAboveBase]**2)*(qsHourly[indTxAboveBase]**2), \
                                          'PlantIds':plantIds[indPlantIds], \
                                          'PlantYears':plantYears[indPlantIds]})
 
@@ -161,6 +165,10 @@ if not os.path.isfile(histFileName10):
         pcPred50[pcPred50 > 100] = basePred50
         pcPred90[pcPred90 > 100] = basePred90
 
+        pcPred10 = np.reshape(pcPred10, [tx.shape[0], 24])
+        pcPred50 = np.reshape(pcPred50, [tx.shape[0], 24])
+        pcPred90 = np.reshape(pcPred90, [tx.shape[0], 24])
+        
         for yearInd, year in enumerate(range(1981, 2005+1)):
             
             for monthInd, month in enumerate(range(1,13)):
@@ -168,15 +176,16 @@ if not os.path.isfile(histFileName10):
                 ind = np.where((plantYearData == year) & \
                                (plantMonthData == month))[0]
                 
-                syswidePCHist10[p, yearInd, monthInd, 0:len(ind)] = pcPred10[ind]
-                syswidePCHist50[p, yearInd, monthInd, 0:len(ind)] = pcPred50[ind]
-                syswidePCHist90[p, yearInd, monthInd, 0:len(ind)] = pcPred90[ind]
+                syswidePCHist10[p, yearInd, monthInd, 0:len(ind), :] = pcPred10[ind, :]
+                syswidePCHist50[p, yearInd, monthInd, 0:len(ind), :] = pcPred50[ind, :]
+                syswidePCHist90[p, yearInd, monthInd, 0:len(ind), :] = pcPred90[ind, :]
 
     globalPC10 = {'globalPCHist10':syswidePCHist10}
     globalPC50 = {'globalPCHist50':syswidePCHist50}
     globalPC90 = {'globalPCHist90':syswidePCHist90}
     
-    print('writing gzip files...')
+    if outputToFile:
+        print('writing files...', file=open('el_build_agg_data_output.txt', 'a'))
     
     with open(histFileName10, 'wb') as f:
         pickle.dump(globalPC10, f, protocol=4)
@@ -185,7 +194,7 @@ if not os.path.isfile(histFileName10):
     with open(histFileName90, 'wb') as f:
         pickle.dump(globalPC90, f, protocol=4)
 
-        
+sys.exit()
         
 # load future mean warming data and recompute PC
 print('computing future systemwide PC...')

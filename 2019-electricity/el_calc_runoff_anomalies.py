@@ -23,8 +23,8 @@ warnings.filterwarnings('ignore')
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-# 'gmt-cmip5, decade-cmip5'
-anomType = 'gmt-cmip5'
+# 'gmt-cmip5, decade-cmip5', 'hist'
+anomType = 'hist'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
@@ -34,9 +34,59 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 #               'inmcm4', 'miroc5', 'miroc-esm', \
 #               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
+if anomType == 'hist':
+    # this is gldas data for historical plants
+    print('processing %s hist runoff'%plantData)
 
+    startP = int(sys.argv[1])
+    endP = int(sys.argv[2])
+    
+    fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
+    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
 
-if anomType == 'decade-cmip5':
+    plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
+
+    # find inds of each unique month - data is monthly and we don't need to fit over daily copies!
+    plantQsDataRawMonthly = []
+    uniqueMonthInds = []
+    curMonth = -1
+    for d in range(plantQsDataRaw.shape[1]):
+        if curMonth == -1 or plantQsDataRaw[1,d] != curMonth:
+            uniqueMonthInds.append(d)
+            curMonth = plantQsDataRaw[1,d]
+    uniqueMonthInds = np.array(uniqueMonthInds)
+    
+    plantQsAnomData = np.full(plantQsDataRaw.shape, np.nan)
+    plantQsAnomData[0, :] = plantQsDataRaw[0, :]
+    plantQsAnomData[1, :] = plantQsDataRaw[1, :]
+    plantQsAnomData[2, :] = plantQsDataRaw[2, :]
+    
+    for p in range(3, plantQsDataRaw.shape[0]):
+        
+        if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3)):
+            curq = plantQsDataRaw[p-3, uniqueMonthInds]
+            nn = np.where(~np.isnan(curq))[0]
+            best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curq[nn])
+            with open('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3), 'wb') as f:
+                dist = getattr(st, best_fit_name)
+    #                 tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,nn], *best_fit_params)
+                distParams = {'name':best_fit_name,
+                              'params':best_fit_params, 
+                              'std':curQsStd}
+                pickle.dump(distParams, f)
+                print('gldas hist %d: dist = %s, std = %.4f'%(p-3, str(dist), curQsStd))
+            
+        with open('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3), 'rb') as f:
+            if p%100 == 0:
+                print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))
+            distParams = pickle.load(f)
+            curQsStd = distParams['std']
+
+            plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
+    print('saving data to %s'%fileNameRunoffAnom)
+    np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
+
+elif anomType == 'decade-cmip5':
     models = [sys.argv[1]]
 
     for m in range(len(models)):
@@ -56,19 +106,15 @@ if anomType == 'decade-cmip5':
         plantQsAnomData[1, :] = plantQsDataRaw[1, :]
         plantQsAnomData[2, :] = plantQsDataRaw[2, :]
 
-#         for p in range(3, plantQsDataRaw.shape[0]):
-        for p in range(3, plantQsDataRaw.shape[0]-3):
-
+        for p in range(3, plantQsDataRaw.shape[0]):
             if p%100 == 0:
                 print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))
 
-#           with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
-            with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p), 'rb') as f:
+            with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsStd = distParams['std']
 
-    #             plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
-                plantQsAnomData[p+3, :] = (plantQsDataRaw[p+3, :] - np.nanmean(plantQsDataRaw[p+3, :]))/curQsStd
+                plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
         print('saving data to %s'%fileNameRunoffAnom)
         np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
     
@@ -102,21 +148,21 @@ elif anomType == 'gmt-cmip5':
                 if (p-3)%100 == 0:
                     print('plant %d of %d'%(p-3, plantQsDataRaw.shape[0]-3))
 
-#                 if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3)):
-                nn = np.where(~np.isnan(plantQsDataHist[p-3,:]))[0]
-                best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(plantQsDataHist[p-3,nn])
-                with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'wb') as f:
-                    dist = getattr(st, best_fit_name)
-                    tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,nn], *best_fit_params)
-                    distParams = {'name':best_fit_name,
-                                  'params':best_fit_params, 
-                                  'std':curQsStd}
-                    pickle.dump(distParams, f)
-                    print('cmip5 hist %d/%s: dist = %s, std = %.4f'%(p-3, models[m], str(dist), curQsStd))
-#                 else:
-#                     with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
-#                         distParams = pickle.load(f)
-#                         curQsStd = distParams['std']
+                if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3)):
+                    nn = np.where(~np.isnan(plantQsDataHist[p-3,:]))[0]
+                    best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(plantQsDataHist[p-3,nn])
+                    with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'wb') as f:
+                        dist = getattr(st, best_fit_name)
+#                         tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,nn], *best_fit_params)
+                        distParams = {'name':best_fit_name,
+                                      'params':best_fit_params, 
+                                      'std':curQsStd}
+                        pickle.dump(distParams, f)
+                        print('cmip5 hist %d/%s: dist = %s, std = %.4f'%(p-3, models[m], str(dist), curQsStd))
+                else:
+                    with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
+                        distParams = pickle.load(f)
+                        curQsStd = distParams['std']
 
 
                 plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd

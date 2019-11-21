@@ -99,7 +99,7 @@ else:
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c", "#cd6ded"])
 
-plt.figure(figsize=(5,4))
+plt.figure(figsize=(6,4))
 plt.xlim([1950,2100])
 plt.ylim([0, 4500])
 plt.grid(True, color=[.9,.9,.9])

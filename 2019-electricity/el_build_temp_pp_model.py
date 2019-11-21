@@ -30,27 +30,27 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     txtotal = []
     txtotal.extend(nukeAgDataAll[tempVar])
-#     txtotal.extend(entsoeAgDataAll[tempVar])
+    txtotal.extend(entsoeAgDataAll[tempVar])
     txtotal = np.array(txtotal)
     
     qstotal = []
     qstotal.extend(nukeAgDataAll[qsVar])
-#     qstotal.extend(entsoeAgDataAll[qsVar])
+    qstotal.extend(entsoeAgDataAll[qsVar])
     qstotal = np.array(qstotal)
     
     plantIds = []
     plantIds.extend(nukeAgDataAll['plantIds'])
-#     plantIds.extend(entsoeAgDataAll['plantIds'])
+    plantIds.extend(entsoeAgDataAll['plantIds'])
     plantIds = np.array(plantIds)
     
     plantYears = []
     plantYears.extend(nukeAgDataAll['plantYearsSummer'])
-#     plantYears.extend(entsoeAgDataAll['plantYears'])
+    plantYears.extend(entsoeAgDataAll['plantYears'])
     plantYears = np.array(plantYears)
     
     pctotal = []
     pctotal.extend(nukeAgDataAll['capacitySummer'])
-#     pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
+    pctotal.extend(100*entsoeAgDataAll['capacitySummer'])
     pctotal = np.array(pctotal)
       
     ind = np.where((pctotal <= 100.1) & (txtotal > 20) & \
