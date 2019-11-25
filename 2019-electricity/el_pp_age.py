@@ -23,21 +23,21 @@ plantData = 'world'
 
 # in gw
 # coal, gas, oil, nuke, bioenergy
-iea2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
+iea2018 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
 iea2025 = np.array([9896.2, 6828.9, 763.2, 3088.7, 890.4]) / 24 / 365 * 1e3
 iea2030 = np.array([10015.9, 7517.4, 675.7, 3252.7, 1056.9]) / 24 / 365 * 1e3
 iea2035 = np.array([10172.0, 8265.5, 597.3, 3520.0, 1238.2]) / 24 / 365 * 1e3
 iea2040 = np.array([10335.1, 9070.6, 527.2, 3725.8, 1427.3]) / 24 / 365 * 1e3
 
 # coal, gas, oil, nuke, bioenergy
-ieaSust2017 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
+ieaSust2018 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
 ieaSust2025 = np.array([7193, 6810, 604, 3302, 1039]) / 24 / 365 * 1e3
 ieaSust2030 = np.array([4847, 6829, 413, 3887, 1324]) / 24 / 365 * 1e3
 ieaSust2035 = np.array([3050, 6254, 274, 4534, 1646]) / 24 / 365 * 1e3
 ieaSust2040 = np.array([1981, 5358, 197, 4960, 1967]) / 24 / 365 * 1e3
 
-ieaNPSlope = (sum(iea2040)-sum(iea2017))/(2040-2017)
-ieaSustSlope = (sum(ieaSust2040)-sum(ieaSust2017))/(2040-2017)
+ieaNPSlope = (sum(iea2040)-sum(iea2018))/(2040-2018)
+ieaSustSlope = (sum(ieaSust2040)-sum(ieaSust2018))/(2040-2018)
 
 # mean years across models reaching 1,2,3,4 GMT
 GMTyears = np.array([2022, 2041, 2061, 2080])
@@ -108,7 +108,7 @@ plt.grid(True, color=[.9,.9,.9])
 msize = 6
 
 # plot iea capacities
-plt.plot([2017], sum(iea2017), 'ok', markersize=msize, label='Historical')
+plt.plot([2018], sum(iea2018), 'ok', markersize=msize, label='Historical')
 
 
 plt.plot(yearsRange, livingPlants40, color='#56a619', lw=2, label='40 Year Lifespan')
@@ -119,7 +119,7 @@ for g in range(GMTyears.shape[0]):
     plt.plot([yr,yr], [0, 5000], '--k')
 
 # replot historical to get marker above the green line, but keep 1st plot of historical to get legend order right
-plt.plot([2017], sum(iea2017), 'ok', markersize=msize)
+plt.plot([2018], sum(iea2018), 'ok', markersize=msize)
 
 p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
 plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=msize)
@@ -127,13 +127,13 @@ plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersiz
 plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot(np.arange(2042,2101,1), [sum(ieaSust2040)+ieaSustSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[0], lw=2)
 
-p2 = plt.plot([2025], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize, label='Constant')
-plt.plot([2030], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
-plt.plot([2035], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
-plt.plot([2040], sum(iea2017), 'ok', markerfacecolor='gray', markersize=msize)
-plt.plot([2042, 2100], [sum(iea2017), sum(iea2017)], '--', color='gray', lw=2)
+p2 = plt.plot([2025], sum(iea2018), 'ok', markerfacecolor='gray', markersize=msize, label='Constant')
+plt.plot([2030], sum(iea2018), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2035], sum(iea2018), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2040], sum(iea2018), 'ok', markerfacecolor='gray', markersize=msize)
+plt.plot([2042, 2100], [sum(iea2018), sum(iea2018)], '--', color='gray', lw=2)
 
-p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=msize, label='IEA New Policies')
+p1 = plt.plot([2025], sum(iea2025), 'ok', markerfacecolor=snsColors[1], markersize=msize, label='IEA Stated Policies')
 plt.plot([2030], sum(iea2030), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)

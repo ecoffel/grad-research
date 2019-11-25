@@ -24,9 +24,7 @@ dumpData = True
 runoffData = 'grdc'
 
 # world, useu, entsoe-nuke
-plantData = 'useu'
-
-qstr = '-qdistfit-gamma'
+plantData = 'world'
 
 yearRange = [1981, 2005]
 
@@ -53,14 +51,14 @@ baseQs = 0
 
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
-                         'QST':[baseTx*baseQs]*len(plantIds), \
+                         'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr)):
+if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData)):
     
     print('building historical pc')
     print('loading historical tx')
@@ -74,7 +72,6 @@ if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDisco
     summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
     plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
     
-    
     pCapTxx10 = np.zeros([plantTxData.shape[0], len(range(yearRange[0], yearRange[1]+1))])
     pCapTxx50 = np.zeros([plantTxData.shape[0], len(range(yearRange[0], yearRange[1]+1))])
     pCapTxx90 = np.zeros([plantTxData.shape[0], len(range(yearRange[0], yearRange[1]+1))])
@@ -84,36 +81,12 @@ if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDisco
     pCapTxMedian90 = np.zeros([plantTxData.shape[0], len(range(yearRange[0], yearRange[1]+1))])
     
     # load historical runoff data for all plants in US and EU
-    fileNameRunoff = '%s/script-data/%s-pp-runoff.csv'%(dataDirDiscovery, plantData)
-    fileNameRunoffDistFit = '%s/script-data/%s-pp-runoff%s.csv'%(dataDirDiscovery, plantData, qstr)
+    fileNameRunoff = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
     
     print('loading historical qs')
-    if os.path.isfile(fileNameRunoffDistFit):
-        plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
-    else:
-        plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
-        plantQsData = plantQsData[3:,:]
-        
-        print('calculating historical qs distfit anomalies')
-        plantQsAnomData = []
-        plantQsPercentileData = []
-        dist = st.gamma
-        for p in range(plantQsData.shape[0]):
-            q = plantQsData[p,:]
-            qPercentile = np.zeros(q.shape)
-            qPercentile[qPercentile == 0] = np.nan
-            nn = np.where(~np.isnan(q))[0]
-            if len(nn) > 10:
-                args = dist.fit(q[nn])
-                curQsStd = dist.std(*args)
-            else:
-                curQsStd = np.nan
-            plantQsAnomData.append((q-np.nanmean(q))/curQsStd)
-        plantQsAnomData = np.array(plantQsAnomData)
-        np.savetxt(fileNameRunoffDistFit, plantQsAnomData, delimiter=',')
-        plantQsData = plantQsAnomData
-    
-    
+    plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
+    plantQsData = plantQsData[3:,:]
+
     for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
     
         print('processing %d'%year)
@@ -157,6 +130,7 @@ if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDisco
             dfpred = pd.DataFrame({'T1':curTxx[indCompute], 'T2':curTxx[indCompute]**2, \
                                      'QS1':curQsTxx[indCompute], 'QS2':curQsTxx[indCompute]**2, \
                                      'QST':curTxx[indCompute]*curQsTxx[indCompute], \
+                                     'QS2T2':(curTxx[indCompute]**2)*(curQsTxx[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
 
             pCapTxx10[indCompute, y] = pcModel10.predict(dfpred) - basePred10
@@ -171,6 +145,7 @@ if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDisco
             dfpred = pd.DataFrame({'T1':curTxMedian[indCompute], 'T2':curTxMedian[indCompute]**2, \
                                      'QS1':curQsTxMedian[indCompute], 'QS2':curQsTxMedian[indCompute]**2, \
                                      'QST':curTxMedian[indCompute]*curQsTxMedian[indCompute], \
+                                     'QS2T2':(curTxMedian[indCompute]**2)*(curQsTxMedian[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
 
             pCapTxMedian10[indCompute, y] = pcModel10.predict(dfpred) - basePred10
@@ -201,7 +176,7 @@ if not os.path.isfile('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDisco
                  'pCapTxx10':pCapTxx10, \
                  'pCapTxx50':pCapTxx50, \
                  'pCapTxx90':pCapTxx90}
-        with open('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'wb') as f:
+        with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'wb') as f:
             pickle.dump(pcChg, f)
 
 sys.exit()

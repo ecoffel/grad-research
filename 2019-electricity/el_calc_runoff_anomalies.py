@@ -23,8 +23,8 @@ warnings.filterwarnings('ignore')
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-# 'gmt-cmip5, decade-cmip5', 'hist'
-anomType = 'hist'
+# 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
+anomType = 'at-txx'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
@@ -34,15 +34,47 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 #               'inmcm4', 'miroc5', 'miroc-esm', \
 #               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-if anomType == 'hist':
+if anomType == 'at-txx':
+
+    model = sys.argv[1]
+    rcp = sys.argv[2]
+    
+    decades = np.array([[2020,2029],\
+                   [2030, 2039],\
+                   [2040,2049],\
+                   [2050,2059],\
+                   [2060,2069],\
+                   [2070,2079],\
+                   [2080,2089]])
+    
+    for d in range(decades.shape[0]):
+        fileNameRunoffRaw = '%s/future-temps/%s-pp-%s-runoff-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, model, decades[d,0], decades[d,1])
+        fileNameRunoffAnom = '%s/future-temps/%s-pp-%s-runoff-anom-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, model, decades[d,0], decades[d,1])
+
+        plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
+        plantQsAnomData = np.full(plantQsDataRaw.shape, np.nan)
+
+        for p in range(0, plantQsAnomData.shape[0]):
+
+            with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, model, p), 'rb') as f:
+                if p%100 == 0:
+                    print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))
+                distParams = pickle.load(f)
+                curQsStd = distParams['std']
+
+                plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
+        print('saving data to %s'%fileNameRunoffAnom)
+        np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
+
+elif anomType == 'hist':
     # this is gldas data for historical plants
     print('processing %s hist runoff'%plantData)
 
-    startP = int(sys.argv[1])
-    endP = int(sys.argv[2])
+#     startP = int(sys.argv[1])
+#     endP = int(sys.argv[2])
     
     fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
-    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
+    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)#, startP, endP)
 
     plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
 
@@ -61,7 +93,7 @@ if anomType == 'hist':
     plantQsAnomData[1, :] = plantQsDataRaw[1, :]
     plantQsAnomData[2, :] = plantQsDataRaw[2, :]
     
-    for p in range(3, plantQsDataRaw.shape[0]):
+    for p in range(3, plantQsAnomData.shape[0]):
         
         if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3)):
             curq = plantQsDataRaw[p-3, uniqueMonthInds]

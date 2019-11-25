@@ -19,7 +19,7 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 nukeLatLon = np.genfromtxt('%s/script-data/nuke-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
 
 startYearNuke = 2007
-endYearNuke = 2008
+endYearNuke = 2018
 
 # shp = shapefile.Reader('%s/basins/c_analysb.shp'%dataDirDiscovery)
 # basins = shp.shapes()
@@ -74,5 +74,5 @@ for year in range(startYearNuke, endYearNuke+1):
     
     # after setting vals for all plants in current year, update the global index
     curDayInd = curPlantCurDayInd
-sys.exit()
+
 np.savetxt('%s/script-data/nuke-qs-nldas-all.csv'%(dataDirDiscovery), qTimeSeriesNuke, delimiter = ',', fmt = '%f')

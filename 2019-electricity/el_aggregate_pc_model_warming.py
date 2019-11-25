@@ -311,8 +311,10 @@ plt.ylim([-400,25])
 plt.xlim([.5, 4.5])
 plt.grid(True, color=[.9,.9,.9])
 
+
 yPt_40yr = np.nanmean(projCurtailment_40yr)
 p40Yr = plt.plot(1, yPt_40yr, 'ok', markersize=msize, markerfacecolor='#56a619', label='40 Year\nLifespan')
+plt.plot([1, 4.5], [yPt_40yr, yPt_40yr], '--', color='#56a619')
 yerr40yr = np.zeros([2,1])
 yerr40yr[0,0] = np.nanmean(projCurtailment_40yr)-np.nanmin(projCurtailment_40yr)
 yerr40yr[1,0] = np.nanmax(projCurtailment_40yr)-np.nanmean(projCurtailment_40yr)
@@ -320,6 +322,7 @@ plt.errorbar(1, yPt_40yr, yerr = yerr40yr, ecolor = '#56a619', elinewidth = 1, c
 
 yPt_sust = np.nanmean(projCurtailment_sust)
 pSust = plt.plot(2, yPt_sust, 'ok', markersize=msize, markerfacecolor='#3498db', label='IEA Sustainability')
+plt.plot([2, 4.5], [yPt_sust, yPt_sust], '--', color='#3498db')
 yerrSust = np.zeros([2,1])
 yerrSust[0,0] = np.nanmean(projCurtailment_sust)-np.nanmin(projCurtailment_sust)
 yerrSust[1,0] = np.nanmax(projCurtailment_sust)-np.nanmean(projCurtailment_sust)
@@ -327,6 +330,7 @@ plt.errorbar(2, yPt_sust, yerr = yerrSust, ecolor = '#3498db', elinewidth = 1, c
 
 yPt_const = np.nanmean(projCurtailment_const)
 pConst = plt.plot(3, yPt_const, 'ok', markersize=msize, markerfacecolor='gray', label='Constant')
+plt.plot([3, 4.5], [yPt_const, yPt_const], '--', color='gray')
 yerrConst = np.zeros([2,1])
 yerrConst[0,0] = np.nanmean(projCurtailment_const)-np.nanmin(projCurtailment_const)
 yerrConst[1,0] = np.nanmax(projCurtailment_const)-np.nanmean(projCurtailment_const)
@@ -334,6 +338,7 @@ plt.errorbar(3, yPt_const, yerr = yerrConst, ecolor = 'gray', elinewidth = 1, ca
 
 yPt_np = np.nanmean(projCurtailment_np)
 pNp = plt.plot(4, yPt_np, 'ok', markersize=msize, markerfacecolor='#e74c3c', label='IEA New Policies')
+plt.plot([4, 4.5], [yPt_np, yPt_np], '--', color='#e74c3c')
 yerrNp = np.zeros([2,1])
 yerrNp[0,0] = np.nanmean(projCurtailment_np)-np.nanmin(projCurtailment_np)
 yerrNp[1,0] = np.nanmax(projCurtailment_np)-np.nanmean(projCurtailment_np)
@@ -341,14 +346,14 @@ plt.errorbar(4, yPt_np, yerr = yerrNp, ecolor = '#e74c3c', elinewidth = 1, capsi
 
 plt.plot([.5,4.5], [0,0], '--', color='black')
 
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
+plt.ylabel('Global annually \naccumulated curtailment\n(TWh)', fontname = 'Helvetica', fontsize=16)
+
+plt.gca().yaxis.tick_right()
+plt.gca().yaxis.set_label_position("right")
+
 for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
-
-plt.ylabel('Annual curtailment (TWh)', fontname = 'Helvetica', fontsize=16)
 
 plt.gca().get_xaxis().set_visible(False)
 

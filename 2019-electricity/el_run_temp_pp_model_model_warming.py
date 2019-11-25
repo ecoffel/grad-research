@@ -27,9 +27,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-qstr = '-qdistfit-bestfit'
-
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 yearRange = [1981, 2005]
 decades = np.array([[2020,2029],\
@@ -45,7 +43,6 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'gfdl-esm2g', 'gfdl-esm2m', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
-
 
 pcModel10 = []
 pcModel50 = []
@@ -74,7 +71,7 @@ basePred90 = np.nanmean(pcModel90.predict(dfpred))
 fileNameRunoff = '%s/script-data/%s-pp-runoff-anom.csv'%(dataDirDiscovery, plantData)
 
 # load historical pc for txx days
-with open('%s/script-data/pc-change-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr), 'rb') as f:
+with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
     pcChg = pickle.load(f)
 
 
@@ -95,7 +92,7 @@ for m in range(len(models)):
         fileNameTemp = '%s/future-temps/%s-pp-%s-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[d,0], decades[d,1])    
         plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
         
-        fileNameRunoff = '%s/future-temps/%s-pp-%s-runoff-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[d,0], decades[d,1])        
+        fileNameRunoff = '%s/future-temps/%s-pp-%s-runoff-anom-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[d,0], decades[d,1]) 
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
 
         plantPcTxx10CurDecade = np.zeros([plantTxData.shape[0], plantTxData.shape[1]])
@@ -105,8 +102,7 @@ for m in range(len(models)):
         for y in range(plantTxData.shape[1]):
             
             tx = plantTxData[:, y]
-            # calc runoff anom for this plant based on previously loaded historical stats
-            qs = (plantQsData[:, y]-plantQsMeans)/plantQsStds
+            qs = plantQsData[:, y]
 
             qs[qs < -5] = np.nan
             qs[qs > 5] = np.nan
@@ -116,7 +112,7 @@ for m in range(len(models)):
             
             dfpred = pd.DataFrame({'T1':tx[indCompute], 'T2':tx[indCompute]**2, \
                                      'QS1':qs[indCompute], 'QS2':qs[indCompute]**2, \
-                                     'QST':tx[indCompute]*qs[indCompute], \
+                                     'QST':tx[indCompute]*qs[indCompute], 'QS2T2':(tx[indCompute]**2)*(qs[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
 
             plantPcTxx10CurDecade[indCompute, y] = pcModel10.predict(dfpred) - basePred10
@@ -143,23 +139,12 @@ plantPcTxx10 = np.array(plantPcTxx10)
 plantPcTxx50 = np.array(plantPcTxx50)
 plantPcTxx90 = np.array(plantPcTxx90)
 
-
-
 if dumpData:
     pcChg = {'pCapTxxFutRcp8510':plantPcTxx10, \
              'pCapTxxFutRcp8550':plantPcTxx50, \
              'pCapTxxFutRcp8590':plantPcTxx90}
-    with open('%s/script-data/pc-change-fut-%s-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, qstr, rcp), 'wb') as f:
+    with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'wb') as f:
         pickle.dump(pcChg, f)
-
-
-
-
-
-
-
-
-
 
 
 
