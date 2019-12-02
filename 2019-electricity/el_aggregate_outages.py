@@ -597,7 +597,7 @@ if plantData == 'world':
     yLimSet = 160
     yTickStep = 50
 else:
-    yLimSet = 9
+    yLimSet = 14
     yTickStep = 2
 
 yticks = np.arange(0,yLimSet,yTickStep)
@@ -615,9 +615,9 @@ plt.gca().set_axisbelow(True)
 
 plt.plot(xpos, yearlyOutagesHist50, '-', lw=2, color='black', label='Historical')
 plt.plot(xpos, np.nanmean(yearlyOutagesFut50[1],axis=0), '-', lw=2, color='#ffb835', label='+ 2$\degree$C')
-plt.plot(xpos, yearlyOutagesFut50GMT2Sorted[-1,:], '--', lw=2, color='#ffb835')
+plt.plot(xpos, yearlyOutagesFut50GMT2Sorted[-2,:], '--', lw=2, color='#ffb835')
 plt.plot(xpos, np.nanmean(yearlyOutagesFut50[3],axis=0), '-', lw=2, color=snsColors[1], label='+ 4$\degree$C')
-plt.plot(xpos, yearlyOutagesFut50GMT4Sorted[-1,:], '--', lw=2, color=snsColors[1])
+plt.plot(xpos, yearlyOutagesFut50GMT4Sorted[-3,:], '--', lw=2, color=snsColors[1])
 
 
 plt.fill_between(xpos, yearlyOutagesHist50, [0]*12, facecolor='black', alpha=.5, interpolate=True)
@@ -670,124 +670,3 @@ if plotFigs:
 
 plt.show()
 sys.exit()
-
-xpos = np.array([1, 3, 4, 5, 6])
-
-plt.figure(figsize=(5,4))
-plt.xlim([0, 7])
-#plt.ylim([.55, 1.175])
-plt.ylim([0, 1.2])
-plt.grid(True, color=[.9,.9,.9])
-
-plt.plot(xpos[0]-.15, np.nansum(yearlyOutagesHist10), 'o', markersize=5, color=snsColors[1])
-plt.plot(xpos[0], np.nansum(yearlyOutagesHist50), 'o', markersize=5, color='black')
-plt.plot(xpos[0]+.15, np.nansum(yearlyOutagesHist90), 'o', markersize=5, color=snsColors[0])
-
-plt.plot(xpos[1]-.15, np.nanmean(np.nansum(yearlyOutagesFut10[0], axis=1)), 'o', markersize=5, color=snsColors[1])
-plt.errorbar(xpos[1]-.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[0], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[0], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[1], np.nanmean(np.nansum(yearlyOutagesFut50[0], axis=1)), 'o', markersize=5, color='black')
-plt.errorbar(xpos[1], \
-             np.nanmean(np.nansum(yearlyOutagesFut50[0], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[0], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[1]+.15, np.nanmean(np.nansum(yearlyOutagesFut90[0], axis=1)), 'o', markersize=5, color=snsColors[0])
-plt.errorbar(xpos[1]+.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[0], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[0], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-
-
-plt.plot(xpos[2]-.15, np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), 'o', markersize=5, color=snsColors[1])
-plt.errorbar(xpos[2]-.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[2], np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), 'o', markersize=5, color='black')
-plt.errorbar(xpos[2], \
-             np.nanmean(np.nansum(yearlyOutagesFut50[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[1], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[2]+.15, np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), 'o', markersize=5, color=snsColors[0])
-plt.errorbar(xpos[2]+.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[1], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[1], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-
-
-plt.plot(xpos[3]-.15, np.nanmean(np.nansum(yearlyOutagesFut10[2], axis=1)), 'o', markersize=5, color=snsColors[1])
-plt.errorbar(xpos[3]-.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[2], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[2], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[3], np.nanmean(np.nansum(yearlyOutagesFut50[2], axis=1)), 'o', markersize=5, color='black')
-plt.errorbar(xpos[3], \
-             np.nanmean(np.nansum(yearlyOutagesFut50[2], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[2], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[3]+.15, np.nanmean(np.nansum(yearlyOutagesFut90[2], axis=1)), 'o', markersize=5, color=snsColors[0])
-plt.errorbar(xpos[3]+.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[2], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[2], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-
-
-plt.plot(xpos[4]-.15, np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), 'o', markersize=5, color=snsColors[1], label='90th Percentile')
-plt.errorbar(xpos[4]-.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             ecolor = snsColors[1], elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[4], np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), 'o', markersize=5, color='black', label='50th Percentile')
-plt.errorbar(xpos[4], \
-             np.nanmean(np.nansum(yearlyOutagesFut50[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut10[3], axis=1)), \
-             ecolor = 'black', elinewidth = 1, capsize = 3, fmt = 'none')
-
-plt.plot(xpos[4]+.15, np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), 'o', markersize=5, color=snsColors[0], label='10th Percentile')
-plt.errorbar(xpos[4]+.15, \
-             np.nanmean(np.nansum(yearlyOutagesFut90[3], axis=1)), \
-             yerr = np.nanstd(np.nansum(yearlyOutagesFut90[3], axis=1)), \
-             ecolor = snsColors[0], elinewidth = 1, capsize = 3, fmt = 'none')
-
-
-
-plt.ylabel('Annual US-EU outage (EJ)', fontname = 'Helvetica', fontsize=16)
-
-plt.gca().set_xticks([1, 3, 4, 5, 6])
-plt.gca().set_xticklabels(['1981-2018', '1$\degree$C', '2$\degree$C', '3$\degree$C', '4$\degree$C'])
-
-
-for tick in plt.gca().xaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')
-    tick.label.set_fontsize(14)
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
-
-leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'upper left')
-leg.get_frame().set_linewidth(0.0)
-
-#x0,x1 = plt.gca().get_xlim()
-#y0,y1 = plt.gca().get_ylim()
-#plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
-
-if plotFigs:
-    plt.savefig('accumulated-annual-outage-%s.eps'%runoffData, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
-
-
-
-
-

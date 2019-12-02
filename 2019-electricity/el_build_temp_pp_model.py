@@ -21,6 +21,12 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
+    entsoeQsVar = qsVar
+    if qsVar == 'qsNldasAnomSummer':
+        entsoeQsVar = 'qsAnomSummer'
+    elif qsVar == 'qsNldasPercentileSummer':
+        entsoeQsVar = 'qsPercentileSummer'
+    
     eData = {}
     with open('%s/script-data/eData.dat'%dataDirDiscovery, 'rb') as f:
         eData = pickle.load(f)
@@ -35,7 +41,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     qstotal = []
     qstotal.extend(nukeAgDataAll[qsVar])
-    qstotal.extend(entsoeAgDataAll[qsVar])
+    qstotal.extend(entsoeAgDataAll[entsoeQsVar])
     qstotal = np.array(qstotal)
     
     plantIds = []
@@ -99,7 +105,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     
     models = np.array(models)
 
-    return models, plantIds, plantYears
+    return models, plantIds, plantYears, txtotal, qstotal
 
 def exportNukeEntsoePlantLocations(dataDir):
     
@@ -141,3 +147,5 @@ def exportNukeEntsoePlantLocations(dataDir):
         for i in range(len(nukeLat)):
             csvWriter.writerow([nukeIds[i], nukeLat[i], nukeLon[i]])
             n += 1
+
+

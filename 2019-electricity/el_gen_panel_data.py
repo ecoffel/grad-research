@@ -40,6 +40,7 @@ if not 'nukeData' in locals():
 #     nukePlantDataNcep = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataNcep)
     nukePlantDataAll = el_nuke_utils.accumulateNukeWxDataPlantLevel(dataDir, nukeData, nukeMatchDataAll)
 
+
 if not 'entsoeData' in locals():
     entsoeData = el_entsoe_utils.loadEntsoeWithLatLon(dataDir, forced=False)
     
@@ -66,23 +67,8 @@ eData = {'entsoeData':entsoeData, \
 
 with open('%s/script-data/eData.dat'%dataDir, 'wb') as f:
     pickle.dump(eData, f)
-
+    
 sys.exit()
-df = pd.DataFrame()
-
-temp = []
-temp.extend(nukeAgDataAll['txSummer'])
-df['Temp'] = temp
-
-qs = []
-qs.extend(nukeAgDataAll['qsAnomSummer'])
-df['QS'] = qs
-
-pc = []
-pc.extend(nukeAgDataAll['capacitySummer'])
-df['PCAll'] = pc
-
-df.to_csv('%s/nuke-panel-data.csv'%dataDir, header = False, index = False, index_label = False)
 
 
 

@@ -101,6 +101,10 @@ def loadWxData(eba, wxdata):
     qsGldasBasin = np.genfromtxt(fileNameGldasBasinWide, delimiter=',')
     qsGldasBasin = qsGldasBasin[:, 1:]
     
+    fileNameNldas = '%s/script-data/nuke-qs-nldas-all.csv'%dataDir
+    qsNldasRaw = np.genfromtxt(fileNameNldas, delimiter=',')
+    qsNldasRaw = qsNldasRaw[:,1:]
+    
     fileNameGrun = '%s/script-data/nuke-qs-grun.csv'%dataDir
     qsGrun = np.genfromtxt(fileNameGrun, delimiter=',')
     qsGrun = qsGrun[:, 1:]
@@ -116,6 +120,12 @@ def loadWxData(eba, wxdata):
         curq = running_mean(qsGrdcRaw[p,:], smoothingLen)
         buf = qsGrdc.shape[1]-len(curq)
         qsGrdc[p, buf:] = curq
+    
+    qsNldas = np.full(qsNldasRaw.shape, np.nan)
+    for p in range(qsNldasRaw.shape[0]):
+        curq = running_mean(qsNldasRaw[p,:], smoothingLen)
+        buf = qsNldas.shape[1]-len(curq)
+        qsNldas[p, buf:] = curq
     
     # these ids store the line numbers for plant level outage and capacity data in the EBA file
     ids = []
@@ -169,7 +179,7 @@ def loadWxData(eba, wxdata):
 #         qsGldasBasinSmooth[p, buf:] = curq
     
     return {'tx':np.array(tx), \
-            'qs':qsGldasSmooth, 'qsGrdc':qsGrdc, 'qsGldasBasin':qsGldasBasinSmooth, 'qsGrun':matchedQsGrun, \
+            'qs':qsGldasSmooth, 'qsNldas':qsNldas, 'qsGrdc':qsGrdc, 'qsGldasBasin':qsGldasBasinSmooth, 'qsGrun':matchedQsGrun, \
             'ids':np.array(ids)}
 
 def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
@@ -178,6 +188,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     
     tx = nukeMatchData['tx']
     qs = nukeMatchData['qs']
+    qsNldas = nukeMatchData['qsNldas']
     qsGldasBasin = nukeMatchData['qsGldasBasin']
     qsGrdc = nukeMatchData['qsGrdc']
     qsGrun = nukeMatchData['qsGrun']
@@ -199,6 +210,14 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     plantQs = []
     plantQsAnom = []
     plantQsPercentile = []
+    
+    plantQsNldasSummer = []
+    plantQsNldasAnomSummer = []
+    plantQsNldasPercentileSummer = []
+    
+    plantQsNldas = []
+    plantQsNldasAnom = []
+    plantQsNldasPercentile = []
     
     plantQsGldasBasin = []
     plantQsGldasBasinAnom = []
@@ -226,6 +245,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     
     # data for stations with complete wx/pc data
     plantQsCompletePlants = []
+    plantQsNldasCompletePlants = []
     plantQsGldasBasinCompletePlants = []
     plantQsGrdcCompletePlants = []
     plantQsGrunCompletePlants = []
@@ -249,6 +269,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             plantDays.append(eba[ids[i,0]]['day'])
             
             plantQsCompletePlants.append(qs[i])
+            plantQsNldasCompletePlants.append(qsNldas[i])
             plantQsGrdcCompletePlants.append(qsGrdc[i])
             plantQsGrunCompletePlants.append(qsGrun[i])
             plantQsGldasBasinCompletePlants.append(qsGldasBasin[i])
@@ -274,6 +295,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     plantDays = np.array(plantDays)
     
     plantQsCompletePlants = np.array(plantQsCompletePlants)
+    plantQsNldasCompletePlants = np.array(plantQsNldasCompletePlants)
     plantQsGldasBasinCompletePlants = np.array(plantQsGldasBasinCompletePlants)
     plantQsGrdcCompletePlants = np.array(plantQsGrdcCompletePlants)
     plantQsGrunCompletePlants = np.array(plantQsGrunCompletePlants)
@@ -290,6 +312,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
         curTx = tx[i,1:]
         
         curQs = plantQsCompletePlants[i]
+        curQsNldas = plantQsNldasCompletePlants[i]
         curQsGrdc = plantQsGrdcCompletePlants[i]
         curQsGrun = plantQsGrunCompletePlants[i]
         curQsGldasBasin = plantQsGldasBasinCompletePlants[i]
@@ -304,6 +327,9 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             tmpQsPercentile = np.zeros(curQs.size)
             tmpQsPercentile[tmpQsPercentile == 0] = np.nan
             
+            tmpQsNldasPercentile = np.zeros(curQsNldas.size)
+            tmpQsNldasPercentile[tmpQsNldasPercentile == 0] = np.nan
+            
             tmpQsGldasBasinPercentile = np.zeros(curQs.size)
             tmpQsGldasBasinPercentile[tmpQsGldasBasinPercentile == 0] = np.nan
             
@@ -312,6 +338,26 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             
             tmpQsGrunPercentile = np.zeros(curQsGrun.size)
             tmpQsGrunPercentile[tmpQsGrunPercentile == 0] = np.nan
+            
+            
+            # use best dist fit to calc anomalies and percentiles for nldas runoff data (all year)
+            nn = np.where(~np.isnan(curQsNldas))[0]
+            if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-nldas.dat'%(datadir, i)): 
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas.dat'%(datadir, i), 'rb') as f:
+                    distParams = pickle.load(f)
+                    curQsNldasStd = distParams['std']
+                    tmpQsNldasPercentile = distParams['cdf']
+            else:
+                best_fit_name, best_fit_params, curQsNldasStd = el_find_best_runoff_dist.best_fit_distribution(curQsNldas[nn])
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas.dat'%(datadir, i), 'wb') as f:
+                    dist = getattr(st, best_fit_name)
+                    tmpQsNldasPercentile = dist.cdf(curQsNldas, *best_fit_params)
+                    distParams = {'name':best_fit_name,
+                                  'params':best_fit_params, 
+                                  'std':curQsNldasStd,
+                                  'cdf':tmpQsNldasPercentile}
+                    pickle.dump(distParams, f)
+                    print('nldas all year plant %d: dist = %s, std = %.4f'%(i, str(dist), curQsNldasStd))
             
             
             # use best dist fit to calc anomalies and percentiles for gldas runoff data (all year)
@@ -394,6 +440,10 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
                     print('grun all year plant %d: dist = %s, std = %.4f'%(i, str(dist), curQsGrunStd))
             
             
+            plantQsNldas.append(curQsNldas)
+            plantQsNldasAnom.append((curQsNldas-np.nanmean(curQsNldas))/curQsNldasStd)
+            plantQsNldasPercentile.append(tmpQsNldasPercentile)
+            
             plantQs.append(curQs)
             plantQsAnom.append((curQs-np.nanmean(curQs))/curQsStd)
             plantQsPercentile.append(tmpQsPercentile)
@@ -414,6 +464,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             curPC = curPC[summerInds]
             curTx = curTx[summerInds]
             curQs = curQs[summerInds]
+            curQsNldas = curQsNldas[summerInds]            
             curQsGrdc = curQsGrdc[summerInds]
             curQsGrun = curQsGrun[summerInds]
             curQsGldasBasin = curQsGldasBasin[summerInds]
@@ -424,12 +475,16 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             curPC = curPC[nn]
             curTx = curTx[nn]
             curQs = curQs[nn]
+            curQsNldas = curQsNldas[nn]
             curQsGrdc = curQsGrdc[nn]
             curQsGrun = curQsGrun[nn]
             curQsGldasBasin = curQsGldasBasin[nn]
             
             tmpQsPercentileSummer = np.zeros(curQs.size)
             tmpQsPercentileSummer[tmpQsPercentileSummer == 0] = np.nan
+            
+            tmpQsNldasPercentileSummer = np.zeros(curQsNldas.size)
+            tmpQsNldasPercentileSummer[tmpQsNldasPercentileSummer == 0] = np.nan
             
             tmpQsGldasBasinPercentileSummer = np.zeros(curQsGldasBasin.size)
             tmpQsGldasBasinPercentileSummer[tmpQsGldasBasinPercentileSummer == 0] = np.nan
@@ -439,6 +494,27 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             
             tmpQsGrunPercentileSummer = np.zeros(curQsGrun.size)
             tmpQsGrunPercentileSummer[tmpQsGrunPercentileSummer == 0] = np.nan
+            
+
+            # use best dist fit to calc anomalies and percentiles for nldas summer runoff data
+            nn = np.where(~np.isnan(curQsNldas))[0]
+            if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i)): 
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i), 'rb') as f:
+                    distParams = pickle.load(f)
+                    curQsNldasStd = distParams['std']
+                    tmpQsNldasPercentileSummer = distParams['cdf']
+            else:
+                best_fit_name, best_fit_params, curQsNldasStd = el_find_best_runoff_dist.best_fit_distribution(curQsNldas[nn])
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i), 'wb') as f:
+                    dist = getattr(st, best_fit_name)
+                    tmpQsNldasPercentileSummer = dist.cdf(curQsNldas, *best_fit_params)
+                    distParams = {'name':best_fit_name,
+                                  'params':best_fit_params, 
+                                  'std':curQsNldasStd,
+                                  'cdf':tmpQsNldasPercentileSummer}
+                    pickle.dump(distParams, f)
+                    print('nldas summer plant %d: dist = %s, std = %.4f'%(i, str(dist), curQsNldasStd))
+            
             
             # use best dist fit to calc anomalies and percentiles for gldas summer runoff data
             nn = np.where(~np.isnan(curQs))[0]
@@ -527,6 +603,10 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             plantQsAnomSummer.append((curQs-np.nanmean(curQs))/curQsStd)
             plantQsPercentileSummer.append(tmpQsPercentileSummer)
             
+            plantQsNldasSummer.append(curQsNldas)
+            plantQsNldasAnomSummer.append((curQsNldas-np.nanmean(curQsNldas))/curQsNldasStd)
+            plantQsNldasPercentileSummer.append(tmpQsNldasPercentileSummer)
+            
             plantQsGldasBasinSummer.append(curQsGldasBasin)
             plantQsGldasBasinAnomSummer.append((curQsGldasBasin-np.nanmean(curQsGldasBasin))/curQsGldasBasinStd)
             plantQsGldasBasinPercentileSummer.append(tmpQsGldasBasinPercentileSummer)
@@ -549,6 +629,13 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     plantQsSummer = np.array(plantQsSummer)
     plantQsAnomSummer = np.array(plantQsAnomSummer)
     plantQsPercentileSummer = np.array(plantQsPercentileSummer)
+    
+    plantQsNldas = np.array(plantQsNldas)
+    plantQsNldasAnom = np.array(plantQsNldasAnom)
+    plantQsNldasPercentile = np.array(plantQsNldasPercentile)
+    plantQsNldasSummer = np.array(plantQsNldasSummer)
+    plantQsNldasAnomSummer = np.array(plantQsNldasAnomSummer)
+    plantQsNldasPercentileSummer = np.array(plantQsNldasPercentileSummer)
     
     plantQsGldasBasinSummer = np.array(plantQsGldasBasinSummer)
     plantQsGldasBasinAnomSummer = np.array(plantQsGldasBasinAnomSummer)
@@ -574,6 +661,10 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     plantQsAnom[plantQsAnom > 5] = np.nan
     plantQsAnomSummer[plantQsAnomSummer < -5] = np.nan
     plantQsAnomSummer[plantQsAnomSummer > 5] = np.nan
+    plantQsNldasAnom[plantQsNldasAnom < -5] = np.nan
+    plantQsNldasAnom[plantQsNldasAnom > 5] = np.nan
+    plantQsNldasAnomSummer[plantQsNldasAnomSummer < -5] = np.nan
+    plantQsNldasAnomSummer[plantQsNldasAnomSummer > 5] = np.nan
     plantQsGrdcAnom[plantQsGrdcAnom < -5] = np.nan
     plantQsGrdcAnom[plantQsGrdcAnom > 5] = np.nan
     plantQsGrdcAnomSummer[plantQsGrdcAnomSummer < -5] = np.nan
@@ -590,8 +681,10 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     
     d = {'txSummer': plantTxSummer, 'tx':plantTx, \
          'qsSummer':plantQsSummer, 'qsAnomSummer':plantQsAnomSummer, 'qsPercentileSummer':plantQsPercentileSummer, \
+         'qsNldasSummer':plantQsNldasSummer, 'qsNldasAnomSummer':plantQsNldasAnomSummer, 'qsNldasPercentileSummer':plantQsNldasPercentileSummer, \
          'qsGldasBasinSummer':plantQsGldasBasinSummer, 'qsGldasBasinAnomSummer':plantQsGldasBasinAnomSummer, 'qsGldasBasinPercentileSummer':plantQsGldasBasinPercentileSummer, \
          'qs':plantQs, 'qsAnom':plantQsAnom, 'qsPercentile':plantQsPercentile, \
+         'qsNldas':plantQsNldas, 'qsNldasAnom':plantQsNldasAnom, 'qsNldasPercentile':plantQsNldasPercentile, \
          'qsGrdcSummer':plantQsGrdcSummer, 'qsGrdcAnomSummer':plantQsGrdcAnomSummer, 'qsGrdcPercentileSummer':plantQsGrdcPercentileSummer, \
          'qsGrdc':plantQsGrdc, 'qsGrdcAnom':plantQsGrdcAnom, 'qsGrdcPercentile':plantQsGrdcPercentile, \
          'qsGrun':plantQsGrun, 'qsGrunAnom':plantQsGrunAnom, 'qsGrunPercentile':plantQsGrunPercentile, \
@@ -612,6 +705,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     tx = nukeMatchData['tx']
     ids = nukeMatchData['ids']
     qs = nukeMatchData['qs']
+    qsNldas = nukeMatchData['qsNldas']
     qsGldasBasin = nukeMatchData['qsGldasBasin']
     qsGrdc = nukeMatchData['qsGrdc']
     qsGrun = nukeMatchData['qsGrun']
@@ -628,6 +722,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantMonths = []
     plantDays = []
     plantQs = []
+    plantQsNldas = []
     plantQsGldasBasin = []
     plantQsGrdc = []
     plantQsGrun = []
@@ -647,6 +742,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             plantDays.append(eba[ids[i,0]]['day'])
             
             plantQs.append(qs[i])
+            plantQsNldas.append(qsNldas[i])
             plantQsGldasBasin.append(qsGldasBasin[i])
             plantQsGrdc.append(qsGrdc[i])
             plantQsGrun.append(qsGrun[i])
@@ -664,6 +760,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     plantQs = np.array(plantQs)
+    plantQsNldas = np.array(plantQsNldas)
     plantQsGldasBasin = np.array(plantQsGldasBasin)
     plantQsGrdc = np.array(plantQsGrdc)
     plantQsGrun = np.array(plantQsGrun)
@@ -673,6 +770,10 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantQsTotal = []
     plantQsAnomTotal = []
     plantQsPercentileTotal = []
+    
+    plantQsNldasTotal = []
+    plantQsNldasAnomTotal = []
+    plantQsNldasPercentileTotal = []
                           
     plantQsGldasBasinTotal = []
     plantQsGldasBasinAnomTotal = []
@@ -700,6 +801,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
         plantCap = percCapacity[i]
         plantTx = tx[i,1:]
         curQs = plantQs[i]
+        curQsNldas = plantQsNldas[i]
         curQsGldasBasin = plantQsGldasBasin[i]
         curQsGrdc = plantQsGrdc[i]
         curQsGrun = plantQsGrun[i]
@@ -708,6 +810,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             plantCap = plantCap[summerInds]
             plantTx = plantTx[summerInds]
             curQs = curQs[summerInds]
+            curQsNldas = curQsNldas[summerInds]
             curQsGldasBasin = curQsGldasBasin[summerInds]
             curQsGrdc = curQsGrdc[summerInds]
             curQsGrun = curQsGrun[summerInds]
@@ -715,12 +818,34 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             nn = np.where((~np.isnan(plantCap)) & (~np.isnan(plantTx)))[0]
             
             curQs = curQs[nn]
+            curQsNldas = curQsNldas[nn]
             curQsGldasBasin = curQsGldasBasin[nn]
             curQsGrdc = curQsGrdc[nn]
             curQsGrun = curQsGrun[nn]
             plantCap = plantCap[nn]
             plantTx = plantTx[nn]
                         
+            
+            # use best dist fit to calc anomalies and percentiles for nldas summer runoff data
+            nn = np.where(~np.isnan(curQsNldas))[0]
+            if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i)): 
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i), 'rb') as f:
+                    distParams = pickle.load(f)
+                    curQsNldasStd = distParams['std']
+                    tmpQsNldasPercentileSummer = distParams['cdf']
+            else:
+                best_fit_name, best_fit_params, curQsNldasStd = el_find_best_runoff_dist.best_fit_distribution(curQsNldas[nn])
+                with open('%s/dist-fits/best-fit-nuke-%d-nldas-summer.dat'%(datadir, i), 'wb') as f:
+                    dist = getattr(st, best_fit_name)
+                    tmpQsNldasPercentileSummer = dist.cdf(curQsNldas, *best_fit_params)
+                    distParams = {'name':best_fit_name,
+                                  'params':best_fit_params, 
+                                  'std':curQsNldasStd,
+                                  'cdf':tmpQsNldasPercentileSummer}
+                    pickle.dump(distParams, f)
+                    print('nldas summer plant %d: dist = %s, std = %.4f'%(i, str(dist), curQsNldasStd))
+                    
+            
             # use best dist fit to calc anomalies and percentiles for gldas summer runoff data
             nn = np.where(~np.isnan(curQs))[0]
             if os.path.isfile('%s/dist-fits/best-fit-nuke-%d-gldas-summer.dat'%(datadir, i)): 
@@ -800,6 +925,10 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
                     pickle.dump(distParams, f)
                     print('grun summer plant %d: dist = %s, std = %.4f'%(i, str(dist), curQsGrunStd))
             
+            plantQsNldasTotal.extend(curQsNldas)
+            plantQsNldasAnomTotal.extend((curQsNldas-np.nanmean(curQsNldas))/curQsNldasStd)
+            plantQsNldasPercentileTotal.extend(tmpQsNldasPercentileSummer)
+            
             plantQsTotal.extend(curQs)
             plantQsAnomTotal.extend((curQs-np.nanmean(curQs))/curQsStd)
             plantQsPercentileTotal.extend(tmpQsPercentileSummer)
@@ -834,6 +963,9 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantQsTotal = np.array(plantQsTotal)
     plantQsAnomTotal = np.array(plantQsAnomTotal)
     
+    plantQsNldasTotal = np.array(plantQsNldasTotal)
+    plantQsNldasAnomTotal = np.array(plantQsNldasAnomTotal)
+    
     plantQsGldasBasinTotal = np.array(plantQsGldasBasinTotal)
     plantQsGldasBasinAnomTotal = np.array(plantQsGldasBasinAnomTotal)
     
@@ -845,6 +977,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     
     plantQsAnomTotal[plantQsAnomTotal < -5] = np.nan
     plantQsAnomTotal[plantQsAnomTotal > 5] = np.nan
+    plantQsNldasAnomTotal[plantQsNldasAnomTotal < -5] = np.nan
+    plantQsNldasAnomTotal[plantQsNldasAnomTotal > 5] = np.nan
     plantQsGldasBasinAnomTotal[plantQsGldasBasinAnomTotal < -5] = np.nan
     plantQsGldasBasinAnomTotal[plantQsGldasBasinAnomTotal > 5] = np.nan
     plantQsGrdcAnomTotal[plantQsGrdcAnomTotal < -5] = np.nan
@@ -861,6 +995,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     
     d = {'txSummer':plantTxTotal, \
          'qsSummer':plantQsTotal, 'qsAnomSummer':plantQsAnomTotal, 'qsPercentileSummer':plantQsPercentileTotal, \
+         'qsNldasSummer':plantQsNldasTotal, 'qsNldasAnomSummer':plantQsNldasAnomTotal, 'qsNldasPercentileSummer':plantQsNldasPercentileTotal, \
          'qsGldasBasinSummer':plantQsGldasBasinTotal, 'qsGldasBasinAnomSummer':plantQsGldasBasinAnomTotal, 'qsGldasBasinPercentileSummer':plantQsGldasBasinPercentileTotal, \
          'qsGrdcSummer':plantQsGrdcTotal, 'qsGrdcAnomSummer':plantQsGrdcAnomTotal, 'qsGrdcPercentileSummer':plantQsGrdcPercentileTotal, \
          'qsGrunSummer':plantQsGrunTotal, 'qsGrunAnomSummer':plantQsGrunAnomTotal, 'qsGrunPercentileSummer':plantQsGrunPercentileTotal, \

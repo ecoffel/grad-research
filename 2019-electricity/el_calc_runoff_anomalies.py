@@ -24,7 +24,9 @@ warnings.filterwarnings('ignore')
 plantData = 'world'
 
 # 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
-anomType = 'at-txx'
+anomType = 'hist'
+
+runoffData = 'nldas'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
@@ -50,21 +52,28 @@ if anomType == 'at-txx':
     for d in range(decades.shape[0]):
         fileNameRunoffRaw = '%s/future-temps/%s-pp-%s-runoff-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, model, decades[d,0], decades[d,1])
         fileNameRunoffAnom = '%s/future-temps/%s-pp-%s-runoff-anom-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, model, decades[d,0], decades[d,1])
+        fileNameRunoffPercentile = '%s/future-temps/%s-pp-%s-runoff-percentile-at-txx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, model, decades[d,0], decades[d,1])
 
         plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
         plantQsAnomData = np.full(plantQsDataRaw.shape, np.nan)
+        plantQsPercentileData = np.full(plantQsDataRaw.shape, np.nan)
 
         for p in range(0, plantQsAnomData.shape[0]):
 
             with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, model, p), 'rb') as f:
                 if p%100 == 0:
                     print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))
+
                 distParams = pickle.load(f)
+                dist = getattr(st, distParams['name'])
+                curQsPercentile = dist.cdf(plantQsDataRaw[p, :], *distParams['params'])
                 curQsStd = distParams['std']
 
                 plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
+                plantQsPercentileData[p, :] = curQsPercentile
         print('saving data to %s'%fileNameRunoffAnom)
         np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
+        np.savetxt(plantQsPercentileData, plantQsPercentileData, delimiter=',')
 
 elif anomType == 'hist':
     # this is gldas data for historical plants
@@ -73,8 +82,8 @@ elif anomType == 'hist':
 #     startP = int(sys.argv[1])
 #     endP = int(sys.argv[2])
     
-    fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
-    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)#, startP, endP)
+    fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-%s-1981-2005.csv'%(dataDirDiscovery, plantData, runoffData)
+    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-%s-1981-2005.csv'%(dataDirDiscovery, plantData, runoffData)#, startP, endP)
 
     plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
 
@@ -95,20 +104,20 @@ elif anomType == 'hist':
     
     for p in range(3, plantQsAnomData.shape[0]):
         
-        if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3)):
+        if not os.path.isfile('%s/dist-fits/best-fit-%s-hist-%s-plant-%d.dat'%(dataDirDiscovery, plantData, runoffData, p-3)):
             curq = plantQsDataRaw[p-3, uniqueMonthInds]
             nn = np.where(~np.isnan(curq))[0]
             best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curq[nn])
-            with open('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3), 'wb') as f:
+            with open('%s/dist-fits/best-fit-%s-hist-%s-plant-%d.dat'%(dataDirDiscovery, plantData, runoffData, p-3), 'wb') as f:
                 dist = getattr(st, best_fit_name)
     #                 tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,nn], *best_fit_params)
                 distParams = {'name':best_fit_name,
                               'params':best_fit_params, 
                               'std':curQsStd}
                 pickle.dump(distParams, f)
-                print('gldas hist %d: dist = %s, std = %.4f'%(p-3, str(dist), curQsStd))
+                print('%s hist %d: dist = %s, std = %.4f'%(runoffData, p-3, str(dist), curQsStd))
             
-        with open('%s/dist-fits/best-fit-%s-hist-gldas-plant-%d.dat'%(dataDirDiscovery, plantData, p-3), 'rb') as f:
+        with open('%s/dist-fits/best-fit-%s-hist-%s-plant-%d.dat'%(dataDirDiscovery, plantData, runoffData, p-3), 'rb') as f:
             if p%100 == 0:
                 print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))
             distParams = pickle.load(f)
@@ -127,6 +136,7 @@ elif anomType == 'decade-cmip5':
 
         fileNameRunoffRaw = '%s/future-temps/world-pp-rcp85-runoff-raw-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
         fileNameRunoffAnom = '%s/future-temps/world-pp-rcp85-runoff-anom-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
+        fileNameRunoffPercentile = '%s/future-temps/world-pp-rcp85-runoff-percentile-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
 
         if not os.path.isfile(fileNameRunoffRaw):
             continue
@@ -137,6 +147,11 @@ elif anomType == 'decade-cmip5':
         plantQsAnomData[0, :] = plantQsDataRaw[0, :]
         plantQsAnomData[1, :] = plantQsDataRaw[1, :]
         plantQsAnomData[2, :] = plantQsDataRaw[2, :]
+        
+        plantQsPercentileData = np.full(plantQsDataRaw.shape, np.nan)
+        plantQsPercentileData[0, :] = plantQsDataRaw[0, :]
+        plantQsPercentileData[1, :] = plantQsDataRaw[1, :]
+        plantQsPercentileData[2, :] = plantQsDataRaw[2, :]
 
         for p in range(3, plantQsDataRaw.shape[0]):
             if p%100 == 0:
@@ -144,12 +159,16 @@ elif anomType == 'decade-cmip5':
 
             with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
                 distParams = pickle.load(f)
+                dist = getattr(st, distParams['name'])
+                curQsPercentile = dist.cdf(plantQsDataRaw[p, :], *distParams['params'])
                 curQsStd = distParams['std']
-
+                
+                plantQsPercentileData[p, :] = curQsPercentile
                 plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
+        
         print('saving data to %s'%fileNameRunoffAnom)
         np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
-    
+        np.savetxt(fileNameRunoffPercentile, plantQsPercentileData, delimiter=',')
     
 elif anomType == 'gmt-cmip5':
     models = [sys.argv[1]]
@@ -162,6 +181,7 @@ elif anomType == 'gmt-cmip5':
 
             fileNameRunoffRaw = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-raw-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
             fileNameRunoffAnom = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-anom-best-dist-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
+            fileNameRunoffPercentile = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-percentile-best-dist-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
             fileNameRunoffHist = '%s/future-temps/%s-pp-hist-runoff-raw-cmip5-%s-1981-2005.csv'%(dataDirDiscovery, plantData, models[m])
 
             if not os.path.isfile(fileNameRunoffRaw) or not os.path.isfile(fileNameRunoffHist):
@@ -174,6 +194,11 @@ elif anomType == 'gmt-cmip5':
             plantQsAnomData[0, :] = plantQsDataRaw[0, :]
             plantQsAnomData[1, :] = plantQsDataRaw[1, :]
             plantQsAnomData[2, :] = plantQsDataRaw[2, :]
+            
+            plantQsPercentileData = np.full(plantQsDataRaw.shape, np.nan)
+            plantQsPercentileData[0, :] = plantQsDataRaw[0, :]
+            plantQsPercentileData[1, :] = plantQsDataRaw[1, :]
+            plantQsPercentileData[2, :] = plantQsDataRaw[2, :]
 
             for p in range(3, plantQsDataRaw.shape[0]):
 
@@ -185,7 +210,7 @@ elif anomType == 'gmt-cmip5':
                     best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(plantQsDataHist[p-3,nn])
                     with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'wb') as f:
                         dist = getattr(st, best_fit_name)
-#                         tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,nn], *best_fit_params)
+                        tmpQsPercentile = dist.cdf(plantQsDataHist[p-3,:], *best_fit_params)
                         distParams = {'name':best_fit_name,
                                       'params':best_fit_params, 
                                       'std':curQsStd}
@@ -195,10 +220,14 @@ elif anomType == 'gmt-cmip5':
                     with open('%s/dist-fits/best-fit-%s-hist-cmip5-%s-plant-%d.dat'%(dataDirDiscovery, plantData, models[m], p-3), 'rb') as f:
                         distParams = pickle.load(f)
                         curQsStd = distParams['std']
+                        dist = getattr(st, distParams['name'])
+                        tmpQsPercentile = dist.cdf(plantQsDataRaw[p-3, :], *distParams['params'])
 
 
+                plantQsPercentileData[p, :] = tmpQsPercentile
                 plantQsAnomData[p, :] = (plantQsDataRaw[p, :] - np.nanmean(plantQsDataRaw[p, :]))/curQsStd
             print('saving data to %s'%fileNameRunoffAnom)
             np.savetxt(fileNameRunoffAnom, plantQsAnomData, delimiter=',')
+            np.savetxt(fileNameRunoffPercentile, plantQsPercentileData, delimiter=',')
             
             

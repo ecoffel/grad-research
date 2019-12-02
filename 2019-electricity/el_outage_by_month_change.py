@@ -43,6 +43,8 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
+qsVar = 'qsGrdcAnom'
+entsoeQsVar = 'qsGrdcAnom'
 
 if not 'eData' in locals():
     eData = {}
@@ -86,7 +88,7 @@ for p in range(entsoePlants['tx'].shape[0]):
     for m in range(1, 13):
         ind = np.where(entsoePlants['months'] == m)[0]
         plantMonthlyTxMean.append(np.nanmean(entsoePlants['tx'][p, ind]))
-        plantMonthlyQsAnomMean.append(np.nanmean(entsoePlants['qsAnom'][p][ind]))
+        plantMonthlyQsAnomMean.append(np.nanmean(entsoePlants[entsoeQsVar][p][ind]))
     
     qsAnomMonthlyMean.append(plantMonthlyQsAnomMean)
     txMonthlyMean.append(plantMonthlyTxMean)
@@ -100,7 +102,7 @@ for p in range(entsoePlants['tx'].shape[0]):
     txMonthlyMax.append(np.nanmean(np.array(plantMonthlyTxMax), axis=1))
 
 # then for nuke plants
-for p in range(nukePlants['qsAnom'].shape[0]):
+for p in range(nukePlants[qsVar].shape[0]):
     plantMonthlyTxMean = []
     plantMonthlyTxMax = []
     plantMonthlyQsAnomMean = []
@@ -108,7 +110,7 @@ for p in range(nukePlants['qsAnom'].shape[0]):
     for m in range(1,13):
         ind = np.where((nukePlants['plantMonthsAll'][p]==m))[0]
         plantMonthlyTxMean.append(np.nanmean(nukePlants['tx'][p][ind]))
-        plantMonthlyQsAnomMean.append(np.nanmean(nukePlants['qsAnom'][p][ind]))
+        plantMonthlyQsAnomMean.append(np.nanmean(nukePlants[qsVar][p][ind]))
 
     qsAnomMonthlyMean.append(plantMonthlyQsAnomMean)
     txMonthlyMean.append(plantMonthlyTxMean)
@@ -349,8 +351,8 @@ else:
     with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'wb') as f:
        pickle.dump(ppFutureData, f)
 
-if os.path.isfile('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery):
-    with open('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery, '4b') as f:
+if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar)):
+    with open('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar), '4b') as f:
         plantMonthlyOutageChg = pickle.load(f)
 else:
     print('calculating curtailment change')
@@ -399,7 +401,7 @@ else:
 
     plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
 
-    with open('%s/script-data/pc-monthly-outage-chg.dat'%dataDirDiscovery, 'wb') as f:
+    with open('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar), 'wb') as f:
         pickle.dump(plantMonthlyOutageChg, f)
 
 plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=1),axis=2)

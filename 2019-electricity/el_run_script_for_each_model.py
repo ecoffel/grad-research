@@ -10,4 +10,4 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 for model in models:
     print('running %s'%model)
 #     os.system('screen -d -m ipython el_aggregate_pc_model_warming.py %s'%model)
-    os.system('screen -d -m ipython el_aggregate_outages.py %s'%model)
+    os.system('screen -d -m ipython el_calc_runoff_anomalies.py %s rcp85'%model)

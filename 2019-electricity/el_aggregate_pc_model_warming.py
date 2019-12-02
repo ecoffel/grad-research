@@ -19,7 +19,7 @@ import sys, os
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -29,7 +29,7 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 decades = np.array([[2080,2089]])
 
@@ -292,7 +292,7 @@ for m in range(len(models)):
                   (dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[0,0], decades[0,1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
-
+sys.exit()
 totalTwh_40yr = 0
 totalTwh_const = monthLens * np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])/1e6*24
 totalTwh_sust = monthLens * np.nansum(np.nanmean(globalPlantsCapsSust[livingPlantsInds40[2018], -10:], axis=1))/1e6*24
@@ -306,6 +306,10 @@ projCurtailment_np = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_np[:,:,
 
 msize = 10
 
+plt.rc('xtick', labelsize=14)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
+plt.rcParams["font.family"] = "Helvetica"
+    
 plt.figure(figsize=(1.5,4.5))
 plt.ylim([-400,25])
 plt.xlim([.5, 4.5])
@@ -351,9 +355,9 @@ plt.ylabel('Global annually \naccumulated curtailment\n(TWh)', fontname = 'Helve
 plt.gca().yaxis.tick_right()
 plt.gca().yaxis.set_label_position("right")
 
-for tick in plt.gca().yaxis.get_major_ticks():
-    tick.label.set_fontname('Helvetica')    
-    tick.label.set_fontsize(14)
+# for tick in plt.gca().yaxis.get_major_ticks():
+#     tick.label.set_fontname('Helvetica')    
+#     tick.label.set_fontsize(14)
 
 plt.gca().get_xaxis().set_visible(False)
 

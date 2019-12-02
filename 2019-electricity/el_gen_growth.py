@@ -30,7 +30,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
@@ -69,13 +69,13 @@ ieaSust2040 = np.array([1981.0, 5358.0, 197.0, 4960.0, 1967.0])
 
 
 # convert to EJ
-iea2017EJ = iea2017 * 3600 * 1e12 / 1e18
+iea2018EJ = iea2018 * 3600 * 1e12 / 1e18
 iea2025EJ = iea2025 * 3600 * 1e12 / 1e18
 iea2030EJ = iea2030 * 3600 * 1e12 / 1e18
 iea2035EJ = iea2035 * 3600 * 1e12 / 1e18
 iea2040EJ = iea2040 * 3600 * 1e12 / 1e18
 
-ieaSust2017EJ = iea2017 * 3600 * 1e12 / 1e18
+ieaSust2018EJ = iea2018 * 3600 * 1e12 / 1e18
 ieaSust2025EJ = iea2025 * 3600 * 1e12 / 1e18
 ieaSust2030EJ = iea2030 * 3600 * 1e12 / 1e18
 ieaSust2035EJ = iea2035 * 3600 * 1e12 / 1e18
@@ -83,21 +83,21 @@ ieaSust2040EJ = iea2040 * 3600 * 1e12 / 1e18
 
 
 #  convert to MW
-iea2017MW = iea2017 * 1e6 / 365 / 24
+iea2018MW = iea2018 * 1e6 / 365 / 24
 iea2025MW = iea2025 * 1e6 / 365 / 24
 iea2030MW = iea2030 * 1e6 / 365 / 24
 iea2035MW = iea2035 * 1e6 / 365 / 24
 iea2040MW = iea2040 * 1e6 / 365 / 24
 
-ieaNPSlope = (sum(iea2040MW)-sum(iea2017MW))/(2040-2017)
+ieaNPSlope = (sum(iea2040MW)-sum(iea2018MW))/(2040-2018)
 
-ieaSust2017MW = ieaSust2017 * 1e6 / 365 / 24
+ieaSust2018MW = ieaSust2018 * 1e6 / 365 / 24
 ieaSust2025MW = ieaSust2025 * 1e6 / 365 / 24 
 ieaSust2030MW = ieaSust2030 * 1e6 / 365 / 24 
 ieaSust2035MW = ieaSust2035 * 1e6 / 365 / 24 
 ieaSust2040MW = ieaSust2040 * 1e6 / 365 / 24 
 
-ieaSustSlope = (sum(ieaSust2040MW)-sum(ieaSust2017MW))/(2040-2017)
+ieaSustSlope = (sum(ieaSust2040MW)-sum(ieaSust2018MW))/(2040-2018)
 
 globalPlantsCapsSust = np.zeros([len(globalPlants['caps']), 1])
 globalPlantsNP = np.zeros([len(globalPlants['caps']), 1])
@@ -167,32 +167,34 @@ outagesHist90 = np.array(outagesHist90)/1e3
 
 with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'rb') as f:
     pcChgFut = pickle.load(f)
-    pCapTxxFutRcp85_10 = pcChgFut['pCapTxxFutRcp8510']
-    pCapTxxFutRcp85_50 = pcChgFut['pCapTxxFutRcp8550']
-    pCapTxxFutRcp85_90 = pcChgFut['pCapTxxFutRcp8590']
+    
+    # at the moment the key is Rcp85 for both scenarios - just stored in different files
+    pCapTxxFutCurRcp_10 = pcChgFut['pCapTxxFutRcp8510']
+    pCapTxxFutCurRcp_50 = pcChgFut['pCapTxxFutRcp8550']
+    pCapTxxFutCurRcp_90 = pcChgFut['pCapTxxFutRcp8590']
 
 
-if os.path.isfile('%s/script-data/pc-change-scenarios-rcp85-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData)):
-    with open('%s/script-data/pc-change-scenarios-rcp85-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
+if os.path.isfile('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData)):
+    with open('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData), 'rb') as f:
         outageScenarios = pickle.load(f)
 else:
-    outagesFutRcp85_const_10 = []
-    outagesFutRcp85_const_50 = []
-    outagesFutRcp85_const_90 = []
+    outagesFutCurRcp_const_10 = []
+    outagesFutCurRcp_const_50 = []
+    outagesFutCurRcp_const_90 = []
     
-    outagesFutRcp85_40yr_10 = []
-    outagesFutRcp85_40yr_50 = []
-    outagesFutRcp85_40yr_90 = []
+    outagesFutCurRcp_40yr_10 = []
+    outagesFutCurRcp_40yr_50 = []
+    outagesFutCurRcp_40yr_90 = []
     
-    outagesFutRcp85_sust_10 = []
-    outagesFutRcp85_sust_50 = []
-    outagesFutRcp85_sust_90 = []
+    outagesFutCurRcp_sust_10 = []
+    outagesFutCurRcp_sust_50 = []
+    outagesFutCurRcp_sust_90 = []
     
-    outagesFutRcp85_np_10 = []
-    outagesFutRcp85_np_50 = []
-    outagesFutRcp85_np_90 = []
+    outagesFutCurRcp_np_10 = []
+    outagesFutCurRcp_np_50 = []
+    outagesFutCurRcp_np_90 = []
     
-    for m in range(0, pCapTxxFutRcp85_50.shape[0]):
+    for m in range(0, pCapTxxFutCurRcp_50.shape[0]):
         
         print('processing %s...'%models[m])
         
@@ -212,7 +214,7 @@ else:
         outagesFutModel_np_50 = []
         outagesFutModel_np_90 = []
         
-        for d in range(pCapTxxFutRcp85_50.shape[1]):
+        for d in range(pCapTxxFutCurRcp_50.shape[1]):
             outagesFutDecade_const_10 = []
             outagesFutDecade_const_50 = []
             outagesFutDecade_const_90 = []
@@ -229,7 +231,7 @@ else:
             outagesFutDecade_np_50 = []
             outagesFutDecade_np_90 = []
         
-            for p in range(pCapTxxFutRcp85_10.shape[2]):#range(len(pCapTxxFutMeanWarming50[w,m])):
+            for p in range(pCapTxxFutCurRcp_10.shape[2]):#range(len(pCapTxxFutMeanWarming50[w,m])):
                 
                 lifespan40Scenario = 2020+((d*10)+5)
                 constantScenario = 2018
@@ -241,9 +243,9 @@ else:
                     outagesFutDecade_const_90.append(np.nan)
                 else:
                     plantCap = globalPlants['caps'][p]
-                    outagesFutDecade_const_10.append(plantCap*np.nanmean(pCapTxxFutRcp85_10[m,d,p,:])/100.0)
-                    outagesFutDecade_const_50.append(plantCap*np.nanmean(pCapTxxFutRcp85_50[m,d,p,:])/100.0)
-                    outagesFutDecade_const_90.append(plantCap*np.nanmean(pCapTxxFutRcp85_90[m,d,p,:])/100.0)
+                    outagesFutDecade_const_10.append(plantCap*np.nanmean(pCapTxxFutCurRcp_10[m,d,p,:])/100.0)
+                    outagesFutDecade_const_50.append(plantCap*np.nanmean(pCapTxxFutCurRcp_50[m,d,p,:])/100.0)
+                    outagesFutDecade_const_90.append(plantCap*np.nanmean(pCapTxxFutCurRcp_90[m,d,p,:])/100.0)
                 
                 # 40yr scenario
                 if p not in livingPlantsInds40[lifespan40Scenario]:
@@ -252,9 +254,9 @@ else:
                     outagesFutDecade_40yr_90.append(np.nan)
                 else:
                     plantCap = globalPlants['caps'][p]
-                    outagesFutDecade_40yr_10.append(plantCap*np.nanmean(pCapTxxFutRcp85_10[m,d,p,:])/100.0)
-                    outagesFutDecade_40yr_50.append(plantCap*np.nanmean(pCapTxxFutRcp85_50[m,d,p,:])/100.0)
-                    outagesFutDecade_40yr_90.append(plantCap*np.nanmean(pCapTxxFutRcp85_90[m,d,p,:])/100.0)
+                    outagesFutDecade_40yr_10.append(plantCap*np.nanmean(pCapTxxFutCurRcp_10[m,d,p,:])/100.0)
+                    outagesFutDecade_40yr_50.append(plantCap*np.nanmean(pCapTxxFutCurRcp_50[m,d,p,:])/100.0)
+                    outagesFutDecade_40yr_90.append(plantCap*np.nanmean(pCapTxxFutCurRcp_90[m,d,p,:])/100.0)
                 
                 # sust scenario
                 if p not in livingPlantsInds40[constantScenario]:
@@ -263,9 +265,9 @@ else:
                     outagesFutDecade_sust_90.append(np.nan)
                 else:
                     plantCap = np.nanmean(globalPlantsCapsSust[p,2+(d*10):2+(d*10)+9])
-                    outagesFutDecade_sust_10.append(plantCap*np.nanmean(pCapTxxFutRcp85_10[m,d,p,:])/100.0)
-                    outagesFutDecade_sust_50.append(plantCap*np.nanmean(pCapTxxFutRcp85_50[m,d,p,:])/100.0)
-                    outagesFutDecade_sust_90.append(plantCap*np.nanmean(pCapTxxFutRcp85_90[m,d,p,:])/100.0)
+                    outagesFutDecade_sust_10.append(plantCap*np.nanmean(pCapTxxFutCurRcp_10[m,d,p,:])/100.0)
+                    outagesFutDecade_sust_50.append(plantCap*np.nanmean(pCapTxxFutCurRcp_50[m,d,p,:])/100.0)
+                    outagesFutDecade_sust_90.append(plantCap*np.nanmean(pCapTxxFutCurRcp_90[m,d,p,:])/100.0)
                 
                 # np scenario
                 if p not in livingPlantsInds40[constantScenario]:
@@ -274,9 +276,9 @@ else:
                     outagesFutDecade_np_90.append(np.nan)
                 else:
                     plantCap = np.nanmean(globalPlantsCapsNP[p,2+(d*10):2+(d*10)+9])
-                    outagesFutDecade_np_10.append(plantCap*np.nanmean(pCapTxxFutRcp85_10[m,d,p,:])/100.0)
-                    outagesFutDecade_np_50.append(plantCap*np.nanmean(pCapTxxFutRcp85_50[m,d,p,:])/100.0)
-                    outagesFutDecade_np_90.append(plantCap*np.nanmean(pCapTxxFutRcp85_90[m,d,p,:])/100.0)
+                    outagesFutDecade_np_10.append(plantCap*np.nanmean(pCapTxxFutCurRcp_10[m,d,p,:])/100.0)
+                    outagesFutDecade_np_50.append(plantCap*np.nanmean(pCapTxxFutCurRcp_50[m,d,p,:])/100.0)
+                    outagesFutDecade_np_90.append(plantCap*np.nanmean(pCapTxxFutCurRcp_90[m,d,p,:])/100.0)
                 
             outagesFutModel_const_10.append(outagesFutDecade_const_10)
             outagesFutModel_const_50.append(outagesFutDecade_const_50)
@@ -294,56 +296,53 @@ else:
             outagesFutModel_np_50.append(outagesFutDecade_np_50)
             outagesFutModel_np_90.append(outagesFutDecade_np_90)
             
-        outagesFutRcp85_const_10.append(outagesFutModel_const_10)
-        outagesFutRcp85_const_50.append(outagesFutModel_const_50)
-        outagesFutRcp85_const_90.append(outagesFutModel_const_90)
+        outagesFutCurRcp_const_10.append(outagesFutModel_const_10)
+        outagesFutCurRcp_const_50.append(outagesFutModel_const_50)
+        outagesFutCurRcp_const_90.append(outagesFutModel_const_90)
         
-        outagesFutRcp85_40yr_10.append(outagesFutModel_40yr_10)
-        outagesFutRcp85_40yr_50.append(outagesFutModel_40yr_50)
-        outagesFutRcp85_40yr_90.append(outagesFutModel_40yr_90)
+        outagesFutCurRcp_40yr_10.append(outagesFutModel_40yr_10)
+        outagesFutCurRcp_40yr_50.append(outagesFutModel_40yr_50)
+        outagesFutCurRcp_40yr_90.append(outagesFutModel_40yr_90)
         
-        outagesFutRcp85_sust_10.append(outagesFutModel_sust_10)
-        outagesFutRcp85_sust_50.append(outagesFutModel_sust_50)
-        outagesFutRcp85_sust_90.append(outagesFutModel_sust_90)
+        outagesFutCurRcp_sust_10.append(outagesFutModel_sust_10)
+        outagesFutCurRcp_sust_50.append(outagesFutModel_sust_50)
+        outagesFutCurRcp_sust_90.append(outagesFutModel_sust_90)
         
-        outagesFutRcp85_np_10.append(outagesFutModel_np_10)
-        outagesFutRcp85_np_50.append(outagesFutModel_np_50)
-        outagesFutRcp85_np_90.append(outagesFutModel_np_90)
+        outagesFutCurRcp_np_10.append(outagesFutModel_np_10)
+        outagesFutCurRcp_np_50.append(outagesFutModel_np_50)
+        outagesFutCurRcp_np_90.append(outagesFutModel_np_90)
     
-    outagesFutRcp85_const_10 = np.array(outagesFutRcp85_const_10)
-    outagesFutRcp85_const_50 = np.array(outagesFutRcp85_const_50)
-    outagesFutRcp85_const_90 = np.array(outagesFutRcp85_const_90)
+    outagesFutCurRcp_const_10 = np.array(outagesFutCurRcp_const_10)
+    outagesFutCurRcp_const_50 = np.array(outagesFutCurRcp_const_50)
+    outagesFutCurRcp_const_90 = np.array(outagesFutCurRcp_const_90)
     
-    outagesFutRcp85_40yr_10 = np.array(outagesFutRcp85_40yr_10)
-    outagesFutRcp85_40yr_50 = np.array(outagesFutRcp85_40yr_50)
-    outagesFutRcp85_40yr_90 = np.array(outagesFutRcp85_40yr_90)
+    outagesFutCurRcp_40yr_10 = np.array(outagesFutCurRcp_40yr_10)
+    outagesFutCurRcp_40yr_50 = np.array(outagesFutCurRcp_40yr_50)
+    outagesFutCurRcp_40yr_90 = np.array(outagesFutCurRcp_40yr_90)
     
-    outagesFutRcp85_sust_10 = np.array(outagesFutRcp85_sust_10)
-    outagesFutRcp85_sust_50 = np.array(outagesFutRcp85_sust_50)
-    outagesFutRcp85_sust_90 = np.array(outagesFutRcp85_sust_90)
+    outagesFutCurRcp_sust_10 = np.array(outagesFutCurRcp_sust_10)
+    outagesFutCurRcp_sust_50 = np.array(outagesFutCurRcp_sust_50)
+    outagesFutCurRcp_sust_90 = np.array(outagesFutCurRcp_sust_90)
     
-    outagesFutRcp85_np_10 = np.array(outagesFutRcp85_np_10)
-    outagesFutRcp85_np_50 = np.array(outagesFutRcp85_np_50)
-    outagesFutRcp85_np_90 = np.array(outagesFutRcp85_np_90)
+    outagesFutCurRcp_np_10 = np.array(outagesFutCurRcp_np_10)
+    outagesFutCurRcp_np_50 = np.array(outagesFutCurRcp_np_50)
+    outagesFutCurRcp_np_90 = np.array(outagesFutCurRcp_np_90)
     
-    outageScenarios = {'const10':outagesFutRcp85_const_10/1e3,\
-                       'const50':outagesFutRcp85_const_50/1e3,\
-                       'const90':outagesFutRcp85_const_90/1e3,\
-                       '40yr10':outagesFutRcp85_40yr_10/1e3,\
-                       '40yr50':outagesFutRcp85_40yr_50/1e3,\
-                       '40yr90':outagesFutRcp85_40yr_90/1e3,\
-                       'sust10':outagesFutRcp85_sust_10/1e3,\
-                       'sust50':outagesFutRcp85_sust_50/1e3,\
-                       'sust90':outagesFutRcp85_sust_90/1e3,\
-                       'np10':outagesFutRcp85_np_10/1e3,\
-                       'np50':outagesFutRcp85_np_50/1e3,\
-                       'np90':outagesFutRcp85_np_90/1e3}
+    outageScenarios = {'const10':outagesFutCurRcp_const_10/1e3,\
+                       'const50':outagesFutCurRcp_const_50/1e3,\
+                       'const90':outagesFutCurRcp_const_90/1e3,\
+                       '40yr10':outagesFutCurRcp_40yr_10/1e3,\
+                       '40yr50':outagesFutCurRcp_40yr_50/1e3,\
+                       '40yr90':outagesFutCurRcp_40yr_90/1e3,\
+                       'sust10':outagesFutCurRcp_sust_10/1e3,\
+                       'sust50':outagesFutCurRcp_sust_50/1e3,\
+                       'sust90':outagesFutCurRcp_sust_90/1e3,\
+                       'np10':outagesFutCurRcp_np_10/1e3,\
+                       'np50':outagesFutCurRcp_np_50/1e3,\
+                       'np90':outagesFutCurRcp_np_90/1e3}
     
-    with open('%s/script-data/pc-change-scenarios-rcp85-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'wb') as f:
+    with open('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData), 'wb') as f:
         pickle.dump(outageScenarios, f)
-
-
-sys.exit()
 
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
@@ -508,7 +507,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label2.set_fontsize(14)
 
 if plotFigs:
-    plt.savefig('global-curtailment.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('global-curtailment-%s.png'%rcp, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()
@@ -574,7 +573,7 @@ plt.bar(ieaDates, ieaSustNuke, bottom=ieaSustCoal+ieaSustGas+ieaSustOil, width=b
 plt.bar(ieaDates, ieaSustBio, bottom=ieaSustCoal+ieaSustGas+ieaSustOil+ieaSustNuke, width=barW, color='#56a619')
 #plt.bar(ieaDates, ieaCurtailment, bottom=ieaCoal+ieaGas+ieaOil+ieaNuke+ieaBio, width=barW, color='#7c7d7a', hatch='/')
 
-plt.xticks([2017, 2025, 2030, 2035, 2040])
+plt.xticks([2018, 2025, 2030, 2035, 2040])
 #plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Electricity generation (TWh)', fontname = 'Helvetica', fontsize=16)
 

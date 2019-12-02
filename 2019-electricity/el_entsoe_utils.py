@@ -375,18 +375,24 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     
     finalQs = []
     finalQsAnom = []
+    finalQsPercentile = []
     finalQsSummer = []
     finalQsAnomSummer = []
+    finalQsPercentileSummer = []
     
     finalQsGldasBasin = []
     finalQsGldasBasinAnom = []
+    finalQsGldasBasinPercentile = []
     finalQsGldasBasinSummer = []
     finalQsGldasBasinAnomSummer = []
+    finalQsGldasBasinPercentileSummer = []
     
     finalQsGrdc = []
     finalQsGrdcAnom = []
+    finalQsGrdcPercentile = []
     finalQsGrdcSummer = []
     finalQsGrdcAnomSummer = []
+    finalQsGrdcPercentileSummer = []
     
     finalCapacity = []
     finalCapacitySummer = []
@@ -493,7 +499,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-summer.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsStd = distParams['std']
-                tmpQsPercentile = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsPercentileSummer = dist.cdf(curQs, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curQs[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-summer.dat'%(datadir, c), 'wb') as f:
@@ -506,6 +513,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                 pickle.dump(distParams, f)
                 print('gldas summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsStd))
         finalQsAnomSummer.append((curQs - np.nanmean(curQs)) / curQsStd)
+        finalQsPercentileSummer.append(tmpQsPercentileSummer)
         
         
         
@@ -515,7 +523,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg-summer.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsGldasBasinStd = distParams['std']
-                tmpQsGldasBasinPercentile = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsGldasBasinPercentileSummer = dist.cdf(curQsGldasBasin, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsGldasBasinStd = el_find_best_runoff_dist.best_fit_distribution(curQsGldasBasin[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg-summer.dat'%(datadir, c), 'wb') as f:
@@ -528,7 +537,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                 pickle.dump(distParams, f)
                 print('gldas basin summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGldasBasinStd))
         finalQsGldasBasinAnomSummer.append((curQsGldasBasin - np.nanmean(curQsGldasBasin)) / curQsGldasBasinStd)
-        
+        finalQsGldasBasinPercentileSummer.append(tmpQsGldasBasinPercentileSummer)
         
         curQsGrdc = np.array(finalQsGrdcSummer[c])
         nn = np.where(~np.isnan(curQsGrdc))[0]          
@@ -536,7 +545,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsGrdcStd = distParams['std']
-                tmpQsGrdcPercentileSummer = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsGrdcPercentileSummer = dist.cdf(curQsGrdc, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsGrdcStd = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc-summer.dat'%(datadir, c), 'wb') as f:
@@ -548,8 +558,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                               'cdf':tmpQsGrdcPercentileSummer}
                 pickle.dump(distParams, f)
                 print('grdc summer plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGrdcStd))
-
         finalQsGrdcAnomSummer.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
+        finalQsGrdcPercentileSummer.append(tmpQsGrdcPercentileSummer)
         
         
         
@@ -560,7 +570,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsStd = distParams['std']
-                tmpQsPercentile = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsPercentile = dist.cdf(curQs, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsStd = el_find_best_runoff_dist.best_fit_distribution(curQs[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas.dat'%(datadir, c), 'wb') as f:
@@ -573,6 +584,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                 pickle.dump(distParams, f)
                 print('gldas all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsStd))
         finalQsAnom.append((curQs - np.nanmean(curQs)) / curQsStd)
+        finalQsPercentile.append(tmpQsPercentile)
         
         
         curQsGldasBasin = np.array(finalQsGldasBasin[c])
@@ -581,7 +593,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsGldasBasinStd = distParams['std']
-                tmpQsGldasBasinPercentile = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsGldasBasinPercentile = dist.cdf(curQsGldasBasin, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsGldasBasinStd = el_find_best_runoff_dist.best_fit_distribution(curQsGldasBasin[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-gldas-basin-avg.dat'%(datadir, c), 'wb') as f:
@@ -594,6 +607,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                 pickle.dump(distParams, f)
                 print('gldas basin all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGldasBasinStd))
         finalQsGldasBasinAnom.append((curQsGldasBasin - np.nanmean(curQsGldasBasin)) / curQsGldasBasinStd)
+        finalQsGldasBasinPercentile.append(tmpQsGldasBasinPercentile)
         
         
         curQsGrdc = np.array(finalQsGrdc[c])
@@ -602,7 +616,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc.dat'%(datadir, c), 'rb') as f:
                 distParams = pickle.load(f)
                 curQsGrdcStd = distParams['std']
-                tmpQsGrdcPercentile = distParams['cdf']
+                dist = getattr(st, distParams['name'])
+                tmpQsGrdcPercentile = dist.cdf(curQsGrdc, *distParams['params'])
         else:
             best_fit_name, best_fit_params, curQsGrdcStd = el_find_best_runoff_dist.best_fit_distribution(curQsGrdc[nn])
             with open('%s/dist-fits/best-fit-entsoe-%d-grdc.dat'%(datadir, c), 'wb') as f:
@@ -614,24 +629,30 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                               'cdf':tmpQsGrdcPercentile}
                 pickle.dump(distParams, f)
                 print('grdc all year plant %d: dist = %s, std = %.4f'%(c, str(dist), curQsGrdcStd))
-
         finalQsGrdcAnom.append((curQsGrdc - np.nanmean(curQsGrdc)) / curQsGrdcStd)
+        finalQsGrdcPercentile.append(tmpQsGrdcPercentile)
         
     
     finalQs = np.array(finalQs)
     finalQsAnom = np.array(finalQsAnom)
+    finalQsPercentile = np.array(finalQsPercentile)
     finalQsSummer = np.array(finalQsSummer)
     finalQsAnomSummer = np.array(finalQsAnomSummer)
+    finalQsPercentileSummer = np.array(finalQsPercentileSummer)
     
     finalQsGldasBasin = np.array(finalQsGldasBasin)
     finalQsGldasBasinAnom = np.array(finalQsGldasBasinAnom)
+    finalQsGldasBasinPercentile = np.array(finalQsGldasBasinPercentile)
     finalQsGldasBasinSummer = np.array(finalQsGldasBasinSummer)
     finalQsGldasBasinAnomSummer = np.array(finalQsGldasBasinAnomSummer)
+    finalQsGldasBasinPercentileSummer = np.array(finalQsGldasBasinPercentileSummer)
     
     finalQsGrdc = np.array(finalQsGrdc)
     finalQsGrdcAnom = np.array(finalQsGrdcAnom)
+    finalQsGrdcPercentile = np.array(finalQsGrdcPercentile)
     finalQsGrdcSummer = np.array(finalQsGrdcSummer)
     finalQsGrdcAnomSummer = np.array(finalQsGrdcAnomSummer)
+    finalQsGrdcPercentileSummer = np.array(finalQsGrdcPercentileSummer)
     
     finalTx = np.array(finalTx)
     finalTxSummer = np.array(finalTxSummer)
@@ -646,12 +667,12 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     entsoeLon = np.array(entsoeLon)
     
     d = {'tx':finalTx, 'txSummer':finalTxSummer, \
-         'qs':finalQs, 'qsAnom':finalQsAnom, \
-         'qsGldasBasin':finalQsGldasBasin, 'qsGldasBasinAnom':finalQsGldasBasinAnom, \
-         'qsSummer':finalQsSummer, 'qsAnomSummer':finalQsAnomSummer, \
-         'qsGldasBasinSummer':finalQsGldasBasinSummer, 'qsGldasBasinAnomSummer':finalQsGldasBasinAnomSummer, \
-         'qsGrdc':finalQsGrdc, 'qsGrdcAnom':finalQsGrdcAnom, \
-         'qsGrdcSummer':finalQsGrdcSummer, 'qsGrdcAnomSummer':finalQsGrdcAnomSummer, \
+         'qs':finalQs, 'qsAnom':finalQsAnom, 'qsPercentile':finalQsPercentile, \
+         'qsGldasBasin':finalQsGldasBasin, 'qsGldasBasinAnom':finalQsGldasBasinAnom, 'qsGldasBasinPercentile':finalQsGldasBasinPercentile, \
+         'qsSummer':finalQsSummer, 'qsAnomSummer':finalQsAnomSummer, 'qsPercentileSummer':finalQsPercentileSummer, \
+         'qsGldasBasinSummer':finalQsGldasBasinSummer, 'qsGldasBasinAnomSummer':finalQsGldasBasinAnomSummer, 'qsGldasBasinPercentileSummer':finalQsGldasBasinPercentileSummer, \
+         'qsGrdc':finalQsGrdc, 'qsGrdcAnom':finalQsGrdcAnom, 'qsGrdcPercentile':finalQsGrdcPercentile, \
+         'qsGrdcSummer':finalQsGrdcSummer, 'qsGrdcAnomSummer':finalQsGrdcAnomSummer, 'qsGrdcPercentileSummer':finalQsGrdcPercentileSummer, \
          'years':txYears, 'months':txMonths, 'days':txDays, \
          'plantIds':plantIds, \
          'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
@@ -665,10 +686,13 @@ def aggregateEntsoeData(entsoeMatchData):
     txAll = []
     qsAll = []
     qsAnomAll = []
+    qsPercentileAll = []
     qsGldasBasinAll = []
     qsGldasBasinAnomAll = []
+    qsGldasBasinPercentileAll = []
     qsGrdcAll = []
     qsGrdcAnomAll = []
+    qsGrdcPercentileAll = []
     capacityAll = []
     outageBoolAll = []
     outageCountAll = []
@@ -683,12 +707,15 @@ def aggregateEntsoeData(entsoeMatchData):
         inds = np.where((entsoeMatchData['months'] >= 7) & (entsoeMatchData['months'] <= 8))[0]
     
         curQsAnom = entsoeMatchData['qsAnom'][c,inds]
+        curQsPercentile = entsoeMatchData['qsPercentile'][c,inds]
         curQs = entsoeMatchData['qs'][c,inds]
         
         curQsGldasBasinAnom = entsoeMatchData['qsGldasBasinAnom'][c,inds]
+        curQsGldasBasinPercentile = entsoeMatchData['qsGldasBasinPercentile'][c,inds]
         curQsGldasBasin = entsoeMatchData['qsGldasBasin'][c,inds]
         
         curQsGrdcAnom = entsoeMatchData['qsGrdcAnom'][c,inds]
+        curQsGrdcPercentile = entsoeMatchData['qsGrdcPercentile'][c,inds]
         curQsGrdc = entsoeMatchData['qsGrdc'][c,inds]
         curTx = entsoeMatchData['tx'][c,inds]
         curCapacity = entsoeMatchData['capacity'][c,inds]
@@ -701,12 +728,15 @@ def aggregateEntsoeData(entsoeMatchData):
             
             qsAll.extend(curQs)
             qsAnomAll.extend(curQsAnom)
+            qsPercentileAll.extend(curQsPercentile)
             
             qsGldasBasinAll.extend(curQsGldasBasin)
             qsGldasBasinAnomAll.extend(curQsGldasBasinAnom)
+            qsGldasBasinPercentileAll.extend(curQsGldasBasinPercentile)
             
             qsGrdcAll.extend(curQsGrdc)
             qsGrdcAnomAll.extend(curQsGrdcAnom)
+            qsGrdcPercentileAll.extend(curQsGrdcPercentile)
             
             plantMeanTemps.extend([np.nanmean(curTx)]*len(curTx))
             capacityAll.extend(curCapacity)
@@ -720,12 +750,16 @@ def aggregateEntsoeData(entsoeMatchData):
     txAll = np.array(txAll)
     qsAll = np.array(qsAll)
     qsAnomAll = np.array(qsAnomAll)
+    qsPercentileAll = np.array(qsPercentileAll)
     
     qsGldasBasinAll = np.array(qsGldasBasinAll)
     qsGldasBasinAnomAll = np.array(qsGldasBasinAnomAll)
+    qsGldasBasinPercentileAll = np.array(qsGldasBasinPercentileAll)
     
     qsGrdcAll = np.array(qsGrdcAll)
     qsGrdcAnomAll = np.array(qsGrdcAnomAll)
+    qsGrdcPercentileAll = np.array(qsGrdcPercentileAll)
+    
     capacityAll = np.array(capacityAll)
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
@@ -734,9 +768,9 @@ def aggregateEntsoeData(entsoeMatchData):
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
     
-    d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, \
-         'qsGldasBasinSummer':qsGldasBasinAll, 'qsGldasBasinAnomSummer':qsGldasBasinAnomAll, \
-         'qsGrdcSummer':qsGrdcAll, 'qsGrdcAnomSummer':qsGrdcAnomAll, \
+    d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, 'qsPercentileSummer':qsPercentileAll, \
+         'qsGldasBasinSummer':qsGldasBasinAll, 'qsGldasBasinAnomSummer':qsGldasBasinAnomAll, 'qsGldasBasinPercentileSummer':qsGldasBasinPercentileAll, \
+         'qsGrdcSummer':qsGrdcAll, 'qsGrdcAnomSummer':qsGrdcAnomAll, 'qsGrdcPercentileSummer':qsGrdcPercentileAll, \
          'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
          'outagesCount':outageCountAll, 'plantYears':plantYears, 'plantMonths':plantMonths, \
          'plantDays':plantDays, 'plantIds':plantIds, 'plantMeanTemps':plantMeanTemps}

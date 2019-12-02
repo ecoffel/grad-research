@@ -19,78 +19,17 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 tempVar = 'txSummer'
-qsVar = 'qsGrunAnomSummer'
+qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 
 plotFigs = True
 dumpData = False
 
-# load historical weather data for plants to compute mean temps 
-# to display on bootstrap temp curve
-fileName = '%s/script-data/entsoe-nuke-pp-tx.csv'%dataDirDiscovery
-plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-plantYearData = plantTxData[0,:].copy()
-plantMonthData = plantTxData[1,:].copy()
-plantDayData = plantTxData[2,:].copy()
-plantTxData = plantTxData[3:,:].copy()
-
-
-fileName = '%s/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'%dataDirDiscovery
-plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
-
-snsColors = sns.color_palette(["#3498db", "#e74c3c"])
-
-summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-
-qs1d = []
-for p in range(plantQsData.shape[0]):
-    qs1d.extend(plantQsData[p,summerInd])
-qs1d = np.array(qs1d)
-qs1d[qs1d<-5] = np.nan
-qs1d[qs1d>5] = np.nan
-qs1d = qs1d[~np.isnan(qs1d)]
-
-plt.figure(figsize=(8,1))
-plt.xlim([-4, 4])
-plt.grid(True, color=[.9, .9, .9])
-n, bins, patches = plt.hist(qs1d, bins=100, density=True, color='#917529');
-
-plt.gca().get_xaxis().set_visible(False)
-plt.gca().get_yaxis().set_visible(False)
-plt.gca().axis('off')
-
-if plotFigs:
-    plt.savefig('runoff-dist.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
-
-    
-tx1d = []
-for p in range(plantTxData.shape[0]):
-    tx1d.extend(plantTxData[p,summerInd])
-tx1d = np.array(tx1d)
-tx1d = tx1d[~np.isnan(tx1d)]
-
-plt.figure(figsize=(8,1))
-plt.xlim([27, 50])
-plt.grid(True, color=[.9, .9, .9])
-n, bins, patches = plt.hist(tx1d, bins=100, density=True, color=snsColors[1]);
-
-plt.gca().get_xaxis().set_visible(False)
-plt.gca().get_yaxis().set_visible(False)
-plt.gca().axis('off')
-
-if plotFigs:
-    plt.savefig('temp-dist.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
-
-    
-
-summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
-plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
-plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 if not 'models' in locals():
     print('building models...')
-    models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+    models, plantIds, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
 
     plantIdsTmp = np.unique(plantIds)
     plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
@@ -98,6 +37,39 @@ if not 'models' in locals():
     for p in np.unique(plantYears):
         tmp.extend([p]*len(plantIdsTmp))
     plantYears = np.array(tmp)
+
+
+snsColors = sns.color_palette(["#3498db", "#e74c3c"])
+
+plt.figure(figsize=(8,1))
+if 'percentile' in qsVar.lower():
+    plt.xlim([0,1])
+else:
+    plt.xlim([-4, 4])
+plt.grid(True, color=[.9, .9, .9])
+n, bins, patches = plt.hist(plantQsData, bins=100, density=True, color='#917529');
+
+plt.gca().get_xaxis().set_visible(False)
+plt.gca().get_yaxis().set_visible(False)
+plt.gca().axis('off')
+
+if plotFigs:
+    plt.savefig('runoff-dist-%s.png'%qsVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
+
+plt.figure(figsize=(8,1))
+plt.xlim([27, 50])
+plt.grid(True, color=[.9, .9, .9])
+n, bins, patches = plt.hist(plantTxData, bins=100, density=True, color=snsColors[1]);
+
+plt.gca().get_xaxis().set_visible(False)
+plt.gca().get_yaxis().set_visible(False)
+plt.gca().axis('off')
+
+if plotFigs:
+    plt.savefig('temp-dist-%s.png'%tempVar, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
+
+plantMeanTemps = np.nanmean(plantTxData)
+plantMeanRunoff = np.nanmean(plantQsData)
 
 #txrange = np.arange(20,51,1)
 #qsrange = [1]
@@ -169,7 +141,7 @@ indPc90 = np.where(abs(pcEval-pc90) == np.nanmin(abs(pcEval-pc90)))[0]
 
 
 # find fit percentiles for runoff
-t = np.nanmean(plantMeanTemps)
+t = 32#np.nanmean(plantMeanTemps)
 if 'percentile' in qsVar.lower():
     q = 0
 else:
@@ -197,10 +169,15 @@ pPolyData = {'pcModel10':models[indPc10], 'pcModel50':models[indPc50], 'pcModel9
              'plantIds':plantIds, 'plantYears':plantYears}
 if dumpData:
     print('dumping model data')
+    prcStr = ''
+    if 'percentile' in qsVar.lower():
+        prcStr = '-perc'
     if 'grdc' in qsVar.lower():
-        polyDataTitle = 'pPolyData-grdc-pow2'
+        polyDataTitle = 'pPolyData-grdc-pow2%s'%prcStr
+    elif 'nldas' in qsVar.lower():
+        polyDataTitle = 'pPolyData-nldas-pow2%s'%prcStr
     else:
-        polyDataTitle = 'pPolyData-gldas-pow2'
+        polyDataTitle = 'pPolyData-gldas-pow2%s'%prcStr
     with gzip.open('%s/script-data/%s.dat'%(dataDirDiscovery, polyDataTitle), 'wb') as f:
         pickle.dump(pPolyData, f)
 
@@ -258,10 +235,6 @@ p3 = plt.plot(xd, yd90, '-', linewidth = 2.5, color = snsColors[0], label='10th 
 
 colors = plt.get_cmap('Reds')
 
-
-# for m in plantMeanTemps:
-#    plt.plot([m, m], [baseY,baseY+2], color=colors(m/max(plantMeanTemps)), linewidth=1)
-
 plt.gca().set_xticks(range(30, 51, 5))
 plt.gca().set_yticks(plotYTicks)
 
@@ -286,7 +259,7 @@ plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 if plotFigs:
     plt.savefig('hist-pc-tx-%s-%s-regression.png'%(tempVar, qsVar), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-xd = np.array([np.nanmean(plantMeanTemps)]*25)
+xd = np.array([32]*25)#np.array([np.nanmean(plantMeanTemps)]*25)
 qd = np.linspace(-4, 4, 25)
 
 ydAll = np.zeros([len(models), len(xd)])
@@ -341,7 +314,7 @@ colors = plt.get_cmap('BrBG')
 
 plt.gca().set_yticks(plotYTicks)
 if 'percentile' in qsVar.lower():
-    plt.gca().set_xticks(np.arange(0, 1, .1))
+    plt.gca().set_xticks(np.arange(0, 1.1, .2))
 else:
     plt.gca().set_xticks(np.arange(-4, 4.1, 1))
 
