@@ -26,7 +26,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-yearRange = [1981, 2005]
+yearRange = [1981, 2018]
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -58,7 +58,7 @@ basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData)):
+if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataDirDiscovery, plantData, runoffData)):
     
     print('building historical pc')
     print('loading historical tx')

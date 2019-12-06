@@ -27,7 +27,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 yearRange = [1981, 2005]
 decades = np.array([[2020,2029],\

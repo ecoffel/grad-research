@@ -116,7 +116,7 @@ plt.plot(yearsRange, livingPlants40, color='#56a619', lw=2, label='40 Year Lifes
 plt.fill_between(np.array(yearsRange[0:111]), livingPlants40[0:111,0], np.array([0]*(111)), facecolor='#56a619', alpha=.5, interpolate=True)
 for g in range(GMTyears.shape[0]):
     yr = GMTyears[g]
-    plt.plot([yr,yr], [0, 5000], '--k')
+    plt.plot([yr,yr], [0, 5000], '-k')
 
 # replot historical to get marker above the green line, but keep 1st plot of historical to get legend order right
 plt.plot([2018], sum(iea2018), 'ok', markersize=msize)
@@ -139,7 +139,7 @@ plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=ms
 plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot(np.arange(2042,2101,1), [sum(iea2040)+ieaNPSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[1], lw=2)
 
-plt.ylabel('Capacity (GW)',fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Global thermal \ngenerating capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
@@ -157,7 +157,7 @@ leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', \
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:
-    plt.savefig('plant-lifespan-40.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('plant-lifespan-40-4.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()

@@ -31,11 +31,13 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 runoffModel = 'grdc'
 
 qstr = '-qdistfit-best'
+
+mdlPrc = 10
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -70,6 +72,13 @@ with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffM
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
 
+if mdlPrc == 10:
+    pcModel = pcModel10
+elif mdlPrc == 50:
+    pcModel = pcModel50
+elif mdlPrc == 90:
+    pcModel = pcModel90
+    
 uniquePlants = np.unique(plantIds)
     
 # find historical monthly mean qs and tx for plants
@@ -134,7 +143,7 @@ dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
                          'QS1':[q0]*len(plantIds), 'QS2':[q0**2]*len(plantIds), \
                          'QST':[t0*q0]*len(plantIds), 'QS2T2':[(t0**2)*(q0**2)]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
-pc0 = np.nanmean(pcModel50.predict(dfpred))
+pc0 = np.nanmean(pcModel.predict(dfpred))
 
 print('calculating historical pc')
 pcHist = np.full([txMonthlyMax.shape[0], 12], np.nan)
@@ -155,7 +164,7 @@ for p in range(txMonthlyMax.shape[0]):
                  'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                  'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
                  'PlantIds':plantIds, 'PlantYears':plantYears})
-            pc1 = np.nanmean(pcModel50.predict(dfpred))
+            pc1 = np.nanmean(pcModel.predict(dfpred))
 
             if pc1 > 100: pc1 = 100
             if pc1 < 0: pc1 = 0
@@ -351,8 +360,8 @@ else:
     with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'wb') as f:
        pickle.dump(ppFutureData, f)
 
-if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar)):
-    with open('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar), '4b') as f:
+if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc)):
+    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'rb') as f:
         plantMonthlyOutageChg = pickle.load(f)
 else:
     print('calculating curtailment change')
@@ -384,7 +393,7 @@ else:
                              'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                              'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
                              'PlantIds':plantIds, 'PlantYears':plantYears})
-                        pc1 = np.nanmean(pcModel50.predict(dfpred))
+                        pc1 = np.nanmean(pcModel.predict(dfpred))
 
                         if pc1 > 100: pc1 = 100
                         if pc1 < 0: pc1 = 0
@@ -401,7 +410,7 @@ else:
 
     plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
 
-    with open('%s/script-data/pc-monthly-outage-chg-%s.dat'%(dataDirDiscovery, qsVar), 'wb') as f:
+    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'wb') as f:
         pickle.dump(plantMonthlyOutageChg, f)
 
 plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=1),axis=2)
@@ -411,7 +420,8 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])
-plt.ylim([-8.5, 0])
+# plt.ylim([-8.5, 0])
+plt.ylim([-11, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -428,7 +438,7 @@ plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, colo
 #plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks(np.arange(-8,1,2))
+plt.yticks(np.arange(-10,1,2))
 
 plt.xticks(list(range(1,13)))
 
@@ -440,19 +450,19 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontsize(14)
 
 #plt.gca().spines['bottom'].set_visible(False)
-plt.tick_params(
-    axis='x',          # changes apply to the x-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
+# plt.tick_params(
+#     axis='x',          # changes apply to the x-axis
+#     which='both',      # both major and minor ticks are affected
+#     bottom=False,      # ticks along the bottom edge are off
+#     top=False,         # ticks along the top edge are off
+#     labelbottom=False) # labels along the bottom edge are off
 
-#plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 
 
 
 if plotFigs:
-    plt.savefig('outage-chg-by-month-%s%s.eps'%(runoffModel, qstr), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('outage-chg-by-month-%s%s-mdl%d.eps'%(runoffModel, qstr, mdlPrc), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
 sys.exit()

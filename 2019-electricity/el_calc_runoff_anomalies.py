@@ -24,7 +24,7 @@ warnings.filterwarnings('ignore')
 plantData = 'world'
 
 # 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
-anomType = 'hist'
+anomType = 'decade-cmip5'
 
 runoffData = 'nldas'
 
@@ -129,14 +129,15 @@ elif anomType == 'hist':
 
 elif anomType == 'decade-cmip5':
     models = [sys.argv[1]]
+    rcp = sys.argv[2]
 
     for m in range(len(models)):
 
         print('processing %s'%(models[m]))
 
-        fileNameRunoffRaw = '%s/future-temps/world-pp-rcp85-runoff-raw-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
-        fileNameRunoffAnom = '%s/future-temps/world-pp-rcp85-runoff-anom-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
-        fileNameRunoffPercentile = '%s/future-temps/world-pp-rcp85-runoff-percentile-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, models[m])
+        fileNameRunoffRaw = '%s/future-temps/world-pp-%s-runoff-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, rcp, models[m])
+        fileNameRunoffAnom = '%s/future-temps/world-pp-%s-runoff-anom-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, rcp, models[m])
+        fileNameRunoffPercentile = '%s/future-temps/world-pp-%s-runoff-percentile-cmip5-%s-2080-2089.csv'%(dataDirDiscovery, rcp, models[m])
 
         if not os.path.isfile(fileNameRunoffRaw):
             continue

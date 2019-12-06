@@ -19,7 +19,7 @@ import sys, os
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -292,7 +292,7 @@ for m in range(len(models)):
                   (dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[0,0], decades[0,1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
-sys.exit()
+
 totalTwh_40yr = 0
 totalTwh_const = monthLens * np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])/1e6*24
 totalTwh_sust = monthLens * np.nansum(np.nanmean(globalPlantsCapsSust[livingPlantsInds40[2018], -10:], axis=1))/1e6*24
@@ -362,7 +362,7 @@ plt.gca().yaxis.set_label_position("right")
 plt.gca().get_xaxis().set_visible(False)
 
 if plotFigs:
-    plt.savefig('annual-total-curtailment-2080s.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('annual-total-curtailment-2080s-%s.eps'%rcp, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()

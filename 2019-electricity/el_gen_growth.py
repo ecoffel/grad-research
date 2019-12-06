@@ -30,7 +30,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
@@ -143,15 +143,6 @@ with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData
     pcTxx50 = pcChgHist['pCapTxx50']
     pcTxx90 = pcChgHist['pCapTxx90']
     
-
-with gzip.open('%s/script-data/demand-projections.dat'%dataDirDiscovery, 'rb') as f:
-    demData = pickle.load(f)    
-    demHist = demData['demHist']
-    demProj = demData['demProj']
-    demMult = demData['demMult']
-    demByMonth = demData['demByMonthHist']
-    demByMonthFut = demData['demByMonthFut']
-
 outagesHist10 = []
 outagesHist50 = []
 outagesHist90 = []
