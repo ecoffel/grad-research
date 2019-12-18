@@ -8,6 +8,7 @@ Created on Wed Jun 26 15:19:34 2019
 import matplotlib.pyplot as plt 
 import matplotlib.cm as cmx
 import seaborn as sns
+import statsmodels.api as sm
 import numpy as np
 import pandas as pd
 import pickle, gzip
@@ -22,7 +23,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = True
+plotFigs = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -136,7 +137,7 @@ with open('%s/script-data/world-plant-caps-iea-scenarios.dat'%dataDirDiscovery, 
                  'globalPlantsCapsNP':globalPlantsCapsNP}
     pickle.dump(scenarios, f)
 
-with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
+with open('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
     pcChgHist = pickle.load(f)
 
     pcTxx10 = pcChgHist['pCapTxx10']
@@ -155,6 +156,19 @@ outagesHist10 = np.array(outagesHist10)/1e3
 outagesHist50 = np.array(outagesHist50)/1e3
 outagesHist90 = np.array(outagesHist90)/1e3
 
+outagesHistTrend10 = np.zeros([pcTxx50.shape[1],1])
+outagesHistTrend50 = np.zeros([pcTxx50.shape[1],1])
+outagesHistTrend90 = np.zeros([pcTxx50.shape[1],1])
+for y in range(pcTxx50.shape[1]):
+    outagesHistTrend10[y] = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]] * (pcTxx10[livingPlantsInds40[2018], y]/100.0))/1e3
+    outagesHistTrend50[y] = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]] * (pcTxx50[livingPlantsInds40[2018], y]/100.0))/1e3
+    outagesHistTrend90[y] = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]] * (pcTxx90[livingPlantsInds40[2018], y]/100.0))/1e3
+
+
+X = sm.add_constant(len(outagesHistTrend50))
+mdl = sm.OLS(outagesHistTrend50, X).fit()
+
+sys.exit()
 
 with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'rb') as f:
     pcChgFut = pickle.load(f)

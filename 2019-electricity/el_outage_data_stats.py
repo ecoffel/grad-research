@@ -104,9 +104,7 @@ plt.xlabel('Month', fontname = 'Helvetica', fontsize=12)
 if plotFigs:
     plt.savefig('outages-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-
-
-
+    
 
 mon = nukeData['plantMonthsAll']
 tx = nukePlants['tx']
@@ -128,6 +126,15 @@ for m in range(1, 13):
 histTempsByMonth = np.array(histTempsByMonth)
 #histTempsByMonth = np.nanmean(histTempsByMonth, axis=1)
 
+histTemps20CR = []
+temps20CR = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-20cr.csv'%dataDirDiscovery, delimiter=',')
+temps20CRMonths = temps20CR[0,:]
+temps20CR = temps20CR[1:,:]
+
+for m in range(1, 13):
+    ind = np.where(temps20CRMonths == m)[0]
+    histTemps20CR.append(np.nanmean(np.nanmean(temps20CR[:,ind])))
+histTemps20CR = np.array(histTemps20CR)
 
 # load future mean warming data and recompute PC
 txMonthlyMeanFutGMT = np.full([4, len(models), 113, 12], np.nan)
@@ -226,6 +233,7 @@ plt.ylim([8, 43])
 plt.grid(True, alpha=.5, color=[.9, .9, .9])
 
 plt.plot(list(range(1,13)), histTempsByMonth, '-', lw=2, color='black')
+plt.plot(list(range(1,13)), histTemps20CR, '-', lw=2, color=snsColors[0])
 
 plt.plot(list(range(1,13)), np.nanmean(txMonthlyMaxFutGMTSorted[1,:,:],axis=0), '-', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), txMonthlyMaxFutGMTSorted[1,-1,:], '--', lw=1, color='#ffb835')
@@ -259,7 +267,7 @@ plt.tick_params(
 
 if plotFigs:
     plt.savefig('temps-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-
+sys.exit()
 
 # load data on demand, generation, and temperature across US subgrids
 demData = {}

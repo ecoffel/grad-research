@@ -24,9 +24,9 @@ warnings.filterwarnings('ignore')
 plantData = 'world'
 
 # 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
-anomType = 'decade-cmip5'
+anomType = 'hist'
 
-runoffData = 'nldas'
+runoffData = 'gldas'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
@@ -82,8 +82,8 @@ elif anomType == 'hist':
 #     startP = int(sys.argv[1])
 #     endP = int(sys.argv[2])
     
-    fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-%s-1981-2005.csv'%(dataDirDiscovery, plantData, runoffData)
-    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-%s-1981-2005.csv'%(dataDirDiscovery, plantData, runoffData)#, startP, endP)
+    fileNameRunoffRaw = '%s/script-data/%s-pp-runoff-raw-%s-1981-2018.csv'%(dataDirDiscovery, plantData, runoffData)
+    fileNameRunoffAnom = '%s/script-data/%s-pp-runoff-anom-%s-1981-2018.csv'%(dataDirDiscovery, plantData, runoffData)#, startP, endP)
 
     plantQsDataRaw = np.genfromtxt(fileNameRunoffRaw, delimiter=',', skip_header=0)
 

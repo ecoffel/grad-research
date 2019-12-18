@@ -83,6 +83,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
         
         # we generate random indices for bootstrapping, leaving spaces for 1 instance of every plant id
         curInd = np.random.choice(len(txtotal), int(len(txtotal))-len(list(np.unique(plantIds))))
+		
         # insert each instance of plant id found before - this is to ensure that all plant ids are present in every model at least once,
         # as otherwise model predictions may fail
         curInd = np.concatenate((curInd, uniquePlantIds))
@@ -100,6 +101,7 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
                                    'PC'])
         df = df.dropna()
         
+		# build the FE model - the 'C' operator marks those variables as fixed effects (from R-style syntax)
         mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears)', data=df).fit()
         models.append(mdl)
     

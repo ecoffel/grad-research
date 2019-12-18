@@ -38,14 +38,14 @@ summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
 plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
-# with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
-#     ppFutureData = pickle.load(f)
-#     txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
-#     qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
-#     tx2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][1,:,:,[6,7]])))
-#     tx4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][3,:,:,[6,7]])))
-#     qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
-#     qs4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][3,:,:,[6,7]])))
+with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
+    ppFutureData = pickle.load(f)
+    txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
+    qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
+    tx2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][1,:,:,[6,7]])))
+    tx4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][3,:,:,[6,7]])))
+    qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
+    qs4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][3,:,:,[6,7]])))
 
 if 'percentile' in qsVar.lower():
     qsrange = np.linspace(0, 1, 25)
@@ -119,8 +119,8 @@ plt.plot([27, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '
 #            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
 #plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
-# plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835', label='+ 2$\degree$C')
-# plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1], label='+ 4$\degree$C')
+plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835', label='+ 2$\degree$C')
+plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1], label='+ 4$\degree$C')
 
 # plt.xticks(txrange)
 # plt.yticks(qsrange)

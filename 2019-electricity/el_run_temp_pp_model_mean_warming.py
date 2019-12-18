@@ -58,11 +58,11 @@ basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataDirDiscovery, plantData, runoffData)):
+if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, yearRange[0], yearRange[1])):
     
     print('building historical pc')
     print('loading historical tx')
-    fileNameTemp = '%s/script-data/%s-pp-tx.csv'%(dataDirDiscovery, plantData)
+    fileNameTemp = '%s/script-data/%s-pp-tx-%d-%d.csv'%(dataDirDiscovery, plantData, yearRange[0], yearRange[1])
     plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
     plantYearData = plantTxData[0,:].copy()
     plantMonthData = plantTxData[1,:].copy()
@@ -81,11 +81,13 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataD
     pCapTxMedian90 = np.zeros([plantTxData.shape[0], len(range(yearRange[0], yearRange[1]+1))])
     
     # load historical runoff data for all plants in US and EU
-    fileNameRunoff = '%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData)
+    fileNameRunoff = '%s/script-data/%s-pp-runoff-anom-gldas-%d-%d.csv'%(dataDirDiscovery, plantData, yearRange[0], yearRange[1])
     
     print('loading historical qs')
     plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
     plantQsData = plantQsData[3:,:]
+    plantQsData[plantQsData < -5] = np.nan
+    plantQsData[plantQsData > 5] = np.nan
 
     for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
     
@@ -152,6 +154,7 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataD
             pCapTxMedian50[indCompute, y] = pcModel50.predict(dfpred) - basePred50
             pCapTxMedian90[indCompute, y] = pcModel90.predict(dfpred) - basePred90
             
+            
     # if positive, no heat realated outage so set to 0
     pCapTxx10[pCapTxx10 > 0] = 0
     pCapTxx50[pCapTxx50 > 0] = 0
@@ -176,7 +179,7 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataD
                  'pCapTxx10':pCapTxx10, \
                  'pCapTxx50':pCapTxx50, \
                  'pCapTxx90':pCapTxx90}
-        with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'wb') as f:
+        with open('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, yearRange[0], yearRange[1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
 sys.exit()

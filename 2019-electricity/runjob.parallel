@@ -1,0 +1,23 @@
+#!/bin/bash -l
+# declare a name for this job to be sample_job
+#PBS -N el_build_agg_data
+
+# request the default queue for this job
+#PBS -q default
+
+# request a total of 32 processors for this job (2 nodes and 16 processors per node)
+#PBS -l nodes=1:ppn=24
+#PBS -l walltime=72:00:00
+
+# mail is sent to you when the job starts and when it terminates or aborts
+#PBS -m bea
+
+# specify your email address
+#PBS -M ecoffel@dartmouth.edu
+
+#change to the directory where you submitted the job
+cd $PBS_O_WORKDIR
+
+module load python
+source activate ecoffel
+ipython el_aggregate_pc_model_warming.py
