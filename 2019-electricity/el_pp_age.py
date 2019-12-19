@@ -121,7 +121,7 @@ for g in range(GMTyears.shape[0]):
 # replot historical to get marker above the green line, but keep 1st plot of historical to get legend order right
 plt.plot([2018], sum(iea2018), 'ok', markersize=msize)
 
-p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainable')
+p2 = plt.plot([2025], sum(ieaSust2025), 'ok', markerfacecolor=snsColors[0], markersize=msize, label='IEA Sustainability')
 plt.plot([2030], sum(ieaSust2030), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot([2035], sum(ieaSust2035), 'ok', markerfacecolor=snsColors[0], markersize=msize)
 plt.plot([2040], sum(ieaSust2040), 'ok', markerfacecolor=snsColors[0], markersize=msize)
@@ -139,7 +139,8 @@ plt.plot([2035], sum(iea2035), 'ok', markerfacecolor=snsColors[1], markersize=ms
 plt.plot([2040], sum(iea2040), 'ok', markerfacecolor=snsColors[1], markersize=msize)
 plt.plot(np.arange(2042,2101,1), [sum(iea2040)+ieaNPSlope*(y-2040) for y in range(2042,2101,1)], '--', color=snsColors[1], lw=2)
 
-plt.ylabel('Global thermal \ngenerating capacity (GW)',fontname = 'Helvetica', fontsize=16)
+# plt.ylabel('Global thermal \ngenerating capacity (GW)',fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Global capacity (GW)',fontname = 'Helvetica', fontsize=16)
 plt.xlabel('Year', fontname = 'Helvetica', fontsize=16)
 
 plt.xticks([1950, 1980, 2010, 2040, 2070, 2100])
@@ -157,7 +158,7 @@ leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', \
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:
-    plt.savefig('plant-lifespan-40-4.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('plant-lifespan-40.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()

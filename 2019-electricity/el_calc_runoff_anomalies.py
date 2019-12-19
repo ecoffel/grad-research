@@ -21,7 +21,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # world, useu, entsoe-nuke
-plantData = 'world'
+plantData = 'entsoe-nuke'
 
 # 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
 anomType = 'hist'
@@ -116,7 +116,7 @@ elif anomType == 'hist':
                               'std':curQsStd}
                 pickle.dump(distParams, f)
                 print('%s hist %d: dist = %s, std = %.4f'%(runoffData, p-3, str(dist), curQsStd))
-            
+
         with open('%s/dist-fits/best-fit-%s-hist-%s-plant-%d.dat'%(dataDirDiscovery, plantData, runoffData, p-3), 'rb') as f:
             if p%100 == 0:
                 print('plant %d of %d'%(p, plantQsDataRaw.shape[0]))

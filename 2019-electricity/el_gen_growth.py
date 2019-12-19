@@ -23,7 +23,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = False
+plotFigs = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -165,10 +165,6 @@ for y in range(pcTxx50.shape[1]):
     outagesHistTrend90[y] = np.nansum(globalPlants['caps'][livingPlantsInds40[2018]] * (pcTxx90[livingPlantsInds40[2018], y]/100.0))/1e3
 
 
-X = sm.add_constant(len(outagesHistTrend50))
-mdl = sm.OLS(outagesHistTrend50, X).fit()
-
-sys.exit()
 
 with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'rb') as f:
     pcChgFut = pickle.load(f)
@@ -418,7 +414,7 @@ plt.plot([2025, 2085], [np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:],
 yPtSust2040 = np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))
 pSust = plt.plot(2041, \
          yPtSust2040, \
-          'ok', markersize=6, markerfacecolor=snsColors[0], label='IEA\nSustainable')
+          'ok', markersize=6, markerfacecolor=snsColors[0], label='IEA\nSustainability')
 yerrSust = np.zeros([2,1])
 yerrSust[0,0] = np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))-np.nanmin(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=1))
 yerrSust[1,0] = np.nanmax(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=1))-np.nanmean(np.nanmean(np.nansum(outageMeanSust[:,1:3,:], axis=2), axis=0))

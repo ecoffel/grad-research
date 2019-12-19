@@ -19,7 +19,7 @@ import sys, os
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -29,7 +29,7 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 decades = np.array([[2080,2089]])
 

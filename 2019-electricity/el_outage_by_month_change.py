@@ -31,13 +31,13 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 runoffModel = 'grdc'
 
 qstr = '-qdistfit-best'
 
-mdlPrc = 10
+mdlPrc = 90
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -145,16 +145,89 @@ dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
                          'PlantIds':plantIds, 'PlantYears':plantYears})
 pc0 = np.nanmean(pcModel.predict(dfpred))
 
-print('calculating historical pc')
+
+plantTxData = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-ncep-r2-1981-2005.csv'%dataDirDiscovery, delimiter=',')
+plantTxDataYears = plantTxData[0,:]
+plantTxDataMonths = plantTxData[1,:]
+plantTxData = plantTxData[2:,:]
+
+plantTxDataPreInd = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-20cr-1850-1900.csv'%dataDirDiscovery, delimiter=',')
+plantTxDataPreIndYears = plantTxDataPreInd[0,:]
+plantTxDataPreIndMonths = plantTxDataPreInd[1,:]
+plantTxDataPreInd = plantTxDataPreInd[2:,:]
+
+plantQsData = np.genfromtxt('%s/script-data/entsoe-nuke-pp-runoff-anom-gldas-1981-2018.csv'%dataDirDiscovery, delimiter=',')
+plantQsDataYears = plantQsData[0,:]
+plantQsDataMonths = plantQsData[1,:]
+plantQsData = plantQsData[3:,:]
+
+plantQsData[plantQsData < -5] = np.nan
+plantQsData[plantQsData > 5] = np.nan
+
+txMonthlyMax = np.full([plantTxData.shape[0], 12], np.nan)
+txMonthlyMaxPreInd = np.full([plantTxDataPreInd.shape[0], 12], np.nan)
+qsAnomMonthlyMean = np.full([plantTxData.shape[0], 12], np.nan)
+
+for month in range(1, 13):
+    curMonthlyMaxTx = np.full([plantTxData.shape[0], len(np.unique(plantTxDataYears))], np.nan)
+    curMonthlyMaxTxPreInd = np.full([plantTxDataPreInd.shape[0], len(np.unique(plantTxDataPreIndYears))], np.nan)
+    curMonthlyMeanQs = np.full([plantTxData.shape[0], len(np.unique(plantTxDataYears))], np.nan)
+    
+    for y, year in enumerate(np.unique(plantTxDataYears)):
+        ind = np.where((plantTxDataYears == year) & (plantTxDataMonths == month))[0]
+        
+        # find monthly max
+        curMonthlyMaxTx[:, y] = np.nanmax(plantTxData[:, ind], axis=1)
+        curMonthlyMeanQs[:, y] = np.nanmean(plantQsData[:, ind], axis=1)
+    
+    for y, year in enumerate(np.unique(plantTxDataPreIndYears)):
+        # these are already monthly max so just take single value for month/year
+        ind = np.where((plantTxDataPreIndYears == year) & (plantTxDataPreIndMonths == month))[0]
+        curMonthlyMaxTxPreInd[:, y] = plantTxDataPreInd[:, ind[0]]
+    
+    txMonthlyMax[:, month-1] = np.nanmean(curMonthlyMaxTx, axis=1)
+    txMonthlyMaxPreInd[:, month-1] = np.nanmean(curMonthlyMaxTxPreInd, axis=1)
+    qsAnomMonthlyMean[:, month-1] = np.nanmean(curMonthlyMeanQs[:, 0:25], axis=1)
+
+print('calculating historical (1981-2018) pc')
 pcHist = np.full([txMonthlyMax.shape[0], 12], np.nan)
 for p in range(txMonthlyMax.shape[0]):
-    
     if p%10 == 0:
         print('plant %d of %d'%(p, txMonthlyMax.shape[0]))
         
     for month in range(0,12):
-
         t1 = txMonthlyMax[p,month]
+        q1 = qsAnomMonthlyMean[p,month]
+
+        # if > 27 C 
+        if t1 >= t0 and ~np.isnan(q1):
+            dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
+                 'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
+                 'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
+                 'PlantIds':plantIds, 'PlantYears':plantYears})
+            pc1 = np.nanmean(pcModel.predict(dfpred))
+
+            if pc1 > 100: pc1 = 100
+            if pc1 < 0: pc1 = 0
+
+            outage = pc1-pc0
+            if outage > 0: outage = 0
+            pcHist[p,month] = outage
+            
+        elif t1 < t0 and ~np.isnan(q1):
+            pcHist[p,month] = 0
+          
+
+print('calculating pre-industrial (1850-1900) pc')
+pcPreInd = np.full([txMonthlyMaxPreInd.shape[0], 12], np.nan)
+for p in range(txMonthlyMaxPreInd.shape[0]):
+    
+    if p%10 == 0:
+        print('plant %d of %d'%(p, txMonthlyMaxPreInd.shape[0]))
+        
+    for month in range(0,12):
+
+        t1 = txMonthlyMaxPreInd[p,month]
         q1 = qsAnomMonthlyMean[p,month]
 
         # if > 27 C 
@@ -171,13 +244,13 @@ for p in range(txMonthlyMax.shape[0]):
 
             outage = pc1-pc0
             if outage > 0: outage = 0
-            pcHist[p,month] = outage
+            pcPreInd[p,month] = outage
             
         elif t1 < t0 and ~np.isnan(q1):
-            pcHist[p,month] = 0
+            pcPreInd[p,month] = 0
 
-
-
+sys.exit()
+            
 if os.path.isfile('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery):
     
     with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
@@ -425,7 +498,7 @@ plt.ylim([-11, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
-
+plt.plot(list(range(1,13)), np.nanmean(pcPreInd,axis=0), '-', lw=2, color=snsColors[0])
 plt.plot(list(range(1,13)), np.nanmean(pcHist,axis=0), '-', lw=2, color='black')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[1,:,:,:],axis=2),axis=0), '-', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[1,:,0], '--', lw=2, color='#ffb835')

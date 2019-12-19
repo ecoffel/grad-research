@@ -128,13 +128,14 @@ histTempsByMonth = np.array(histTempsByMonth)
 
 histTemps20CR = []
 temps20CR = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-20cr.csv'%dataDirDiscovery, delimiter=',')
-temps20CRMonths = temps20CR[0,:]
-temps20CR = temps20CR[1:,:]
+temps20CRMonths = temps20CR[1,:]
+temps20CR = temps20CR[2:,:]
 
 for m in range(1, 13):
     ind = np.where(temps20CRMonths == m)[0]
     histTemps20CR.append(np.nanmean(np.nanmean(temps20CR[:,ind])))
 histTemps20CR = np.array(histTemps20CR)
+
 
 # load future mean warming data and recompute PC
 txMonthlyMeanFutGMT = np.full([4, len(models), 113, 12], np.nan)
@@ -267,7 +268,8 @@ plt.tick_params(
 
 if plotFigs:
     plt.savefig('temps-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
-sys.exit()
+
+sys.exit() 
 
 # load data on demand, generation, and temperature across US subgrids
 demData = {}
@@ -301,6 +303,20 @@ nukeMonthlyTxMaxHist = np.nanmean(np.array(nukeMonthlyTxMaxHist), axis=0)
 monthlyTxMaxHist = np.concatenate((nukeMonthlyTxMaxHist, entsoeMonthlyTxMaxHist), axis=1)
 
 
+
+plantTxData = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx.csv'%dataDirDiscovery, delimiter=',')
+plantTxDataYears = plantTxData[0,:]
+plantTxDataMonths = plantTxData[1,:]
+plantTxData = plantTxData[3:,:]
+
+plantMonthlyMaxTx = np.full([plantTxData.shape[0], len(np.unique(plantTxDataYears)), 12], np.nan)
+
+for y, year in enumerate(np.unique(plantTxDataYears)):
+    for m in range(1, 13):
+        ind = np.where((plantTxDataYears == year) & (plantTxDataMonths == m))[0]
+        maxTx = np.nanmax(plantTxData[:, ind], axis=1)
+        plantMonthlyMaxTx[:, y, m-1] = maxTx
+        
 if os.path.isfile('%s/script-data/demand-projections.dat'%dataDirDiscovery):
     with gzip.open('%s/script-data/demand-projections.dat'%dataDirDiscovery, 'rb') as f:
         demData = pickle.load(f)
@@ -314,17 +330,18 @@ if os.path.isfile('%s/script-data/demand-projections.dat'%dataDirDiscovery):
 else:
 
     demHist = []
-    for plant in range(monthlyTxMaxHist.shape[1]):
+    for plant in range(plantMonthlyMaxTx.shape[0]):
         demHistPlant = []
         for month in range(0,12):
             demHistMonth = []
             for d in range(len(demTempModels)):
-                tx = monthlyTxMaxHist[month, plant]
-                txProj = demTempModels[d].predict([1, tx, tx**2])
-                demHistMonth.append(txProj)
+                tx = np.reshape(plantMonthlyMaxTx[plant, :, month], [plantMonthlyMaxTx.shape[1], 1])
+                txProj = demTempModels[d].predict([1, tx, tx**2])[0]
+                demHistMonth.append(np.nanmean(txProj))
             
             demHistPlant.append(demHistMonth)
         demHist.append(demHistPlant)
+    demHist = np.array(demHist)
     demHist = np.squeeze(np.nanmean(np.nanmean(np.array(demHist), axis=2), axis=0))
     
     # project future demand at GMT thresholds
@@ -451,6 +468,7 @@ if plotFigs:
     plt.savefig('dem-by-month-wide.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 plt.show()
+sys.exit()
 
 
 mon = nukeData['plantMonthsAll']
