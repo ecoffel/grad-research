@@ -37,7 +37,7 @@ runoffModel = 'grdc'
 
 qstr = '-qdistfit-best'
 
-mdlPrc = 90
+mdlPrc = 50
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -146,10 +146,15 @@ dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
 pc0 = np.nanmean(pcModel.predict(dfpred))
 
 
-plantTxData = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-ncep-r2-1981-2005.csv'%dataDirDiscovery, delimiter=',')
+plantTxDataNcepR2 = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-ncep-r2-1981-2005.csv'%dataDirDiscovery, delimiter=',')
+plantTxDataNcepR2Years = plantTxDataNcepR2[0,:]
+plantTxDataNcepR2Months = plantTxDataNcepR2[1,:]
+plantTxDataNcepR2 = plantTxDataNcepR2[2:,:]
+
+plantTxData = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-1981-2018.csv'%dataDirDiscovery, delimiter=',')
 plantTxDataYears = plantTxData[0,:]
 plantTxDataMonths = plantTxData[1,:]
-plantTxData = plantTxData[2:,:]
+plantTxData = plantTxData[3:,:]
 
 plantTxDataPreInd = np.genfromtxt('%s/script-data/entsoe-nuke-pp-tx-20cr-1850-1900.csv'%dataDirDiscovery, delimiter=',')
 plantTxDataPreIndYears = plantTxDataPreInd[0,:]
@@ -165,13 +170,20 @@ plantQsData[plantQsData < -5] = np.nan
 plantQsData[plantQsData > 5] = np.nan
 
 txMonthlyMax = np.full([plantTxData.shape[0], 12], np.nan)
+txMonthlyMaxNcepR2 = np.full([plantTxDataNcepR2.shape[0], 12], np.nan)
 txMonthlyMaxPreInd = np.full([plantTxDataPreInd.shape[0], 12], np.nan)
 qsAnomMonthlyMean = np.full([plantTxData.shape[0], 12], np.nan)
+qsAnomMonthlyMeanNcepR2 = np.full([plantTxDataNcepR2.shape[0], 12], np.nan)
+qsAnomMonthlyMeanPreInd = np.full([plantTxDataPreInd.shape[0], 12], np.nan)
 
 for month in range(1, 13):
     curMonthlyMaxTx = np.full([plantTxData.shape[0], len(np.unique(plantTxDataYears))], np.nan)
+    curMonthlyMaxTxNcepR2 = np.full([plantTxDataNcepR2.shape[0], len(np.unique(plantTxDataNcepR2Years))], np.nan)
     curMonthlyMaxTxPreInd = np.full([plantTxDataPreInd.shape[0], len(np.unique(plantTxDataPreIndYears))], np.nan)
+    
     curMonthlyMeanQs = np.full([plantTxData.shape[0], len(np.unique(plantTxDataYears))], np.nan)
+    curMonthlyMeanQsNcepR2 = np.full([plantTxDataNcepR2.shape[0], len(np.unique(plantTxDataNcepR2Years))], np.nan)
+    curMonthlyMeanQsPreInd = np.full([plantTxDataPreInd.shape[0], len(np.unique(plantTxDataPreIndYears))], np.nan)
     
     for y, year in enumerate(np.unique(plantTxDataYears)):
         ind = np.where((plantTxDataYears == year) & (plantTxDataMonths == month))[0]
@@ -180,14 +192,28 @@ for month in range(1, 13):
         curMonthlyMaxTx[:, y] = np.nanmax(plantTxData[:, ind], axis=1)
         curMonthlyMeanQs[:, y] = np.nanmean(plantQsData[:, ind], axis=1)
     
+    for y, year in enumerate(np.unique(plantTxDataNcepR2Years)):
+        indTx = np.where((plantTxDataNcepR2Years == year) & (plantTxDataNcepR2Months == month))[0]
+        indQs = np.where((plantQsDataYears == year) & (plantQsDataMonths == month))[0]
+        
+        # these are already monthly max, so just take single value
+        curMonthlyMaxTxNcepR2[:, y] = plantTxDataNcepR2[:, indTx[0]]
+        
+        # but find monthly mean from qs data
+        curMonthlyMeanQsNcepR2[:, y] = np.nanmean(plantQsData[:, indQs], axis=1)
+    
     for y, year in enumerate(np.unique(plantTxDataPreIndYears)):
         # these are already monthly max so just take single value for month/year
-        ind = np.where((plantTxDataPreIndYears == year) & (plantTxDataPreIndMonths == month))[0]
-        curMonthlyMaxTxPreInd[:, y] = plantTxDataPreInd[:, ind[0]]
+        # also use the historical (1981-2018) monthly mean runoff
+        indTx = np.where((plantTxDataPreIndYears == year) & (plantTxDataPreIndMonths == month))[0]
+        curMonthlyMaxTxPreInd[:, y] = plantTxDataPreInd[:, indTx[0]]
     
     txMonthlyMax[:, month-1] = np.nanmean(curMonthlyMaxTx, axis=1)
+    txMonthlyMaxNcepR2[:, month-1] = np.nanmean(curMonthlyMaxTxNcepR2, axis=1)
     txMonthlyMaxPreInd[:, month-1] = np.nanmean(curMonthlyMaxTxPreInd, axis=1)
-    qsAnomMonthlyMean[:, month-1] = np.nanmean(curMonthlyMeanQs[:, 0:25], axis=1)
+    qsAnomMonthlyMean[:, month-1] = np.nanmean(curMonthlyMeanQs, axis=1)
+    qsAnomMonthlyMeanPreInd[:, month-1] = np.nanmean(curMonthlyMeanQs, axis=1)
+    qsAnomMonthlyMeanNcepR2[:, month-1] = np.nanmean(curMonthlyMeanQsNcepR2, axis=1)
 
 print('calculating historical (1981-2018) pc')
 pcHist = np.full([txMonthlyMax.shape[0], 12], np.nan)
@@ -217,7 +243,35 @@ for p in range(txMonthlyMax.shape[0]):
         elif t1 < t0 and ~np.isnan(q1):
             pcHist[p,month] = 0
           
+print('calculating historical (1981-2005) pc with NCEP R2')
+pcHistNcepR2 = np.full([txMonthlyMaxNcepR2.shape[0], 12], np.nan)
+for p in range(txMonthlyMaxNcepR2.shape[0]):
+    if p%10 == 0:
+        print('plant %d of %d'%(p, txMonthlyMaxNcepR2.shape[0]))
+        
+    for month in range(0,12):
+        t1 = txMonthlyMaxNcepR2[p,month]
+        q1 = qsAnomMonthlyMeanNcepR2[p,month]
 
+        # if > 27 C 
+        if t1 >= t0 and ~np.isnan(q1):
+            dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
+                 'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
+                 'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
+                 'PlantIds':plantIds, 'PlantYears':plantYears})
+            pc1 = np.nanmean(pcModel.predict(dfpred))
+
+            if pc1 > 100: pc1 = 100
+            if pc1 < 0: pc1 = 0
+
+            outage = pc1-pc0
+            if outage > 0: outage = 0
+            pcHistNcepR2[p,month] = outage
+            
+        elif t1 < t0 and ~np.isnan(q1):
+            pcHistNcepR2[p,month] = 0
+        
+        
 print('calculating pre-industrial (1850-1900) pc')
 pcPreInd = np.full([txMonthlyMaxPreInd.shape[0], 12], np.nan)
 for p in range(txMonthlyMaxPreInd.shape[0]):
@@ -228,7 +282,7 @@ for p in range(txMonthlyMaxPreInd.shape[0]):
     for month in range(0,12):
 
         t1 = txMonthlyMaxPreInd[p,month]
-        q1 = qsAnomMonthlyMean[p,month]
+        q1 = qsAnomMonthlyMeanPreInd[p,month]
 
         # if > 27 C 
         if t1 >= t0 and ~np.isnan(q1):
@@ -249,7 +303,6 @@ for p in range(txMonthlyMaxPreInd.shape[0]):
         elif t1 < t0 and ~np.isnan(q1):
             pcPreInd[p,month] = 0
 
-sys.exit()
             
 if os.path.isfile('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery):
     
@@ -537,6 +590,49 @@ plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 if plotFigs:
     plt.savefig('outage-chg-by-month-%s%s-mdl%d.eps'%(runoffModel, qstr, mdlPrc), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+    
+    
+fig = plt.figure(figsize=(5,2))
+plt.xlim([0, 13])
+# plt.ylim([-8.5, 0])
+plt.ylim([-3, 0])
+plt.grid(True, color=[.9,.9,.9])
+
+#plt.plot([0, 13], [0, 0], '--k', lw=1)
+plt.plot(list(range(1,13)), np.nanmean(pcPreInd,axis=0), '-', lw=2, color=snsColors[0], label='Pre-Industrial')
+plt.plot(list(range(1,13)), np.nanmean(pcHistNcepR2,axis=0), '-', lw=2, color='black', label='1981-2018')
+
+plt.xticks(list(range(1,13)))
+plt.yticks(np.arange(-3,1,1))
+
+plt.xticks(list(range(1,13)))
+
+for tick in plt.gca().xaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')
+    tick.label.set_fontsize(14)
+for tick in plt.gca().yaxis.get_major_ticks():
+    tick.label.set_fontname('Helvetica')    
+    tick.label.set_fontsize(14)
+
+#plt.gca().spines['bottom'].set_visible(False)
+# plt.tick_params(
+#     axis='x',          # changes apply to the x-axis
+#     which='both',      # both major and minor ticks are affected
+#     bottom=False,      # ticks along the bottom edge are off
+#     top=False,         # ticks along the top edge are off
+#     labelbottom=False) # labels along the bottom edge are off
+
+plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
+
+leg = plt.legend(prop = {'size':14, 'family':'Helvetica'})
+leg.get_frame().set_linewidth(0.0)
+
+if plotFigs:
+    plt.savefig('outage-chg-by-month-pre-ind-vs-hist-%s%s-mdl%d.eps'%(runoffModel, qstr, mdlPrc), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+    
+    
+    
 plt.show()
 sys.exit()
 

@@ -19,7 +19,7 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsGrdcPercentileSummer'
 
 modelPower = 'pow2'
 
@@ -249,7 +249,7 @@ plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 #                 bbox_to_anchor=(0.01, 0.3)
-leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper right')
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'center left')
 leg.get_frame().set_linewidth(0.0)
     
 x0,x1 = plt.gca().get_xlim()
@@ -260,7 +260,10 @@ if plotFigs:
     plt.savefig('hist-pc-tx-%s-%s-regression.png'%(tempVar, qsVar), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 xd = np.array([32]*25)#np.array([np.nanmean(plantMeanTemps)]*25)
-qd = np.linspace(-4, 4, 25)
+if 'percentile' in qsVar.lower():
+    qd = np.linspace(0, 1, 25)
+else:
+    qd = np.linspace(-4, 4, 25)
 
 ydAll = np.zeros([len(models), len(xd)])
 ydAll[ydAll == 0] = np.nan
@@ -325,7 +328,8 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+# plt.xlabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.xlabel('Runoff percentile', fontname = 'Helvetica', fontsize=16)
 plt.ylabel('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 #leg = plt.legend(prop = {'size':12, 'family':'Helvetica'}, loc = 'lower left')

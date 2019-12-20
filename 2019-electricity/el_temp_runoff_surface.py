@@ -19,20 +19,24 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = True
 
+# only show values on the surface that have historically occurred
+onlyShowObs = True
+
 tempVar = 'txSummer'
-qsVar = 'qsGrdcAnomSummer'
+qsVar = 'qsGrdcPercentileSummer'
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
-fileName = '%s/script-data/entsoe-nuke-pp-tx.csv'%dataDirDiscovery
+fileName = '%s/script-data/entsoe-nuke-pp-tx-1981-2018.csv'%dataDirDiscovery
 plantTxData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
 plantYearData = plantTxData[0,:].copy()
 plantMonthData = plantTxData[1,:].copy()
 plantDayData = plantTxData[2,:].copy()
 plantTxData = plantTxData[3:,:].copy()
 
-fileName = '%s/script-data/entsoe-nuke-pp-runoff-qdistfit-gamma.csv'%dataDirDiscovery
+fileName = '%s/script-data/entsoe-nuke-pp-runoff-anom-gldas-1981-2018.csv'%dataDirDiscovery
 plantQsData = np.genfromtxt(fileName, delimiter=',', skip_header=0)
+plantQsData = plantQsData[3:,:]
 
 summerInd = np.where((plantMonthData == 7) | (plantMonthData == 8))[0]
 plantMeanTemps = np.nanmean(plantTxData[:,summerInd], axis=1)
@@ -40,8 +44,8 @@ plantMeanRunoff = np.nanmean(plantQsData[:,summerInd], axis=1)
 
 with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
     ppFutureData = pickle.load(f)
-    txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
-    qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
+#     txHist = np.nanmean(np.nanmean(ppFutureData['txMonthlyMax'][:,[6,7]]))
+#     qsHist = np.nanmean(np.nanmean(ppFutureData['qsAnomMonthlyMean'][:,[6,7]]))
     tx2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][1,:,:,[6,7]])))
     tx4 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['txMonthlyMaxFutGMT'][3,:,:,[6,7]])))
     qs2 = np.nanmean(np.nanmean(np.nanmean(ppFutureData['qsMonthlyMeanFutGMT'][1,:,:,[6,7]])))
@@ -65,7 +69,8 @@ for q, qs in enumerate(qsrange):
             histPDF[q,t] = 0
 
 print('building models')
-models, plantIds, plantYears = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 100)
+models, plantIds, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 10)
+
 plantIdsTmp = np.unique(plantIds)
 plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
 tmp = []
@@ -82,7 +87,7 @@ for m in range(len(models)):
     for q in range(len(qsrange)):
         for t in range(len(txrange)):
             
-            if histPDF[q,t] == 1:
+            if histPDF[q,t] == 1 or not onlyShowObs:
                 dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
                          'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
                          'QST':[txrange[t]*qsrange[q]]*len(plantIds), 'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
@@ -125,7 +130,8 @@ plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1], label='
 # plt.xticks(txrange)
 # plt.yticks(qsrange)
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+# plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Runoff percentile', fontname = 'Helvetica', fontsize=16)
 cb.set_label('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
@@ -138,7 +144,7 @@ for tick in cb.ax.yaxis.get_ticklabels():
     tick.set_fontname('Helvetica')    
     tick.set_fontsize(14)
 
-leg = plt.legend(prop = {'size':14, 'family':'Helvetica'}, loc = 'lower right')
+leg = plt.legend(prop = {'size':14, 'family':'Helvetica'}, loc = 'upper right')
 leg.get_frame().set_linewidth(0.0)
 
 x0,x1 = plt.gca().get_xlim()
