@@ -22,7 +22,7 @@ import sys,os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 # if we are running as job on discovery, send print output to a file
-outputToFile = True
+outputToFile = False
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -32,7 +32,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 
 #gldas or grdc
 runoffModel = 'grdc'
-plantData = 'world'
+plantData = 'useu'
 
 modelPower = 'pow2'
 
@@ -70,6 +70,8 @@ if not os.path.isfile(histFileName10):
     # load historical temp data
     if outputToFile:
         print('loading historical tx data', file=open('el_build_agg_data_output.txt', 'a'))
+    else:
+        print('loading historical tx data')
     
     plantTxData = np.genfromtxt('%s/script-data/%s-pp-tx.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
     plantYearData = plantTxData[0,:]
@@ -83,6 +85,8 @@ if not os.path.isfile(histFileName10):
     # load historical runoff data and make dist-fitted anomalies if necessary
     if outputToFile:
         print('loading historical runoff data', file=open('el_build_agg_data_output.txt', 'a'))
+    else:
+        print('loading historical runoff data')
     
     plantQsData = np.genfromtxt('%s/script-data/%s-pp-runoff-anom-gldas-1981-2005.csv'%(dataDirDiscovery, plantData), delimiter=',', skip_header=0)
     plantQsData = plantQsData[3:,:]
@@ -106,6 +110,8 @@ if not os.path.isfile(histFileName10):
     
     if outputToFile:
         print('computing historical systemwide PC...', file=open('el_build_agg_data_output.txt', 'a'))
+    else:
+        print('computing historical systemwide PC...')
     
     # loop over all global plants
     for p in range(0, plantTxData.shape[0]):
@@ -113,6 +119,8 @@ if not os.path.isfile(histFileName10):
         if p%100==0:
             if outputToFile:
                 print('processing historical plant %d of %d...'%(p, plantTxData.shape[0]), file=open('el_build_agg_data_output.txt', 'a'))
+            else:
+                print('processing historical plant %d of %d...'%(p, plantTxData.shape[0]))
         
         selPlantIds = np.random.choice(len(plantIds), 1)
         
@@ -187,6 +195,8 @@ if not os.path.isfile(histFileName10):
     
     if outputToFile:
         print('writing files...', file=open('el_build_agg_data_output.txt', 'a'))
+    else:
+        print('writing files...')
     
     with open(histFileName10, 'wb') as f:
         pickle.dump(globalPC10, f, protocol=4)
@@ -197,36 +207,50 @@ if not os.path.isfile(histFileName10):
 
         
 # load future mean warming data and recompute PC
-print('computing future systemwide PC...', file=open('el_build_agg_data_output.txt', 'a'))
+if outputToFile:
+    print('computing future systemwide PC...', file=open('el_build_agg_data_output.txt', 'a'))
+else:
+    print('computing future systemwide PC...')
 for w in range(1, 4+1):
         
     for m in range(len(models)):
         
-        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
         
         if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
             continue
         
-        print('processing %s/+%dC'%(models[m], w), file=open('el_build_agg_data_output.txt', 'a'))
+        if outputToFile:
+            print('processing %s/+%dC'%(models[m], w), file=open('el_build_agg_data_output.txt', 'a'))
+        else:
+            print('processing %s/+%dC'%(models[m], w))
         
         syswidePCFutCurModel10 = []
         syswidePCFutCurModel50 = []
         syswidePCFutCurModel90 = []
         
         # load data for current model and warming level
-        fileNameTx = '%s/gmt-anomaly-temps/%s-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
-        fileNameTn = '%s/gmt-anomaly-temps/%s-pp-%ddeg-tn-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
+        fileNameTx = '%s/gmt-anomaly-temps/%s-pp-%ddeg-tx-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
+        fileNameTn = '%s/gmt-anomaly-temps/%s-pp-%ddeg-tn-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
     
         if not os.path.isfile(fileNameTx) or not os.path.isfile(fileNameTn):
+            if outputToFile:
+                print("temp data doesn't exist: %s"%fileNameTx, file=open('el_build_agg_data_output.txt', 'a'))
+            else:
+                print("temp data doesn't exist: %s"%fileNameTx)
             continue
     
         plantTxData = np.genfromtxt(fileNameTx, delimiter=',', skip_header=0)
         plantTnData = np.genfromtxt(fileNameTn, delimiter=',', skip_header=0)
         
         if len(plantTxData) == 0 or len(plantTnData) == 0:
+            if outputToFile:
+                print("temp file empty: %s"%fileNameTx, file=open('el_build_agg_data_output.txt', 'a'))
+            else:
+                print("temp file empty: %s"%fileNameTx)
             continue
         
         plantTxYearData = plantTxData[0,0:].copy()
@@ -236,21 +260,32 @@ for w in range(1, 4+1):
         
         plantTnData = plantTnData[3:,0:].copy()
         
-        fileNameRunoff = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-anom-best-dist-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
+        fileNameRunoff = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-anom-best-dist-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
 
         if not os.path.isfile(fileNameRunoff):
+            if outputToFile:
+                print("runoff file doesn't exist: %s"%fileNameRunoff, file=open('el_build_agg_data_output.txt', 'a'))
+            else:
+                print("runoff file doesn't exist: %s"%fileNameRunoff)
             continue
         
         plantQsData = np.genfromtxt(fileNameRunoff, delimiter=',', skip_header=0)
         plantQsData = plantQsData[3:,:]
         
         if len(plantQsData) == 0:
+            if outputToFile:
+                print("runoff file empty: %s"%fileNameRunoff, file=open('el_build_agg_data_output.txt', 'a'))
+            else:
+                print("runoff file empty: %s"%fileNameRunoff)
             continue
             
         plantQsData[plantQsData < -5] = np.nan
         plantQsData[plantQsData > 5] = np.nan
         
-        print('calculating PC for %s/+%dC'%(models[m], w), file=open('el_build_agg_data_output.txt', 'a'))
+        if outputToFile:
+            print('calculating PC for %s/+%dC'%(models[m], w), file=open('el_build_agg_data_output.txt', 'a'))
+        else:
+            print('calculating PC for %s/+%dC'%(models[m], w))
         
         dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
@@ -273,7 +308,10 @@ for w in range(1, 4+1):
         for p in range(plantTxData.shape[0]):
             
             if p % 500 == 0:
-                print('processing future plant %d out of %d'%(p, plantTxData.shape[0]), file=open('el_build_agg_data_output.txt', 'a'))
+                if outputToFile:
+                    print('processing future plant %d out of %d'%(p, plantTxData.shape[0]), file=open('el_build_agg_data_output.txt', 'a'))
+                else:
+                    print('processing future plant %d out of %d'%(p, plantTxData.shape[0]))
             
             selPlantIds = np.random.choice(len(plantIds), 1)
         
@@ -347,7 +385,10 @@ for w in range(1, 4+1):
         globalPC50 = {'globalPCFut50':syswidePCFutCurModel50}
         globalPC90 = {'globalPCFut90':syswidePCFutCurModel90}
 
-        print('writing files...', file=open('el_build_agg_data_output.txt', 'a'))
+        if outputToFile:
+            print('writing files...', file=open('el_build_agg_data_output.txt', 'a'))
+        else:
+            print('writing files...')
         with open(fileName10, 'wb') as f:
             pickle.dump(globalPC10, f, protocol=4)
         with open(fileName50, 'wb') as f:

@@ -33,14 +33,14 @@ for t in tmaxNcepR2Ds.time:
 tmaxNcepR2Ds['time'] = tDt
 
 tmaxNcepR2Ds = tmaxNcepR2Ds.where(tmaxNcepR2Ds != missing_value)
-tmaxNcepR2Ds = tmaxNcepR2Ds.resample(time='1M').max()
+# tmaxNcepR2Ds = tmaxNcepR2Ds.resample(time='1M').max()
 tmaxNcepR2Ds = tmaxNcepR2Ds.where((tmaxNcepR2Ds['time.year'] >= startYear) & (tmaxNcepR2Ds['time.year'] <= endYear), drop=True)
 
 tmaxNcepR2Ds = tmaxNcepR2Ds*scale_factor + add_offset
 
 print('loading selected data')
 tmaxNcepR2Ds.load()
-
+sys.exit()
 tmaxNcepR2 = np.full([ppLatLon.shape[0]+2, (endYear-startYear+1)*12], np.nan)
 
 print('selecting plant data')

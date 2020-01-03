@@ -21,10 +21,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # world, useu, entsoe-nuke
-plantData = 'entsoe-nuke'
+plantData = 'useu'
 
 # 'gmt-cmip5, decade-cmip5', 'hist', 'at-txx'
-anomType = 'hist'
+anomType = 'gmt-cmip5'
 
 runoffData = 'gldas'
 
@@ -180,9 +180,9 @@ elif anomType == 'gmt-cmip5':
 
             print('processing %s/%d'%(models[m], w))
 
-            fileNameRunoffRaw = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-raw-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
-            fileNameRunoffAnom = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-anom-best-dist-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
-            fileNameRunoffPercentile = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-percentile-best-dist-cmip5-%s.csv'%(dataDirDiscovery, plantData, w, models[m])
+            fileNameRunoffRaw = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-raw-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
+            fileNameRunoffAnom = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-anom-best-dist-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
+            fileNameRunoffPercentile = '%s/gmt-anomaly-temps/%s-pp-%ddeg-runoff-percentile-best-dist-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, plantData, w, models[m])
             fileNameRunoffHist = '%s/future-temps/%s-pp-hist-runoff-raw-cmip5-%s-1981-2005.csv'%(dataDirDiscovery, plantData, models[m])
 
             if not os.path.isfile(fileNameRunoffRaw) or not os.path.isfile(fileNameRunoffHist):

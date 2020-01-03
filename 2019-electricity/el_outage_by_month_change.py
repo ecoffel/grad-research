@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 runoffModel = 'grdc'
 
@@ -304,9 +304,9 @@ for p in range(txMonthlyMaxPreInd.shape[0]):
             pcPreInd[p,month] = 0
 
             
-if os.path.isfile('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery):
+if os.path.isfile('%s/script-data/ppFutureTxQsData-preIndRef.dat'%dataDirDiscovery):
     
-    with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'rb') as f:
+    with gzip.open('%s/script-data/ppFutureTxQsData-preIndRef.dat'%dataDirDiscovery, 'rb') as f:
         ppFutureData = pickle.load(f)
         txMonthlyMeanFutGMT = ppFutureData['txMonthlyMeanFutGMT']
         txMonthlyMaxFutGMT = ppFutureData['txMonthlyMaxFutGMT']
@@ -328,14 +328,16 @@ else:
 
 
             # load data for current model and warming level
-            fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
+            fileNameTemp = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-tx-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, w, models[m])
 
             if not os.path.isfile(fileNameTemp):
+                print('no temp file: %s'%fileNameTemp)
                 continue
 
             plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
 
             if len(plantTxData) == 0:
+                print('temp data empty: %s'%fileNameTemp)
                 continue
 
             plantTxYearData = plantTxData[0,1:].copy()
@@ -343,8 +345,8 @@ else:
             plantTxDayData = plantTxData[2,1:].copy()
             plantTxData = plantTxData[3:,1:].copy()
 
-            fileNameRunoffRaw = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-raw-cmip5-%s.csv'%(dataDirDiscovery, w, models[m])
-            fileNameRunoffDistFit = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s.csv'%(dataDirDiscovery, w, qstr, models[m])
+            fileNameRunoffRaw = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff-raw-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, w, models[m])
+            fileNameRunoffDistFit = '%s/gmt-anomaly-temps/entsoe-nuke-pp-%ddeg-runoff%s-cmip5-%s-preIndRef.csv'%(dataDirDiscovery, w, qstr, models[m])
 
             plantQsAnomData = []
 
@@ -422,9 +424,11 @@ else:
 
             else:
                 # neither raw nor anom runoff file exists
+                print("runoff file doesn't exist: %s"%fileNameRunoffDistFit)
                 continue
 
             if len(plantQsData) == 0:
+                print('runoff data empty: %s'%fileNameRunoffDistFit)
                 continue
 
             plantQsYearData = plantTxData[0,1:].copy()
@@ -483,11 +487,11 @@ else:
     ppFutureData = {'txMonthlyMeanFutGMT':txMonthlyMeanFutGMT, \
                    'txMonthlyMaxFutGMT':txMonthlyMaxFutGMT, \
                    'qsMonthlyMeanFutGMT':qsMonthlyMeanFutGMT}
-    with gzip.open('%s/script-data/ppFutureTxQsData.dat'%dataDirDiscovery, 'wb') as f:
+    with gzip.open('%s/script-data/ppFutureTxQsData-preIndRef.dat'%dataDirDiscovery, 'wb') as f:
        pickle.dump(ppFutureData, f)
 
-if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc)):
-    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'rb') as f:
+if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc)):
+    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'rb') as f:
         plantMonthlyOutageChg = pickle.load(f)
 else:
     print('calculating curtailment change')
@@ -536,32 +540,31 @@ else:
 
     plantMonthlyOutageChg = np.array(plantMonthlyOutageChg)
 
-    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'wb') as f:
+    with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'wb') as f:
         pickle.dump(plantMonthlyOutageChg, f)
 
 plantMonthlyOutageChgSorted = np.sort(np.nanmean(plantMonthlyOutageChg,axis=1),axis=2)
+
+outageSummerWorst = np.nanmean(np.nanmean(plantMonthlyOutageChg[:,:,[6,7],:], axis=2), axis=1)
+outageMonthlyFutGMT2Min = np.where(outageSummerWorst[1,:] == np.nanmin(outageSummerWorst[1,:]))[0][0]
+outageMonthlyFutGMT4Min = np.where(outageSummerWorst[3,:] == np.nanmin(outageSummerWorst[3,:]))[0][0]
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
 fig = plt.figure(figsize=(5,2))
-plt.xlim([0, 13])
-# plt.ylim([-8.5, 0])
+# plt.xlim([0, 13])
+plt.ylim([-7, 0])
 plt.ylim([-11, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
-plt.plot(list(range(1,13)), np.nanmean(pcPreInd,axis=0), '-', lw=2, color=snsColors[0])
+# plt.plot(list(range(1,13)), np.nanmean(pcPreInd,axis=0), '-', lw=2, color=snsColors[0])
 plt.plot(list(range(1,13)), np.nanmean(pcHist,axis=0), '-', lw=2, color='black')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[1,:,:,:],axis=2),axis=0), '-', lw=2, color='#ffb835')
-plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[1,:,0], '--', lw=2, color='#ffb835')
+plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChg[1,:,:,outageMonthlyFutGMT2Min],axis=0), '--', lw=2, color='#ffb835')
 plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[3,:,:,:],axis=2),axis=0), '-', lw=2, color=snsColors[1])
-plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[3,:,0], '--', lw=2, color=snsColors[1])
-
-
-#plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,0], '--', lw=1, color=snsColors[1])
-#plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChgSorted, axis=1), '-', lw=3, color=snsColors[1])
-#plt.plot(list(range(1,13)), plantMonthlyOutageChgSorted[:,-1], '--', lw=1, color=snsColors[1])
+plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChg[3,:,:,outageMonthlyFutGMT4Min],axis=0), '--', lw=2, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
 plt.yticks(np.arange(-10,1,2))
@@ -575,22 +578,20 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-#plt.gca().spines['bottom'].set_visible(False)
-# plt.tick_params(
-#     axis='x',          # changes apply to the x-axis
-#     which='both',      # both major and minor ticks are affected
-#     bottom=False,      # ticks along the bottom edge are off
-#     top=False,         # ticks along the top edge are off
-#     labelbottom=False) # labels along the bottom edge are off
+# plt.gca().spines['bottom'].set_visible(False)
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
 
-plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
-
-
+# plt.xlabel('Month', fontname = 'Helvetica', fontsize=16)
 
 if plotFigs:
     plt.savefig('outage-chg-by-month-%s%s-mdl%d.eps'%(runoffModel, qstr, mdlPrc), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
-    
+sys.exit()
     
 fig = plt.figure(figsize=(5,2))
 plt.xlim([0, 13])

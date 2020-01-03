@@ -16,8 +16,8 @@ import datetime, calendar
 #dataDir = 'e:/data'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-startYear = 1981
-endYear = 2005
+startYear = 1850
+endYear = 1900
 
 ppLatLon = np.genfromtxt('%s/script-data/entsoe-nuke-pp-lat-lon.csv'%dataDirDiscovery, delimiter=',', skip_header=0)
 
@@ -30,7 +30,7 @@ for t in tmax20CRDs.time:
 tmax20CRDs['time'] = tDt
 
 tmax20CRDs = tmax20CRDs.resample(time='1M').max()
-tmax20CRDs = tmax20CRDs.where((tmax20CRDs['time.year'] < startYear) | (tmax20CRDs['time.year'] > endYear), drop=True)
+tmax20CRDs = tmax20CRDs.where((tmax20CRDs['time.year'] >= startYear) & (tmax20CRDs['time.year'] <= endYear), drop=True)
 
 print('loading selected data')
 tmax20CRDs.load()
@@ -51,6 +51,5 @@ for i, row in enumerate(ppLatLon):
 
 np.savetxt('%s/script-data/entsoe-nuke-pp-tx-20cr-%d-%d.csv'%(dataDirDiscovery, startYear, endYear), tmax20CR, delimiter=',')
 
-sys.exit()
 
 
