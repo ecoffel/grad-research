@@ -553,9 +553,9 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
 fig = plt.figure(figsize=(5,2))
-# plt.xlim([0, 13])
-plt.ylim([-7, 0])
-plt.ylim([-11, 0])
+plt.xlim([0, 13])
+plt.ylim([-7.5, 0])
+# plt.ylim([-11, 0])
 plt.grid(True, color=[.9,.9,.9])
 
 #plt.plot([0, 13], [0, 0], '--k', lw=1)
@@ -567,7 +567,7 @@ plt.plot(list(range(1,13)), np.nanmean(np.nanmean(plantMonthlyOutageChg[3,:,:,:]
 plt.plot(list(range(1,13)), np.nanmean(plantMonthlyOutageChg[3,:,:,outageMonthlyFutGMT4Min],axis=0), '--', lw=2, color=snsColors[1])
 
 plt.xticks(list(range(1,13)))
-plt.yticks(np.arange(-10,1,2))
+plt.yticks(np.arange(-7,1,1))
 
 plt.xticks(list(range(1,13)))
 

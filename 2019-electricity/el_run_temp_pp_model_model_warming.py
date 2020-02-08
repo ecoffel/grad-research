@@ -19,7 +19,7 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
-dumpData = True
+dumpData = False
 
 # grdc or gldas
 runoffData = 'grdc'

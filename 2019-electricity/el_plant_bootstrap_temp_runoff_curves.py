@@ -19,7 +19,7 @@ import sys, os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcPercentileSummer'
+qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 

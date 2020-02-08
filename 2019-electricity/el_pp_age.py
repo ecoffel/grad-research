@@ -21,6 +21,8 @@ dumpData = False
 
 plantData = 'world'
 
+rcp = 'rcp85'
+
 # in gw
 # coal, gas, oil, nuke, bioenergy
 iea2018 = np.array([9858.1, 5855.4, 939.6, 2636.8, 622.7]) / 24 / 365 * 1e3
@@ -39,8 +41,11 @@ ieaSust2040 = np.array([1981, 5358, 197, 4960, 1967]) / 24 / 365 * 1e3
 ieaNPSlope = (sum(iea2040)-sum(iea2018))/(2040-2018)
 ieaSustSlope = (sum(ieaSust2040)-sum(ieaSust2018))/(2040-2018)
 
-# mean years across models reaching 1,2,3,4 GMT
-GMTyears = np.array([2022, 2041, 2061, 2080])
+# mean years across models reaching 2,3,4 GMT above pre-ind
+if rcp == 'rcp85':
+    GMTyears = np.array([2020, 2027, 2048, 2067])
+elif rcp == 'rcp45':
+    GMTyears = np.array([2020, 2029, 2063, 2086])
 
 if plantData == 'world':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
@@ -158,7 +163,7 @@ leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, loc = 'upper left', \
 leg.get_frame().set_linewidth(0.0)
 
 if plotFigs:
-    plt.savefig('plant-lifespan-40.png', format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('plant-lifespan-40-%s.png'%rcp, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()

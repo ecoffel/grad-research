@@ -1,6 +1,6 @@
 import os, sys
 
-dataDir = 'ftp://ftp.cdc.noaa.gov/Projects/20CRv3/Dailies/2mSI'
+dataDir = 'ftp://ftp.cdc.noaa.gov/Projects/20CRv3/Dailies/2mSI'z
 dataDest = '/dartfs-hpc/rc/lab/C/CMIG/20CR/tmax'
 
 for year in range(1901, 1980+1):

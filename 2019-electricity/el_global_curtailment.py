@@ -31,7 +31,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
@@ -350,11 +350,11 @@ snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
 decadesToShow = [d[0]+5 for d in decades]
-yaxis1Ticks = np.arange(-300,1,50)
+yaxis1Ticks = np.arange(-250,1,50)
 yaxis2Ticks = [int(-x) for x in yaxis1Ticks/avgPlantSize]
 
 plt.figure(figsize=(6,4))
-plt.ylim([-325, 0])
+plt.ylim([-260, 0])
 plt.xlim([2016,2087])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -494,11 +494,11 @@ for tick in plt.gca().yaxis.get_major_ticks():
 
 
 leg = plt.legend(prop = {'size':9, 'family':'Helvetica'}, \
-                 loc='lower left', bbox_to_anchor=(-.0145, 0.12))
+                 loc='lower left', bbox_to_anchor=(-.0145, 0.024), framealpha=0.75)
 leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()
-plt.ylim([-190, 0])
+plt.ylim([-260, 0])
 plt.ylabel('# Average power plants', fontname = 'Helvetica', fontsize=16)
 plt.yticks(yaxis1Ticks)
 plt.gca().set_yticklabels(yaxis2Ticks)

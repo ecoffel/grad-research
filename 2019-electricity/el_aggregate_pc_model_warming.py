@@ -19,7 +19,7 @@ import sys, os
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -29,7 +29,7 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 decades = np.array([[2080,2089]])
 
@@ -311,7 +311,7 @@ plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
 plt.rcParams["font.family"] = "Helvetica"
     
 plt.figure(figsize=(1.5,4.5))
-plt.ylim([-400,25])
+plt.ylim([-250,25])
 plt.xlim([.5, 4.5])
 plt.grid(True, color=[.9,.9,.9])
 

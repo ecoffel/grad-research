@@ -258,15 +258,15 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = np.full([4, 12], np.nan)
     yearlyOutagesCurModel90 = np.full([4, 12], np.nan)
 
-    if os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])):
+    if os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])):
         print('skipping %s...'%models[model])
         continue
 
     for w in range(1,4+1):
         
-        fileName10 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-10-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
-        fileName50 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-50-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
-        fileName90 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-90-%ddeg-%s-%s.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
+        fileName10 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-10-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
+        fileName50 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-50-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
+        fileName90 = '%s/pc-future-%s/%s-pc-future-anom-best-dist-90-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, w, modelPower, models[model])
         
         if os.path.isfile(fileName10):
             with open(fileName10, 'rb') as f:
@@ -421,13 +421,13 @@ for model in range(len(models)):
         yearlyOutagesCurModel90[w-1, :] = yearlyOutagesGMT90
         
     
-    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel10, f)
     
-    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-50-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel50, f)
         
-    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
+    with gzip.open('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-90-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model]), 'wb') as f:
         pickle.dump(yearlyOutagesCurModel90, f)
     
 
@@ -450,9 +450,9 @@ for model in range(len(models[0])):
     yearlyOutagesCurModel90 = []
 
 
-    fileName10 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
-    fileName50 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-50.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
-    fileName90 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-90.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
+    fileName10 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
+    fileName50 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-50-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
+    fileName90 = '%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-90-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])
     
     if os.path.isfile(fileName10):
         
@@ -505,10 +505,10 @@ if plantData == 'world':
     yTickStep = 200
     yticks = np.arange(0,yLimSet,yTickStep)
 else:
-    yLimSet = 49
+    yLimSet = 45
     yTickStep = 10
     yTicks = [0, 10, 20, 30, 40]
-    yticks = np.arange(0,49,yTickStep)
+    yticks = np.arange(0,45,yTickStep)
 
                             
 # Twh
@@ -597,7 +597,7 @@ if plantData == 'world':
     yLimSet = 160
     yTickStep = 50
 else:
-    yLimSet = 14
+    yLimSet = 11.5
     yTickStep = 2
 
 yticks = np.arange(0,yLimSet,yTickStep)

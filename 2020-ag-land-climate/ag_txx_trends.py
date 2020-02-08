@@ -8,11 +8,19 @@ import os, sys, pickle, gzip
 import geopy.distance
 import xarray as xr
 
+import warnings
+warnings.filterwarnings('ignore')
+
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
 txx = np.zeros([360, 720, len(range(1981, 2011+1))])
 txxTrends = np.zeros([360, 720])
 txxTrends[txxTrends == 0] = np.nan
+
+tnn = np.zeros([360, 720, len(range(1981, 2011+1))])
+tnnTrends = np.zeros([360, 720])
+tnnTrends[txxTrends == 0] = np.nan
+
 
 maize = np.zeros([360, 720, len(range(1981, 2011+1))])
 maizeTrends = np.full([360, 720], np.nan)
@@ -181,4 +189,12 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label.set_fontname('Helvetica')    
     tick.label.set_fontsize(14)
 
-plt.savefig('crop-txx-trend.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+#plt.savefig('crop-txx-trend.eps', format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+
+ax = plt.axes(projection=ccrs.PlateCarree())
+c = plt.contourf(lons,lats,np.clip(txxTrends*10, -1, 1), cmap=plt.cm.get_cmap('bwr'), vmin=-1, vmax=1, levels=np.linspace(-1, 1, 30))
+cbar = plt.colorbar(c, orientation='horizontal')
+cbar.set_ticks(np.arange(-1, 1.1, .2))
+cbar.set_label('TXx trend ($\degree$C/decade)')
+ax.coastlines()

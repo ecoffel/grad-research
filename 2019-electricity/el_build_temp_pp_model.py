@@ -121,6 +121,7 @@ def exportNukeEntsoePlantLocations(dataDir):
     entsoeLat = entsoeData['lats']
     entsoeLon = entsoeData['lons']
     entsoeIds = entsoeData['plantIds']
+    entsoeCap = entsoeData['capacity']
     
 #    uniqueLat, uniqueLatInds = np.unique(entsoeData['lats'], return_index=True)
 #    entsoeLat = np.array(entsoeData['lats'][uniqueLatInds])
@@ -129,16 +130,18 @@ def exportNukeEntsoePlantLocations(dataDir):
     nukeLat = []
     nukeLon = []
     nukeIds = []
+    nukeCap = []
     
     for i in range(len(nukeData['plantLats'])):
         nukeLat.append(nukeData['plantLats'][i])
         nukeLon.append(nukeData['plantLons'][i])
         nukeIds.append(nukeData['plantIds'][i])
+        nukeCap.append(nukeData['capacity'][i])
     
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)
     nukeIds = np.array(nukeIds)
-
+    sys.exit()
     import csv
     n = 0
     with open('%s/script-data/entsoe-nuke-lat-lon.csv'%dataDir, 'w') as f:
