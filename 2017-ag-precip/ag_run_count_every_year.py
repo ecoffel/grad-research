@@ -1,7 +1,7 @@
 
 import sys, os
 
-years = [2013]
+years = range(2002, 2017+1)
 
 for year in years:
     print('running %s'%year)

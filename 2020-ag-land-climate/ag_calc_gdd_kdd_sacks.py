@@ -23,6 +23,9 @@ t_low = 9
 t_high = 29
 
 crop = sys.argv[1]
+wxData = sys.argv[2]
+
+years = [1981, 2018]
 
 # load the sacks crop calendars
 
@@ -34,79 +37,150 @@ sacksEnd[sacksEnd<0] = np.nan
 sacksStart = np.roll(sacksStart, int(sacksStart.shape[1]/2), axis=1)
 sacksEnd = np.roll(sacksEnd, int(sacksEnd.shape[1]/2), axis=1)
 
+sacksLat = np.linspace(90, -90, 360)
+sacksLon = np.linspace(0, 360, 720)
 
 
 # calculate gdd/kdd from cpc temperature data
+gdd = [] #np.zeros([360, 720, len(range(years[0]-1, years[1]+1))])
+kdd = [] #np.zeros([360, 720, len(range(years[0]-1, years[1]+1))])
 
-gdd = np.zeros([360, 720, len(range(1981, 2011+1))])
-kdd = np.zeros([360, 720, len(range(1981, 2011+1))])
-
-for y, year in enumerate(range(1981, 2011+1)):
+for y, year in enumerate(range(years[0], years[1]+1)):
     print('processing year %d for %s...'%(year, crop))
 
-    dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmax/tmax.%d.nc'%year, decode_cf=False)
+    if wxData == 'cpc':
+        dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmax/tmax.%d.nc'%year, decode_cf=False)
+        dims = dsMax.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMax.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMax['time'] = tDt
+        
+        dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmin/tmin.%d.nc'%year, decode_cf=False)
+        dims = dsMin.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMin.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMin['time'] = tDt
+        
+        # load previous year
+        dsMaxLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmax/tmax.%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMaxLastYear.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMaxLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMaxLastYear['time'] = tDt
+        
+        dsMinLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmin/tmin.%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMinLastYear.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMinLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMinLastYear['time'] = tDt
+        
+    elif wxData == 'era5':
+        dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmax_%d.nc'%year, decode_cf=False)
+        dims = dsMax.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMax.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMax['time'] = tDt
+        
+        dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmin_%d.nc'%year, decode_cf=False)
+        dims = dsMin.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMin.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMin['time'] = tDt
+        
+        
+        # load previous year
+        dsMaxLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmax_%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMaxLastYear.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMaxLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMaxLastYear['time'] = tDt
+        
+        dsMinLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmin_%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMinLastYear.dims
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMinLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMinLastYear['time'] = tDt
+        
+        
     dsMax.load()
-
-    dims = dsMax.dims
-    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
-    tDt = []
-
-    for curTTime in dsMax.time:
-        delta = datetime.timedelta(hours=int(curTTime.values))
-        tDt.append(startingDate + delta)
-    dsMax['time'] = tDt
-    
-    dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmin/tmin.%d.nc'%year, decode_cf=False)
     dsMin.load()
-
-    dims = dsMin.dims
-    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
-    tDt = []
-
-    for curTTime in dsMin.time:
-        delta = datetime.timedelta(hours=int(curTTime.values))
-        tDt.append(startingDate + delta)
-    dsMin['time'] = tDt
-    
-    
-    # load previous year
-    dsMaxLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmax/tmax.%d.nc'%(year-1), decode_cf=False)
     dsMaxLastYear.load()
-
-    dims = dsMaxLastYear.dims
-    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
-    tDt = []
-
-    for curTTime in dsMaxLastYear.time:
-        delta = datetime.timedelta(hours=int(curTTime.values))
-        tDt.append(startingDate + delta)
-    dsMaxLastYear['time'] = tDt
-    
-    dsMinLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/CPC/tmin/tmin.%d.nc'%(year-1), decode_cf=False)
     dsMinLastYear.load()
-
-    dims = dsMinLastYear.dims
-    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
-    tDt = []
-
-    for curTTime in dsMinLastYear.time:
-        delta = datetime.timedelta(hours=int(curTTime.values))
-        tDt.append(startingDate + delta)
-    dsMinLastYear['time'] = tDt
-
-    for xlat in range(len(dsMax.lat)):
-        for ylon in range(len(dsMax.lon)):
-            if ~np.isnan(sacksStart[xlat,ylon]) and ~np.isnan(sacksEnd[xlat,ylon]):
+    
+    if wxData == 'era5':
+        lat = dsMax.latitude.values
+        lon = dsMax.longitude.values
+        tmax = dsMax.mx2t
+        tmin = dsMin.mn2t
+        tmaxLastYear = dsMaxLastYear.mx2t
+        tminLastYear = dsMinLastYear.mn2t
+    elif wxData == 'cpc':
+        lat = dsMax.lat.values
+        lon = dsMax.lon.values
+        tmax = dsMax.tmax
+        tmin = dsMin.tmin
+        tmaxLastYear = dsMaxLastYear.tmax
+        tminLastYear = dsMinLastYear.tmin
+    
+    if len(gdd) == 0:
+        gdd = np.zeros([len(lat), len(lon), len(range(years[0], years[1]+1))])
+    if len(kdd) == 0:
+        kdd = np.zeros([len(lat), len(lon), len(range(years[0], years[1]+1))])
+    
+    for xlat in range(len(lat)):
+        for ylon in range(len(lon)):
+            
+            sacksNearestX = np.where((abs(sacksLat-lat[xlat]) == np.nanmin(abs(sacksLat-lat[xlat]))))[0][0]
+            sacksNearestY = np.where((abs(sacksLon-lon[ylon]) == np.nanmin(abs(sacksLon-lon[ylon]))))[0][0]
+            
+            if ~np.isnan(sacksStart[sacksNearestX,sacksNearestY]) and ~np.isnan(sacksEnd[sacksNearestX,sacksNearestY]):
                 
                 # in southern hemisphere when planting happens in fall and harvest happens in spring
-                if sacksStart[xlat,ylon] > sacksEnd[xlat,ylon]:
-                    curTmax = xr.concat([dsMaxLastYear.tmax[int(sacksStart[xlat, ylon]):, xlat, ylon], \
-                                         dsMax.tmax[:int(sacksEnd[xlat, ylon]), xlat, ylon]], dim='time')
-                    curTmin = xr.concat([dsMinLastYear.tmin[int(sacksStart[xlat, ylon]):, xlat, ylon], \
-                                         dsMin.tmin[:int(sacksEnd[xlat, ylon]), xlat, ylon]], dim='time')
+                if sacksStart[sacksNearestX,sacksNearestY] > sacksEnd[sacksNearestX,sacksNearestY]:
+                    curTmax = xr.concat([tmaxLastYear[int(sacksStart[sacksNearestX,sacksNearestY]):, xlat, ylon], \
+                                         tmax[:int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]], dim='time')
+                    
+                    curTmin = xr.concat([tminLastYear[int(sacksStart[sacksNearestX,sacksNearestY]):, xlat, ylon], \
+                                         tmin[:int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]], dim='time')
                 else:
-                    curTmax = dsMax.tmax[int(sacksStart[xlat, ylon]):int(sacksEnd[xlat, ylon]), xlat, ylon]
-                    curTmin = dsMin.tmin[int(sacksStart[xlat, ylon]):int(sacksEnd[xlat, ylon]), xlat, ylon]
+                    curTmax = tmax[int(sacksStart[sacksNearestX,sacksNearestY]):int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]
+                    curTmin = tmin[int(sacksStart[sacksNearestX,sacksNearestY]):int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]
                 
                 curYearGdd = (curTmax.where(curTmax > t_low) + curTmin.where(curTmin > t_low))/2-t_low
                 curYearGdd = curYearGdd.sum(dim='time')
@@ -118,14 +192,14 @@ for y, year in enumerate(range(1981, 2011+1)):
 
                 kdd[xlat, ylon, y] = curYearKdd.values
 
-with gzip.open('%s/kdd-cpc-%s.dat'%(dataDirDiscovery, crop), 'wb') as f:
+with gzip.open('%s/kdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, years[0], years[1]), 'wb') as f:
     pickle.dump(kdd, f)
 
-with gzip.open('%s/gdd-cpc-%s.dat'%(dataDirDiscovery, crop), 'wb') as f:
+with gzip.open('%s/gdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, years[0], years[1]), 'wb') as f:
     pickle.dump(gdd, f)
 
-with gzip.open('%s/gdd-kdd-lat-cpc.dat'%dataDirDiscovery, 'wb') as f:
+with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
     pickle.dump(dsMax.lat.values, f)
 
-with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'wb') as f:
+with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
     pickle.dump(dsMax.lon.values, f)
