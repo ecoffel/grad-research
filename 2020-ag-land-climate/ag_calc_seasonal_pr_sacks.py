@@ -27,12 +27,11 @@ sacksMaizeStart = np.roll(sacksMaizeStart, int(sacksMaizeStart.shape[1]/2), axis
 sacksMaizeEnd = np.roll(sacksMaizeEnd, int(sacksMaizeEnd.shape[1]/2), axis=1)
 
 with gzip.open('%s/gdd-kdd-lat-cpc.dat'%dataDirDiscovery, 'rb') as f:
-    lat = pickle.load(f)
+    tempLat = pickle.load(f)
 
 with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'rb') as f:
-    lon = pickle.load(f)
+    tempLon = pickle.load(f)
 
-    
 gpcp = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/GPCP/precip.mon.mean.nc', decode_cf=False)
 gpcp.load()
 
@@ -50,26 +49,28 @@ if os.path.isfile('%s/seasonal-precip-maize-gpcp.dat'%dataDirDiscovery):
     with gzip.open('%s/seasonal-precip-maize-gpcp.dat'%dataDirDiscovery, 'rb') as f:
         seasonalPrecip = pickle.load(f)
 else:
-    seasonalPrecip = np.zeros([len(lat), len(lon), len(range(yearRange[0], yearRange[1]+1))])
+    seasonalPrecip = np.zeros([len(tempLat), len(tempLon), len(range(yearRange[0], yearRange[1]+1))])
 
-    for xlat in range(len(lat)):
-        if xlat % 25 == 0: print(xlat)
-        for ylon in range(len(lon)):
+    for xlat in range(len(tempLat)):
+        if xlat % 25 == 0: 
+            print('%.0f %%'%(xlat/len(tempLat)*100))
+        for ylon in range(len(tempLon)):
 
             if ~np.isnan(sacksMaizeStart[xlat,ylon]) and ~np.isnan(sacksMaizeEnd[xlat,ylon]):
                 startMonth = datetime.datetime.strptime('%d'%(sacksMaizeStart[xlat,ylon]), '%j').date().month
                 endMonth = datetime.datetime.strptime('%d'%(sacksMaizeEnd[xlat,ylon]), '%j').date().month
 
-                curPr = gpcp.precip.sel(lat=lat[xlat], lon=lon[ylon], method='nearest')
+                curPr = gpcp.precip.sel(lat=tempLat[xlat], lon=tempLon[ylon], method='nearest')
 
                 for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
                     # in southern hemisphere when planting happens in fall and harvest happens in spring
                     if  startMonth > endMonth:
-                        curPr = curPr.sel(time=slice('%d-%d'%(year-1, startMonth), '%d-%d'%(year, endMonth)))
+                        curYearPr = curPr.sel(time=slice('%d-%d'%(year-1, startMonth), '%d-%d'%(year, endMonth)))
                     else:
-                        curPr = curPr.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
+                        curYearPr = curPr.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
 
-                    seasonalPrecip[xlat, ylon, y] = np.nansum(curPr.values)
+                    seasonalPrecip[xlat, ylon, y] = np.nansum(curYearPr.values)
+        
     with gzip.open('%s/seasonal-precip-maize-gpcp.dat'%dataDirDiscovery, 'wb') as f:
         pickle.dump(seasonalPrecip, f)

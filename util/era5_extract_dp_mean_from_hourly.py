@@ -14,7 +14,7 @@ import datetime
 
 dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
 
-yearRange = [2001, 2018]
+yearRange = [1999, 2000]
 
 for year in range(yearRange[0], yearRange[1]+1):
     print('opening dataset for %d'%year)

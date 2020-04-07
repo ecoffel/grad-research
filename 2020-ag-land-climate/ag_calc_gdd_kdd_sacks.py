@@ -25,7 +25,7 @@ t_high = 29
 crop = sys.argv[1]
 wxData = sys.argv[2]
 
-years = [1981, 2018]
+years = [int(sys.argv[3]), int(sys.argv[4])]
 
 # load the sacks crop calendars
 
@@ -95,47 +95,51 @@ for y, year in enumerate(range(years[0], years[1]+1)):
     elif wxData == 'era5':
         dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmax_%d.nc'%year, decode_cf=False)
         dims = dsMax.dims
-        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
         tDt = []
 
         for curTTime in dsMax.time:
-            delta = datetime.timedelta(hours=int(curTTime.values))
+            delta = datetime.timedelta(days=int(curTTime.values))
             tDt.append(startingDate + delta)
         dsMax['time'] = tDt
+        dsMax['mx2t'] = dsMax['mx2t'] - 273.15
         
         dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmin_%d.nc'%year, decode_cf=False)
         dims = dsMin.dims
-        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
         tDt = []
 
         for curTTime in dsMin.time:
-            delta = datetime.timedelta(hours=int(curTTime.values))
+            delta = datetime.timedelta(days=int(curTTime.values))
             tDt.append(startingDate + delta)
         dsMin['time'] = tDt
+        dsMin['mn2t'] = dsMin['mn2t'] - 273.15
         
         
         # load previous year
         dsMaxLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmax_%d.nc'%(year-1), decode_cf=False)
         
         dims = dsMaxLastYear.dims
-        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        startingDate = datetime.datetime(year-1, 1, 1, 0, 0, 0)
         tDt = []
 
         for curTTime in dsMaxLastYear.time:
-            delta = datetime.timedelta(hours=int(curTTime.values))
+            delta = datetime.timedelta(days=int(curTTime.values))
             tDt.append(startingDate + delta)
         dsMaxLastYear['time'] = tDt
+        dsMaxLastYear['mx2t'] = dsMaxLastYear['mx2t'] - 273.15
         
         dsMinLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/daily/tasmin_%d.nc'%(year-1), decode_cf=False)
         
         dims = dsMinLastYear.dims
-        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
+        startingDate = datetime.datetime(year-1, 1, 1, 0, 0, 0)
         tDt = []
 
         for curTTime in dsMinLastYear.time:
-            delta = datetime.timedelta(hours=int(curTTime.values))
+            delta = datetime.timedelta(days=int(curTTime.values))
             tDt.append(startingDate + delta)
         dsMinLastYear['time'] = tDt
+        dsMinLastYear['mn2t'] = dsMinLastYear['mn2t'] - 273.15
         
         
     dsMax.load()
@@ -159,16 +163,24 @@ for y, year in enumerate(range(years[0], years[1]+1)):
         tminLastYear = dsMinLastYear.tmin
     
     if len(gdd) == 0:
-        gdd = np.zeros([len(lat), len(lon), len(range(years[0], years[1]+1))])
+        gdd = np.zeros([len(lat), len(lon)])
+        gddWeekly = np.full([len(lat), len(lon), int(365/7)+1], np.nan)
     if len(kdd) == 0:
-        kdd = np.zeros([len(lat), len(lon), len(range(years[0], years[1]+1))])
+        kdd = np.zeros([len(lat), len(lon)])
+        kddWeekly = np.full([len(lat), len(lon), int(365/7)+1], np.nan)
     
     for xlat in range(len(lat)):
+        
+        if xlat % 25 == 0:
+            print('%.0f %% complete'%(xlat/len(lat)*100))
+        
         for ylon in range(len(lon)):
             
             sacksNearestX = np.where((abs(sacksLat-lat[xlat]) == np.nanmin(abs(sacksLat-lat[xlat]))))[0][0]
             sacksNearestY = np.where((abs(sacksLon-lon[ylon]) == np.nanmin(abs(sacksLon-lon[ylon]))))[0][0]
             
+            growingSeasonLen = 0
+
             if ~np.isnan(sacksStart[sacksNearestX,sacksNearestY]) and ~np.isnan(sacksEnd[sacksNearestX,sacksNearestY]):
                 
                 # in southern hemisphere when planting happens in fall and harvest happens in spring
@@ -178,28 +190,41 @@ for y, year in enumerate(range(years[0], years[1]+1)):
                     
                     curTmin = xr.concat([tminLastYear[int(sacksStart[sacksNearestX,sacksNearestY]):, xlat, ylon], \
                                          tmin[:int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]], dim='time')
+                    
+                    growingSeasonLen = (365-int(sacksStart[sacksNearestX,sacksNearestY])) + int(sacksEnd[sacksNearestX,sacksNearestY])
+                    
                 else:
                     curTmax = tmax[int(sacksStart[sacksNearestX,sacksNearestY]):int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]
                     curTmin = tmin[int(sacksStart[sacksNearestX,sacksNearestY]):int(sacksEnd[sacksNearestX,sacksNearestY]), xlat, ylon]
+                    
+                    growingSeasonLen = int(sacksEnd[sacksNearestX,sacksNearestY]) - int(sacksStart[sacksNearestX,sacksNearestY])
                 
+                # calc seasonal gdd/kdd
                 curYearGdd = (curTmax.where(curTmax > t_low) + curTmin.where(curTmin > t_low))/2-t_low
-                curYearGdd = curYearGdd.sum(dim='time')
-
-                gdd[xlat, ylon, y] = curYearGdd.values
-
                 curYearKdd = curTmax.where(curTmax > t_high)-t_high
+                
+                # loop over weeks to get weekly kdd/gdd
+                if growingSeasonLen >= 7:
+                    for w, wInd in enumerate(np.arange(0, growingSeasonLen, 7)):
+                        gddWeekly[xlat, ylon, w] = np.nansum(curYearGdd.values[wInd:wInd+7])
+                        kddWeekly[xlat, ylon, w] = np.nansum(curYearKdd.values[wInd:wInd+7])
+                    
+                curYearGdd = curYearGdd.sum(dim='time')
+                gdd[xlat, ylon] = curYearGdd.values
+                
                 curYearKdd = curYearKdd.sum(dim='time')
+                kdd[xlat, ylon] = curYearKdd.values
+                
+    with gzip.open('%s/kdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+        pickle.dump(kdd, f)
 
-                kdd[xlat, ylon, y] = curYearKdd.values
+    with gzip.open('%s/gdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+        pickle.dump(gdd, f)
 
-with gzip.open('%s/kdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, years[0], years[1]), 'wb') as f:
-    pickle.dump(kdd, f)
+    if not os.path.isfile('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData)):
+        with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
+            pickle.dump(lat, f)
 
-with gzip.open('%s/gdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, years[0], years[1]), 'wb') as f:
-    pickle.dump(gdd, f)
-
-with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
-    pickle.dump(dsMax.lat.values, f)
-
-with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
-    pickle.dump(dsMax.lon.values, f)
+    if not os.path.isfile('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData)):
+        with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
+            pickle.dump(lon, f)
