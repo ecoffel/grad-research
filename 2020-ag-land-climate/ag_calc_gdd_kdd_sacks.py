@@ -204,10 +204,10 @@ for y, year in enumerate(range(years[0], years[1]+1)):
                 curYearKdd = curTmax.where(curTmax > t_high)-t_high
                 
                 # loop over weeks to get weekly kdd/gdd
-                if growingSeasonLen >= 7:
-                    for w, wInd in enumerate(np.arange(0, growingSeasonLen, 7)):
-                        gddWeekly[xlat, ylon, w] = np.nansum(curYearGdd.values[wInd:wInd+7])
-                        kddWeekly[xlat, ylon, w] = np.nansum(curYearKdd.values[wInd:wInd+7])
+                
+                for w, wInd in enumerate(range(0, growingSeasonLen, 7)):
+                    gddWeekly[xlat, ylon, w] = np.nansum(curYearGdd.values[wInd:wInd+7])
+                    kddWeekly[xlat, ylon, w] = np.nansum(curYearKdd.values[wInd:wInd+7])
                     
                 curYearGdd = curYearGdd.sum(dim='time')
                 gdd[xlat, ylon] = curYearGdd.values
@@ -215,11 +215,17 @@ for y, year in enumerate(range(years[0], years[1]+1)):
                 curYearKdd = curYearKdd.sum(dim='time')
                 kdd[xlat, ylon] = curYearKdd.values
                 
+#     with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+#         pickle.dump(kdd, f)
+
+#     with gzip.open('%s/gdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+#         pickle.dump(gdd, f)
+    
     with gzip.open('%s/kdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-        pickle.dump(kdd, f)
+        pickle.dump(kddWeekly, f)
 
     with gzip.open('%s/gdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-        pickle.dump(gdd, f)
+        pickle.dump(gddWeekly, f)
 
     if not os.path.isfile('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData)):
         with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
