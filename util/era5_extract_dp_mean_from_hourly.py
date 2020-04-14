@@ -14,11 +14,11 @@ import datetime
 
 dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
 
-yearRange = [1999, 2000]
+yearRange = [int(sys.argv[1]), int(sys.argv[2])]
 
 for year in range(yearRange[0], yearRange[1]+1):
     print('opening dataset for %d'%year)
-    dp = xr.open_dataset('%s/dp_hourly_%d.nc'%(dataDir, year), decode_cf=False)
+    dp = xr.open_dataset('%s/evaporation_hourly_%d.nc'%(dataDir, year), decode_cf=False)
 
     print('computing new times for %d'%year)
     dims = dp.dims
@@ -38,10 +38,10 @@ for year in range(yearRange[0], yearRange[1]+1):
     dp = dp.astype(float) * scale + offset
     
     print('resampling dp data for %d'%year)
-    dp = dp.resample(time='1D').mean()
+    dp = dp.resample(time='1D').sum()
     
     print('saving mean dp netcdf for %d'%year)
-    dp.to_netcdf('%s/daily/dp_mean_%d.nc'%(dataDir, year), mode='w', format='NETCDF4')
+    dp.to_netcdf('%s/daily/evaporation_%d.nc'%(dataDir, year), mode='w', format='NETCDF4')
 
         
 
