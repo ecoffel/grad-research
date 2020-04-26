@@ -1,6 +1,3 @@
-
-
-
 import rasterio as rio
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -29,17 +26,16 @@ years = [int(sys.argv[3]), int(sys.argv[4])]
 
 # load the sacks crop calendars
 
-sacksStart = np.genfromtxt('%s/sacks/sacks-planting-end-%s.txt'%(dataDirDiscovery, crop), delimiter=',')
-sacksStart[sacksStart<0] = np.nan
-sacksEnd = np.genfromtxt('%s/sacks/sacks-harvest-start-%s.txt'%(dataDirDiscovery, crop), delimiter=',')
-sacksEnd[sacksEnd<0] = np.nan
-
-sacksStart = np.roll(sacksStart, int(sacksStart.shape[1]/2), axis=1)
-sacksEnd = np.roll(sacksEnd, int(sacksEnd.shape[1]/2), axis=1)
+sacksMaizeNc = xr.open_dataset('%s/sacks/Maize.crop.calendar.fill.nc'%dataDirDiscovery)
+sacksStart = sacksMaizeNc['plant'].values
+sacksStart = np.roll(sacksStart, -int(sacksStart.shape[1]/2), axis=1)
+sacksStart[sacksStart < 0] = np.nan
+sacksEnd = sacksMaizeNc['harvest'].values
+sacksEnd = np.roll(sacksEnd, -int(sacksEnd.shape[1]/2), axis=1)
+sacksEnd[sacksEnd < 0] = np.nan
 
 sacksLat = np.linspace(90, -90, 360)
 sacksLon = np.linspace(0, 360, 720)
-
 
 # calculate gdd/kdd from cpc temperature data
 gdd = [] #np.zeros([360, 720, len(range(years[0]-1, years[1]+1))])
@@ -214,18 +210,18 @@ for y, year in enumerate(range(years[0], years[1]+1)):
                 
                 curYearKdd = curYearKdd.sum(dim='time')
                 kdd[xlat, ylon] = curYearKdd.values
-                
-#     with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-#         pickle.dump(kdd, f)
-
-#     with gzip.open('%s/gdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-#         pickle.dump(gdd, f)
     
-    with gzip.open('%s/kdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-        pickle.dump(kddWeekly, f)
+    with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+        pickle.dump(kdd, f)
 
-    with gzip.open('%s/gdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
-        pickle.dump(gddWeekly, f)
+    with gzip.open('%s/gdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+        pickle.dump(gdd, f)
+    
+#     with gzip.open('%s/kdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+#         pickle.dump(kddWeekly, f)
+
+#     with gzip.open('%s/gdd-weekly-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
+#         pickle.dump(gddWeekly, f)
 
     if not os.path.isfile('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData)):
         with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:

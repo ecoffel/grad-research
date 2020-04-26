@@ -22,9 +22,9 @@ for year in range(yearRange[0], yearRange[1]+1):
         print('skipping %d: file doesnt exist!'%year)
         continue
     
-    if os.path.isfile('%s/monthly/tp_%d.nc'%(dataDir, year)):
-        print('skipping %d: monthly file already exists!'%year)
-        continue
+#     if os.path.isfile('%s/monthly/tp_%d.nc'%(dataDir, year)):
+#         print('skipping %d: monthly file already exists!'%year)
+#         continue
     
     print('opening dataset for %d'%year)
     tp = xr.open_dataset('%s/daily/tp_%d.nc'%(dataDir, year), decode_cf=False)
@@ -38,8 +38,12 @@ for year in range(yearRange[0], yearRange[1]+1):
         tDt.append(startingDate + delta)
     tp['time'] = tDt
 
+    
+    # convert m/day -> mm/day
+    tp *= 1000
+    
     print('resampling tp data for %d'%year)
-    tp = tp.resample(time='1M').mean()
+    tp = tp.resample(time='1M').sum()
     
     print('saving monthly tp netcdf for %d'%year)
     tp.to_netcdf('%s/monthly/tp_%d.nc'%(dataDir, year), mode='w', format='NETCDF4')

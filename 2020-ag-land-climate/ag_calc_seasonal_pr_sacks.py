@@ -6,12 +6,15 @@ import statsmodels.api as sm
 import scipy.stats as st
 import os, sys, pickle, gzip
 import datetime
+from dateutil.relativedelta import relativedelta
 import geopy.distance
 import xarray as xr
 import cartopy.crs as ccrs
 
 import warnings
 warnings.filterwarnings('ignore')
+
+wxData = 'era5'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
@@ -32,21 +35,43 @@ with gzip.open('%s/gdd-kdd-lat-cpc.dat'%dataDirDiscovery, 'rb') as f:
 with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'rb') as f:
     tempLon = pickle.load(f)
 
-gpcp = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/GPCP/precip.mon.mean.nc', decode_cf=False)
-gpcp.load()
+if wxData == 'gpcp':
+    prData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/GPCP/precip.mon.mean.nc', decode_cf=False)
+    prData.load()
 
-dims = gpcp.dims
-startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
-tDt = []
+    dims = prData.dims
+    startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
+    tDt = []
 
-for curTTime in gpcp.time:
-    delta = datetime.timedelta(days=int(curTTime.values))
-    tDt.append(startingDate + delta)
-gpcp['time'] = tDt
+    for curTTime in prData.time:
+        delta = datetime.timedelta(days=int(curTTime.values))
+        tDt.append(startingDate + delta)
+    prData['time'] = tDt
+elif wxData == 'era5':
+    
+    prData = []
+    
+    for year in range(yearRange[0], yearRange[1]+1):
+        curPrData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/monthly/tp_%d.nc'%year, decode_cf=False)
+        curPrData.load()
+
+        dims = curPrData.dims
+        startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in curPrData.time:
+            delta = datetime.timedelta(days=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        curPrData['time'] = tDt
+        
+        if len(prData) == 0:
+            prData = curPrData
+        else:
+            prData = xr.concat([prData, curPrData], dim='time')
     
 seasonalPrecip = np.zeros([len(tempLat), len(tempLon), len(range(yearRange[0], yearRange[1]+1))])
 
-for xlat in range(len(tempLat)):
+for xlat in range(len(tempLat)-1):
 
     if xlat % 25 == 0: 
         print('%.0f %%'%(xlat/len(tempLat)*100))
@@ -57,8 +82,20 @@ for xlat in range(len(tempLat)):
             startMonth = datetime.datetime.strptime('%d'%(sacksMaizeStart[xlat,ylon]), '%j').date().month
             endMonth = datetime.datetime.strptime('%d'%(sacksMaizeEnd[xlat,ylon]), '%j').date().month
 
-            curPr = gpcp.precip.sel(lat=tempLat[xlat], lon=tempLon[ylon], method='nearest')
-
+            if wxData == 'gpcp':
+                curPr = prData.precip.sel(lat=tempLat[xlat], lon=tempLon[ylon], method='nearest')
+            elif wxData == 'era5':
+                lat1 = tempLat[xlat]
+                lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])
+                lon1 = tempLon[ylon]
+                lon2 = tempLon[ylon]+(tempLon[1]-tempLon[0])
+                if lon2 > 360:
+                    lon2 -= 360
+                if lon1 > 360:
+                    lon1 -= 360
+                
+                curPr = prData.tp.sel(latitude=[lat1, lat2], longitude=[lon1, lon2]).mean(dim='latitude').mean(dim='longitude')
+                
             for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
                 # in southern hemisphere when planting happens in fall and harvest happens in spring
@@ -69,5 +106,5 @@ for xlat in range(len(tempLat)):
 
                 seasonalPrecip[xlat, ylon, y] = np.nansum(curYearPr.values)
 
-with gzip.open('%s/seasonal-precip-maize-gpcp.dat'%dataDirDiscovery, 'wb') as f:
+with gzip.open('%s/seasonal-precip-maize-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
     pickle.dump(seasonalPrecip, f)
