@@ -39,7 +39,7 @@ for year in range(yearRange[0], yearRange[1]+1):
     evap['time'] = tDt
 
     print('resampling evaporation data for %d'%year)
-    evap = evap.resample(time='1M').mean()
+    evap = evap.resample(time='1M').sum()
     
     print('saving monthly evaporation netcdf for %d'%year)
     evap.to_netcdf('%s/monthly/evaporation_%d.nc'%(dataDir, year), mode='w', format='NETCDF4')

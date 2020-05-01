@@ -136,7 +136,55 @@ for y, year in enumerate(range(years[0], years[1]+1)):
             tDt.append(startingDate + delta)
         dsMinLastYear['time'] = tDt
         dsMinLastYear['mn2t'] = dsMinLastYear['mn2t'] - 273.15
+    
+    elif wxData == '20cr':
+        dsMax = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/20CR/tmax/tmax.2m.%d.nc'%year, decode_cf=False)
+        dims = dsMax.dims
+        startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMax.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMax['time'] = tDt
+        dsMax['tmax'] = dsMax['tmax'] - 273.15
         
+        dsMin = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/20CR/tmin/tmin.2m.%d.nc'%year, decode_cf=False)
+        dims = dsMin.dims
+        startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMin.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMin['time'] = tDt
+        dsMin['tmin'] = dsMin['tmin'] - 273.15
+        
+        
+        # load previous year
+        dsMaxLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/20CR/tmax/tmax.2m.%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMaxLastYear.dims
+        startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMaxLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMaxLastYear['time'] = tDt
+        dsMaxLastYear['tmax'] = dsMaxLastYear['tmax'] - 273.15
+        
+        dsMinLastYear = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/20CR/tmin/tmin.2m.%d.nc'%(year-1), decode_cf=False)
+        
+        dims = dsMinLastYear.dims
+        startingDate = datetime.datetime(1800, 1, 1, 0, 0, 0)
+        tDt = []
+
+        for curTTime in dsMinLastYear.time:
+            delta = datetime.timedelta(hours=int(curTTime.values))
+            tDt.append(startingDate + delta)
+        dsMinLastYear['time'] = tDt
+        dsMinLastYear['tmin'] = dsMinLastYear['tmin'] - 273.15
         
     dsMax.load()
     dsMin.load()
@@ -151,6 +199,13 @@ for y, year in enumerate(range(years[0], years[1]+1)):
         tmaxLastYear = dsMaxLastYear.mx2t
         tminLastYear = dsMinLastYear.mn2t
     elif wxData == 'cpc':
+        lat = dsMax.lat.values
+        lon = dsMax.lon.values
+        tmax = dsMax.tmax
+        tmin = dsMin.tmin
+        tmaxLastYear = dsMaxLastYear.tmax
+        tminLastYear = dsMinLastYear.tmin
+    elif wxData == '20cr':
         lat = dsMax.lat.values
         lon = dsMax.lon.values
         tmax = dsMax.tmax
@@ -210,6 +265,11 @@ for y, year in enumerate(range(years[0], years[1]+1)):
                 
                 curYearKdd = curYearKdd.sum(dim='time')
                 kdd[xlat, ylon] = curYearKdd.values
+    
+    if wxData == '20cr':
+        gdd = np.flipud(gdd)
+        kdd = np.flipud(kdd)
+        lat = np.flipud(lat)
     
     with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'wb') as f:
         pickle.dump(kdd, f)

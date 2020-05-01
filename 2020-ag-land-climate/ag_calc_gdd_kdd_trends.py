@@ -24,26 +24,26 @@ wxData = sys.argv[2]
 
 yearRange = [1981, 2018]
 
+sacksLat = np.linspace(90, -90, 360)
+sacksLon = np.linspace(0, 360, 720)
 
 # load gdd/kdd from cpc temperature data
-with gzip.open('%s/kdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'rb') as f:
-    kdd = pickle.load(f)
-    if wxData == 'cpc': kdd = kdd[:,:,1:]
+if wxData == 'cpc':
+    gdd = np.full([len(sacksLat), len(sacksLon), (yearRange[1]-yearRange[0]+1)], np.nan)
+    kdd = np.full([len(sacksLat), len(sacksLon), (yearRange[1]-yearRange[0]+1)], np.nan)
+elif wxData == 'era5':
+    gdd = np.full([721, 1440, (yearRange[1]-yearRange[0]+1)], np.nan)
+    kdd = np.full([721, 1440, (yearRange[1]-yearRange[0]+1)], np.nan)
 
-with gzip.open('%s/gdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'rb') as f:
-    gdd = pickle.load(f)
-    if wxData == 'cpc': gdd = gdd[:,:,1:]
-
-tx95 = np.full(gdd.shape, np.nan)
-txMean = np.full(gdd.shape, np.nan)
-for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
-    with gzip.open('%s/tx95-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
-        curTx95 = pickle.load(f)
-        tx95[:, :, y] = curTx95
-
-    with gzip.open('%s/txMean-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
-        curTxMean = pickle.load(f)
-        txMean[:, :, y] = curTxMean
+for y, year in enumerate(np.arange(yearRange[0], yearRange[1]+1)):
+    print('loading gdd/kdd data for %d'%year)
+    with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
+        curKdd = pickle.load(f)
+        kdd[:, :, y] = curKdd
+        
+    with gzip.open('%s/gdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
+        curGdd = pickle.load(f)
+        gdd[:, :, y] = curGdd
         
 with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     lat = pickle.load(f)
@@ -51,21 +51,27 @@ with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
 with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     lon = pickle.load(f)
 
+with open('%s/seasonal-evap-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
+    seasonalEvap = pickle.load(f)
+with open('%s/seasonal-sshf-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
+    seasonalSshf = pickle.load(f)
+with open('%s/seasonal-slhf-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
+    seasonalSlhf = pickle.load(f)
+    
 # calculate gdd and kdd trends from already-loaded cpc tmax and tmin data
 gddTrends = np.full([gdd.shape[0], gdd.shape[1]], np.nan)
 kddTrends = np.full([kdd.shape[0], kdd.shape[1]], np.nan)
+evapTrends = np.full([seasonalEvap.shape[0], seasonalEvap.shape[1]], np.nan)
+sshfTrends = np.full([seasonalSshf.shape[0], seasonalSshf.shape[1]], np.nan)
+slhfTrends = np.full([seasonalSlhf.shape[0], seasonalSlhf.shape[1]], np.nan)
 
-tx95Trends = np.full([tx95.shape[0], tx95.shape[1]], np.nan)
-txMeanTrends = np.full([txMean.shape[0], txMean.shape[1]], np.nan)
-
-print('calculating trends...')
+print('computing gdd, kdd trends')
 
 for x in range(gddTrends.shape[0]):
-
-    if x % 20 == 0:
-        print('%.0f %% done...'%(x/gddTrends.shape[0]*100))
-
+    if x % 50 == 0:
+        print('%.0f %%'%(x/gddTrends.shape[0]*100))
     for y in range(gddTrends.shape[1]):
+        
         nn = np.where(~np.isnan(gdd[x, y, :]))[0]
         if len(nn) == gdd.shape[2]:
             X = sm.add_constant(range(gdd.shape[2]))
@@ -78,32 +84,50 @@ for x in range(gddTrends.shape[0]):
             mdl = sm.OLS(kdd[x, y, :], X).fit()
             kddTrends[x, y] = mdl.params[1]
 
-        nn = np.where(~np.isnan(tx95[x, y, :]))[0]
-        if len(nn) == tx95.shape[2]:
-            X = sm.add_constant(range(tx95.shape[2]))
-            mdl = sm.OLS(tx95[x, y, :], X).fit()
-            tx95Trends[x, y] = mdl.params[1]
+print('computing evap, sshf, slhf trends')
+for x in range(seasonalSlhf.shape[0]):
+    
+    if x % 50 == 0:
+        print('%.0f %%'%(x/seasonalSlhf.shape[0]*100))
+    
+    for y in range(seasonalSlhf.shape[1]):
+        
+        nn = np.where(~np.isnan(seasonalEvap[x, y, :]))[0]
+        if len(nn) == seasonalEvap.shape[2]:
+            X = sm.add_constant(range(seasonalEvap.shape[2]))
+            mdl = sm.OLS(seasonalEvap[x, y, :], X).fit()
+            evapTrends[x, y] = mdl.params[1]
 
-        nn = np.where(~np.isnan(txMean[x, y, :]))[0]
-        if len(nn) == txMean.shape[2]:
-            X = sm.add_constant(range(txMean.shape[2]))
-            mdl = sm.OLS(txMean[x, y, :], X).fit()
-            txMeanTrends[x, y] = mdl.params[1]
+        nn = np.where(~np.isnan(seasonalSshf[x, y, :]))[0]
+        if len(nn) == seasonalSshf.shape[2]:
+            X = sm.add_constant(range(seasonalSshf.shape[2]))
+            mdl = sm.OLS(seasonalSshf[x, y, :], X).fit()
+            sshfTrends[x, y] = mdl.params[1]
+
+        nn = np.where(~np.isnan(seasonalSlhf[x, y, :]))[0]
+        if len(nn) == seasonalSlhf.shape[2]:
+            X = sm.add_constant(range(seasonalSlhf.shape[2]))
+            mdl = sm.OLS(seasonalSlhf[x, y, :], X).fit()
+            slhfTrends[x, y] = mdl.params[1]
 
 # if a grid cell has no gdd/kdds, trend will be exactly 0 - set to nan
 kddTrends[kddTrends == 0] = np.nan
 gddTrends[gddTrends == 0] = np.nan
-tx95Trends[tx95Trends == 0] = np.nan
-txMeanTrends[txMeanTrends == 0] = np.nan
+evapTrends[evapTrends == 0] = np.nan
+sshfTrends[sshfTrends == 0] = np.nan
+slhfTrends[slhfTrends == 0] = np.nan
 
-with gzip.open('%s/kdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/kdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(kddTrends, f)
 
-with gzip.open('%s/gdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/gdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(gddTrends, f)
 
-with gzip.open('%s/tx95-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
-    pickle.dump(tx95Trends, f)
+with open('%s/evap-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+    pickle.dump(evapTrends, f)
 
-with gzip.open('%s/txMean-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
-    pickle.dump(txMeanTrends, f)
+with open('%s/sshf-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+    pickle.dump(sshfTrends, f)
+
+with open('%s/slhf-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+    pickle.dump(slhfTrends, f)

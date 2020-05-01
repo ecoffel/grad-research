@@ -31,11 +31,11 @@ warnings.filterwarnings('ignore')
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
 rebuildPointModels = True
-reproject = False
+reproject = True
 
 
 crop = 'Maize'
-wxData = 'cpc'
+wxData = '20cr'
 
 yieldDataOld = True
 
@@ -43,8 +43,9 @@ oldStr = 'new'
 if yieldDataOld:
     oldStr = 'old'
 
+print('running analysis for %s with %s and %s deepak data'%(crop, wxData, oldStr))
     
-
+    
 def findConsec(data):
     # find longest consequtative sequence of years with yield data
     ptMax = (-1, -1)
@@ -67,42 +68,51 @@ def findConsec(data):
     return ptMax
 
 
-tempYearRange = [1981, 2018]
-if yieldDataOld:
-    yieldYearRange = [1981, 2008]
+
+if wxData == '20cr':
+    tempYearRange = [1970, 2015]
+
+    if yieldDataOld:
+        yieldYearRange = [1970, 2008]
+    else:
+        yieldYearRange = [1970, 2013]
 else:
-    yieldYearRange = [1981, 2013]
+    tempYearRange = [1981, 2018]
 
-yearRange = np.intersect1d(np.arange(tempYearRange[0], tempYearRange[1]+1), np.arange(yieldYearRange[0], yieldYearRange[1]+1))
-
-# load the sacks crop calendars
-sacksMaizeStart = np.genfromtxt('%s/sacks/sacks-planting-end-Maize.txt'%dataDirDiscovery, delimiter=',')
-sacksMaizeStart[sacksMaizeStart<0] = np.nan
-sacksMaizeEnd = np.genfromtxt('%s/sacks/sacks-harvest-start-Maize.txt'%dataDirDiscovery, delimiter=',')
-sacksMaizeEnd[sacksMaizeEnd<0] = np.nan
-
-sacksMaizeStart = np.roll(sacksMaizeStart, int(sacksMaizeStart.shape[1]/2), axis=1)
-sacksMaizeEnd = np.roll(sacksMaizeEnd, int(sacksMaizeEnd.shape[1]/2), axis=1)
+    if yieldDataOld:
+        yieldYearRange = [1981, 2008]
+    else:
+        yieldYearRange = [1981, 2013]
 
 sacksLat = np.linspace(90, -90, 360)
 sacksLon = np.linspace(0, 360, 720)
 
-
 # load gdd/kdd from cpc temperature data
-with gzip.open('%s/kdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    kdd = pickle.load(f)
-    if wxData == 'cpc': kdd = kdd[:,:,1:]
+if wxData == 'cpc':
+    gdd = np.full([len(sacksLat), len(sacksLon), tempYearRange[1]-tempYearRange[0]+1], np.nan)
+    kdd = np.full([len(sacksLat), len(sacksLon), tempYearRange[1]-tempYearRange[0]+1], np.nan)
+elif wxData == 'era5':
+    gdd = np.full([721, 1440, tempYearRange[1]-tempYearRange[0]+1], np.nan)
+    kdd = np.full([721, 1440, tempYearRange[1]-tempYearRange[0]+1], np.nan)
+elif wxData == '20cr':
+    gdd = np.full([181, 360, tempYearRange[1]-tempYearRange[0]+1], np.nan)
+    kdd = np.full([181, 360, tempYearRange[1]-tempYearRange[0]+1], np.nan)
 
-with gzip.open('%s/gdd-%s-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    gdd = pickle.load(f)
-    if wxData == 'cpc': gdd = gdd[:,:,1:]
-    
+for y, year in enumerate(range(tempYearRange[0], tempYearRange[1]+1)):
+    print('loading gdd/kdd data for %d'%year)
+    with gzip.open('%s/kdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
+        curKdd = pickle.load(f)
+        kdd[:, :, y] = curKdd
+        
+    with gzip.open('%s/gdd-%s-%s-%d.dat'%(dataDirDiscovery, wxData, crop, year), 'rb') as f:
+        curGdd = pickle.load(f)
+        gdd[:, :, y] = curGdd
+        
 with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     tempLat = pickle.load(f)
 
 with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     tempLon = pickle.load(f)
-
 
 maizeYield = []
 for year in range(yieldYearRange[0],yieldYearRange[1]+1):
@@ -137,8 +147,6 @@ maizeYield['latitude'] = latDeepak
 maizeYield['longitude'] = lonDeepak
 maizeYield['Data'] = (('latitude', 'longitude', 'time'), np.squeeze(data))
 
-kdd = kdd[:, :, 0:maizeYield.Data.shape[2]]
-gdd = gdd[:, :, 0:maizeYield.Data.shape[2]]
 
 if wxData == 'cpc':
     with gzip.open('%s/seasonal-precip-maize-gpcp.dat'%dataDirDiscovery, 'rb') as f:
@@ -146,46 +154,44 @@ if wxData == 'cpc':
 elif wxData == 'era5':
     with gzip.open('%s/seasonal-precip-maize-era5.dat'%dataDirDiscovery, 'rb') as f:
         seasonalPrecip = pickle.load(f)
+elif wxData == '20cr':
+    with gzip.open('%s/seasonal-precip-maize-20cr.dat'%dataDirDiscovery, 'rb') as f:
+        seasonalPrecip = pickle.load(f)
 
-# calculate gdd and kdd trends from already-loaded cpc tmax and tmin data
-with gzip.open('%s/kdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    kddTrends = pickle.load(f)
-
-with gzip.open('%s/gdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    gddTrends = pickle.load(f)
-
-with gzip.open('%s/tx95-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    tx95Trends = pickle.load(f)
-
-with gzip.open('%s/txMean-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, tempYearRange[0], tempYearRange[1]), 'rb') as f:
-    txMeanTrends = pickle.load(f)
+        
+        
     
-
-if os.path.isfile('%s/global-point-model-data-kdd-only-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr)) and not rebuildPointModels:
-    with open('%s/global-point-model-data-kdd-only-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr), 'rb') as f:
+if os.path.isfile('%s/global-point-model-data-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr)) and not rebuildPointModels:
+    with open('%s/global-point-model-data-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr), 'rb') as f:
         print('loading saved point model data...')
         modelData = pickle.load(f)
         
-        pointModelsKDD = modelData['pointModelsKDD']
+        pointModels = modelData['pointModels']
+        pointModels_KDD_GDD = modelData['pointModels_KDD_GDD']
         
         print('loaded %s'%('%s/global-point-model-data-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr)))
 else:
-    minCropYears = 20
+    print('building global point models...')
+    
+    minCropYears = 10
 
-    pointModelsKDD = {}
-    pointModelsTx95 = {}
-
+    pointModels = {}
+    pointModels_STD = {}
+    pointModels_KDD_GDD = {}
+    
     for xlat in range(0, len(latDeepak)):
 
         if xlat % 10 == 0: print('%.0f %%'%(xlat/len(latDeepak)*100))
 
-        pointModelsKDD[xlat] = {}
-        pointModelsTx95[xlat] = {}
+        pointModels[xlat] = {}
+        pointModels_STD[xlat] = {}
+        pointModels_KDD_GDD[xlat] = {}
 
         for ylon in range(0, len(lonDeepak)):
 
             y = maizeYield.Data.values[xlat, ylon, :]
-            ptMaxDeepak = findConsec(y)
+            yNn = np.where(~np.isnan(y))[0]
+#             ptMaxDeepak = findConsec(y)
 
             lat1 = latDeepak[xlat]
             lat2 = latDeepak[xlat] + (latDeepak[1]-latDeepak[0])
@@ -193,7 +199,7 @@ else:
             lon1 = lonDeepak[ylon]
             lon2 = lonDeepak[ylon] + (lonDeepak[1]-lonDeepak[0])
 
-            if ptMaxDeepak[1]-ptMaxDeepak[0]+1 >= minCropYears:
+            if len(yNn) >= minCropYears:
 
                 indLat = [np.where(abs(tempLat-lat1) == np.nanmin(abs(tempLat-lat1)))[0][0],
                            np.where(abs(tempLat-lat2) == np.nanmin(abs(tempLat-lat2)))[0][0]]
@@ -220,16 +226,22 @@ else:
                 p = np.nanmean(seasonalPrecip[indLatPrRange, :, :], axis=0)
                 p = np.nanmean(p[indLonPrRange, :], axis=0)
                 
-                g = g[ptMaxDeepak[0]:ptMaxDeepak[1]]
-                k = k[ptMaxDeepak[0]:ptMaxDeepak[1]]
-                p = p[ptMaxDeepak[0]:ptMaxDeepak[1]]
-                y = y[ptMaxDeepak[0]:ptMaxDeepak[1]]
+                cropLen = len(y)
+                k = k[:cropLen]
+                g = g[:cropLen]
+                p = p[:cropLen]
+                
+                allNn = np.where((~np.isnan(g)) & (~np.isnan(k)) & (~np.isnan(p)) & (~np.isnan(y)))[0]
+                
+                g = g[allNn]
+                k = k[allNn]
+                p = p[allNn]
+                y = y[allNn]
                 
                 if len(np.where(np.isnan(k))[0]) == 0 and \
                     len(np.where(np.isnan(g))[0]) == 0 and \
                     len(np.where(np.isnan(p))[0]) == 0 and \
-                    len(np.where(np.isnan(y))[0]) == 0 and \
-                    len(np.where(np.isnan(curTx95))[0]) == 0:
+                    len(np.where(np.isnan(y))[0]) == 0:
                     
                     g = scipy.signal.detrend(g)
                     k = scipy.signal.detrend(k)
@@ -251,48 +263,75 @@ else:
                                       columns=['GDD', 'KDD', 'Pr', \
                                                'Yield'])
 
-                    mdl = smf.ols(formula='Yield ~ KDD', data=df).fit()
-                    pointModelsKDD[xlat][ylon] = mdl
+                    mdl = smf.ols(formula='Yield ~ KDD + GDD + Pr', data=df).fit()
+                    
+                    if mdl.f_pvalue <= 0.05:
+                        pointModels[xlat][ylon] = mdl
+                    
+                    
+                    
+                    
+                    mdl_KDD_GDD = smf.ols(formula='Yield ~ KDD + GDD', data=df).fit()
+                    
+                    if mdl_KDD_GDD.f_pvalue <= 0.05:
+                        pointModels_KDD_GDD[xlat][ylon] = mdl_KDD_GDD
+                    
+                    
+                    
+                    
+                    
+                    dataStd = {'GDD':g/np.linalg.norm(g), \
+                            'KDD':k/np.linalg.norm(k), \
+                            'Pr':p/np.linalg.norm(p), \
+                            'Yield':y/np.linalg.norm(y)}
+
+                    dfStd = pd.DataFrame(dataStd, \
+                                      columns=['GDD', 'KDD', 'Pr', \
+                                               'Yield'])
+
+                    mdlStd = smf.ols(formula='Yield ~ KDD + GDD + Pr', data=dfStd).fit()
+                    
+                    if mdlStd.f_pvalue <= 0.05:
+                        pointModels_STD[xlat][ylon] = mdlStd
                 
 
-    with open('%s/global-point-model-data-kdd-only-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr), 'wb') as f:
-        modelData = {'pointModelsKDD':pointModelsKDD}
+    with open('%s/global-point-model-data-%s-%s-%s.dat'%(dataDirDiscovery, wxData, crop, oldStr), 'wb') as f:
+        modelData = {'pointModels':pointModels, \
+                     'pointModels_KDD_GDD':pointModels_KDD_GDD, \
+                     'pointModels_STD':pointModels_STD}
         pickle.dump(modelData, f)
 
-if os.path.isfile('%s/global-yield-projections-trendMethod-%s-%s-%s'%(dataDirDiscovery, crop, wxData, oldStr)) and not reproject:
-    
-    with open('%s/global-yield-projections-trendMethod-%s-%s'%(dataDirDiscovery, crop, wxData), 'rb') as f:
-        globalYieldProj = pickle.load(f)
-        yieldProj = globalYieldProj['yieldProj']
-        globalKddChg = globalYieldProj['globalKddChg']
-        globalGddChg = globalYieldProj['globalGddChg']
-        globalPrChg = globalYieldProj['globalPrChg']
-    
-    print('loaded %s'%('%s/global-yield-projections-trendMethod-%s-%s-%s'%(dataDirDiscovery, crop, wxData, oldDataStr)))
-else:
+        
+        
+
+if reproject:
     # project climate-related yield change with point models
 
+    print('calculating global yield projections...')
+    
     leaveOutN = 100
     
     yieldProj = np.full([len(latDeepak), len(lonDeepak), leaveOutN], np.nan)
+    yieldProj_KDD_GDD = np.full([len(latDeepak), len(lonDeepak), leaveOutN], np.nan)
     globalKddChg = np.full([len(latDeepak), len(lonDeepak), leaveOutN], np.nan)
     globalGddChg = np.full([len(latDeepak), len(lonDeepak), leaveOutN], np.nan)
     globalPrChg = np.full([len(latDeepak), len(lonDeepak), leaveOutN], np.nan)
 
-
     for xlat in range(len(latDeepak)):
 
+        if xlat not in pointModels.keys(): 
+            if xlat not in pointModels_KDD_GDD.keys():
+                continue
+        
         if xlat % 10 == 0:
             print('%.0f %%'%(xlat/len(latDeepak)*100))
 
-        if xlat not in pointModelsKDD.keys():
-            continue
-
         for ylon in range(len(lonDeepak)):
 
-            if ylon not in pointModelsKDD[xlat].keys():
-                continue
-
+            if ylon not in pointModels[xlat].keys():
+                if ylon not in pointModels_KDD_GDD[xlat].keys():
+                    continue
+            
             lat1 = latDeepak[xlat]
             lat2 = latDeepak[xlat] + (latDeepak[1]-latDeepak[0])
 
@@ -381,23 +420,37 @@ else:
             dfStart = pd.DataFrame(dataStart, columns=['GDD', 'KDD', 'Pr'])
             dfEnd = pd.DataFrame(dataEnd, columns=['GDD', 'KDD', 'Pr'])
 
-            curProjStarts = pointModelsKDD[xlat][ylon].predict(dfStart).values
-            curProjEnds = pointModelsKDD[xlat][ylon].predict(dfEnd).values
+            if xlat in pointModels.keys():
+                if ylon in pointModels[xlat].keys():
+                    curProjStarts = pointModels[xlat][ylon].predict(dfStart).values
+                    curProjEnds = pointModels[xlat][ylon].predict(dfEnd).values
 
-            curProjChg = ((curProjEnds-curProjStarts)/np.nanmean(maizeYield.Data.values[xlat, ylon, :]))*100
-            curProjChg[curProjChg < -100] = np.nan
-            curProjChg[curProjChg > 100] = np.nan
+                    curProjChg = ((curProjEnds-curProjStarts)/np.nanmean(maizeYield.Data.values[xlat, ylon, :]))*100
+                    curProjChg[curProjChg < -100] = np.nan
+                    curProjChg[curProjChg > 100] = np.nan
+                    
+                    yieldProj[xlat, ylon, :] = curProjChg
+            
+            if xlat in pointModels_KDD_GDD.keys():
+                if ylon in pointModels_KDD_GDD[xlat].keys():
+            
+                    curProjStarts_KDD_GDD = pointModels_KDD_GDD[xlat][ylon].predict(dfStart).values
+                    curProjEnds_KDD_GDD = pointModels_KDD_GDD[xlat][ylon].predict(dfEnd).values
 
+                    curProjChg_KDD_GDD = ((curProjEnds_KDD_GDD-curProjStarts_KDD_GDD)/np.nanmean(maizeYield.Data.values[xlat, ylon, :]))*100
+                    curProjChg_KDD_GDD[curProjChg_KDD_GDD < -100] = np.nan
+                    curProjChg_KDD_GDD[curProjChg_KDD_GDD > 100] = np.nan
+                    
+                    yieldProj_KDD_GDD[xlat, ylon, :] = curProjChg_KDD_GDD
+            
             globalKddChg[xlat, ylon, :] = dfEnd['KDD'].values-dfStart['KDD'].values
             globalGddChg[xlat, ylon, :] = dfEnd['GDD'].values-dfStart['GDD'].values
             globalPrChg[xlat, ylon, :] = dfEnd['Pr'].values-dfStart['Pr'].values
 
-            tval, pval = scipy.stats.ttest_1samp(curProjChg, 0)
-            if pval <= 0.05:
-                yieldProj[xlat, ylon, :] = curProjChg
             
     with open('%s/global-yield-projections-trendMethod-%s-%s-%s'%(dataDirDiscovery, crop, wxData, oldStr), 'wb') as f:
         globalYieldProj = {'yieldProj':yieldProj, \
+                           'yieldProj_KDD_GDD':yieldProj_KDD_GDD, \
                            'globalKddChg':globalKddChg, \
                            'globalGddChg':globalGddChg, \
                            'globalPrChg':globalPrChg}
