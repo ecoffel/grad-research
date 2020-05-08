@@ -30,14 +30,14 @@ warnings.filterwarnings('ignore')
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
-rebuildPointModels = True
+rebuildPointModels = False
 reproject = True
 
 
 crop = 'Maize'
-wxData = '20cr'
+wxData = 'era5'
 
-yieldDataOld = True
+yieldDataOld = False
 
 oldStr = 'new'
 if yieldDataOld:

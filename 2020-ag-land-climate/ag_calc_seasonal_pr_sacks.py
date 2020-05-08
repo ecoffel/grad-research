@@ -14,7 +14,7 @@ import cartopy.crs as ccrs
 import warnings
 warnings.filterwarnings('ignore')
 
-wxData = '20cr'
+wxData = 'era5'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
@@ -57,15 +57,22 @@ elif wxData == 'era5':
     prData = []
     
     for year in range(yearRange[0], yearRange[1]+1):
-        curPrData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/monthly/tp_%d.nc'%year, decode_cf=False)
+        curPrData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5-Land/monthly/total_precipitation_monthly_%d.nc'%year, decode_cf=False)
         curPrData.load()
 
+        scale = curPrData.tp.attrs['scale_factor']
+        offset = curPrData.tp.attrs['add_offset']
+        missing = curPrData.tp.attrs['missing_value']
+        
+        curPrData.where((curPrData != missing))
+        curPrData = curPrData.astype(float) * scale + offset
+        
         dims = curPrData.dims
-        startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
+        startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
         tDt = []
 
         for curTTime in curPrData.time:
-            delta = datetime.timedelta(days=int(curTTime.values))
+            delta = datetime.timedelta(hours=int(curTTime.values))
             tDt.append(startingDate + delta)
         curPrData['time'] = tDt
         
@@ -120,7 +127,8 @@ for xlat in range(len(tempLat)-1):
                 if lon1 > 360:
                     lon1 -= 360
                 
-                curPr = prData.tp.sel(latitude=[lat1, lat2], longitude=[lon1, lon2]).mean(dim='latitude').mean(dim='longitude')
+                # this is in m/month
+                curPr = prData.tp.sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2)).mean(dim='latitude').mean(dim='longitude')
             elif wxData == '20cr':
                 lat1 = tempLat[xlat]
                 lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])

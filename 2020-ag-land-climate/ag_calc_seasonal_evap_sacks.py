@@ -40,15 +40,22 @@ with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'rb') as f:
 evapData = []
 
 for year in range(yearRange[0], yearRange[1]+1):
-    curEvapData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/monthly/evaporation_%d.nc'%year, decode_cf=False)
+    curEvapData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5-Land/monthly/evapotranspiration_monthly_%d.nc'%year, decode_cf=False)
     curEvapData.load()
 
+    scale = curEvapData.e.attrs['scale_factor']
+    offset = curEvapData.e.attrs['add_offset']
+    missing = curEvapData.e.attrs['missing_value']
+        
+    curEvapData.where((curEvapData != missing))
+    curEvapData = curEvapData.astype(float) * scale + offset
+    
     dims = curEvapData.dims
-    startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
+    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
     tDt = []
 
     for curTTime in curEvapData.time:
-        delta = datetime.timedelta(days=int(curTTime.values))
+        delta = datetime.timedelta(hours=int(curTTime.values))
         tDt.append(startingDate + delta)
     curEvapData['time'] = tDt
 
@@ -79,7 +86,7 @@ for xlat in range(len(tempLat)-1):
             if lon1 > 360:
                 lon1 -= 360
 
-            curEvap = evapData.e.sel(latitude=[lat1, lat2], longitude=[lon1, lon2]).mean(dim='latitude').mean(dim='longitude')
+            curEvap = evapData.e.sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2)).mean(dim='latitude').mean(dim='longitude')
 
             for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
@@ -91,5 +98,5 @@ for xlat in range(len(tempLat)-1):
 
                 seasonalEvap[xlat, ylon, y] = np.nansum(curYearEvap.values)
 
-with open('%s/seasonal-evap-maize-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
+with open('%s/seasonal-et-maize-%s.dat'%(dataDirDiscovery, wxData), 'wb') as f:
     pickle.dump(seasonalEvap, f)

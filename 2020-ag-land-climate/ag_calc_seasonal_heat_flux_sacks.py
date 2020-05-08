@@ -16,7 +16,11 @@ warnings.filterwarnings('ignore')
 
 wxData = 'era5'
 
-hfVar = 'sshf'
+hfVarShort = 'slhf'
+if hfVarShort == 'sshf':
+    hfVar = 'surface_sensible_heat_flux'
+elif hfVarShort == 'slhf':
+    hfVar = 'surface_latent_heat_flux'
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
@@ -42,15 +46,22 @@ with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'rb') as f:
 hfData = []
 
 for year in range(yearRange[0], yearRange[1]+1):
-    curHfData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5/monthly/%s_%d.nc'%(hfVar, year), decode_cf=False)
+    curHfData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5-Land/monthly/%s_monthly_%d.nc'%(hfVar, year), decode_cf=False)
     curHfData.load()
 
+    scale = curHfData[hfVarShort].attrs['scale_factor']
+    offset = curHfData[hfVarShort].attrs['add_offset']
+    missing = curHfData[hfVarShort].attrs['missing_value']
+
+    curHfData.where((curHfData != missing))
+    curHfData = curHfData.astype(float) * scale + offset
+    
     dims = curHfData.dims
-    startingDate = datetime.datetime(year, 1, 1, 0, 0, 0)
+    startingDate = datetime.datetime(1900, 1, 1, 0, 0, 0)
     tDt = []
 
     for curTTime in curHfData.time:
-        delta = datetime.timedelta(days=int(curTTime.values))
+        delta = datetime.timedelta(hours=int(curTTime.values))
         tDt.append(startingDate + delta)
     curHfData['time'] = tDt
 
@@ -81,10 +92,10 @@ for xlat in range(len(tempLat)-1):
             if lon1 > 360:
                 lon1 -= 360
 
-            if hfVar == 'sshf':
-                curHf = hfData.sshf.sel(latitude=[lat1, lat2], longitude=[lon1, lon2]).mean(dim='latitude').mean(dim='longitude')
-            elif hfVar == 'slhf':
-                curHf = hfData.slhf.sel(latitude=[lat1, lat2], longitude=[lon1, lon2]).mean(dim='latitude').mean(dim='longitude')
+            if hfVarShort == 'sshf':
+                curHf = hfData.sshf.sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2)).mean(dim='latitude').mean(dim='longitude')
+            elif hfVarShort == 'slhf':
+                curHf = hfData.slhf.sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2)).mean(dim='latitude').mean(dim='longitude')
 
             for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
@@ -94,7 +105,7 @@ for xlat in range(len(tempLat)-1):
                 else:
                     curYearHf = curHf.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
 
-                seasonalHf[xlat, ylon, y] = np.nanmean(curYearHf.values)
+                seasonalHf[xlat, ylon, y] = np.nansun(curYearHf.values)
 
-with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, hfVar, wxData), 'wb') as f:
+with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, hfVarShort, wxData), 'wb') as f:
     pickle.dump(seasonalHf, f)
