@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 # dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 
 if not 'eData' in locals():
@@ -314,7 +314,7 @@ with open('%s/script-data/genData.dat'%dataDirDiscovery, 'rb') as f:
     demData = pickle.load(f)
 
 demTempModels = el_build_temp_demand_model.buildNonlinearDemandModel(10)
-
+sys.exit()
 
 # calculate monthly mean maximum temp for entsoe and nuke plants
 entsoeMonthlyTxMaxHist = []

@@ -23,7 +23,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = True
+plotFigs = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -528,7 +528,7 @@ ieaSustNuke = np.array([ieaSust2018[3], ieaSust2025[3], ieaSust2030[3], ieaSust2
 ieaSustBio = np.array([ieaSust2018[4], ieaSust2025[4], ieaSust2030[4], ieaSust2035[4], ieaSust2040[4]])
 
 ieaDates = np.array([2018, 2025, 2030, 2035, 2040])
-ieaLegend = ['Coal', 'Gas', 'Oil', 'Nuke', 'Bio', 'Warming+\nCurtailment']
+ieaLegend = ['Coal', 'Gas', 'Oil', 'Nuclear', 'Bio', 'Warming+\nCurtailment']
 
 barW = 3
 

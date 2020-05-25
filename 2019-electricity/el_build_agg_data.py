@@ -22,7 +22,7 @@ import sys,os
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 # if we are running as job on discovery, send print output to a file
-outputToFile = False
+outputToFile = True
 
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
@@ -215,10 +215,10 @@ for w in range(1, 4+1):
         
     for m in range(len(models)):
         
-        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
         
         if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
             continue

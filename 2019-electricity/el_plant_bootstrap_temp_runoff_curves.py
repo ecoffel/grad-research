@@ -4,6 +4,7 @@ Created on Thu May  2 16:56:07 2019
 
 @author: Ethan
 """
+exec(open("../util/setupConsole.py").read())
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,13 +24,13 @@ qsVar = 'qsGrdcAnomSummer'
 
 modelPower = 'pow2'
 
-plotFigs = True
+plotFigs = False
 dumpData = False
 
 
 if not 'models' in locals():
     print('building models...')
-    models, plantIds, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1000)
+    models, plantIds, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1)
 
     plantIdsTmp = np.unique(plantIds)
     plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
@@ -38,7 +39,7 @@ if not 'models' in locals():
         tmp.extend([p]*len(plantIdsTmp))
     plantYears = np.array(tmp)
 
-
+sys.exit()
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 plt.figure(figsize=(8,1))

@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 runoffModel = 'grdc'
 
@@ -242,7 +242,8 @@ for p in range(txMonthlyMax.shape[0]):
             
         elif t1 < t0 and ~np.isnan(q1):
             pcHist[p,month] = 0
-          
+
+            
 print('calculating historical (1981-2005) pc with NCEP R2')
 pcHistNcepR2 = np.full([txMonthlyMaxNcepR2.shape[0], 12], np.nan)
 for p in range(txMonthlyMaxNcepR2.shape[0]):
