@@ -49,6 +49,26 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     plantIds.extend(entsoeAgDataAll['plantIds'])
     plantIds = np.array(plantIds)
     
+    plantCooling = []
+    plantCooling.extend(nukeAgDataAll['plantCooling'])
+    plantCooling.extend([-1]*len(entsoeAgDataAll['plantIds']))
+    plantCooling = np.array(plantCooling)
+    
+    plantFuel = []
+    plantFuel.extend(nukeAgDataAll['plantFuel'])
+    plantFuel.extend(entsoeAgDataAll['plantFuel'])
+    plantFuel = np.array(plantFuel)
+    
+    plantAge = []
+    plantAge.extend(nukeAgDataAll['plantAge'])
+    plantAge.extend([-1]*len(entsoeAgDataAll['plantIds']))
+    plantAge = np.array(plantAge)
+    
+    plantUSorEU = []
+    plantUSorEU.extend([0]*len(nukeAgDataAll[tempVar]))
+    plantUSorEU.extend([1]*len(entsoeAgDataAll[tempVar]))
+    plantUSorEU = np.array(plantUSorEU)
+    
     plantYears = []
     plantYears.extend(nukeAgDataAll['plantYearsSummer'])
     plantYears.extend(entsoeAgDataAll['plantYears'])
@@ -66,6 +86,10 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
     txtotal = txtotal[ind]
     qstotal = qstotal[ind]
     plantIds = plantIds[ind]
+    plantCooling = plantCooling[ind]
+    plantAge = plantAge[ind]
+    plantFuel = plantFuel[ind]
+    plantUSorEU = plantUSorEU[ind]
     plantYears = plantYears[ind]
     pctotal = pctotal[ind]
     
@@ -91,24 +115,26 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
         data = {'T1':txtotal[curInd], 'T2':txtotal[curInd]**2, \
                 'QS1':qstotal[curInd], 'QS2':qstotal[curInd]**2, \
                 'QST':txtotal[curInd]*qstotal[curInd], 'QS2T2':(txtotal[curInd]**2)*(qstotal[curInd]**2), \
-                'PlantIds':plantIds[curInd], 'PlantYears':plantYears[curInd], 'PC':pctotal[curInd]}
+                'PlantIds':plantIds[curInd], 'PlantYears':plantYears[curInd], 'PC':pctotal[curInd], \
+                'PlantCooling':plantCooling[curInd], 'PlantFuel':plantFuel[curInd], 'PlantAge':plantAge[curInd], \
+                'USorEU':plantUSorEU[curInd]}
         
         df = pd.DataFrame(data, \
                           columns=['T1', 'T2', \
                                    'QS1', 'QS2', \
                                    'QST', 'QS2T2', \
-                                   'PlantIds', 'PlantYears', \
+                                   'PlantIds', 'PlantYears', 'PlantCooling', 'PlantFuel', 'PlantAge', 'USorEU', 
                                    'PC'])
-        df = df.dropna()
+#         df = df.dropna()
         
 		# build the FE model - the 'C' operator marks those variables as fixed effects (from R-style syntax)
-        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears)', data=df).fit()
+        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears) + C(PlantCooling) + C(PlantAge)', data=df).fit()
 #         mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + C(PlantIds) + C(PlantYears)', data=df).fit()
         models.append(mdl)
     
     models = np.array(models)
 
-    return models, plantIds, plantYears, txtotal, qstotal
+    return models, plantIds, plantCooling, plantFuel, plantAge, plantUSorEU, plantYears, txtotal, qstotal
 
 def exportNukeEntsoePlantLocations(dataDir):
     

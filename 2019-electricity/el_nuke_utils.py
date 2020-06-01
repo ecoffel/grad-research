@@ -7,6 +7,7 @@ Created on Mon Apr  1 09:47:36 2019
 
 import json
 import numpy as np
+import pandas as pd
 import scipy.stats as st
 import el_find_best_runoff_dist
 
@@ -24,6 +25,13 @@ def running_mean(x, N):
 
 def loadNukeData(dataDir):
     print('loading nuke eba...')
+    
+    usPlants = pd.read_csv('%s/cooling-data/us-plant-data.csv'%dataDir, delimiter=',', header=4)
+    usPlants = usPlants[usPlants['Fuel Types']=='NUC']
+    
+    usPlantsCoolingData = pd.read_csv('%s/cooling-data/cooling_detail_2014.csv'%dataDir, delimiter=',', header=2, squeeze=True)
+    coolingTypes = {'O':0, 'R':1, 'D':2}
+
     eba = []
     for line in open('%s/NUC_STATUS.txt' % dataDir, 'r'):
         if (len(eba)+1) % 100 == 0:
@@ -40,6 +48,8 @@ def loadNukeData(dataDir):
             curLineNew['year'] = []
             curLineNew['month'] = []
             curLineNew['day'] = []
+            curLineNew['cooling'] = np.nan
+            curLineNew['age'] = np.nan
             curLineNew['data'] = []
             
             for datapt in curLine['data']:
@@ -54,10 +64,36 @@ def loadNukeData(dataDir):
                     curLineNew['data'].append(float(datapt[1]))
                 else:
                     curLineNew['data'].append(np.nan)
+            
+            for p in range(usPlants.shape[0]):
+                if np.array(list(usPlants['Plant Name']))[p] in curLine['name'] and \
+                    'generator' not in curLine['name'] and 'percent' not in curLine['name'] and 'outage' in curLine['name']:
+
+                    curPlant = usPlantsCoolingData[usPlantsCoolingData['Plant Code']==np.array(list(usPlants['Plant Code']))[p]]
+                    curCool = np.array(list(curPlant['923 Cooling Type']))
+                    nn = np.where((curCool != 'nan'))[0]
+                    curLineNew['cooling'] = coolingTypes[curCool[nn][0][0]]
+                    
+                    curAge = np.nanmean(np.array(list(curPlant['Generator Inservice Year'])))
+                    if np.isnan(curAge):
+                        curAge = -1
+                    elif curAge < 1979:
+                        curAge = 1970
+                    elif curAge < 1989:
+                        curAge = 1980
+                    elif curAge >= 1990:
+                        curAge = 1990
+                    
+                    curLineNew['age'] = curAge
+                    
+            if np.isnan(curLineNew['cooling']):
+                curLineNew['cooling'] = -1
                     
             curLineNew['year'] = np.array(curLineNew['year'])
             curLineNew['month'] = np.array(curLineNew['month'])
             curLineNew['day'] = np.array(curLineNew['day'])
+            curLineNew['cooling'] = np.array(curLineNew['cooling'])
+            curLineNew['age'] = np.array(curLineNew['age'])
             curLineNew['data'] = np.array(curLineNew['data'])
             
             eba.append(curLineNew)
@@ -197,6 +233,9 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     nukeLat = []
     nukeLon = []
     
+    nukeCooling = []
+    nukeAge = []
+    
     plantCapacity = []
     plantPercCapacity = []
     plantTx = []
@@ -277,7 +316,10 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
             nukeLat.append(eba[ids[i,0]]['lat'])
             nukeLon.append(eba[ids[i,0]]['lon'])
             
-            plantIds.append(i)
+            nukeCooling.append(eba[ids[i,0]]['cooling'])
+            nukeAge.append(eba[ids[i,0]]['age'])
+            
+            plantIds.append(i+1)
             
             # find total generating capacity for this plant
             for p in range(len(eba)):
@@ -302,6 +344,9 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     
     nukeLat = np.array(nukeLat)
     nukeLon = np.array(nukeLon)
+    
+    nukeCooling = np.array(nukeCooling)
+    nukeAge = np.array(nukeAge)
     
     finalPlantPercCapacity = []
     finalPlantPercCapacitySummer = []
@@ -675,6 +720,8 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
     plantQsGrunAnomSummer[plantQsGrunAnomSummer > 5] = np.nan
     
     plantIds = np.array(plantIds)
+    nukeCooling = np.array(nukeCooling)
+    nukeAge = np.array(nukeAge)
     
     finalPlantPercCapacity = np.array(finalPlantPercCapacity)
     finalPlantPercCapacitySummer = np.array(finalPlantPercCapacitySummer)
@@ -692,6 +739,7 @@ def accumulateNukeWxDataPlantLevel(datadir, eba, nukeMatchData):
          'normalCapacity':plantCapacity, \
          'plantIds':plantIds, 'summerInds':summerInds, \
          'plantLats':nukeLat, 'plantLons':nukeLon, \
+         'plantCooling':nukeCooling, 'plantFuel':[0]*len(nukeCooling), 'plantAge':nukeAge, \
          'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, 'plantDaysAll':plantDays}
     return d
 
@@ -718,6 +766,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     
     # unique identifiers for plants
     plantIds = []
+    plantCooling = []
+    plantAge = []
     plantYears = []
     plantMonths = []
     plantDays = []
@@ -736,7 +786,9 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             # calc the plant operating capacity (% of total normal capacity)
             percCapacity.append(100*(1-(out/cap)))
             
-            plantIds.append([i]*len(out))
+            plantIds.append([i+1]*len(out))
+            plantCooling.append([eba[ids[i,0]]['cooling']]*len(out))
+            plantAge.append([eba[ids[i,0]]['age']]*len(out))
             plantYears.append(eba[ids[i,0]]['year'])
             plantMonths.append(eba[ids[i,0]]['month'])
             plantDays.append(eba[ids[i,0]]['day'])
@@ -756,6 +808,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     
     percCapacity = np.array(percCapacity)  
     plantIds = np.array(plantIds)
+    plantCooling = np.array(plantCooling)
+    plantAge = np.array(plantAge)
     plantYears = np.array(plantYears)
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
@@ -790,6 +844,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantTxTotal = []
     plantCapTotal = []
     plantIdsAcc = []
+    plantCoolingAcc = []
+    plantAgeAcc = []
     plantMeanTempsAcc = []
     yearsAcc = []
     monthsAcc = []
@@ -824,7 +880,6 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             curQsGrun = curQsGrun[nn]
             plantCap = plantCap[nn]
             plantTx = plantTx[nn]
-                        
             
             # use best dist fit to calc anomalies and percentiles for nldas summer runoff data
             nn = np.where(~np.isnan(curQsNldas))[0]
@@ -949,6 +1004,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
             plantTxTotal.extend(plantTx)
             
             plantIdsAcc.extend(plantIds[i,summerInds])
+            plantCoolingAcc.extend(plantCooling[i,summerInds])
+            plantAgeAcc.extend(plantAge[i,summerInds])
             plantMeanTempsAcc.extend([np.nanmean(plantTx)]*len(plantTx))
             yearsAcc.extend(plantYears[i,summerInds])
             monthsAcc.extend(plantMonths[i,summerInds])
@@ -989,6 +1046,8 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
     plantTxTotal = np.array(plantTxTotal)
     plantCapTotal = np.array(plantCapTotal)
     plantIdsAcc = np.array(plantIdsAcc)
+    plantCoolingAcc = np.array(plantCoolingAcc)
+    plantAgeAcc = np.array(plantAgeAcc)
     yearsAcc = np.array(yearsAcc)
     monthsAcc = np.array(monthsAcc)
     daysAcc = np.array(daysAcc)
@@ -1001,6 +1060,7 @@ def accumulateNukeWxData(datadir, eba, nukeMatchData):
          'qsGrunSummer':plantQsGrunTotal, 'qsGrunAnomSummer':plantQsGrunAnomTotal, 'qsGrunPercentileSummer':plantQsGrunPercentileTotal, \
          'capacitySummer':plantCapTotal, 'percCapacity':percCapacity, \
          'summerInds':summerInds, 'outagesBoolSummer':outageBool, 'plantIds':plantIdsAcc, \
+         'plantCooling':plantCoolingAcc, 'plantFuel':[0]*len(plantCoolingAcc), 'plantAge':plantAgeAcc, \
          'plantMeanTemps':plantMeanTempsAcc, 'plantYearsAll':plantYears, 'plantMonthsAll':plantMonths, \
          'plantYearsSummer':yearsAcc, 'plantMonthsSummer':monthsAcc, 'plantDaysSummer':daysAcc}
     return d

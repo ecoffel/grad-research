@@ -39,7 +39,7 @@ if not 'models' in locals():
         tmp.extend([p]*len(plantIdsTmp))
     plantYears = np.array(tmp)
 
-sys.exit()
+# sys.exit()
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 plt.figure(figsize=(8,1))
@@ -128,7 +128,7 @@ pcEval = []
 dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
                          'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
                          'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
 for i in range(len(models)):
     pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
@@ -153,7 +153,7 @@ pcEval = []
 dfpred = pd.DataFrame({'T1':[t]*len(plantIds), 'T2':[t**2]*len(plantIds), \
                          'QS1':[q]*len(plantIds), 'QS2':[q**2]*len(plantIds), \
                          'QST':[t*q]*len(plantIds), 'QS2T2':[(t**2)*(q**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
 for i in range(len(models)):
     pcEval.append(np.nanmean(models[i].predict(dfpred)))
 
@@ -197,7 +197,7 @@ for k in range(len(xd)):
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
                      'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
-                     'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
     for i in range(len(models)):
         ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
         
@@ -213,7 +213,7 @@ for k in range(len(xd)):
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
                      'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
-                     'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
     yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
     yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
     yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))
@@ -274,7 +274,7 @@ for k in range(len(xd)):
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
                      'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
-                     'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
     for i in range(len(models)):
         ydAll[i, k] = np.nanmean(models[i].predict(dfpred))
         
@@ -288,7 +288,7 @@ for k in range(len(xd)):
     dfpred = pd.DataFrame({'T1':[xd[k]]*len(plantIds), 'T2':[xd[k]**2]*len(plantIds), \
                      'QS1':[qd[k]]*len(plantIds), 'QS2':[qd[k]**2]*len(plantIds), \
                      'QST':[xd[k]*qd[k]]*len(plantIds), 'QS2T2':[(xd[k]**2)*(qd[k]**2)]*len(plantIds), \
-                     'PlantIds':plantIds, 'PlantYears':plantYears})
+                     'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':[0]*len(plantIds)})
     yd10.append(np.nanmean(models[indPc10[0]].predict(dfpred)))
     yd50.append(np.nanmean(models[indPc50[0]].predict(dfpred)))   
     yd90.append(np.nanmean(models[indPc90[0]].predict(dfpred)))

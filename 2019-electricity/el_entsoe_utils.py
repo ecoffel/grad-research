@@ -53,6 +53,13 @@ def getFuelType(s):
         if t in s.lower() or s.lower() in t:
             return t
 
+def getFuelTypeNumber(s):
+    types = {'coal':1, 'oil':2, 'gas':3, 'nuclear':0, 'cogeneration':4, 'biomass':5}
+    if s in types.keys():
+        return types[s]
+    else:
+        return np.nan
+    
 def loadEntsoeWithLatLon(dataDir, forced):
     
     print('loading entsoe plant locations...')
@@ -170,7 +177,7 @@ def loadEntsoeWithLatLon(dataDir, forced):
                         eicEntsoe.append(curEIC)
                         countriesEntsoe.append(getEUCountryCode(lineParts[countryInd]))
                         namesEntsoe.append(curName)
-                        fuelTypesEntsoe.append(getFuelType(lineParts[15].strip()))
+                        fuelTypesEntsoe.append(getFuelTypeNumber(getFuelType(lineParts[15].strip())))
                         actualCapacityEntsoe.append(float(lineParts[capActInd]))
                         normalCapacityEntsoe.append(float(lineParts[capNormInd]))
                     
@@ -258,7 +265,7 @@ def loadEntsoe(dataDir, forced):
                     eicEntsoe.append(curEIC)
                     countriesEntsoe.append(getEUCountryCode(lineParts[countryInd]))
                     namesEntsoe.append(curName)
-                    fuelTypesEntsoe.append(getFuelType(lineParts[15].strip()))
+                    fuelTypesEntsoe.append(getFuelTypeNumber(getFuelType(lineParts[15].strip())))
                     actualCapacityEntsoe.append(float(lineParts[capActInd]))
                     normalCapacityEntsoe.append(float(lineParts[capNormInd]))
                     
@@ -317,6 +324,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     txMonths = []
     txDays = []
     plantIds = []
+    plantFuel = []
     
     # the number to start the IDs at to differentiate from the nuke data
     baseId = 100
@@ -411,6 +419,7 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     for c in range(len(entsoeLat)):
         
         plantIds.append(c + baseId)
+        plantFuel.append(entsoeData['fuelTypes'][c])
         
         finalTx.append([])
         finalQs.append([])
@@ -666,6 +675,8 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     entsoeLat = np.array(entsoeLat)
     entsoeLon = np.array(entsoeLon)
     
+    entsoeCooling = [np.nan]*len(entsoeLat)
+    
     d = {'tx':finalTx, 'txSummer':finalTxSummer, \
          'qs':finalQs, 'qsAnom':finalQsAnom, 'qsPercentile':finalQsPercentile, \
          'qsGldasBasin':finalQsGldasBasin, 'qsGldasBasinAnom':finalQsGldasBasinAnom, 'qsGldasBasinPercentile':finalQsGldasBasinPercentile, \
@@ -674,10 +685,10 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
          'qsGrdc':finalQsGrdc, 'qsGrdcAnom':finalQsGrdcAnom, 'qsGrdcPercentile':finalQsGrdcPercentile, \
          'qsGrdcSummer':finalQsGrdcSummer, 'qsGrdcAnomSummer':finalQsGrdcAnomSummer, 'qsGrdcPercentileSummer':finalQsGrdcPercentileSummer, \
          'years':txYears, 'months':txMonths, 'days':txDays, \
-         'plantIds':plantIds, \
+         'plantIds':plantIds, 'plantFuel':plantFuel, \
          'countries':entsoeData['countries'][plantInds[0]], 'capacity':finalCapacity, 'capacitySummer':finalCapacitySummer, \
          'outagesBool':finalOutagesBool, 'outagesBoolSummer':finalOutagesBoolSummer, 'outagesCount':finalOutagesCount, \
-         'lats':entsoeLat, 'lons':entsoeLon}
+         'lats':entsoeLat, 'lons':entsoeLon, 'plantCooling':entsoeCooling}
     return d
 
 
@@ -701,6 +712,7 @@ def aggregateEntsoeData(entsoeMatchData):
     plantMonths = []
     plantDays = []
     plantIds = []
+    plantFuel = []
     plantMeanTemps = []
     
     for c in range(entsoeMatchData['capacity'].shape[0]):
@@ -743,6 +755,7 @@ def aggregateEntsoeData(entsoeMatchData):
             outageBoolAll.extend(curOutageBool)
             outageCountAll.extend(normalize(np.array(curOutageCount)))
             plantIds.extend([entsoeMatchData['plantIds'][c]] * len(curTx))
+            plantFuel.extend([entsoeMatchData['plantFuel'][c]] * len(curTx))
             plantYears.extend(entsoeMatchData['years'][inds])
             plantMonths.extend(entsoeMatchData['months'][inds])
             plantDays.extend(entsoeMatchData['days'][inds])
@@ -764,16 +777,19 @@ def aggregateEntsoeData(entsoeMatchData):
     outageBoolAll = np.array(outageBoolAll)
     outageCountAll = np.array(outageCountAll)
     plantIds = np.array(plantIds)
+    plantFuel = np.array(plantFuel)
     plantYears = np.array(plantYears)
     plantMonths = np.array(plantMonths)
     plantDays = np.array(plantDays)
+    
+    plantCooling = [np.nan]*len(plantIds)
     
     d = {'txSummer':txAll, 'qsSummer':qsAll, 'qsAnomSummer':qsAnomAll, 'qsPercentileSummer':qsPercentileAll, \
          'qsGldasBasinSummer':qsGldasBasinAll, 'qsGldasBasinAnomSummer':qsGldasBasinAnomAll, 'qsGldasBasinPercentileSummer':qsGldasBasinPercentileAll, \
          'qsGrdcSummer':qsGrdcAll, 'qsGrdcAnomSummer':qsGrdcAnomAll, 'qsGrdcPercentileSummer':qsGrdcPercentileAll, \
          'capacitySummer':capacityAll, 'outagesBoolSummer':outageBoolAll, \
          'outagesCount':outageCountAll, 'plantYears':plantYears, 'plantMonths':plantMonths, \
-         'plantDays':plantDays, 'plantIds':plantIds, 'plantMeanTemps':plantMeanTemps}
+         'plantDays':plantDays, 'plantIds':plantIds, 'plantFuel':plantFuel, 'plantMeanTemps':plantMeanTemps, 'plantCooling':plantCooling}
     return d
 
 

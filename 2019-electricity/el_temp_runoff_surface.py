@@ -17,13 +17,13 @@ import sys
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
 
 # only show values on the surface that have historically occurred
 onlyShowObs = True
 
 tempVar = 'txSummer'
-qsVar = 'qsGrdcPercentileSummer'
+qsVar = 'qsGrdcAnomSummer'
 
 # load historical weather data for plants to compute mean temps 
 # to display on bootstrap temp curve
@@ -58,6 +58,7 @@ else:
 txrange = np.linspace(27, 51, 25)
 
 histPDF = np.zeros([len(qsrange), len(txrange)])
+histStipple = np.zeros([len(qsrange), len(txrange)])
 
 for q, qs in enumerate(qsrange):
     for t, tx in enumerate(txrange):
@@ -67,16 +68,25 @@ for q, qs in enumerate(qsrange):
             histPDF[q,t] = 1
         else:
             histPDF[q,t] = 0
+        
+        if len(ind) > 10:
+            histStipple[q,t] = 1
 
 print('building models')
-models, plantIds, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 10)
+models, plantIds, plantCooling, plantUSorEU, plantYears, plantTxData, plantQsData = el_build_temp_pp_model.buildNonlinearTempQsPPModel(tempVar, qsVar, 1)
 
-plantIdsTmp = np.unique(plantIds)
-plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
-tmp = []
-for p in np.unique(plantYears):
-    tmp.extend([p]*len(plantIdsTmp))
-plantYears = np.array(tmp)
+ind = np.where(plantIds > 0)[0]
+plantIds = plantIds[ind]
+plantYears = plantYears[ind]
+plantCooling = plantCooling[ind]
+
+
+# plantIdsTmp = np.unique(plantIds)
+# plantIds = np.array(list(np.unique(plantIds))*len(np.unique(plantYears)))
+# tmp = []
+# for p in np.unique(plantYears):
+#     tmp.extend([p]*len(plantIdsTmp))
+# plantYears = np.array(tmp)
 
 yds = np.zeros([len(models), len(qsrange), len(txrange)])
 yds[yds == 0] = np.nan
@@ -91,7 +101,7 @@ for m in range(len(models)):
                 dfpred = pd.DataFrame({'T1':[txrange[t]]*len(plantIds), 'T2':[txrange[t]**2]*len(plantIds), \
                          'QS1':[qsrange[q]]*len(plantIds), 'QS2':[qsrange[q]**2]*len(plantIds), \
                          'QST':[txrange[t]*qsrange[q]]*len(plantIds), 'QS2T2':[(txrange[t]**2)*(qsrange[q]**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling})
 
                 yds[m,q,t] = np.nanmean(models[m].predict(dfpred))
             else:
@@ -118,10 +128,10 @@ else:
 plt.plot([27, 50], [np.nanmean(plantMeanRunoff), np.nanmean(plantMeanRunoff)], '-k', lw=2)
 # plt.plot([txHist, txHist], [-4, 4], '-k', lw=2)
 
-# for q in range(len(qsrange)):
-#    for t in range(len(txrange)):
-#        if histPDF[q, t] == 1:
-#            plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
+for q in range(len(qsrange)):
+   for t in range(len(txrange)):
+       if histStipple[q, t] == 1:
+           plt.plot(txrange[t], qsrange[q], 'ok', markersize=1)
 
 #plt.plot(txHist, qsHist, '+k', markersize=20, mew=4, lw=2)
 plt.plot(tx2, qs2, '+k', markersize=20, mew=4, lw=2, color='#ffb835', label='+ 2$\degree$C')
@@ -130,8 +140,8 @@ plt.plot(tx4, qs4, '+k', markersize=20, mew=4, lw=2, color=snsColors[1], label='
 # plt.xticks(txrange)
 # plt.yticks(qsrange)
 plt.xlabel('Daily Tx ($\degree$C)', fontname = 'Helvetica', fontsize=16)
-# plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
-plt.ylabel('Runoff percentile', fontname = 'Helvetica', fontsize=16)
+plt.ylabel('Runoff anomaly (SD)', fontname = 'Helvetica', fontsize=16)
+# plt.ylabel('Runoff percentile', fontname = 'Helvetica', fontsize=16)
 cb.set_label('Mean plant capacity (%)', fontname = 'Helvetica', fontsize=16)
 
 for tick in plt.gca().xaxis.get_major_ticks():
