@@ -15,6 +15,10 @@ import pickle, gzip
 import sys, os
 import el_load_global_plants
 
+
+import warnings
+warnings.filterwarnings('ignore')
+
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 models = ['bcc-csm1-1-m', 'canesm2', \
@@ -23,7 +27,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
               'inmcm4', 'miroc5', 'miroc-esm', \
               'mpi-esm-mr', 'mri-cgcm3', 'noresm1-m']
 
-plotFigs = False
+plotFigs = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -31,7 +35,9 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
+
+modelPower = 'pow2-noInteraction'
 
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
@@ -137,7 +143,7 @@ with open('%s/script-data/world-plant-caps-iea-scenarios.dat'%dataDirDiscovery, 
                  'globalPlantsCapsNP':globalPlantsCapsNP}
     pickle.dump(scenarios, f)
 
-with open('%s/script-data/pc-at-txx-hist-%s-%s-1981-2018.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
+with open('%s/script-data/pc-at-txx-hist-%s-%s-%s-1981-2018.dat'%(dataDirDiscovery, plantData, runoffData, modelPower), 'rb') as f:
     pcChgHist = pickle.load(f)
 
     pcTxx10 = pcChgHist['pCapTxx10']
@@ -166,7 +172,7 @@ for y in range(pcTxx50.shape[1]):
 
 
 
-with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'rb') as f:
+with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp, modelPower), 'rb') as f:
     pcChgFut = pickle.load(f)
     
     # at the moment the key is Rcp85 for both scenarios - just stored in different files
@@ -175,8 +181,8 @@ with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, 
     pCapTxxFutCurRcp_90 = pcChgFut['pCapTxxFutRcp8590']
 
 
-if os.path.isfile('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData)):
-    with open('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData), 'rb') as f:
+if os.path.isfile('%s/script-data/pc-change-scenarios-%s-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData, modelPower)):
+    with open('%s/script-data/pc-change-scenarios-%s-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData, modelPower), 'rb') as f:
         outageScenarios = pickle.load(f)
 else:
     outagesFutCurRcp_const_10 = []
@@ -342,19 +348,21 @@ else:
                        'np50':outagesFutCurRcp_np_50/1e3,\
                        'np90':outagesFutCurRcp_np_90/1e3}
     
-    with open('%s/script-data/pc-change-scenarios-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData), 'wb') as f:
+    with open('%s/script-data/pc-change-scenarios-%s-%s-%s-%s.dat'%(dataDirDiscovery, rcp, plantData, runoffData, modelPower), 'wb') as f:
         pickle.dump(outageScenarios, f)
 
 
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
+ylims = [-225, 0]
+
 decadesToShow = [d[0]+5 for d in decades]
-yaxis1Ticks = np.arange(-250,1,50)
+yaxis1Ticks = np.arange(-200,1,50)
 yaxis2Ticks = [int(-x) for x in yaxis1Ticks/avgPlantSize]
 
 plt.figure(figsize=(6,4))
-plt.ylim([-260, 0])
+plt.ylim(ylims)
 plt.xlim([2016,2087])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -498,7 +506,7 @@ leg = plt.legend(prop = {'size':9, 'family':'Helvetica'}, \
 leg.get_frame().set_linewidth(0.0)
 
 ax2 = plt.twinx()
-plt.ylim([-260, 0])
+plt.ylim(ylims)
 plt.ylabel('# Average power plants', fontname = 'Helvetica', fontsize=16)
 plt.yticks(yaxis1Ticks)
 plt.gca().set_yticklabels(yaxis2Ticks)
@@ -508,7 +516,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label2.set_fontsize(14)
 
 if plotFigs:
-    plt.savefig('global-curtailment-%s.png'%rcp, format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('global-curtailment-%s-%s.png'%(rcp, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
 
 plt.show()

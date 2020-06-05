@@ -14,12 +14,16 @@ import pickle, gzip
 import el_load_global_plants
 import sys, os
 
+import warnings
+warnings.filterwarnings('ignore')
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = True
+plotFigs = False
+
+outputToFile = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -29,7 +33,9 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
+
+modelPower = 'pow2-noInteraction'
 
 decades = np.array([[2080,2089]])
 
@@ -44,13 +50,19 @@ monthLens = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffData), 'rb') as f:
+plantIds = []
+plantYears = []
+with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
+    # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 baseTx = 27
 baseQs = 0
@@ -58,7 +70,7 @@ baseQs = 0
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
@@ -96,12 +108,12 @@ plantPcTxAllModels90_np = np.full([len(models), len(globalPlants['caps']), 10, 1
 
 for m in range(len(models)):
     
-    if os.path.isfile('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%d-%d.dat'% \
-                      (dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[0,0], decades[0,1])):
+    if os.path.isfile('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1])):
         
         print('loading model %s'%models[m])
-        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[0,0], decades[0,1]), 'rb') as f:
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'rb') as f:
             pcChg = pickle.load(f)
             
             plantPcTxAllModels10_40yr[m, :, :, :] = pcChg['plantPcAggTx10_40yr']
@@ -143,14 +155,23 @@ for m in range(len(models)):
         plantPcTx50_np = np.full([len(globalPlants['caps']), 10, 12], np.nan)
         plantPcTx90_np = np.full([len(globalPlants['caps']), 10, 12], np.nan)
 
-        print('processing %s/%d...'%(models[m], decades[0,0]), file=open("el_aggregate_pc_model_warming.txt", "a"))
+        if outputToFile:
+            print('processing %s/%d...'%(models[m], decades[0,0]), file=open("el_aggregate_pc_model_warming.txt", "a"))
+        else:
+            print('processing %s/%d...'%(models[m], decades[0,0]))
 
-        print('loading future tx data', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        if outputToFile:
+            print('loading future tx data', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        else:
+            print('loading future tx data')
         fileNameTemp = '%s/future-temps/%s-pp-%s-tx-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[0,0], decades[0,1])
         plantTxData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
         plantTxData = plantTxData[3:,:]
         
-        print('loading future tn data', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        if outputToFile:
+            print('loading future tn data', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        else:
+            print('loading future tn data')
         fileNameTemp = '%s/future-temps/%s-pp-%s-tn-cmip5-%s-%d-%d.csv'%(dataDirDiscovery, plantData, rcp, models[m], decades[0,0], decades[0,1])    
         plantTnData = np.genfromtxt(fileNameTemp, delimiter=',', skip_header=0)
         plantTnData = plantTnData[3:,:]
@@ -158,19 +179,28 @@ for m in range(len(models)):
         fileNameRunoffDistFit = '%s/future-temps/%s-pp-%s-runoff-anom-cmip5-%s-%d-%d.csv'% \
                                  (dataDirDiscovery, plantData, rcp, models[m], decades[0,0], decades[0,1]) 
         
-        print('loading future runoff anomalies', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        if outputToFile:
+            print('loading future runoff anomalies', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        else:
+            print('loading future runoff anomalies')
         plantQsData = np.genfromtxt(fileNameRunoffDistFit, delimiter=',', skip_header=0)
         plantQsYears = plantQsData[0,:]
         plantQsMonths = plantQsData[1,:]
         plantQsDays = plantQsData[2,:]
         plantQsData = plantQsData[3:,:]
 
-        print('calculating pc', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        if outputToFile:
+            print('calculating pc', file=open("el_aggregate_pc_model_warming.txt", "a"))
+        else:
+            print('calculating pc')
         # compute pc for every plant
         for p in range(plantTxData.shape[0]):
 
             if p % 1000 == 0:
-                print('plant %d of %d'%(p, plantTxData.shape[0]), file=open("el_aggregate_pc_model_warming.txt", "a"))
+                if outputToFile:
+                    print('plant %d of %d'%(p, plantTxData.shape[0]), file=open("el_aggregate_pc_model_warming.txt", "a"))
+                else:
+                    print('plant %d of %d'%(p, plantTxData.shape[0]))
 
             # all tx and qs data for this plant for the decade
             tx = plantTxData[p,:]
@@ -215,7 +245,9 @@ for m in range(len(models)):
             dfpred = pd.DataFrame({'T1':txHourly[indCompute], 'T2':txHourly[indCompute]**2, \
                                      'QS1':qsHourly[indCompute], 'QS2':qsHourly[indCompute]**2, \
                                      'QST':txHourly[indCompute]*qsHourly[indCompute], 'QS2T2':(txHourly[indCompute]**2)*(qsHourly[indCompute]**2), \
-                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
+                                     'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
+                                     'PlantAge':plantAge[indPlantIdsCompute]})
 
             plantPcTx10CurDecade[indCompute] = pcModel10.predict(dfpred) - basePred10
             plantPcTx50CurDecade[indCompute] = pcModel50.predict(dfpred) - basePred50
@@ -288,8 +320,8 @@ for m in range(len(models)):
                  'plantPcAggTx10_np':plantPcTx10_np, \
                  'plantPcAggTx50_np':plantPcTx50_np, \
                  'plantPcAggTx90_np':plantPcTx90_np}
-        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, models[m], decades[0,0], decades[0,1]), 'wb') as f:
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
 

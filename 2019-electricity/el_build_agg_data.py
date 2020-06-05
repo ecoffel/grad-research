@@ -34,7 +34,7 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 runoffModel = 'grdc'
 plantData = 'useu'
 
-modelPower = 'pow2'
+modelPower = 'pow2-noInteraction'
 
 # '-anom-best-dist' or ''
 qsdist = '-anom-best-dist'
@@ -55,11 +55,15 @@ plantIds = []
 plantYears = []
 with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffModel, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
+    # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 histFileName10 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-10.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
 histFileName50 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-50.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
@@ -102,7 +106,7 @@ if not os.path.isfile(histFileName10):
     dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
     
     basePred10 = np.nanmean(pcModel10.predict(dfpred))
     basePred50 = np.nanmean(pcModel50.predict(dfpred))
@@ -164,7 +168,8 @@ if not os.path.isfile(histFileName10):
                                          'QST':txHourly[indTxAboveBase]*qsHourly[indTxAboveBase], \
                                          'QS2T2':(txHourly[indTxAboveBase]**2)*(qsHourly[indTxAboveBase]**2), \
                                          'PlantIds':plantIds[indPlantIds], \
-                                         'PlantYears':plantYears[indPlantIds]})
+                                         'PlantYears':plantYears[indPlantIds], 'PlantCooling':plantCooling[indPlantIds], \
+                                         'PlantFuel':plantFuel[indPlantIds], 'PlantAge':plantAge[indPlantIds]})
 
         pcPred10[indTxAboveBase] = pcModel10.predict(dfpred)
         pcPred50[indTxAboveBase] = pcModel50.predict(dfpred)
@@ -215,10 +220,10 @@ for w in range(1, 4+1):
         
     for m in range(len(models)):
         
-        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
-        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef-no-qs2t2.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName = '%s/pc-future-%s/%s-pc-future%s-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName10 = '%s/pc-future-%s/%s-pc-future%s-10-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
+        fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
         
         if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
             continue
@@ -290,7 +295,7 @@ for w in range(1, 4+1):
         dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
     
         basePred10 = np.nanmean(pcModel10.predict(dfpred))
         basePred50 = np.nanmean(pcModel50.predict(dfpred))
@@ -356,7 +361,8 @@ for w in range(1, 4+1):
                                              'QST':txHourly[indTxAboveBase]*qsHourly[indTxAboveBase], \
                                              'QS2T2':(txHourly[indTxAboveBase]**2)*(qsHourly[indTxAboveBase]**2), \
                                              'PlantIds':plantIds[indPlantIds], \
-                                             'PlantYears':plantYears[indPlantIds]})
+                                             'PlantYears':plantYears[indPlantIds], 'PlantCooling':plantCooling[indPlantIds], \
+                                             'PlantFuel':plantFuel[indPlantIds], 'PlantAge':plantAge[indPlantIds]})
 
             pcPred10[indTxAboveBase] = pcModel10.predict(dfpred)
             pcPred50[indTxAboveBase] = pcModel50.predict(dfpred)

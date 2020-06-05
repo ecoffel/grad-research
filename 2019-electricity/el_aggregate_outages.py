@@ -47,7 +47,7 @@ runoffData = 'grdc'
 # world, useu, or entsoe-nuke
 plantData = 'useu'
 
-modelPower = 'pow2'
+modelPower = 'pow2-noInteraction'
 
 if plantData == 'useu':
     globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
@@ -57,16 +57,23 @@ elif plantData == 'world':
 with open('%s/script-data/active-pp-inds-40-%s.dat'%(dataDirDiscovery, plantData), 'rb') as f:
     livingPlantsInds40 = pickle.load(f)
 
+# load temp-runoff outage models
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
+plantIds = []
+plantYears = []
 with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
+    # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 yearRange = [1981, 2018]
 
@@ -79,7 +86,7 @@ baseQs = 0
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantAge':plantAge, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
@@ -587,7 +594,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
     tick.label2.set_fontsize(14)
 
 if plotFigs:
-    plt.savefig('accumulated-annual-outage-cdf-%s-%s.png'%(plantData,runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
+    plt.savefig('accumulated-annual-outage-cdf-%s-%s-%s.png'%(plantData,runoffData, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
 
     
     
@@ -666,7 +673,7 @@ for tick in plt.gca().yaxis.get_major_ticks():
 #plt.gca().set_aspect(abs(x1-x0)/abs(y1-y0))
 
 if plotFigs:
-    plt.savefig('accumulated-monthly-outage-%s-%s.png'%(plantData, runoffData), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
+    plt.savefig('accumulated-monthly-outage-%s-%s-%s.png'%(plantData, runoffData, modelPower), format='png', dpi=500, bbox_inches = 'tight', pad_inches = 0, transparent=True)
 
 plt.show()
 sys.exit()

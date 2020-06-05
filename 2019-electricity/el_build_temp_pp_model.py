@@ -128,13 +128,14 @@ def buildNonlinearTempQsPPModel(tempVar, qsVar, nBootstrap):
 #         df = df.dropna()
         
 		# build the FE model - the 'C' operator marks those variables as fixed effects (from R-style syntax)
-        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + QS2T2 + C(PlantIds) + C(PlantYears) + C(PlantCooling) + C(PlantAge)', data=df).fit()
+#         mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + C(PlantIds) + C(PlantYears) + C(PlantCooling) + C(PlantAge)', data=df).fit()
+        mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + C(PlantIds) + C(PlantYears) + C(PlantCooling) + C(PlantAge)', data=df).fit()
 #         mdl=smf.ols(formula='PC ~ T1 + T2 + QS1 + QS2 + QST + C(PlantIds) + C(PlantYears)', data=df).fit()
         models.append(mdl)
     
     models = np.array(models)
 
-    return models, plantIds, plantCooling, plantFuel, plantAge, plantUSorEU, plantYears, txtotal, qstotal
+    return models, df, plantIds, plantCooling, plantFuel, plantAge, plantUSorEU, plantYears, txtotal, qstotal
 
 def exportNukeEntsoePlantLocations(dataDir):
     

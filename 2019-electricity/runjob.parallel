@@ -6,8 +6,8 @@
 #PBS -q default
 
 # request a total of 32 processors for this job (2 nodes and 16 processors per node)
-#PBS -l nodes=1:ppn=10
-#PBS -l walltime=1:00:00
+#PBS -l nodes=1:ppn=23
+#PBS -l walltime=48:00:00
 
 # mail is sent to you when the job starts and when it terminates or aborts
 #PBS -m bea
@@ -20,4 +20,4 @@ cd $PBS_O_WORKDIR
 
 module load python
 source activate ecoffel
-ipython el_build_agg_data.py
+ipython el_aggregate_pc_model_warming.py

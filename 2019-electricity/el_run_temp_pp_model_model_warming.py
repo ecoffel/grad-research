@@ -13,13 +13,16 @@ import pandas as pd
 import pickle, gzip
 import sys, os
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
-dumpData = False
+dumpData = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -27,9 +30,11 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
-yearRange = [1981, 2005]
+modelPower = 'pow2-noInteraction'
+
+yearRange = [1981, 2018]
 decades = np.array([[2020,2029],\
                    [2030, 2039],\
                    [2040,2049],\
@@ -47,13 +52,19 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffData), 'rb') as f:
+plantIds = []
+plantYears = []
+with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
+    # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 baseTx = 27
 baseQs = 0
@@ -61,7 +72,7 @@ baseQs = 0
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
@@ -71,8 +82,13 @@ basePred90 = np.nanmean(pcModel90.predict(dfpred))
 fileNameRunoff = '%s/script-data/%s-pp-runoff-anom.csv'%(dataDirDiscovery, plantData)
 
 # load historical pc for txx days
-with open('%s/script-data/pc-at-txx-hist-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData), 'rb') as f:
+# with open('%s/script-data/pc-at-txx-hist-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, modelPower), 'rb') as f:
+#     pcChg = pickle.load(f)
+
+with open('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1]), 'rb') as f:
     pcChg = pickle.load(f)
+    
+    
 
 
 plantPcTxx10 = []
@@ -113,7 +129,9 @@ for m in range(len(models)):
             dfpred = pd.DataFrame({'T1':tx[indCompute], 'T2':tx[indCompute]**2, \
                                      'QS1':qs[indCompute], 'QS2':qs[indCompute]**2, \
                                      'QST':tx[indCompute]*qs[indCompute], 'QS2T2':(tx[indCompute]**2)*(qs[indCompute]**2), \
-                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
+                                     'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
+                                     'PlantAge':plantAge[indPlantIdsCompute]})
 
             plantPcTxx10CurDecade[indCompute, y] = pcModel10.predict(dfpred) - basePred10
             plantPcTxx50CurDecade[indCompute, y] = pcModel50.predict(dfpred) - basePred50
@@ -143,7 +161,7 @@ if dumpData:
     pcChg = {'pCapTxxFutRcp8510':plantPcTxx10, \
              'pCapTxxFutRcp8550':plantPcTxx50, \
              'pCapTxxFutRcp8590':plantPcTxx90}
-    with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp), 'wb') as f:
+    with open('%s/script-data/pc-at-txx-change-fut-%s-%s-%s-%s.dat'%(dataDirDiscovery, plantData, runoffData, rcp, modelPower), 'wb') as f:
         pickle.dump(pcChg, f)
 
 

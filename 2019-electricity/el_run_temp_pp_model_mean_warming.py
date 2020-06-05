@@ -28,6 +28,8 @@ plantData = 'world'
 
 yearRange = [1981, 2018]
 
+modelPower = 'pow2-noInteraction'
+
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
               'gfdl-esm2g', 'gfdl-esm2m', \
@@ -38,13 +40,19 @@ models = ['bcc-csm1-1-m', 'canesm2', \
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
-with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffData), 'rb') as f:
+plantIds = []
+plantYears = []
+with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
+    # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
     pcModel50 = pPolyData['pcModel50'][0]
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 baseTx = 27
 baseQs = 0
@@ -52,13 +60,13 @@ baseQs = 0
 dfpred = pd.DataFrame({'T1':[baseTx]*len(plantIds), 'T2':[baseTx**2]*len(plantIds), \
                          'QS1':[baseQs]*len(plantIds), 'QS2':[baseQs**2]*len(plantIds), \
                          'QST':[baseTx*baseQs]*len(plantIds), 'QS2T2':[(baseTx**2)*(baseQs**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
 
 basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, yearRange[0], yearRange[1])):
+if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1])):
     
     print('building historical pc')
     print('loading historical tx')
@@ -133,7 +141,9 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDi
                                      'QS1':curQsTxx[indCompute], 'QS2':curQsTxx[indCompute]**2, \
                                      'QST':curTxx[indCompute]*curQsTxx[indCompute], \
                                      'QS2T2':(curTxx[indCompute]**2)*(curQsTxx[indCompute]**2), \
-                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
+                                     'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
+                                     'PlantAge':plantAge[indPlantIdsCompute]})
 
             pCapTxx10[indCompute, y] = pcModel10.predict(dfpred) - basePred10
             pCapTxx50[indCompute, y] = pcModel50.predict(dfpred) - basePred50
@@ -148,7 +158,9 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDi
                                      'QS1':curQsTxMedian[indCompute], 'QS2':curQsTxMedian[indCompute]**2, \
                                      'QST':curTxMedian[indCompute]*curQsTxMedian[indCompute], \
                                      'QS2T2':(curTxMedian[indCompute]**2)*(curQsTxMedian[indCompute]**2), \
-                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute]})
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
+                                     'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
+                                     'PlantAge':plantAge[indPlantIdsCompute]})
 
             pCapTxMedian10[indCompute, y] = pcModel10.predict(dfpred) - basePred10
             pCapTxMedian50[indCompute, y] = pcModel50.predict(dfpred) - basePred50
@@ -179,7 +191,7 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDi
                  'pCapTxx10':pCapTxx10, \
                  'pCapTxx50':pCapTxx50, \
                  'pCapTxx90':pCapTxx90}
-        with open('%s/script-data/pc-at-txx-hist-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, yearRange[0], yearRange[1]), 'wb') as f:
+        with open('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
 sys.exit()
