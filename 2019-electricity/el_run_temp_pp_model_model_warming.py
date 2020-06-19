@@ -13,6 +13,8 @@ import pandas as pd
 import pickle, gzip
 import sys, os
 
+import el_load_global_plants
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -30,7 +32,7 @@ runoffData = 'grdc'
 # world, useu, entsoe-nuke
 plantData = 'world'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 modelPower = 'pow2-noInteraction'
 
@@ -66,6 +68,11 @@ with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffDat
     plantFuel = pPolyData['plantFuel']
     plantAge = pPolyData['plantAge']
 
+if plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+elif plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+    
 baseTx = 27
 baseQs = 0
 
@@ -88,8 +95,6 @@ fileNameRunoff = '%s/script-data/%s-pp-runoff-anom.csv'%(dataDirDiscovery, plant
 with open('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1]), 'rb') as f:
     pcChg = pickle.load(f)
     
-    
-
 
 plantPcTxx10 = []
 plantPcTxx50 = []
@@ -126,16 +131,25 @@ for m in range(len(models)):
             indCompute = np.where((~np.isnan(tx)) & (~np.isnan(qs)) & (tx > baseTx))[0]
             indPlantIdsCompute = np.random.choice(len(plantIds), len(indCompute))
             
+            curPlantAges = globalPlants['yearCom'][indCompute]
+            curPlantAges[curPlantAges<=1979] = 1970
+            curPlantAges[(curPlantAges>1979) & (curPlantAges<1990)] = 1980
+            curPlantAges[curPlantAges>=1990] = 1990
+            
+            curPlantAges[curPlantAges==-1] = plantAge[np.random.choice(len(plantIds), len(curPlantAges[curPlantAges==-1]))]
+            curPlantAges[np.isnan(curPlantAges)] = plantAge[np.random.choice(len(plantIds), len(curPlantAges[np.isnan(curPlantAges)]))]
+
             dfpred = pd.DataFrame({'T1':tx[indCompute], 'T2':tx[indCompute]**2, \
                                      'QS1':qs[indCompute], 'QS2':qs[indCompute]**2, \
                                      'QST':tx[indCompute]*qs[indCompute], 'QS2T2':(tx[indCompute]**2)*(qs[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
                                      'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
-                                     'PlantAge':plantAge[indPlantIdsCompute]})
+                                     'PlantAge':curPlantAges})
 
             plantPcTxx10CurDecade[indCompute, y] = pcModel10.predict(dfpred) - basePred10
             plantPcTxx50CurDecade[indCompute, y] = pcModel50.predict(dfpred) - basePred50
             plantPcTxx90CurDecade[indCompute, y] = pcModel90.predict(dfpred) - basePred90
+            
             
             plantPcTxx10CurDecade[plantPcTxx10CurDecade > 100] = 0
             plantPcTxx50CurDecade[plantPcTxx50CurDecade > 100] = 0

@@ -355,10 +355,10 @@ else:
 snsColors = sns.color_palette(["#3498db", "#e74c3c"])
 
 
-ylims = [-225, 0]
+ylims = [-300, 0]
 
 decadesToShow = [d[0]+5 for d in decades]
-yaxis1Ticks = np.arange(-200,1,50)
+yaxis1Ticks = np.arange(-300,1,50)
 yaxis2Ticks = [int(-x) for x in yaxis1Ticks/avgPlantSize]
 
 plt.figure(figsize=(6,4))

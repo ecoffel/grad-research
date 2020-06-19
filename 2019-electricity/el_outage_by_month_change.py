@@ -31,7 +31,9 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
+
+rebuild = True
 
 runoffModel = 'grdc'
 
@@ -57,13 +59,12 @@ nukePlants = eData['nukePlantDataAll']
 nukeData = eData['nukeAgDataAll']
 entsoePlants = eData['entsoePlantDataAll']
 
-# load temp-runoff outage models
 pcModel10 = []
 pcModel50 = []
 pcModel90 = []
 plantIds = []
 plantYears = []
-with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffModel), 'rb') as f:
+with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffData, modelPower), 'rb') as f:
     pPolyData = pickle.load(f)
     # these are mislabeled in dict for now (90 is 10, 10 is 90)
     pcModel10 = pPolyData['pcModel10'][0]
@@ -71,6 +72,9 @@ with gzip.open('%s/script-data/pPolyData-%s-pow2.dat'%(dataDirDiscovery, runoffM
     pcModel90 = pPolyData['pcModel90'][0]
     plantIds = pPolyData['plantIds']
     plantYears = pPolyData['plantYears']
+    plantCooling = pPolyData['plantCooling']
+    plantFuel = pPolyData['plantFuel']
+    plantAge = pPolyData['plantAge']
 
 if mdlPrc == 10:
     pcModel = pcModel10
@@ -142,7 +146,7 @@ q0 = 0
 dfpred = pd.DataFrame({'T1':[t0]*len(plantIds), 'T2':[t0**2]*len(plantIds), \
                          'QS1':[q0]*len(plantIds), 'QS2':[q0**2]*len(plantIds), \
                          'QST':[t0*q0]*len(plantIds), 'QS2T2':[(t0**2)*(q0**2)]*len(plantIds), \
-                         'PlantIds':plantIds, 'PlantYears':plantYears})
+                         'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
 pc0 = np.nanmean(pcModel.predict(dfpred))
 
 
@@ -230,7 +234,7 @@ for p in range(txMonthlyMax.shape[0]):
             dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
                  'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                  'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
-                 'PlantIds':plantIds, 'PlantYears':plantYears})
+                 'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
             pc1 = np.nanmean(pcModel.predict(dfpred))
 
             if pc1 > 100: pc1 = 100
@@ -259,7 +263,7 @@ for p in range(txMonthlyMaxNcepR2.shape[0]):
             dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
                  'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                  'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
-                 'PlantIds':plantIds, 'PlantYears':plantYears})
+                 'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
             pc1 = np.nanmean(pcModel.predict(dfpred))
 
             if pc1 > 100: pc1 = 100
@@ -291,7 +295,7 @@ for p in range(txMonthlyMaxPreInd.shape[0]):
             dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
                  'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                  'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
-                 'PlantIds':plantIds, 'PlantYears':plantYears})
+                 'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
             pc1 = np.nanmean(pcModel.predict(dfpred))
 
             if pc1 > 100: pc1 = 100
@@ -491,7 +495,7 @@ else:
     with gzip.open('%s/script-data/ppFutureTxQsData-preIndRef.dat'%dataDirDiscovery, 'wb') as f:
        pickle.dump(ppFutureData, f)
 
-if os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc)):
+if not rebuild and os.path.isfile('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc)):
     with open('%s/script-data/pc-monthly-outage-chg-%s-mdl%d-preIndRef.dat'%(dataDirDiscovery, qsVar, mdlPrc), 'rb') as f:
         plantMonthlyOutageChg = pickle.load(f)
 else:
@@ -523,7 +527,7 @@ else:
                         dfpred = pd.DataFrame({'T1':[t1]*len(plantIds), 'T2':[t1**2]*len(plantIds), \
                              'QS1':[q1]*len(plantIds), 'QS2':[q1**2]*len(plantIds), \
                              'QST':[t1*q1]*len(plantIds), 'QS2T2':[(t1**2)*(q1**2)]*len(plantIds), \
-                             'PlantIds':plantIds, 'PlantYears':plantYears})
+                             'PlantIds':plantIds, 'PlantYears':plantYears, 'PlantCooling':plantCooling, 'PlantFuel':plantFuel, 'PlantAge':plantAge})
                         pc1 = np.nanmean(pcModel.predict(dfpred))
 
                         if pc1 > 100: pc1 = 100

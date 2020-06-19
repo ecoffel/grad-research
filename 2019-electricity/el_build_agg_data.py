@@ -24,6 +24,8 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 # if we are running as job on discovery, send print output to a file
 outputToFile = True
 
+rebuild = True
+
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
               'gfdl-esm2g', 'gfdl-esm2m', \
@@ -69,7 +71,7 @@ histFileName10 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-10.dat'%(dataDirDiscovery
 histFileName50 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-50.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
 histFileName90 = '%s/pc-future-%s/%s-pc-hist-hourly-%s-90.dat'%(dataDirDiscovery, runoffModel, plantData, modelPower)
 
-if not os.path.isfile(histFileName10):
+if not os.path.isfile(histFileName10) or rebuild:
     
     # load historical temp data
     if outputToFile:
@@ -159,6 +161,19 @@ if not os.path.isfile(histFileName10):
         indTxAboveBase = np.where((txHourly > baseTx))[0]
         indPlantIds = np.random.choice(len(plantIds), len(indTxAboveBase))
 
+        curPlantAge = globalPlants['yearCom'][p]
+        if np.isnan(curPlantAge):
+            curPlantAges = plantAge[indPlantIds]
+        else:
+            if curPlantAge <= 1979: 
+                curPlantAge = 1970
+            elif curPlantAge < 1990: 
+                curPlantAge = 1980
+            elif curPlantAge >= 1990: 
+                curPlantAge = 1990
+            curPlantAges = np.array([curPlantAge]*len(indPlantIds))
+            
+        
         pcPred10 = np.full([len(txHourly)], basePred10)
         pcPred50 = np.full([len(txHourly)], basePred50)
         pcPred90 = np.full([len(txHourly)], basePred90)
@@ -169,8 +184,8 @@ if not os.path.isfile(histFileName10):
                                          'QS2T2':(txHourly[indTxAboveBase]**2)*(qsHourly[indTxAboveBase]**2), \
                                          'PlantIds':plantIds[indPlantIds], \
                                          'PlantYears':plantYears[indPlantIds], 'PlantCooling':plantCooling[indPlantIds], \
-                                         'PlantFuel':plantFuel[indPlantIds], 'PlantAge':plantAge[indPlantIds]})
-
+                                         'PlantFuel':plantFuel[indPlantIds], 'PlantAge':curPlantAges})
+        
         pcPred10[indTxAboveBase] = pcModel10.predict(dfpred)
         pcPred50[indTxAboveBase] = pcModel50.predict(dfpred)
         pcPred90[indTxAboveBase] = pcModel90.predict(dfpred)
@@ -225,8 +240,9 @@ for w in range(1, 4+1):
         fileName50 = '%s/pc-future-%s/%s-pc-future%s-50-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
         fileName90 = '%s/pc-future-%s/%s-pc-future%s-90-%ddeg-%s-%s-preIndRef.dat'%(dataDirDiscovery, runoffModel, plantData, qsdist, w, modelPower, models[m])
         
-        if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
-            continue
+        if not rebuild:
+            if os.path.isfile(fileName10) and os.path.isfile(fileName50) and os.path.isfile(fileName90):
+                continue
         
         if outputToFile:
             print('processing %s/+%dC'%(models[m], w), file=open('el_build_agg_data_output.txt', 'a'))
@@ -352,6 +368,18 @@ for w in range(1, 4+1):
             indTxAboveBase = np.where((txHourly > baseTx))[0]
             indPlantIds = np.random.choice(len(plantIds), len(indTxAboveBase))
 
+            curPlantAge = globalPlants['yearCom'][p]
+            if np.isnan(curPlantAge):
+                curPlantAges = plantAge[indPlantIds]
+            else:
+                if curPlantAge <= 1979: 
+                    curPlantAge = 1970
+                elif curPlantAge < 1990: 
+                    curPlantAge = 1980
+                elif curPlantAge >= 1990: 
+                    curPlantAge = 1990
+                curPlantAges = np.array([curPlantAge]*len(indPlantIds))
+            
             pcPred10 = np.full([len(txHourly)], basePred10)
             pcPred50 = np.full([len(txHourly)], basePred50)
             pcPred90 = np.full([len(txHourly)], basePred90)
@@ -362,7 +390,7 @@ for w in range(1, 4+1):
                                              'QS2T2':(txHourly[indTxAboveBase]**2)*(qsHourly[indTxAboveBase]**2), \
                                              'PlantIds':plantIds[indPlantIds], \
                                              'PlantYears':plantYears[indPlantIds], 'PlantCooling':plantCooling[indPlantIds], \
-                                             'PlantFuel':plantFuel[indPlantIds], 'PlantAge':plantAge[indPlantIds]})
+                                             'PlantFuel':plantFuel[indPlantIds], 'PlantAge':curPlantAges})
 
             pcPred10[indTxAboveBase] = pcModel10.predict(dfpred)
             pcPred50[indTxAboveBase] = pcModel50.predict(dfpred)

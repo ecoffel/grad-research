@@ -32,6 +32,8 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = True
 
+rebuild = True
+
 models = ['bcc-csm1-1-m', 'canesm2', \
               'ccsm4', 'cesm1-bgc', 'cesm1-cam5', 'cnrm-cm5', 'csiro-mk3-6-0', \
               'gfdl-esm2g', 'gfdl-esm2m', \
@@ -92,7 +94,7 @@ basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-hist-hourly-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, modelPower)):
+if not os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-hist-hourly-%s-10.dat'%(dataDirDiscovery, runoffData, plantData, modelPower)) and not rebuild:
 
     extra=''
     if not 'globalPCHist50' in locals():
@@ -265,7 +267,7 @@ for model in range(len(models)):
     yearlyOutagesCurModel50 = np.full([4, 12], np.nan)
     yearlyOutagesCurModel90 = np.full([4, 12], np.nan)
 
-    if os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])):
+    if not rebuild and os.path.isfile('%s/agg-outages-%s/aggregated-%s-outages-fut-hourly-%s-%s-10-preIndRef.dat'%(dataDirDiscovery, runoffData, plantData, modelPower, models[model])):
         print('skipping %s...'%models[model])
         continue
 

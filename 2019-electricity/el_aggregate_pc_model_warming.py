@@ -33,9 +33,13 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp85'
+rcp = 'rcp45'
 
 modelPower = 'pow2-noInteraction'
+
+pcVal = 1
+
+rebuild = True
 
 decades = np.array([[2080,2089]])
 
@@ -108,12 +112,12 @@ plantPcTxAllModels90_np = np.full([len(models), len(globalPlants['caps']), 10, 1
 
 for m in range(len(models)):
     
-    if os.path.isfile('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1])):
+    if not rebuild and os.path.isfile(('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-%d-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], pcVal, decades[0,0], decades[0,1]))):
         
         print('loading model %s'%models[m])
-        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'rb') as f:
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-%d-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], pcVal, decades[0,0], decades[0,1]), 'rb') as f:
             pcChg = pickle.load(f)
             
             plantPcTxAllModels10_40yr[m, :, :, :] = pcChg['plantPcAggTx10_40yr']
@@ -242,12 +246,32 @@ for m in range(len(models)):
             indCompute = np.where((~np.isnan(txHourly)) & (~np.isnan(qsHourly)) & (txHourly > baseTx))[0]
             indPlantIdsCompute = np.random.choice(len(plantIds), len(indCompute))
 
-            dfpred = pd.DataFrame({'T1':txHourly[indCompute], 'T2':txHourly[indCompute]**2, \
+            curPlantAge = globalPlants['yearCom'][p]
+            if np.isnan(curPlantAge):
+                curPlantAges = plantAge[indPlantIdsCompute]
+            else:
+                if curPlantAge <= 1979: 
+                    curPlantAge = 1970
+                elif curPlantAge < 1990: 
+                    curPlantAge = 1980
+                elif curPlantAge >= 1990: 
+                    curPlantAge = 1990
+                curPlantAges = np.array([curPlantAge]*len(indPlantIdsCompute))
+            
+            if pcVal >= 0:
+                dfpred = pd.DataFrame({'T1':txHourly[indCompute], 'T2':txHourly[indCompute]**2, \
+                                     'QS1':qsHourly[indCompute], 'QS2':qsHourly[indCompute]**2, \
+                                     'QST':txHourly[indCompute]*qsHourly[indCompute], 'QS2T2':(txHourly[indCompute]**2)*(qsHourly[indCompute]**2), \
+                                     'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
+                                     'PlantCooling':[pcVal]*len(indPlantIdsCompute), 'PlantFuel':plantFuel[indPlantIdsCompute], \
+                                     'PlantAge':curPlantAges})
+            else:
+                dfpred = pd.DataFrame({'T1':txHourly[indCompute], 'T2':txHourly[indCompute]**2, \
                                      'QS1':qsHourly[indCompute], 'QS2':qsHourly[indCompute]**2, \
                                      'QST':txHourly[indCompute]*qsHourly[indCompute], 'QS2T2':(txHourly[indCompute]**2)*(qsHourly[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
                                      'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
-                                     'PlantAge':plantAge[indPlantIdsCompute]})
+                                     'PlantAge':curPlantAges})
 
             plantPcTx10CurDecade[indCompute] = pcModel10.predict(dfpred) - basePred10
             plantPcTx50CurDecade[indCompute] = pcModel50.predict(dfpred) - basePred50
@@ -320,8 +344,8 @@ for m in range(len(models)):
                  'plantPcAggTx10_np':plantPcTx10_np, \
                  'plantPcAggTx50_np':plantPcTx50_np, \
                  'plantPcAggTx90_np':plantPcTx90_np}
-        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'wb') as f:
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-%d-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], pcVal, decades[0,0], decades[0,1]), 'wb') as f:
             pickle.dump(pcChg, f)
 
 
@@ -343,7 +367,7 @@ plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
 plt.rcParams["font.family"] = "Helvetica"
     
 plt.figure(figsize=(1.5,4.5))
-plt.ylim([-250,25])
+plt.ylim([-375,25])
 plt.xlim([.5, 4.5])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -394,8 +418,13 @@ plt.gca().yaxis.set_label_position("right")
 plt.gca().get_xaxis().set_visible(False)
 
 if plotFigs:
-    plt.savefig('annual-total-curtailment-2080s-%s.eps'%rcp, format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+    plt.savefig('annual-total-curtailment-2080s-%s-%s-pcVal-%d.eps'%(rcp, modelPower, pcVal), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
 
+    
+    
+print('np: %.2f to %.2f $B'%((yPt_np-yerrNp[0])*1e9*.2/1e9, (yPt_np+yerrNp[1])*1e9*.1/1e9))
+print('const: %.2f to %.2f $B'%((yPt_const-yerrConst[0])*1e9*.2/1e9, (yPt_const+yerrConst[1])*1e9*.1/1e9))
+print('sust: %.2f to %.2f $B'%((yPt_sust-yerrSust[0])*1e9*.2/1e9, (yPt_sust+yerrSust[1])*1e9*.1/1e9))
 
 plt.show()
 sys.exit()

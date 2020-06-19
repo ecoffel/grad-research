@@ -13,12 +13,17 @@ import scipy.stats as st
 import pickle, gzip
 import sys, os
 
+
+import el_load_global_plants
+
 #dataDir = '/dartfs-hpc/rc/lab/C/CMIG'
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
 plotFigs = False
 dumpData = True
+
+rebuild = True
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -54,6 +59,11 @@ with gzip.open('%s/script-data/pPolyData-%s-%s.dat'%(dataDirDiscovery, runoffDat
     plantFuel = pPolyData['plantFuel']
     plantAge = pPolyData['plantAge']
 
+if plantData == 'world':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=True)
+elif plantData == 'useu':
+    globalPlants = el_load_global_plants.loadGlobalPlants(world=False)
+    
 baseTx = 27
 baseQs = 0
 
@@ -66,7 +76,7 @@ basePred10 = np.nanmean(pcModel10.predict(dfpred))
 basePred50 = np.nanmean(pcModel50.predict(dfpred))
 basePred90 = np.nanmean(pcModel90.predict(dfpred))
 
-if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1])):
+if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDirDiscovery, plantData, runoffData, modelPower, yearRange[0], yearRange[1])) or rebuild:
     
     print('building historical pc')
     print('loading historical tx')
@@ -137,13 +147,22 @@ if not os.path.isfile('%s/script-data/pc-at-txx-hist-%s-%s-%s-%d-%d.dat'%(dataDi
             indCompute = np.where((~np.isnan(curTxx)) & (~np.isnan(curQsTxx)) & (curTxx > baseTx))[0]
             indPlantIdsCompute = np.random.choice(len(plantIds), len(indCompute))
             
+            curPlantAges = globalPlants['yearCom'][indCompute]
+            curPlantAges[curPlantAges<=1979] = 1970
+            curPlantAges[(curPlantAges>1979) & (curPlantAges<1990)] = 1980
+            curPlantAges[curPlantAges>=1990] = 1990
+            
+            curPlantAges[curPlantAges==-1] = plantAge[np.random.choice(len(plantIds), len(curPlantAges[curPlantAges==-1]))]
+            curPlantAges[np.isnan(curPlantAges)] = plantAge[np.random.choice(len(plantIds), len(curPlantAges[np.isnan(curPlantAges)]))]
+
+            
             dfpred = pd.DataFrame({'T1':curTxx[indCompute], 'T2':curTxx[indCompute]**2, \
                                      'QS1':curQsTxx[indCompute], 'QS2':curQsTxx[indCompute]**2, \
                                      'QST':curTxx[indCompute]*curQsTxx[indCompute], \
                                      'QS2T2':(curTxx[indCompute]**2)*(curQsTxx[indCompute]**2), \
                                      'PlantIds':plantIds[indPlantIdsCompute], 'PlantYears':plantYears[indPlantIdsCompute], \
                                      'PlantCooling':plantCooling[indPlantIdsCompute], 'PlantFuel':plantFuel[indPlantIdsCompute], \
-                                     'PlantAge':plantAge[indPlantIdsCompute]})
+                                     'PlantAge':curPlantAges})
 
             pCapTxx10[indCompute, y] = pcModel10.predict(dfpred) - basePred10
             pCapTxx50[indCompute, y] = pcModel50.predict(dfpred) - basePred50
