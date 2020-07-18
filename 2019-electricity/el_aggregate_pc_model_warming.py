@@ -21,9 +21,9 @@ warnings.filterwarnings('ignore')
 #dataDir = 'e:/data/'
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/electricity'
 
-plotFigs = False
+plotFigs = True
 
-outputToFile = True
+outputToFile = False
 
 # grdc or gldas
 runoffData = 'grdc'
@@ -33,13 +33,13 @@ plantData = 'world'
 
 qstr = '-anom-best-dist'
 
-rcp = 'rcp45'
+rcp = 'rcp85'
 
 modelPower = 'pow2-noInteraction'
 
-pcVal = 1
+pcVal = -1
 
-rebuild = True
+rebuild = False
 
 decades = np.array([[2080,2089]])
 
@@ -94,48 +94,89 @@ with open('%s/script-data/world-plant-caps-iea-scenarios.dat'%dataDirDiscovery, 
     globalPlantsCapsNP = scenarios['globalPlantsCapsNP']
 
     
-plantPcTxAllModels10_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels50_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels90_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
+plantPcTxAllModels10_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels50_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels90_40yr = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
 
-plantPcTxAllModels10_sust = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels50_sust = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels90_sust = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
+plantPcTxAllModels10_sust = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels50_sust = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels90_sust = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
 
-plantPcTxAllModels10_const = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels50_const = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels90_const = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
+plantPcTxAllModels10_const = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels50_const = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels90_const = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
 
-plantPcTxAllModels10_np = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels50_np = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
-plantPcTxAllModels90_np = np.full([len(models), len(globalPlants['caps']), 10, 12], np.nan)
+plantPcTxAllModels10_np = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels50_np = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
+plantPcTxAllModels90_np = np.full([len(models), len(globalPlants['caps']), 10, 12, 3], np.nan)
 
 for m in range(len(models)):
     
-    if not rebuild and os.path.isfile(('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-%d-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], pcVal, decades[0,0], decades[0,1]))):
+    if not rebuild:
         
         print('loading model %s'%models[m])
-        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-%d-%d-%d.dat'% \
-                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], pcVal, decades[0,0], decades[0,1]), 'rb') as f:
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-0-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'rb') as f:
             pcChg = pickle.load(f)
             
-            plantPcTxAllModels10_40yr[m, :, :, :] = pcChg['plantPcAggTx10_40yr']
-            plantPcTxAllModels50_40yr[m, :, :, :] = pcChg['plantPcAggTx50_40yr']
-            plantPcTxAllModels90_40yr[m, :, :, :] = pcChg['plantPcAggTx90_40yr']
+            plantPcTxAllModels10_40yr[m, :, :, :, 0] = pcChg['plantPcAggTx10_40yr']
+            plantPcTxAllModels50_40yr[m, :, :, :, 0] = pcChg['plantPcAggTx50_40yr']
+            plantPcTxAllModels90_40yr[m, :, :, :, 0] = pcChg['plantPcAggTx90_40yr']
             
-            plantPcTxAllModels10_sust[m, :, :, :] = pcChg['plantPcAggTx10_sust']
-            plantPcTxAllModels50_sust[m, :, :, :] = pcChg['plantPcAggTx50_sust']
-            plantPcTxAllModels90_sust[m, :, :, :] = pcChg['plantPcAggTx90_sust']
+            plantPcTxAllModels10_sust[m, :, :, :, 0] = pcChg['plantPcAggTx10_sust']
+            plantPcTxAllModels50_sust[m, :, :, :, 0] = pcChg['plantPcAggTx50_sust']
+            plantPcTxAllModels90_sust[m, :, :, :, 0] = pcChg['plantPcAggTx90_sust']
             
-            plantPcTxAllModels10_const[m, :, :, :] = pcChg['plantPcAggTx10_const']
-            plantPcTxAllModels50_const[m, :, :, :] = pcChg['plantPcAggTx50_const']
-            plantPcTxAllModels90_const[m, :, :, :] = pcChg['plantPcAggTx90_const']
+            plantPcTxAllModels10_const[m, :, :, :, 0] = pcChg['plantPcAggTx10_const']
+            plantPcTxAllModels50_const[m, :, :, :, 0] = pcChg['plantPcAggTx50_const']
+            plantPcTxAllModels90_const[m, :, :, :, 0] = pcChg['plantPcAggTx90_const']
             
-            plantPcTxAllModels10_np[m, :, :, :] = pcChg['plantPcAggTx10_np']
-            plantPcTxAllModels50_np[m, :, :, :] = pcChg['plantPcAggTx50_np']
-            plantPcTxAllModels90_np[m, :, :, :] = pcChg['plantPcAggTx90_np']
+            plantPcTxAllModels10_np[m, :, :, :, 0] = pcChg['plantPcAggTx10_np']
+            plantPcTxAllModels50_np[m, :, :, :, 0] = pcChg['plantPcAggTx50_np']
+            plantPcTxAllModels90_np[m, :, :, :, 0] = pcChg['plantPcAggTx90_np']
+        
+        
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-pcVal-1-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'rb') as f:
+            pcChg = pickle.load(f)
             
+            plantPcTxAllModels10_40yr[m, :, :, :, 1] = pcChg['plantPcAggTx10_40yr']
+            plantPcTxAllModels50_40yr[m, :, :, :, 1] = pcChg['plantPcAggTx50_40yr']
+            plantPcTxAllModels90_40yr[m, :, :, :, 1] = pcChg['plantPcAggTx90_40yr']
+            
+            plantPcTxAllModels10_sust[m, :, :, :, 1] = pcChg['plantPcAggTx10_sust']
+            plantPcTxAllModels50_sust[m, :, :, :, 1] = pcChg['plantPcAggTx50_sust']
+            plantPcTxAllModels90_sust[m, :, :, :, 1] = pcChg['plantPcAggTx90_sust']
+            
+            plantPcTxAllModels10_const[m, :, :, :, 1] = pcChg['plantPcAggTx10_const']
+            plantPcTxAllModels50_const[m, :, :, :, 1] = pcChg['plantPcAggTx50_const']
+            plantPcTxAllModels90_const[m, :, :, :, 1] = pcChg['plantPcAggTx90_const']
+            
+            plantPcTxAllModels10_np[m, :, :, :, 1] = pcChg['plantPcAggTx10_np']
+            plantPcTxAllModels50_np[m, :, :, :, 1] = pcChg['plantPcAggTx50_np']
+            plantPcTxAllModels90_np[m, :, :, :, 1] = pcChg['plantPcAggTx90_np']
+        
+        
+        with open('%s/script-data/pc-change-fut-hourly-%s-%s%s-%s-%s-%s-%d-%d.dat'% \
+                  (dataDirDiscovery, plantData, runoffData, qstr, rcp, modelPower, models[m], decades[0,0], decades[0,1]), 'rb') as f:
+            pcChg = pickle.load(f)
+            
+            plantPcTxAllModels10_40yr[m, :, :, :, 2] = pcChg['plantPcAggTx10_40yr']
+            plantPcTxAllModels50_40yr[m, :, :, :, 2] = pcChg['plantPcAggTx50_40yr']
+            plantPcTxAllModels90_40yr[m, :, :, :, 2] = pcChg['plantPcAggTx90_40yr']
+            
+            plantPcTxAllModels10_sust[m, :, :, :, 2] = pcChg['plantPcAggTx10_sust']
+            plantPcTxAllModels50_sust[m, :, :, :, 2] = pcChg['plantPcAggTx50_sust']
+            plantPcTxAllModels90_sust[m, :, :, :, 2] = pcChg['plantPcAggTx90_sust']
+            
+            plantPcTxAllModels10_const[m, :, :, :, 2] = pcChg['plantPcAggTx10_const']
+            plantPcTxAllModels50_const[m, :, :, :, 2] = pcChg['plantPcAggTx50_const']
+            plantPcTxAllModels90_const[m, :, :, :, 2] = pcChg['plantPcAggTx90_const']
+            
+            plantPcTxAllModels10_np[m, :, :, :, 2] = pcChg['plantPcAggTx10_np']
+            plantPcTxAllModels50_np[m, :, :, :, 2] = pcChg['plantPcAggTx50_np']
+            plantPcTxAllModels90_np[m, :, :, :, 2] = pcChg['plantPcAggTx90_np']
+        
     else:
         
         # ref years for constant and 40yr scenarios
@@ -349,6 +390,164 @@ for m in range(len(models)):
             pickle.dump(pcChg, f)
 
 
+            
+totalTwh_40yr = 0
+totalTwh_const = monthLens * np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])/1e6*24
+totalTwh_sust = monthLens * np.nansum(np.nanmean(globalPlantsCapsSust[livingPlantsInds40[2018], -10:], axis=1))/1e6*24
+totalTwh_np = monthLens * np.nansum(np.nanmean(globalPlantsCapsNP[livingPlantsInds40[2018], -10:], axis=1))/1e6*24
+
+# these are in TWh
+projCurtailment_40yr_pcVal0 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_40yr[:,:,:,:,0], axis=3), axis=2), axis=1)/1e3
+projCurtailment_const_pcVal0 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_const[:,:,:,:,0], axis=3), axis=2), axis=1)/1e3
+projCurtailment_sust_pcVal0 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_sust[:,:,:,:,0], axis=3), axis=2), axis=1)/1e3
+projCurtailment_np_pcVal0 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_np[:,:,:,:,0], axis=3), axis=2), axis=1)/1e3
+
+projCurtailment_40yr_pcVal1 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_40yr[:,:,:,:,1], axis=3), axis=2), axis=1)/1e3
+projCurtailment_const_pcVal1 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_const[:,:,:,:,1], axis=3), axis=2), axis=1)/1e3
+projCurtailment_sust_pcVal1 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_sust[:,:,:,:,1], axis=3), axis=2), axis=1)/1e3
+projCurtailment_np_pcVal1 = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_np[:,:,:,:,1], axis=3), axis=2), axis=1)/1e3
+
+projCurtailment_40yr = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_40yr[:,:,:,:,2], axis=3), axis=2), axis=1)/1e3
+projCurtailment_const = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_const[:,:,:,:,2], axis=3), axis=2), axis=1)/1e3
+projCurtailment_sust = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_sust[:,:,:,:,2], axis=3), axis=2), axis=1)/1e3
+projCurtailment_np = np.nansum(np.nanmean(np.nansum(plantPcTxAllModels50_np[:,:,:,:,2], axis=3), axis=2), axis=1)/1e3
+
+msize = 10
+
+plt.rc('xtick', labelsize=14)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
+plt.rcParams["font.family"] = "Helvetica"
+    
+plt.figure(figsize=(1.5,4.5))
+if rcp == 'rcp85':
+    plt.ylim([-380,20])
+elif rcp == 'rcp45':
+    plt.ylim([-250,20])
+plt.xlim([.5, 4.5])
+plt.grid(True, color=[.9,.9,.9])
+
+
+yPt_40yr_pcVal0 = np.nanmean(projCurtailment_40yr_pcVal0)
+p40Yr_pcVal0 = plt.plot(1, yPt_40yr_pcVal0, 'xk', markersize=msize, markerfacecolor='#56a619')
+
+yPt_40yr_pcVal1 = np.nanmean(projCurtailment_40yr_pcVal1)
+p40Yr_pcVal1 = plt.plot(1, yPt_40yr_pcVal1, 'ok', markersize=msize, markerfacecolor='#56a619')
+
+yPt_40yr = np.nanmean(projCurtailment_40yr)
+# p40Yr = plt.plot(1, yPt_40yr, 'ok', markersize=msize, markerfacecolor='#56a619')
+# plt.plot([1, 4.5], [yPt_40yr, yPt_40yr], '--', color='#56a619')
+p40Yr_pcValMean = (yPt_40yr_pcVal1+yPt_40yr_pcVal0)/2
+plt.plot([1, 4.5], [p40Yr_pcValMean, p40Yr_pcValMean], '--', color='#56a619')
+yerr40yr = np.zeros([2,1])
+yerr40yr[0,0] = np.nanmean(projCurtailment_40yr_pcVal1)-np.nanmin(projCurtailment_40yr_pcVal1)
+yerr40yr[1,0] = np.nanmax(projCurtailment_40yr_pcVal0)-np.nanmean(projCurtailment_40yr_pcVal1)
+plt.errorbar(1, yPt_40yr, yerr = yerr40yr, ecolor = '#56a619', elinewidth = 1, capsize = 3, fmt = 'none')
+
+
+
+yPt_sust_pcVal0 = np.nanmean(projCurtailment_sust_pcVal0)
+pSust_pcVal0 = plt.plot(2, yPt_sust_pcVal0, 'xk', markersize=msize, markerfacecolor='#3498db')
+
+yPt_sust_pcVal1 = np.nanmean(projCurtailment_sust_pcVal1)
+pSust_pcVal1 = plt.plot(2, yPt_sust_pcVal1, 'ok', markersize=msize, markerfacecolor='#3498db')
+
+yPt_sust = np.nanmean(projCurtailment_sust)
+# pSust = plt.plot(2, yPt_sust, 'ok', markersize=msize, markerfacecolor='#3498db', label='IEA Sustainability')
+# plt.plot([2, 4.5], [yPt_sust, yPt_sust], '--', color='#3498db')
+p_sust_pcValMean = (yPt_sust_pcVal1+yPt_sust_pcVal0)/2
+plt.plot([2, 4.5], [p_sust_pcValMean, p_sust_pcValMean], '--', color='#3498db')
+yerrSust = np.zeros([2,1])
+yerrSust[0,0] = np.nanmean(projCurtailment_sust_pcVal1)-np.nanmin(projCurtailment_sust_pcVal1)
+yerrSust[1,0] = np.nanmax(projCurtailment_sust_pcVal0)-np.nanmean(projCurtailment_sust_pcVal1)
+plt.errorbar(2, yPt_sust, yerr = yerrSust, ecolor = '#3498db', elinewidth = 1, capsize = 3, fmt = 'none')
+
+
+yPt_const_pcVal0 = np.nanmean(projCurtailment_const_pcVal0)
+pConst_pcVal0 = plt.plot(3, yPt_const_pcVal0, 'xk', markersize=msize, markerfacecolor='gray')
+
+yPt_const_pcVal1 = np.nanmean(projCurtailment_const_pcVal1)
+pConst_pcVal1 = plt.plot(3, yPt_const_pcVal1, 'ok', markersize=msize, markerfacecolor='gray')
+
+yPt_const = np.nanmean(projCurtailment_const)
+# pConst = plt.plot(3, yPt_const, 'ok', markersize=msize, markerfacecolor='gray')
+# plt.plot([3, 4.5], [yPt_const, yPt_const], '--', color='gray')
+p_const_pcValMean = (yPt_const_pcVal1+yPt_const_pcVal0)/2
+plt.plot([3, 4.5], [p_const_pcValMean, p_const_pcValMean], '--', color='gray')
+yerrConst = np.zeros([2,1])
+yerrConst[0,0] = np.nanmean(projCurtailment_const_pcVal1)-np.nanmin(projCurtailment_const_pcVal1)
+yerrConst[1,0] = np.nanmax(projCurtailment_const_pcVal0)-np.nanmean(projCurtailment_const_pcVal1)
+plt.errorbar(3, yPt_const, yerr = yerrConst, ecolor = 'gray', elinewidth = 1, capsize = 3, fmt = 'none')
+
+
+
+yPt_np_pcVal0 = np.nanmean(projCurtailment_np_pcVal0)
+pNp_pcVal0 = plt.plot(4, yPt_np_pcVal0, 'xk', markersize=msize, markerfacecolor='#e74c3c', label='Once-\nthrough')
+
+yPt_np_pcVal1 = np.nanmean(projCurtailment_np_pcVal1)
+plt.plot(4, yPt_np_pcVal1, 'ok', markersize=msize, markerfacecolor='white', label='Recir-\nculating')
+pNp_pcVal1 = plt.plot(4, yPt_np_pcVal1, 'ok', markersize=msize, markerfacecolor='#e74c3c')
+
+
+yPt_np = np.nanmean(projCurtailment_np)
+# pNp = plt.plot(4, yPt_np, 'ok', markersize=msize, markerfacecolor='#e74c3c')
+# plt.plot([4, 4.5], [yPt_np, yPt_np], '--', color='#e74c3c')
+p_np_pcValMean = (yPt_np_pcVal1+yPt_np_pcVal0)/2
+plt.plot([4, 4.5], [p_np_pcValMean, p_np_pcValMean], '--', color='#e74c3c')
+yerrNp = np.zeros([2,1])
+yerrNp[0,0] = np.nanmean(projCurtailment_np_pcVal1)-np.nanmin(projCurtailment_np_pcVal1)
+yerrNp[1,0] = np.nanmax(projCurtailment_np_pcVal0)-np.nanmean(projCurtailment_np_pcVal1)
+plt.errorbar(4, yPt_np, yerr = yerrNp, ecolor = '#e74c3c', elinewidth = 1, capsize = 3, fmt = 'none')
+
+plt.plot([.5,4.5], [0,0], '--', color='black')
+
+plt.ylabel('Global annually \naccumulated curtailment\n(TWh)', fontname = 'Helvetica', fontsize=16)
+
+leg = plt.legend(prop = {'size':10, 'family':'Helvetica'}, framealpha=0, bbox_to_anchor=(.89,0.26))
+leg.get_frame().set_linewidth(0.0)
+
+plt.gca().yaxis.tick_right()
+plt.gca().yaxis.set_label_position("right")
+
+# for tick in plt.gca().yaxis.get_major_ticks():
+#     tick.label.set_fontname('Helvetica')    
+#     tick.label.set_fontsize(14)
+
+plt.gca().get_xaxis().set_visible(False)
+
+if plotFigs:
+    plt.savefig('annual-total-curtailment-2080s-%s-%s-pcVal-both.eps'%(rcp, modelPower), format='eps', dpi=500, bbox_inches = 'tight', pad_inches = 0)
+
+            
+print('np: %.2f to %.2f $B'%((yPt_np-yerrNp[0])*1e9*.2/1e9, (yPt_np+yerrNp[1])*1e9*.1/1e9))
+print('const: %.2f to %.2f $B'%((yPt_const-yerrConst[0])*1e9*.2/1e9, (yPt_const+yerrConst[1])*1e9*.1/1e9))
+print('sust: %.2f to %.2f $B'%((yPt_sust-yerrSust[0])*1e9*.2/1e9, (yPt_sust+yerrSust[1])*1e9*.1/1e9))
+
+# print('pcVal = 1')
+# print('np: %.2f to %.2f $B'%((yPt_np_pcVal1-yerrNp_pcVal1[0])*1e9*.2/1e9, (yPt_np_pcVal1+yerrNp_pcVal1[1])*1e9*.1/1e9))
+# print('const: %.2f to %.2f $B'%((yPt_const_pcVal1-yerrConst_pcVal1[0])*1e9*.2/1e9, (yPt_const_pcVal1+yerrConst_pcVal1[1])*1e9*.1/1e9))
+# print('sust: %.2f to %.2f $B'%((yPt_sust_pcVal1-yerrSust_pcVal1[0])*1e9*.2/1e9, (yPt_sust_pcVal1+yerrSust_pcVal1[1])*1e9*.1/1e9))
+
+plt.show()
+sys.exit()
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
 totalTwh_40yr = 0
 totalTwh_const = monthLens * np.nansum(globalPlants['caps'][livingPlantsInds40[2018]])/1e6*24
 totalTwh_sust = monthLens * np.nansum(np.nanmean(globalPlantsCapsSust[livingPlantsInds40[2018], -10:], axis=1))/1e6*24
@@ -367,7 +566,10 @@ plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
 plt.rcParams["font.family"] = "Helvetica"
     
 plt.figure(figsize=(1.5,4.5))
-plt.ylim([-375,25])
+if rcp == 'rcp85':
+    plt.ylim([-375,10])
+elif rcp == 'rcp45':
+    plt.ylim([-250,10])
 plt.xlim([.5, 4.5])
 plt.grid(True, color=[.9,.9,.9])
 
@@ -422,12 +624,6 @@ if plotFigs:
 
     
     
-print('np: %.2f to %.2f $B'%((yPt_np-yerrNp[0])*1e9*.2/1e9, (yPt_np+yerrNp[1])*1e9*.1/1e9))
-print('const: %.2f to %.2f $B'%((yPt_const-yerrConst[0])*1e9*.2/1e9, (yPt_const+yerrConst[1])*1e9*.1/1e9))
-print('sust: %.2f to %.2f $B'%((yPt_sust-yerrSust[0])*1e9*.2/1e9, (yPt_sust+yerrSust[1])*1e9*.1/1e9))
-
-plt.show()
-sys.exit()
 
 
 
