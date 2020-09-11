@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 wxData = 'era5'
 
-hfVarShort = 'slhf'
+hfVarShort = 'sshf'
 if hfVarShort == 'sshf':
     hfVar = 'surface_sensible_heat_flux'
 elif hfVarShort == 'slhf':
@@ -46,6 +46,7 @@ with gzip.open('%s/gdd-kdd-lon-cpc.dat'%dataDirDiscovery, 'rb') as f:
 hfData = []
 
 for year in range(yearRange[0], yearRange[1]+1):
+    print('loading %d...'%year)
     curHfData = xr.open_dataset('/dartfs-hpc/rc/lab/C/CMIG/ERA5-Land/monthly/%s_monthly_%d.nc'%(hfVar, year), decode_cf=False)
     curHfData.load()
 
@@ -72,6 +73,7 @@ for year in range(yearRange[0], yearRange[1]+1):
 
 seasonalHf = np.zeros([len(tempLat), len(tempLon), len(range(yearRange[0], yearRange[1]+1))])
 
+seasonalSeconds = np.zeros([len(tempLat), len(tempLon)])
 for xlat in range(len(tempLat)-1):
 
     if xlat % 25 == 0: 
@@ -83,6 +85,9 @@ for xlat in range(len(tempLat)-1):
             startMonth = datetime.datetime.strptime('%d'%(sacksStart[xlat,ylon]), '%j').date().month
             endMonth = datetime.datetime.strptime('%d'%(sacksEnd[xlat,ylon]), '%j').date().month
 
+            seasonalSeconds[xlat, ylon] =  (datetime.datetime.strptime('%d'%(sacksEnd[xlat,ylon]), '%j') - \
+                                            datetime.datetime.strptime('%d'%(sacksStart[xlat,ylon]), '%j')).total_seconds()
+            continue
             lat1 = tempLat[xlat]
             lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])
             lon1 = tempLon[ylon]
@@ -105,7 +110,9 @@ for xlat in range(len(tempLat)-1):
                 else:
                     curYearHf = curHf.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
 
-                seasonalHf[xlat, ylon, y] = np.nansun(curYearHf.values)
+                seasonalHf[xlat, ylon, y] = np.nansum(curYearHf.values)
 
-with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, hfVarShort, wxData), 'wb') as f:
-    pickle.dump(seasonalHf, f)
+# with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, hfVarShort, wxData), 'wb') as f:
+#     pickle.dump(seasonalHf, f)
+with open('%s/seasonal-seconds-maize.dat'%(dataDirDiscovery), 'wb') as f:
+    pickle.dump(seasonalSeconds, f)
