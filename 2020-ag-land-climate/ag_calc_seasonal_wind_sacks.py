@@ -24,7 +24,7 @@ elif windVarShort == 'v10':
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
-yearRange = [1981, 2018]
+yearRange = [1981, 2019]
 
 sacksMaizeNc = xr.open_dataset('%s/sacks/Maize.crop.calendar.fill.nc'%dataDirDiscovery)
 sacksStart = sacksMaizeNc['plant'].values + 1

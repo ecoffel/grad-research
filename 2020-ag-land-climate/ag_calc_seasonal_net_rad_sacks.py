@@ -7,6 +7,7 @@ import scipy.stats as st
 import os, sys, pickle, gzip
 import datetime
 from dateutil.relativedelta import relativedelta
+from calendar import monthrange
 import geopy.distance
 import xarray as xr
 import cartopy.crs as ccrs
@@ -24,7 +25,7 @@ elif nrVarShort == 'str':
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
-yearRange = [1981, 2018]
+yearRange = [1981, 2019]
 
 sacksMaizeNc = xr.open_dataset('%s/sacks/Maize.crop.calendar.fill.nc'%dataDirDiscovery)
 sacksStart = sacksMaizeNc['plant'].values + 1
@@ -99,13 +100,27 @@ for xlat in range(len(tempLat)-1):
 
             for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
+                daysInMonths = []
+                
                 # in southern hemisphere when planting happens in fall and harvest happens in spring
                 if  startMonth > endMonth:
                     curYearNr = curNr.sel(time=slice('%d-%d'%(year-1, startMonth), '%d-%d'%(year, endMonth)))
+                    curMonths = np.concatenate([np.arange(startMonth, 12+1,1), np.arange(1,endMonth+1)])
+                    for curM in curMonths:
+                        if curM > endMonth:
+                            daysInMonths.append(monthrange(year-1, curM)[1])
+                        else:
+                            daysInMonths.append(monthrange(year, curM)[1])
                 else:
                     curYearNr = curNr.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
+                    for curM in range(startMonth, endMonth+1):
+                        if curM > endMonth:
+                            daysInMonths.append(monthrange(year-1, curM)[1])
+                        else:
+                            daysInMonths.append(monthrange(year, curM)[1])
 
-                seasonalNr[xlat, ylon, y] = np.nansum(curYearNr.values)
-
-with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, nrVarShort, wxData), 'wb') as f:
+                daysInMonths = np.array(daysInMonths)
+                seasonalNr[xlat, ylon, y] = np.nansum([curYearNr.values[i]*daysInMonths[i] for i in range(len(curYearNr.values))])
+                
+with open('%s/seasonal-%s-maize-%s-correctedunits.dat'%(dataDirDiscovery, nrVarShort, wxData), 'wb') as f:
     pickle.dump(seasonalNr, f)

@@ -22,7 +22,7 @@ t_high = 29
 crop = sys.argv[1]
 wxData = sys.argv[2]
 
-yearRange = [1981, 2018]
+yearRange = [1981, 2019]
 
 sacksLat = np.linspace(90, -90, 360)
 sacksLon = np.linspace(0, 360, 720)
@@ -51,7 +51,7 @@ with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
 with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     lon = pickle.load(f)
 
-with open('%s/seasonal-evap-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
+with open('%s/seasonal-et-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
     seasonalEvap = pickle.load(f)
 with open('%s/seasonal-sshf-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
     seasonalSshf = pickle.load(f)
@@ -117,17 +117,17 @@ evapTrends[evapTrends == 0] = np.nan
 sshfTrends[sshfTrends == 0] = np.nan
 slhfTrends[slhfTrends == 0] = np.nan
 
-with open('%s/kdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/kdd-%s-trends-%s-%d-%d-cor.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(kddTrends, f)
 
-with open('%s/gdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/gdd-%s-trends-%s-%d-%d-cor.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(gddTrends, f)
 
-with open('%s/evap-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/evap-%s-trends-%s-%d-%d-cor.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(evapTrends, f)
 
-with open('%s/sshf-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/sshf-%s-trends-%s-%d-%d-cor.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(sshfTrends, f)
 
-with open('%s/slhf-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+with open('%s/slhf-%s-trends-%s-%d-%d-cor.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(slhfTrends, f)

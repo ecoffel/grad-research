@@ -7,6 +7,7 @@ import scipy.stats as st
 import os, sys, pickle, gzip
 import datetime
 from dateutil.relativedelta import relativedelta
+from calendar import monthrange
 import geopy.distance
 import xarray as xr
 import cartopy.crs as ccrs
@@ -24,7 +25,7 @@ elif hfVarShort == 'slhf':
 
 dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-climate'
 
-yearRange = [1981, 2018]
+yearRange = [1981, 2019]
 
 sacksMaizeNc = xr.open_dataset('%s/sacks/Maize.crop.calendar.fill.nc'%dataDirDiscovery)
 sacksStart = sacksMaizeNc['plant'].values + 1
@@ -87,7 +88,7 @@ for xlat in range(len(tempLat)-1):
 
             seasonalSeconds[xlat, ylon] =  (datetime.datetime.strptime('%d'%(sacksEnd[xlat,ylon]), '%j') - \
                                             datetime.datetime.strptime('%d'%(sacksStart[xlat,ylon]), '%j')).total_seconds()
-            continue
+            
             lat1 = tempLat[xlat]
             lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])
             lon1 = tempLon[ylon]
@@ -102,17 +103,37 @@ for xlat in range(len(tempLat)-1):
             elif hfVarShort == 'slhf':
                 curHf = hfData.slhf.sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2)).mean(dim='latitude').mean(dim='longitude')
 
+                
+            # these are in J/DAY/M2, averaged out for the month. so when we accumulate over multiple months,
+            # we need to multiply by the number of days in the month to get J/MONTH/M2, and then sum the J/MONTH/M2 values to get 
+            # J/GROWING SEASON/M2. Then, we keep track of the # of seconds in the growing season so that we can divide and get 
+            # W/M2
             for y, year in enumerate(range(yearRange[0], yearRange[1]+1)):
 
+                daysInMonths = []
+                
                 # in southern hemisphere when planting happens in fall and harvest happens in spring
                 if  startMonth > endMonth:
                     curYearHf = curHf.sel(time=slice('%d-%d'%(year-1, startMonth), '%d-%d'%(year, endMonth)))
+                    curMonths = np.concatenate([np.arange(startMonth, 12+1,1), np.arange(1,endMonth+1)])
+                    for curM in curMonths:
+                        if curM > endMonth:
+                            daysInMonths.append(monthrange(year-1, curM)[1])
+                        else:
+                            daysInMonths.append(monthrange(year, curM)[1])
+                        
                 else:
                     curYearHf = curHf.sel(time=slice('%d-%d'%(year, startMonth), '%d-%d'%(year, endMonth)))
+                    for curM in range(startMonth, endMonth+1):
+                        if curM > endMonth:
+                            daysInMonths.append(monthrange(year-1, curM)[1])
+                        else:
+                            daysInMonths.append(monthrange(year, curM)[1])
+                
+                daysInMonths = np.array(daysInMonths)
+                seasonalHf[xlat, ylon, y] = np.nansum([curYearHf.values[i]*daysInMonths[i] for i in range(len(curYearHf.values))])
 
-                seasonalHf[xlat, ylon, y] = np.nansum(curYearHf.values)
-
-# with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, hfVarShort, wxData), 'wb') as f:
-#     pickle.dump(seasonalHf, f)
+with open('%s/seasonal-%s-maize-%s-correctedunits.dat'%(dataDirDiscovery, hfVarShort, wxData), 'wb') as f:
+    pickle.dump(seasonalHf, f)
 with open('%s/seasonal-seconds-maize.dat'%(dataDirDiscovery), 'wb') as f:
     pickle.dump(seasonalSeconds, f)

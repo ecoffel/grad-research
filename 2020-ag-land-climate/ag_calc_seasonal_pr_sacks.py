@@ -21,7 +21,7 @@ dataDirDiscovery = '/dartfs-hpc/rc/lab/C/CMIG/ecoffel/data/projects/ag-land-clim
 if wxData == '20cr':
     yearRange = [1970, 2015]
 else:
-    yearRange = [1981, 2018]
+    yearRange = [1981, 2019]
 
 sacksMaizeNc = xr.open_dataset('%s/sacks/Maize.crop.calendar.fill.nc'%dataDirDiscovery)
 sacksStart = sacksMaizeNc['plant'].values + 1

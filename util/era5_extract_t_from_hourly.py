@@ -12,12 +12,12 @@ import glob
 import os
 import datetime
 
-tfile = 'tmin'
+tfile = 'mn2t'
 tvar = 'mn2t'
 
 dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
 
-for year in range(1979, 2019):
+for year in range(2019, 2019+1):
     print('opening dataset for %d'%year)
     ds = xr.open_dataset('%s/%s_hourly_%d.nc'%(dataDir, tfile, year), decode_cf=False)
 
