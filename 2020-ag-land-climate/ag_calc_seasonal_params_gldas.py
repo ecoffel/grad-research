@@ -40,17 +40,6 @@ print('opening datasets...')
 gldasNoah = xr.open_mfdataset('/dartfs-hpc/rc/lab/C/CMIG/GLDAS-V2-NOAH/GLDAS_NOAH10_M.*.nc4', concat_dim='time')
 gldasVic = xr.open_mfdataset('/dartfs-hpc/rc/lab/C/CMIG/GLDAS-V2-VIC/GLDAS_VIC10_M.*.nc4', concat_dim='time')
 
-dims = gldasNoah.dims
-startingDate = datetime.datetime(1948, 1, 1, 0, 0, 0)
-tDt = []
-for curTTime in gldasNoah.time:
-    delta = datetime.timedelta(days=int(curTTime.values))
-    tDt.append(startingDate + delta)
-gldasNoah['time'] = tDt
-gldasVic['time'] = tDt
-
-sys.exit()
-
 print('loading gldas noah...')
 gldasNoah.load()
 print('loading gldas vic...')

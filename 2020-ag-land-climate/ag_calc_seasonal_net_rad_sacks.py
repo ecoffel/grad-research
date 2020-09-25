@@ -122,5 +122,5 @@ for xlat in range(len(tempLat)-1):
                 daysInMonths = np.array(daysInMonths)
                 seasonalNr[xlat, ylon, y] = np.nansum([curYearNr.values[i]*daysInMonths[i] for i in range(len(curYearNr.values))])
                 
-with open('%s/seasonal-%s-maize-%s-correctedunits.dat'%(dataDirDiscovery, nrVarShort, wxData), 'wb') as f:
+with open('%s/seasonal-%s-maize-%s.dat'%(dataDirDiscovery, nrVarShort, wxData), 'wb') as f:
     pickle.dump(seasonalNr, f)
