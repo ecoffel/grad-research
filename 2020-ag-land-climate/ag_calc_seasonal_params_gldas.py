@@ -79,11 +79,17 @@ for xlat in range(len(tempLat)-1):
             lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])
             lon1 = tempLon[ylon]
             lon2 = tempLon[ylon]+(tempLon[1]-tempLon[0])
+            
             if lon2 > 360:
                 lon2 -= 360
             if lon1 > 360:
                 lon1 -= 360
 
+            if lon1 > 180: 
+                lon1 = lon1-360
+            if lon2 > 180: 
+                lon2 = lon2-360
+                
             curSshf_Noah = gldasNoah.Qh_tavg.sel(lat=(lat1+lat2)/2, lon=(lon1+lon2)/2, method='nearest')
             curSshf_Vic = gldasVic.Qh_tavg.sel(lat=(lat1+lat2)/2, lon=(lon1+lon2)/2, method='nearest')
 
