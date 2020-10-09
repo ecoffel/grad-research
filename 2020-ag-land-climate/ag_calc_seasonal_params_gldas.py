@@ -75,6 +75,10 @@ for xlat in range(len(tempLat)-1):
             startMonth = datetime.datetime.strptime('%d'%(sacksStart[xlat,ylon]), '%j').date().month
             endMonth = datetime.datetime.strptime('%d'%(sacksEnd[xlat,ylon]), '%j').date().month
 
+            
+            seasonalSeconds =  (datetime.datetime.strptime('%d'%(sacksEnd[xlat,ylon]), '%j') - \
+                                                datetime.datetime.strptime('%d'%(sacksStart[xlat,ylon]), '%j')).total_seconds()
+            
             lat1 = tempLat[xlat]
             lat2 = tempLat[xlat]+(tempLat[1]-tempLat[0])
             lon1 = tempLon[ylon]
@@ -129,7 +133,7 @@ for xlat in range(len(tempLat)-1):
 
                     seasonalSshf_Noah[xlat, ylon, y] = np.nanmean(curYearSshf_Noah.values)
                     seasonalSlhf_Noah[xlat, ylon, y] = np.nanmean(curYearSlhf_Noah.values)
-                    seasonalPr_Noah[xlat, ylon, y] = np.nanmean(curYearPr_Noah.values)
+                    seasonalPr_Noah[xlat, ylon, y] = np.nanmean(curYearPr_Noah.values) * seasonalSeconds
                     seasonalStr_Noah[xlat, ylon, y] = np.nanmean(curYearStr_Noah.values)
                     seasonalSsr_Noah[xlat, ylon, y] = np.nanmean(curYearSsr_Noah.values)
                     seasonalWind_Noah[xlat, ylon, y] = np.nanmean(curYearWind_Noah.values)
@@ -155,7 +159,7 @@ for xlat in range(len(tempLat)-1):
 
                     seasonalSshf_Vic[xlat, ylon, y] = np.nanmean(curYearSshf_Vic.values)
                     seasonalSlhf_Vic[xlat, ylon, y] = np.nanmean(curYearSlhf_Vic.values)
-                    seasonalPr_Vic[xlat, ylon, y] = np.nanmean(curYearPr_Vic.values)
+                    seasonalPr_Vic[xlat, ylon, y] = np.nanmean(curYearPr_Vic.values) * seasonalSeconds
                     seasonalStr_Vic[xlat, ylon, y] = np.nanmean(curYearStr_Vic.values)
                     seasonalSsr_Vic[xlat, ylon, y] = np.nanmean(curYearSsr_Vic.values)
                     seasonalWind_Vic[xlat, ylon, y] = np.nanmean(curYearWind_Vic.values)
