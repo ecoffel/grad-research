@@ -55,8 +55,8 @@ with gzip.open('%s/gdd-kdd-lat-%s.dat'%(dataDirDiscovery, gddKddWxData), 'rb') a
 with gzip.open('%s/gdd-kdd-lon-%s.dat'%(dataDirDiscovery, gddKddWxData), 'rb') as f:
     lon = pickle.load(f)
 
-# with open('%s/seasonal-et-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
-#     seasonalEvap = pickle.load(f)
+with open('%s/seasonal-t-maize-era5.dat'%(dataDirDiscovery), 'rb') as f:
+    seasonalT = pickle.load(f)
 with open('%s/seasonal-precip-maize-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
     seasonalPrecip = pickle.load(f)
 with open('%s/seasonal-sshf-maize-%s.dat'%(dataDirDiscovery, wxData), 'rb') as f:
@@ -73,7 +73,8 @@ gddTrends = np.full([gdd.shape[0], gdd.shape[1]], np.nan)
 gddTrendSig = np.full([gdd.shape[0], gdd.shape[1]], np.nan)
 kddTrends = np.full([kdd.shape[0], kdd.shape[1]], np.nan)
 kddTrendSig = np.full([kdd.shape[0], kdd.shape[1]], np.nan)
-# evapTrends = np.full([seasonalEvap.shape[0], seasonalEvap.shape[1]], np.nan)
+tTrends = np.full([seasonalT.shape[0], seasonalT.shape[1]], np.nan)
+tTrendSig = np.full([seasonalT.shape[0], seasonalT.shape[1]], np.nan)
 prTrends = np.full([seasonalPrecip.shape[0], seasonalSlhf.shape[1]], np.nan)
 prTrendSig = np.full([seasonalPrecip.shape[0], seasonalSlhf.shape[1]], np.nan)
 sshfTrends = np.full([seasonalSshf.shape[0], seasonalSshf.shape[1]], np.nan)
@@ -123,11 +124,12 @@ for x in range(seasonalSlhf.shape[0]):
             prTrends[x, y] = mdl.params[1]
             prTrendSig[x, y] = mdl.pvalues[1]
         
-#         nn = np.where(~np.isnan(seasonalEvap[x, y, :]))[0]
-#         if len(nn) == seasonalEvap.shape[2]:
-#             X = sm.add_constant(range(seasonalEvap.shape[2]))
-#             mdl = sm.OLS(seasonalEvap[x, y, :], X).fit()
-#             evapTrends[x, y] = mdl.params[1]
+        nn = np.where(~np.isnan(seasonalT[x, y, :]))[0]
+        if len(nn) == seasonalT.shape[2]:
+            X = sm.add_constant(range(seasonalT.shape[2]))
+            mdl = sm.OLS(seasonalT[x, y, :], X).fit()
+            tTrends[x, y] = mdl.params[1]
+            tTrendSig[x, y] = mdl.pvalues[1]
 
         nn = np.where(~np.isnan(seasonalSshf[x, y, :]))[0]
         if len(nn) == seasonalSshf.shape[2]:
@@ -176,7 +178,7 @@ for x in range(seasonalSlhf.shape[0]):
 kddTrends[kddTrends == 0] = np.nan
 gddTrends[gddTrends == 0] = np.nan
 prTrends[prTrends == 0] = np.nan
-# evapTrends[evapTrends == 0] = np.nan
+tTrends[tTrends == 0] = np.nan
 sshfTrends[sshfTrends == 0] = np.nan
 slhfTrends[slhfTrends == 0] = np.nan
 efTrends[efTrends == 0] = np.nan
@@ -196,8 +198,11 @@ with open('%s/gdd-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearR
 with open('%s/gdd-%s-trends-sig-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(gddTrendSig, f)
 
-# with open('%s/evap-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
-#     pickle.dump(evapTrends, f)
+with open('%s/t-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+    pickle.dump(tTrends, f)
+    
+with open('%s/t-%s-trends-sig-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
+    pickle.dump(tTrendSig, f)
     
 with open('%s/pr-%s-trends-%s-%d-%d.dat'%(dataDirDiscovery, wxData, crop, yearRange[0], yearRange[1]), 'wb') as f:
     pickle.dump(prTrends, f)

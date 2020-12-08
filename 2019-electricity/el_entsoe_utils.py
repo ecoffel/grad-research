@@ -301,11 +301,11 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
     fileNameQsGldasBasinWide = '%s/script-data/entsoe-qs-gldas-basin-avg-nonforced.csv'%dataDir
     
     if wxdata == 'cpc':
-        fileName = '%s/script-data/entsoe-tx-cpc.csv'%dataDir
+        fileName = '%s/script-data/entsoe-tx-cpc-nonforced.csv'%dataDir
     elif wxdata == 'era':
-        fileName = '%s/script-data/entsoe-tx-era.csv'%dataDir
+        fileName = '%s/script-data/entsoe-tx-era-nonforced.csv'%dataDir
     elif wxdata == 'ncep':
-        fileName = '%s/script-data/entsoe-tx-ncep.csv'%dataDir
+        fileName = '%s/script-data/entsoe-tx-ncep-nonforced.csv'%dataDir
     elif wxdata == 'all':
         if forced:
             fileName = ['%s/script-data/entsoe-tx-cpc.csv'%dataDir, \
@@ -344,12 +344,15 @@ def matchEntsoeWxPlantSpecific(datadir, entsoeData, wxdata, forced):
                 tx[i-3,j] = np.nanmean([tx1[i,j], tx2[i,j], tx3[i,j]])
         
     else:
-        tx = np.genfromtxt(fileName, delimiter=',')
+        txRaw = np.genfromtxt(fileName, delimiter=',')
         
-        txYears = tx[0,:]
-        txMonths = tx[1,:]
-        txDays = tx[2,:]
-        tx = tx[3:,:]
+        txYears = txRaw[0,:]
+        txMonths = txRaw[1,:]
+        txDays = txRaw[2,:]
+        
+        tx = np.zeros([txRaw.shape[0]-3, txRaw.shape[1]])
+        
+        tx[:,:] = txRaw[3:,:]
     
     
     smoothingLen = 30

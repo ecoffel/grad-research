@@ -2,6 +2,7 @@ import matplotlib.font_manager as font_manager
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 from matplotlib.colors import Normalize
 from IPython import get_ipython
 ipython = get_ipython()
@@ -10,6 +11,8 @@ ipython.magic('load_ext autoreload')
 ipython.magic('autoreload 2')
 ipython.magic('matplotlib inline')
 
+
+warnings.filterwarnings('ignore')
 
 font_dirs = ['/dartfs-hpc/rc/lab/C/CMIG/ecoffel/fonts', ]
 font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
