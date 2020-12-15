@@ -75,3 +75,9 @@ dbscan/*
 *.ai
 *.mat
 2019-electricity/pp-dataframe
+2020-ag-land-climate
+**/2020-ag-cmip6
+**/2017-ag-precip/.ipynb_checkpoints/
+**/2019-electricity/.ipynb_checkpoints
+**/util/.ipynb_checkpoints
+2019-electricity/el_aggregate_pc_model_warming.txt

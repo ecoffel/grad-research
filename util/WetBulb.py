@@ -84,7 +84,6 @@ def calc_RH_from_T_Td(T, Td, mode=0):
 def QSat_2(T_k, p_t):
     """
     [es_mb,rs,de_mbdT,dlnes_mbdT,rsdT,foftk,fdt]=QSat_2(T_k, p_t)
-
     DESCRIPTION:
       Computes saturation mixing ratio and the change in saturation
       mixing ratio with respect to temperature.  Uses Bolton eqn 10, 39.
@@ -98,11 +97,8 @@ def QSat_2(T_k, p_t):
     INPUTS:
       T_k        temperature (K)
       p_t        surface atmospheric pressure (pa)
-
       T_k and p_t should be arrays of identical dimensions.
-
     OUTPUTS:
-
       es_mb      vapor pressure (pa)
       rs       	 humidity (kg/kg)
       de_mbdT    d(es)/d(T)
@@ -110,10 +106,8 @@ def QSat_2(T_k, p_t):
       rsdT     	 d(qs)/d(T)
       foftk      Davies-Jones eqn 2.3
       fdT     	 d(f)/d(T)
-
     Ported from HumanIndexMod by Jonathan R Buzan 08/08/13
     MATLAB port by Robert Kopp
-
     Last updated by Robert Kopp, robert-dot-kopp-at-rutgers-dot-edu, Wed Sep 02 22:22:25 EDT 2015
     """
 
@@ -206,10 +200,8 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
       HumidityMode
         0 (Default): Humidity is specific humidity (kg/kg)
         1: Humidity is relative humidity (#, max = 100)
-
       TemperatureC, Pressure, and Humidity should either be scalars or arrays of
         identical dimension.
-
     OUTPUTS:
       Twb	    wet bulb temperature (C)
       Teq	    Equivalent Temperature (K)
@@ -339,10 +331,10 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
     # but in the MATLAB code, for sake of speed, we only do this for the values
     # that didn't converge
 
-    if 1: #ConvergenceMode:
+    if np.max(delta)>0.01: #ConvergenceMode:
         
         convergence = 0.00001
-        maxiter = 2000
+        maxiter = 20000
 
         es_mb_wb_temp,rs_wb_temp,de_mbdwb_temp, dlnes_mbdwb_temp, rsdwb_temp, foftk_wb_temp, fdwb_temp = QSat_2(wb_temp + C, Pressure)
         delta = (foftk_wb_temp - X)/fdwb_temp  #float((foftk_wb_temp - X)/fdwb_temp)
@@ -366,10 +358,9 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
             Twb[subdo] = TemperatureK[subdo]-C
             #print(subdo)
             for www in subdo[0]:
-                pass
             #    print(www)
-#                 print('WARNING-Wet_Bulb failed to converge. Setting to T: WB, P, T, RH, Delta: %0.2f, %0.2f, %0.1f, %0.2g, %0.1f'%(Twb[www], Pressure[www], \
-#                     TemperatureK[www], relhum[www], delta[www]))
+                print('WARNING-Wet_Bulb failed to converge. Setting to T: WB, P, T, RH, Delta: %0.2f, %0.2f, %0.1f, %0.2g, %0.1f'%(Twb[www], Pressure[www], \
+                    TemperatureK[www], relhum[www], delta[www]))
             #end
         #end
 
@@ -377,21 +368,3 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
     
     #Twb=float(Twb)
     return Twb,Teq,epott
-
-if __name__ == "__main__":
-    tempC = np.array([31.,32.,33.,34.])
-    #tempd = np.array([26.58,29.10,29.26,27.55])
-    tempd = np.array([26.57,29.11,29.26,27.54])
-    RH = calc_RH_from_T_Td(tempC,tempd,mode=1)
-    print('RH = ')
-    print(RH)
-
-    #Pres  = np.array([102130,102130,102130,102130])
-    Pres  = np.array([101325]*4)
-    relHum = np.array([70.,80.,75.,60.])
-    Hum_mode = 1
-
-    Twb,Teq,epott = WetBulb(tempC,Pres,relHum,Hum_mode)
-    print(Twb)
-    print(Teq)
-    print(epott)
