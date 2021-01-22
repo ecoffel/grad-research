@@ -189,7 +189,8 @@ def QSat_2(T_k, p_t):
     d2fdT2 = lambd_a*(1.0/(T_k*T_k) - vkp*de_mbdT*de_mbdT/(pminuse*pminuse) - \
         vkp*d2e_mbdT2/pminuse - d2gdT2)
 
-# avoid bad numbers
+    
+#         # avoid bad numbers
     rs[rs>1]=np.nan
     rs[rs<0]=np.nan
 
@@ -215,7 +216,7 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
       Teq	    Equivalent Temperature (K)
       epott 	Equivalent Potential Temperature (K)
     """
-#    SHR_CONST_TKFRZ = 273.15
+    
     TemperatureK = TemperatureC + SHR_CONST_TKFRZ
 
     constA = 2675 	 # Constant used for extreme cold temparatures (K)
@@ -339,7 +340,7 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
     # but in the MATLAB code, for sake of speed, we only do this for the values
     # that didn't converge
 
-    if 1: #ConvergenceMode:
+    if 0: #ConvergenceMode:
         
         convergence = 0.00001
         maxiter = 2000
@@ -376,7 +377,7 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
     #end
     
     #Twb=float(Twb)
-    return Twb,Teq,epott
+    return Twb
 
 if __name__ == "__main__":
     tempC = np.array([31.,32.,33.,34.])

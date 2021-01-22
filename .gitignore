@@ -75,3 +75,5 @@ dbscan/*
 *.ai
 *.mat
 2019-electricity/pp-dataframe
+2019-electricity/.ipynb_checkpoints
+2017-ag-precip/.ipynb_checkpoints
