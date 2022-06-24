@@ -62,6 +62,7 @@ dbscan/*
 2015-weight-restriction-v2/airport-wx/*
 *.eps
 *.csv
+.png
 *.dat
 *.iml
 *.asc

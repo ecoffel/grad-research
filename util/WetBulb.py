@@ -332,11 +332,8 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
     # but in the MATLAB code, for sake of speed, we only do this for the values
     # that didn't converge
 
-<<<<<<< HEAD
     if 0: #ConvergenceMode:
-=======
-    if np.max(delta)>0.01: #ConvergenceMode:
->>>>>>> b31cc9ec9c516d99658df3f6b0e5d0ceeda47538
+#     if np.max(delta)>0.01: #ConvergenceMode:
         
         convergence = 0.00001
         maxiter = 20000
@@ -359,39 +356,35 @@ def WetBulb(TemperatureC,Pressure,Humidity,HumidityMode=0):
 
         Twb = wb_temp
         if any(map(len,subdo)): #len(subdo)>0:
-            print(len(subdo))
+#             print(len(subdo))
             Twb[subdo] = TemperatureK[subdo]-C
             #print(subdo)
-            for www in subdo[0]:
-            #    print(www)
-                print('WARNING-Wet_Bulb failed to converge. Setting to T: WB, P, T, RH, Delta: %0.2f, %0.2f, %0.1f, %0.2g, %0.1f'%(Twb[www], Pressure[www], \
-                    TemperatureK[www], relhum[www], delta[www]))
+#             for www in subdo[0]:
+#             #    print(www)
+#                 print('WARNING-Wet_Bulb failed to converge. Setting to T: WB, P, T, RH, Delta: %0.2f, %0.2f, %0.1f, %0.2g, %0.1f'%(Twb[www], Pressure[www], \
+#                     TemperatureK[www], relhum[www], delta[www]))
             #end
         #end
 
     #end
     
-    #Twb=float(Twb)
-<<<<<<< HEAD
     return Twb
 
-if __name__ == "__main__":
-    tempC = np.array([31.,32.,33.,34.])
-    #tempd = np.array([26.58,29.10,29.26,27.55])
-    tempd = np.array([26.57,29.11,29.26,27.54])
-    RH = calc_RH_from_T_Td(tempC,tempd,mode=1)
-    print('RH = ')
-    print(RH)
+# if __name__ == "__main__":
+#     tempC = np.array([31.])
+#     #tempd = np.array([26.58,29.10,29.26,27.55])
+#     tempd = np.array([26.57])
+#     RH = calc_RH_from_T_Td(tempC,tempd,mode=1)
+# #     print('RH = ')
+# #     print(RH)
 
-    #Pres  = np.array([102130,102130,102130,102130])
-    Pres  = np.array([101325]*4)
-    relHum = np.array([70.,80.,75.,60.])
-    Hum_mode = 1
+#     #Pres  = np.array([102130,102130,102130,102130])
+#     Pres  = np.array([101325])
+#     relHum = np.array([70.])
+#     Hum_mode = 1
 
-    Twb,Teq,epott = WetBulb(tempC,Pres,relHum,Hum_mode)
-    print(Twb)
-    print(Teq)
-    print(epott)
-=======
-    return Twb,Teq,epott
->>>>>>> b31cc9ec9c516d99658df3f6b0e5d0ceeda47538
+# #     Twb,Teq,epott = WetBulb(tempC,Pres,relHum,Hum_mode)
+#     Twb = WetBulb(tempC,Pres,relHum,Hum_mode)
+#     print(Twb)
+# #     print(Teq)
+# #     print(epott)

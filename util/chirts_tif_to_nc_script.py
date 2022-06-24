@@ -16,7 +16,8 @@ import pickle
 
 chirtsVar = 'HeatIndex'
 
-dirChirts = '/dartfs-hpc/rc/lab/C/CMIG/CHIRTS'
+# dirChirts = '/dartfs-hpc/rc/lab/C/CMIG/CHIRTS'
+dirChirts = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CHIRTS'
 urlChirts = 'http://data.chc.ucsb.edu/products/CHIRTSdaily/v1.0/global_tifs_p05/%s'%chirtsVar
 
 years = range(1983,2017)
@@ -29,8 +30,8 @@ chirts_lon = np.linspace(0, 360, 7200)
 
 for year in years:
     
-    local_dir = '%s/%s/%d/'%(dirChirts, chirtsVar, year)
-    output_dir = '%s/%s/netcdf/'%(dirChirts, chirtsVar)
+    local_dir = '%s/%s/%d'%(dirChirts, chirtsVar, year)
+    output_dir = '%s/%s/netcdf'%(dirChirts, chirtsVar)
     
     for month in months:
         

@@ -15,6 +15,7 @@ dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F
 yearRange = [int(sys.argv[1]), int(sys.argv[2])]
 
 chunk_size = 100
+chunk_size_time = 1
 
 def spec_humidity(dp, sp):
     """Calculates SH automatically from the dewpt. Returns in g/kg"""
@@ -37,51 +38,47 @@ def spec_humidity(dp, sp):
 for year in range(yearRange[0], yearRange[1]+1):
     print('opening mx2t datasets for %d'%year)
     mx2t = xr.open_dataset('%s/hourly/mx2t_hourly_%d.nc'%(dataDir, year))
-#     mx2t = mx2t.sel(time='%d-07-01'%year)
-#     mx2t.load()
+    mx2t = mx2t.sel(latitude=slice(40,30), longitude=slice(240,245), time='%d-07-01'%year)
+    mx2t['mx2t'] -= 273.15
+    mx2t.load()
 
     print('opening sp datasets for %d'%year)
     sp = xr.open_dataset('%s/hourly/sp_hourly_%d.nc'%(dataDir, year))
-#     sp = sp.sel(time='%d-07-01'%year)
-#     sp.load()
+    sp = sp.sel(latitude=slice(40,30), longitude=slice(240,245), time='%d-07-01'%year)
+    sp.load()
 
     print('opening dp2t datasets for %d'%year)
     dp2t = xr.open_dataset('%s/hourly/dp_hourly_%d.nc'%(dataDir, year)) # UPDATE THIS!!
-#     dp2t = dp2t.sel(time='%d-07-01'%year)
-#     dp2t.load()
+    dp2t = dp2t.sel(latitude=slice(40,30), longitude=slice(240,245), time='%d-07-01'%year)
+    dp2t.load()
 
     
-    print('building dask chunks')
-    dask_mx2t = mx2t.mx2t.chunk({'time':chunk_size, 'latitude':chunk_size, 'longitude':chunk_size})
-    dask_sp = sp.sp.chunk({'time':chunk_size, 'latitude':chunk_size, 'longitude':chunk_size})
-    dask_dp2t = dp2t.d2m.chunk({'time':chunk_size, 'latitude':chunk_size, 'longitude':chunk_size})
-
     print('computing specific hum')
-    q=spec_humidity(dask_dp2t, dask_sp/100)
-#     q.compute()
-
-    dask_q = q.chunk({'time':chunk_size, 'latitude':chunk_size, 'longitude':chunk_size})/1000
-
-#     dask_mx2t.load()
-#     dask_sp.load()
-#     dask_q.load()
+    q=spec_humidity(dp2t, sp/100)
+    
+    mx2t_1d = mx2t.mx2t.values.reshape([mx2t.mx2t.values.size])
+    sp_1d = sp.sp.values.reshape([sp.sp.values.size])
+    q_1d = q.reshape([q.size])
     
     print('computing tw')
-    tw = xr.apply_ufunc(WetBulb.WetBulb,
-                            dask_mx2t-273.15, dask_sp, dask_q,
-                            dask='parallelized',
-#                             vectorize=True,
-                            input_core_dims=None,
-#                             output_core_dims=[['latitude'], ['longitude'], ['time']],
-#                             output_sizes={'latitude':dask_mx2t.latitude.size, 'longitude':dask_mx2t.longitude.size, 'time':dask_mx2t.time.size},
-                            output_dtypes=[dask_q.dtype],
-                            )
+    tw = WetBulb.WetBulb(mx2t_1d, sp_1d, q_1d)
+
+    
+#     tw = xr.apply_ufunc(WetBulb.WetBulb,
+#                             mx2t, dask_sp, dask_q,
+#                             dask='parallelized',
+#     #                         vectorize=True,
+#                             input_core_dims=None,
+# #                             output_core_dims=[['latitude'], ['longitude'], ['time']],
+# #                             output_sizes={'latitude':dask_mx2t.latitude.size, 'longitude':dask_mx2t.longitude.size, 'time':dask_mx2t.time.size},
+#                             output_dtypes=[dask_q.dtype],
+#                             )
 
 
     
 #     tw = tw.compute()
-    tw_ds = xr.Dataset()
-    tw_ds['tw'] = tw
+#     tw_ds = xr.Dataset()
+#     tw_ds['tw'] = tw
     
-    print('writing netcdf')
-    tw_ds.to_netcdf('%s/hourly/tw_%d.nc'%(dataDir, year), encoding={'tw': {"dtype": "float32", "zlib": True, 'complevel':9}})
+#     print('writing netcdf')
+#     tw_ds.to_netcdf('%s/hourly/tw_%d.nc'%(dataDir, year), encoding={'tw': {"dtype": "float32", "zlib": True, 'complevel':9}})

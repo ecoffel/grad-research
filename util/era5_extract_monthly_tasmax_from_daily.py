@@ -12,7 +12,8 @@ import glob
 import sys, os
 import datetime
 
-dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
+# dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
+dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/ERA5'
 
 yearRange = [int(sys.argv[1]), int(sys.argv[2])]
 

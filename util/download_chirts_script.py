@@ -1,22 +1,23 @@
-import xarray as xr
-import pandas as pd
-import numpy as np
+# import xarray as xr
+# import pandas as pd
+# import numpy as np
 
-import cartopy
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
+# import cartopy
+# import cartopy.crs as ccrs
+# import matplotlib.pyplot as plt
 
 import glob
 import sys
 import os
 import datetime
 import calendar
-import rasterio
-import pickle
+# import rasterio
+# import pickle
 
 chirtsVar = 'HeatIndex'
 
-dirChirts = '/dartfs-hpc/rc/lab/C/CMIG/CHIRTS'
+# dirChirts = '/dartfs-hpc/rc/lab/C/CMIG/CHIRTS'
+dirChirts = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CHIRTS'
 urlChirts = 'http://data.chc.ucsb.edu/products/CHIRTSdaily/v1.0/global_tifs_p05/%s'%chirtsVar
 
 years = range(1983, 2017)

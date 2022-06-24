@@ -12,12 +12,13 @@ import glob
 import os, sys
 import datetime
 
-tfile = 'mx2t'
-tvar = 'mx2t'
+tfile = 'mn2t'
+tvar = 'mn2t'
 
 years = [int(sys.argv[1]), int(sys.argv[2])]
 
-dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
+dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/ERA5'
+# dataDir = '/dartfs-hpc/rc/lab/C/CMIG/ERA5'
 
 for year in range(years[0], years[1]+1):
     print('opening dataset for %d'%year)
