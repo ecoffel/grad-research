@@ -23,9 +23,10 @@ sys.path.append('../2020-ag-land-climate')
 
 import ag_build_elevation_map
 
-# model = 'canesm5'
+# model = 'bcc-csm2-mr'
+model = 'ipsl-cm6a-lr'
 # model = 'kace-1-0-g'
-model = 'bcc-esm1'
+# model = 'noresm2-lm'
 
 year = int(sys.argv[1])
 
@@ -38,9 +39,9 @@ dsTasmaxHist = dsTasmaxHist.where((dsTasmaxHist['time.year'] == year), drop=True
 dsTasmaxHist.load()
 
 print('loading hist %s/huss'%model)
-if model == 'bcc-esm1':
+if model == 'bcc-esm1' or model == 'ipsl-cm6a-lr':
     dsHussHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/hus/hus_day*.nc'%(dataDir, model), combine='by_coords')
-    dsHussHist = dsHussHist.where((dsHussHist['time.year'] == year) & (dsHussHist['plev'] == 100000), drop=True)
+    dsHussHist = dsHussHist.where((dsHussHist['time.year'] == year), drop=True)
     dsHussHist = dsHussHist.squeeze()
     dsHussHist = dsHussHist.rename({'hus':'huss'})
     dsHussHist.load()
@@ -93,6 +94,24 @@ for x, xlat in enumerate(txHist.lat.values):
 
         elevSubMap[x, y] = elevationMap[elevX, elevY]
 
+huss_values = np.full([dsHussHist.time.size, dsHussHist.lat.size, dsHussHist.lon.size], np.nan)
+
+# find huss for models with multiple levels
+if model == 'bcc-esm1' or model == 'ipsl-cm6a-lr':
+    for xlat in range(latPixels):
+        for ylon in range(lonPixels):
+            if elevSubMap[xlat, ylon] > 0:
+                # mean over time, after this dim0 is plev
+                cur_huss_mean = np.nanmean(hussHist.values[:, :, xlat, ylon], axis=0)
+                
+                #plev
+                for p in range(cur_huss_mean.shape[0]):
+                    if not np.isnan(cur_huss_mean[p]):
+                        huss_values[:, xlat, ylon] = hussHist.values[:, p, xlat, ylon]
+                        break
+else:
+    huss_values = hussHist.values
+
 # calculate estimated surface pressure
 print('calculating historical surface pressure for %s'%model)
 pSurfHist = pslHist * (1 - (L*elevSubMap)/txHist)**((g*M)/(R0*L))
@@ -111,7 +130,8 @@ for xlat in range(latPixels):
 
                 cur_tx = np.array([txHist.values[t, xlat, ylon]-273.15])
                 cur_p_surf = np.array([pSurfHist.values[t, xlat, ylon]])
-                cur_huss = np.array([hussHist.values[t, xlat, ylon]])
+                cur_huss = np.array([huss_values[t, xlat, ylon]])
+                
                 curTwHist[t, xlat, ylon] = WetBulb.WetBulb(cur_tx, cur_p_surf, cur_huss)
                 n += 1
 
