@@ -24,7 +24,7 @@ sys.path.append('../2020-ag-land-climate')
 import ag_build_elevation_map
 
 # model = 'bcc-csm2-mr'
-model = 'ipsl-cm6a-lr'
+model = 'miroc6'
 # model = 'kace-1-0-g'
 # model = 'noresm2-lm'
 
