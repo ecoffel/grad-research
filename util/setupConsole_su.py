@@ -13,12 +13,20 @@ ipython.magic('matplotlib inline')
 
 warnings.filterwarnings('ignore')
 
-font_dirs = ['/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/fonts', ]
-font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-font_list = font_manager.createFontList(font_files)
-font_manager.fontManager.ttflist.extend(font_list)
+# font_dirs = ['/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/fonts', ]
+# font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+# font_list = font_manager.createFontList(font_files)
+# font_manager.fontManager.ttflist.extend(font_list)
 
-plt.rcParams["font.family"] = "Helvetica"
+
+font_dirs = ['/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/fonts']
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+
+for font_file in font_files:
+    font_manager.fontManager.addfont(font_file)
+
+
+plt.rcParams["font.family"] = "Helvetica Neue"
 plt.rc('xtick', labelsize=14)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=14)    # fontsize of the tick labels
 plt.rc('axes', labelsize=16)    # fontsize of the tick labels

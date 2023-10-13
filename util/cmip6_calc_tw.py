@@ -24,11 +24,11 @@ sys.path.append('../2020-ag-land-climate')
 import ag_build_elevation_map
 
 # model = 'bcc-csm2-mr'
-model = 'miroc6'
+model = sys.argv[1]
 # model = 'kace-1-0-g'
 # model = 'noresm2-lm'
 
-year = int(sys.argv[1])
+year = int(sys.argv[2])
 
 dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CMIP6'
 dataDirElevation = '/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/data/elevation'
@@ -54,6 +54,7 @@ print('loading hist %s/psl'%model)
 dsPslHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/psl/psl_day*.nc'%(dataDir, model), combine='by_coords')
 dsPslHist = dsPslHist.where((dsPslHist['time.year'] == year), drop=True)
 dsPslHist.load()
+
 
 # build elev map for this grid res
 latPixels = dsTasmaxHist.lat.shape[0]
