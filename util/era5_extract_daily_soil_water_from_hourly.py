@@ -17,7 +17,7 @@ dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F
 
 yearRange = [int(sys.argv[1]), int(sys.argv[2])]
 
-sw_layer = 2
+sw_layer = 3
 
 # for year in range(yearRange[0], yearRange[1]+1):
     

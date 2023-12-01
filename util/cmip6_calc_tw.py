@@ -30,35 +30,37 @@ model = sys.argv[1]
 
 year = int(sys.argv[2])
 
+scenario = 'ssp245'
+
 dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CMIP6'
 dataDirElevation = '/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/data/elevation'
 
 print('loading hist %s/tasmax'%model)
-dsTasmaxHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/tasmax/tasmax_day*.nc'%(dataDir, model), combine='by_coords')
-dsTasmaxHist = dsTasmaxHist.where((dsTasmaxHist['time.year'] == year), drop=True)
-dsTasmaxHist.load()
+dsTasmax = xr.open_mfdataset('%s/%s/r1i1p1f1/%s/tasmax/tasmax_day*.nc'%(dataDir, model, scenario), combine='by_coords')
+dsTasmax = dsTasmax.where((dsTasmax['time.year'] == year), drop=True)
+dsTasmax.load()
 
 print('loading hist %s/huss'%model)
 if model == 'bcc-esm1' or model == 'ipsl-cm6a-lr':
-    dsHussHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/hus/hus_day*.nc'%(dataDir, model), combine='by_coords')
-    dsHussHist = dsHussHist.where((dsHussHist['time.year'] == year), drop=True)
-    dsHussHist = dsHussHist.squeeze()
-    dsHussHist = dsHussHist.rename({'hus':'huss'})
-    dsHussHist.load()
+    dsHuss = xr.open_mfdataset('%s/%s/r1i1p1f1/%s/hus/hus_day*.nc'%(dataDir, model, scenario), combine='by_coords')
+    dsHuss = dsHuss.where((dsHuss['time.year'] == year), drop=True)
+    dsHuss = dsHuss.squeeze()
+    dsHuss = dsHuss.rename({'hus':'huss'})
+    dsHuss.load()
 else:
-    dsHussHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/huss/huss_day*.nc'%(dataDir, model), combine='by_coords')
-    dsHussHist = dsHussHist.where((dsHussHist['time.year'] == year), drop=True)
-    dsHussHist.load()
+    dsHuss = xr.open_mfdataset('%s/%s/r1i1p1f1/%s/huss/huss_day*.nc'%(dataDir, model, scenario), combine='by_coords')
+    dsHuss = dsHuss.where((dsHuss['time.year'] == year), drop=True)
+    dsHuss.load()
 
 print('loading hist %s/psl'%model)
-dsPslHist = xr.open_mfdataset('%s/%s/r1i1p1f1/historical/psl/psl_day*.nc'%(dataDir, model), combine='by_coords')
-dsPslHist = dsPslHist.where((dsPslHist['time.year'] == year), drop=True)
-dsPslHist.load()
+dsPsl = xr.open_mfdataset('%s/%s/r1i1p1f1/%s/psl/psl_day*.nc'%(dataDir, model, scenario), combine='by_coords')
+dsPsl = dsPsl.where((dsPsl['time.year'] == year), drop=True)
+dsPsl.load()
 
 
 # build elev map for this grid res
-latPixels = dsTasmaxHist.lat.shape[0]
-lonPixels = dsTasmaxHist.lon.shape[0]
+latPixels = dsTasmax.lat.shape[0]
+lonPixels = dsTasmax.lon.shape[0]
 
 if not os.path.isfile('%s/elevation-map-%d-%d.dat'%(dataDirElevation, latPixels, lonPixels)):
     print('building elevation map for %s/(%d, %d)'%(model, latPixels, lonPixels))
@@ -69,7 +71,7 @@ else:
         elevLat = e['lat']
         elevLon = e['lon']
 
-        if np.nanmax(dsTasmaxHist.lon > 300):
+        if np.nanmax(dsTasmax.lon > 300):
             elevLon[elevLon<0] += 360
 
         elevationMap = e['elevationMap']
@@ -80,22 +82,22 @@ g = 9.80665 # gravitational acceleration (m/s2)
 M = 0.02896968 # molar mass of dry air (kg/mol)
 R0 = 8.3144 # universal gas constant (J/mol*K)
 
-txHist = dsTasmaxHist.tasmax
-hussHist = dsHussHist.huss
-pslHist = dsPslHist.psl
+tx = dsTasmax.tasmax
+huss = dsHuss.huss
+psl = dsPsl.psl
 
 # construct elevation subgrid that matches the grids of the cmip6 variables
-elevSubMap = np.full([txHist.lat.values.shape[0], txHist.lon.values.shape[0]], np.nan)
+elevSubMap = np.full([tx.lat.values.shape[0], tx.lon.values.shape[0]], np.nan)
 
 print('calculating elevation sub grid for %s'%model)
-for x, xlat in enumerate(txHist.lat.values):
-    for y, ylon in enumerate(txHist.lon.values):
+for x, xlat in enumerate(tx.lat.values):
+    for y, ylon in enumerate(tx.lon.values):
         elevX = np.where((abs(elevLat - xlat) == np.nanmin(abs(elevLat - xlat))))[0][0]
         elevY = np.where((abs(elevLon - ylon) == np.nanmin(abs(elevLon - ylon))))[0][0]
 
         elevSubMap[x, y] = elevationMap[elevX, elevY]
 
-huss_values = np.full([dsHussHist.time.size, dsHussHist.lat.size, dsHussHist.lon.size], np.nan)
+huss_values = np.full([dsHuss.time.size, dsHuss.lat.size, dsHuss.lon.size], np.nan)
 
 # find huss for models with multiple levels
 if model == 'bcc-esm1' or model == 'ipsl-cm6a-lr':
@@ -103,49 +105,52 @@ if model == 'bcc-esm1' or model == 'ipsl-cm6a-lr':
         for ylon in range(lonPixels):
             if elevSubMap[xlat, ylon] > 0:
                 # mean over time, after this dim0 is plev
-                cur_huss_mean = np.nanmean(hussHist.values[:, :, xlat, ylon], axis=0)
+                cur_huss_mean = np.nanmean(huss.values[:, :, xlat, ylon], axis=0)
                 
                 #plev
                 for p in range(cur_huss_mean.shape[0]):
                     if not np.isnan(cur_huss_mean[p]):
-                        huss_values[:, xlat, ylon] = hussHist.values[:, p, xlat, ylon]
+                        huss_values[:, xlat, ylon] = huss.values[:, p, xlat, ylon]
                         break
 else:
-    huss_values = hussHist.values
+    huss_values = huss.values
 
 # calculate estimated surface pressure
 print('calculating historical surface pressure for %s'%model)
-pSurfHist = pslHist * (1 - (L*elevSubMap)/txHist)**((g*M)/(R0*L))
+pSurf = psl * (1 - (L*elevSubMap)/tx)**((g*M)/(R0*L))
 
 # and now calculate wet bulb
 print('calculating historical wet bulb temperature for %s'%model)
-curTwHist = np.full([dsTasmaxHist.time.size, latPixels, lonPixels], np.nan)
+cur_tw = np.full([dsTasmax.time.size, latPixels, lonPixels], np.nan)
 n = 0
-n_total = np.where((elevSubMap.reshape([elevSubMap.size,1])>0))[0].size * dsTasmaxHist.time.size
+n_total = np.where((elevSubMap.reshape([elevSubMap.size,1])>0))[0].size * dsTasmax.time.size
 for xlat in range(latPixels):
     for ylon in range(lonPixels):
         if elevSubMap[xlat, ylon] > 0:
-            for t in range(dsTasmaxHist.time.size):
+            for t in range(dsTasmax.time.size):
                 if n % 1000 == 0:
                     print(n/n_total)
 
-                cur_tx = np.array([txHist.values[t, xlat, ylon]-273.15])
-                cur_p_surf = np.array([pSurfHist.values[t, xlat, ylon]])
+                cur_tx = np.array([tx.values[t, xlat, ylon]-273.15])
+                cur_p_surf = np.array([pSurf.values[t, xlat, ylon]])
                 cur_huss = np.array([huss_values[t, xlat, ylon]])
                 
-                curTwHist[t, xlat, ylon] = WetBulb.WetBulb(cur_tx, cur_p_surf, cur_huss)
+                cur_tw[t, xlat, ylon] = WetBulb.WetBulb(cur_tx, cur_p_surf, cur_huss)
+                
+                print(cur_tx, cur_p_surf, cur_huss, cur_tw[t,xlat,ylon])
+                
                 n += 1
-
-dsTwHist = xr.Dataset(
+    
+dstw = xr.Dataset(
     {
-        'tw':(('time', 'lat', 'lon'), curTwHist)
+        'tw':(('time', 'lat', 'lon'), cur_tw)
     },
-    coords = {'time':txHist.time, 'lat':txHist.lat, 'lon':txHist.lon},
+    coords = {'time':tx.time, 'lat':tx.lat, 'lon':tx.lon},
 )
 
 print('writing tw change netcdf file for %s'%model)
-dsTwHist.to_netcdf(path='tw_daily_%s_%d.nc'%(model, year), mode='w')
-#     dsTwHist.to_netcdf(path='%s/%s/r1i1p1f1/historical/tw/tw_daily.nc'%(dataDir, model), mode='w')
+dstw.to_netcdf(path='tw_daily_%s_%s_%d.nc'%(model, scenario, year), mode='w')
+#     dstw.to_netcdf(path='%s/%s/r1i1p1f1/historical/tw/tw_daily.nc'%(dataDir, model), mode='w')
     
     
 #     uniqueLatLongs = {}
@@ -169,16 +174,16 @@ dsTwHist.to_netcdf(path='tw_daily_%s_%d.nc'%(model, year), mode='w')
 #         # convert to 0-360 for referencing cmip6
 #         if long < 0: long += 360
 #         tx = dsTasmaxHist.tasmax.sel(lat=lat, lon=long, method='nearest')
-#         huss = dsHussHist.huss.sel(lat=lat, lon=long, method='nearest')
-#         psl = dsPslHist.psl.sel(lat=lat, lon=long, method='nearest')
+#         huss = dsHuss.huss.sel(lat=lat, lon=long, method='nearest')
+#         psl = dsPsl.psl.sel(lat=lat, lon=long, method='nearest')
         
 #         print('computing slp for station %d'%i)
 #         # convert to surface pressure using the mean altitude at this grid cell
 #         pSurf = psl * (1 - (L*elevationMap[elevX, elevY])/tx)**((g*M)/(R0*L))
         
 #         print('computing tw for station %d'%i)
-#         curTw = WetBulb.WetBulb(tx.values-273.15, pSurf.values, huss.values)
-#         tw.append({'ID':mooseLoc['pointID'][i], 'TW':curTw}, ignore_index=True)
+#         cur_tw = WetBulb.WetBulb(tx.values-273.15, pSurf.values, huss.values)
+#         tw.append({'ID':mooseLoc['pointID'][i], 'TW':cur_tw}, ignore_index=True)
 #     sys.exit()
     
 # sys.exit()

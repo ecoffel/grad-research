@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 sys.path.append('../2020-ag-land-climate')
 import ag_build_elevation_map
 
-member = 3
+member = 40
 year = int(sys.argv[1])
 
 dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CMIP6'
@@ -43,11 +43,22 @@ R0 = 8.3144 # universal gas constant (J/mol*K)
 
 tasmax = xr.open_mfdataset('%s/TASMAX/HIST-RCP85/tasmax_day_CESM1-CAM5_historical_rcp85_r%di1p1_*.nc'%(dataDirLens, member))
 
-q_hist = xr.open_mfdataset(f'%s/QBOT/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{member:03}.cam.h1.QBOT.*.nc'%(dataDirLens))
-q_fut = xr.open_mfdataset(f'%s/QBOT/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{member:03}.cam.h1.QBOT.*.nc'%(dataDirLens))
+if member > 35:
+    print('loading q')
+    q_hist = xr.open_mfdataset(f'%s/QBOT/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{(101-36+member):03}.cam.h1.QBOT.*.nc'%(dataDirLens))
+    q_fut = xr.open_mfdataset(f'%s/QBOT/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{(101-36+member):03}.cam.h1.QBOT.*.nc'%(dataDirLens))
+    
+    print('loading slp')
+    slp_hist = xr.open_mfdataset(f'%s/SLP/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{(101-36+member):03}.cam.h1.PSL.*.nc'%(dataDirLens))
+    slp_fut = xr.open_mfdataset(f'%s/SLP/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{(101-36+member):03}.cam.h1.PSL.*.nc'%(dataDirLens))
+else:
+    q_hist = xr.open_mfdataset(f'%s/QBOT/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{member:03}.cam.h1.QBOT.*.nc'%(dataDirLens))
+    q_fut = xr.open_mfdataset(f'%s/QBOT/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{member:03}.cam.h1.QBOT.*.nc'%(dataDirLens))
+    
+    slp_hist = xr.open_mfdataset(f'%s/SLP/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{member:03}.cam.h1.PSL.*.nc'%(dataDirLens))
+    slp_fut = xr.open_mfdataset(f'%s/SLP/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{member:03}.cam.h1.PSL.*.nc'%(dataDirLens))
 
-slp_hist = xr.open_mfdataset(f'%s/SLP/HIST/b.e11.B20TRC5CNBDRD.f09_g16.{member:03}.cam.h1.PSL.*.nc'%(dataDirLens))
-slp_fut = xr.open_mfdataset(f'%s/SLP/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{member:03}.cam.h1.PSL.*.nc'%(dataDirLens))
+# q_fut = xr.open_mfdataset(f'%s/QBOT/RCP85/b.e11.BRCP85C5CNBDRD.f09_g16.{member:03}.cam.h1.QBOT.20060101-20801231.nc'%(dataDirLens))
 
 tasmax = tasmax.sel(time=slice('%d-01-01'%year, '%d-12-31'%year))
 
@@ -80,6 +91,7 @@ txHist = tasmax.tasmax
 hussHist = q.QBOT
 pslHist = slp.PSL
 
+print('loading all data')
 txHist.load()
 hussHist.load()
 pslHist.load()
