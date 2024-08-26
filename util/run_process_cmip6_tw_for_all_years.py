@@ -1,7 +1,7 @@
 
 import sys, os, time
 
-for y in range(2036, 2060+1):
+for y in range(1981, 2022):
     print('running %s'%y)
-    os.system('screen -d -m ipython cmip6_calc_tw.py cmcc-esm2 %d'%(y))
+    os.system('ipython era5_calc_huss-metpy.py %d'%(y))
 #     time.sleep(500)

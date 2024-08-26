@@ -30,7 +30,7 @@ model = sys.argv[1]
 
 year = int(sys.argv[2])
 
-scenario = 'ssp245'
+scenario = 'historical'
 
 dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CMIP6'
 dataDirElevation = '/home/edcoffel/drive/MAX-Filer/Research/Climate-01/Personal-F20/edcoffel-F20/data/elevation'
@@ -128,7 +128,7 @@ for xlat in range(latPixels):
     for ylon in range(lonPixels):
         if elevSubMap[xlat, ylon] > 0:
             for t in range(dsTasmax.time.size):
-                if n % 1000 == 0:
+                if n % 10000 == 0:
                     print(n/n_total)
 
                 cur_tx = np.array([tx.values[t, xlat, ylon]-273.15])
@@ -137,7 +137,7 @@ for xlat in range(latPixels):
                 
                 cur_tw[t, xlat, ylon] = WetBulb.WetBulb(cur_tx, cur_p_surf, cur_huss)
                 
-                print(cur_tx, cur_p_surf, cur_huss, cur_tw[t,xlat,ylon])
+#                 print(cur_tx, cur_p_surf, cur_huss, cur_tw[t,xlat,ylon])
                 
                 n += 1
     

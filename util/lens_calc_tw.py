@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 sys.path.append('../2020-ag-land-climate')
 import ag_build_elevation_map
 
-member = 40
+member = 1
 year = int(sys.argv[1])
 
 dataDir = '/home/edcoffel/drive/MAX-Filer/Research/Climate-02/Data-02-edcoffel-F20/CMIP6'

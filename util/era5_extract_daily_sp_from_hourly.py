@@ -55,7 +55,7 @@ for year in range(yearRange[0], yearRange[1]+1):
         sp = sp.astype(float) * scale + offset
 
         print('resampling sp data for %d'%year)
-        sp = sp.resample(time='1D').sum()
+        sp = sp.resample(time='1D').mean()
 
         if month > 1:
             sp_daily = xr.concat([sp_daily, sp], dim='time')
